@@ -668,14 +668,15 @@ document.querySelector(`[data-box="${blockId}"]`).hidden = true;
 /* TOGGLE LINE */
 function toggleLine(blockId, product, type, price, checked) {
   if (checked) {
-    invoiceLines.push({
-      id: crypto.randomUUID(),
-      blockId,
-      product,
-      type,
-      qty: 1,
-      price
-    });
+   invoiceLines.push({
+  id: crypto.randomUUID(),
+  blockId,
+  product,
+  type,
+  qty: 1,
+  price,
+  isKeg: type.toLowerCase().includes("keg")
+});
   } else {
     invoiceLines = invoiceLines.filter(
       l => !(l.blockId === blockId && l.product === product && l.type === type)
@@ -776,13 +777,13 @@ addProductBlock();
     <tr>
       <td>Discount:</td>
       <td>
-        <input id="discountInput" type="number" min="0" value="0">
+       <input id="discountInput" type="number" disabled>
       </td>
     </tr>
     <tr>
       <td>Keg Deposit:</td>
       <td>
-        <input id="depositInput" type="number" min="0" value="0">
+       <input id="depositInput" type="number" disabled>
       </td>
     </tr>
     <tr class="grand-total">
@@ -797,43 +798,104 @@ addProductBlock();
  * TOTALS LOGIC
  ******************************************************/
 const TAX_RATE = 0.06; // PA sales tax
+/******************************************************
+ * AUTOMATIC PRICING RULES
+ ******************************************************/
+const CASE_DISCOUNT_RATE = 0.10; // 10% discount
+const KEG_DEPOSIT_AMOUNT = 30;   // $30 per keg (adjust if needed)
+document
+  .getElementById("discountInput")
+  .closest("tr")
+  .style.display = "none";
 
-const discountInput = document.getElementById("discountInput");
-const depositInput = document.getElementById("depositInput");
+document
+  .getElementById("depositInput")
+  .closest("tr")
+  .style.display = "none";
 
 function calculateTotals() {
-  const subtotal = invoiceLines.reduce(
-    (sum, l) => sum + (l.qty * l.price),
-    0
-  );
+  let subtotal = 0;
+  let totalCases = 0;
+  let kegCount = 0;
 
+  invoiceLines.forEach(l => {
+    subtotal += l.qty * l.price;
+
+    // CASE LOGIC
+    if (l.type.toLowerCase().includes("case")) {
+      totalCases += l.qty;
+    }
+
+    // KEG LOGIC
+   if (l.isKeg) {
+  kegCount += l.qty;
+}
+
+  });
+
+  /* CUSTOMER TAX LOGIC */
   const customerType =
     document.getElementById("customerType").value;
-
   const taxable = customerType === "Restaurant";
   const salesTax = taxable ? subtotal * TAX_RATE : 0;
 
-  const discount = Number(discountInput.value) || 0;
-  const deposit = Number(depositInput.value) || 0;
+  /* AUTOMATIC DISCOUNT */
+  let discount = 0;
+  if (totalCases >= 10) {
+    discount = subtotal * CASE_DISCOUNT_RATE;
+  }
+
+  /* AUTOMATIC KEG DEPOSIT */
+  let deposit = kegCount * KEG_DEPOSIT_AMOUNT;
+  // SHOW / HIDE DISCOUNT ROW
+document
+  .getElementById("discountInput")
+  .closest("tr")
+  .style.display = discount > 0 ? "" : "none";
+
+// SHOW / HIDE DEPOSIT ROW
+document
+  .getElementById("depositInput")
+  .closest("tr")
+  .style.display = deposit > 0 ? "" : "none";
+
+/* UX EXPLANATIONS (NON-VISUAL) */
+const discountInputEl = document.getElementById("discountInput");
+const depositInputEl = document.getElementById("depositInput");
+
+if (totalCases >= 10) {
+  discountInputEl.title = `10+ case discount applied (${totalCases} cases)`;
+} else {
+  discountInputEl.title = "";
+}
+
+if (kegCount > 0) {
+  depositInputEl.title = `${kegCount} keg deposit(s) applied`;
+} else {
+  depositInputEl.title = "";
+}
 
   const total = Math.max(
-  0,
-  subtotal + salesTax + deposit - discount
-);
+    0,
+    subtotal + salesTax + deposit - discount
+  );
 
+  /* UI UPDATES */
   document.getElementById("subtotal").textContent =
     `$${subtotal.toFixed(2)}`;
 
   document.getElementById("salesTax").textContent =
     `$${salesTax.toFixed(2)}`;
 
+  document.getElementById("discountInput").value =
+    discount.toFixed(2);
+
+  document.getElementById("depositInput").value =
+    deposit.toFixed(2);
+
   document.getElementById("grandTotal").textContent =
     `$${total.toFixed(2)}`;
 }
-
-/* Recalculate when anything changes */
-discountInput.addEventListener("input", calculateTotals);
-depositInput.addEventListener("input", calculateTotals);
 
 /* Hook totals into product updates */
 const originalRenderBlock = renderBlock;
@@ -881,6 +943,9 @@ function updatePaymentFooter() {
  * SAVE INVOICE (FRONTEND) — FIXED
  ******************************************************/
 function saveInvoice() {
+ const discountInput = document.getElementById("discountInput");
+const depositInput = document.getElementById("depositInput");
+
   if (!customerState.name) {
     alert("Select a customer first");
     return;
@@ -915,8 +980,8 @@ function saveInvoice() {
     tax: Number(
       document.getElementById("salesTax").textContent.replace("$", "")
     ),
-    discount: Number(discountInput.value) || 0,
-    deposit: Number(depositInput.value) || 0,
+    discount: Number(document.getElementById("discountInput").value) || 0,
+deposit: Number(document.getElementById("depositInput").value) || 0,
     total: Number(
       document.getElementById("grandTotal").textContent.replace("$", "")
     )
@@ -928,15 +993,18 @@ function saveInvoice() {
   })
     .then(r => r.json())
     .then(res => {
-      if (res.success) {
-        alert("Invoice saved successfully");
-        document.querySelector(
-          "button[onclick='saveInvoice()']"
-        ).disabled = true;
-      } else {
-        alert("Save failed");
-      }
-    })
+  if (res.success) {
+    alert("Invoice saved successfully");
+
+    // LOCK UI
+    document.querySelectorAll("input, button, select").forEach(el => {
+      el.disabled = true;
+    });
+
+  } else {
+    alert("Save failed");
+  }
+})
     .catch(err => {
       console.error(err);
       alert("Save failed");
