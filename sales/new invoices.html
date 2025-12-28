@@ -483,25 +483,11 @@ function saveNewCustomer() {
   };
 
   fetch(`${API_URL}?action=addCustomer`, {
-  method: "POST",
-  mode: "no-cors",
-  body: JSON.stringify(payload)
-});
+    method: "POST",
+    mode: "no-cors",
+    body: JSON.stringify(payload)
+  });
 
-const normalized = {
-  name: payload.name,
-  address: payload.address,
-  type: payload.type,
-  payment: payload.payment,
-  email: payload.email
-};
-
-customers.push(normalized);
-selectCustomer(normalized);
-updatePaymentFooter();
-closeNewCustomerModal();
-
-    .then(saved => {
   const normalized = {
     name: payload.name,
     address: payload.address,
@@ -514,13 +500,8 @@ closeNewCustomerModal();
   selectCustomer(normalized);
   updatePaymentFooter();
   closeNewCustomerModal();
-})
-
-    .catch(err => {
-      alert("Failed to save customer");
-      console.error(err);
-    });
 }
+
 </script>
 <!-- =============== END NEW CUSTOMER MODAL =============== -->
 <!-- ================= PRODUCT SECTION ================= -->
