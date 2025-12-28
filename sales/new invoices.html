@@ -13,10 +13,11 @@
 <!-- ================= HEADER SECTION ================= -->
 <style>
 .invoice-header {
+  position: relative;              /* REQUIRED */
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 4px;
+  padding-bottom: 28px;             /* space for barcode */
 }
 
 .company-block {
@@ -77,12 +78,14 @@
   border-top: 2px solid #222;
 }
  .invoice-title {
-  text-align: center;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 2px;
-  margin-top: -28px;   /* pulls INVOICE up significantly */
-  margin-bottom: 10px;
+  pointer-events: none;
 }
 
 </style>
@@ -117,8 +120,10 @@
 
     <canvas id="barcodeCanvas"></canvas>
   </div>
+
+  <!-- MUST be here -->
+  <div class="invoice-title">INVOICE</div>
 </header>
-<div class="invoice-title">INVOICE</div>
 <div class="header-divider"></div>
 
 <script>
