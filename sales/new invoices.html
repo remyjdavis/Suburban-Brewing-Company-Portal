@@ -280,7 +280,7 @@ function selectCustomer(cust) {
   nameInput.value = cust.name;
 
   customerState.name = cust.name;
-  customerState.address = cust.address; // ✅ REQUIRED
+  customerState.address = cust.address;
   customerState.type = cust.type;
   customerState.payment = cust.payment;
   customerState.isNew = false;
@@ -291,7 +291,9 @@ function selectCustomer(cust) {
 
   clearAutocomplete();
   calculateTotals();
+  updatePaymentFooter(); // ✅ ADD THIS
 }
+
 
 
 /* ===== AUTOCOMPLETE ===== */
@@ -466,10 +468,11 @@ function saveNewCustomer() {
   })
     .then(res => res.json())
     .then(saved => {
-      customers.push(saved);
-      selectCustomer(saved);
-      closeNewCustomerModal();
-    })
+  customers.push(saved);
+  selectCustomer(saved);
+  updatePaymentFooter(); // ✅ ADD THIS
+  closeNewCustomerModal();
+})
     .catch(err => {
       alert("Failed to save customer");
       console.error(err);
@@ -604,6 +607,12 @@ function addProductBlock() {
 
   setupAutocomplete(id);
 }
+function closeAllProductAutocompletes() {
+  document.querySelectorAll(".autocomplete-box").forEach(b => {
+    b.hidden = true;
+    b.innerHTML = "";
+  });
+}
 
 /* AUTOCOMPLETE */
 function setupAutocomplete(id) {
@@ -611,6 +620,8 @@ function setupAutocomplete(id) {
   const box = document.querySelector(`[data-box="${id}"]`);
 
   input.addEventListener("input", () => {
+    closeAllProductAutocompletes();
+
     const q = input.value.toLowerCase();
     box.innerHTML = "";
     box.hidden = true;
@@ -825,6 +836,36 @@ renderBlock = function(blockId) {
 };
 
 </script>
+  <!-- ================= PAYMENT FOOTER ================= -->
+<style>
+.payment-footer {
+  margin-top: 18px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+</style>
+
+<div id="paymentFooter" class="payment-footer"></div>
+<!-- =============== END PAYMENT FOOTER =============== -->
+<script>
+/******************************************************
+ * PAYMENT FOOTER LOGIC
+ ******************************************************/
+function updatePaymentFooter() {
+  const payment = document.getElementById("paymentMethod").value;
+  const footer = document.getElementById("paymentFooter");
+
+  if (payment === "Check") {
+    footer.textContent = "Make checks payable to Suburban Brewing Company";
+  } else if (payment === "Fintech") {
+    footer.textContent = "Paid through Fintech";
+  } else {
+    footer.textContent = "";
+  }
+}
+</script>
+
 <div style="margin-top:20px; text-align:right">
   <button onclick="saveInvoice()">💾 Save Invoice</button>
 </div>
