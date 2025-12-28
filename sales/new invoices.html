@@ -294,8 +294,6 @@ function selectCustomer(cust) {
   updatePaymentFooter(); // ✅ ADD THIS
 }
 
-
-
 /* ===== AUTOCOMPLETE ===== */
 nameInput.addEventListener("input", () => {
   const query = nameInput.value.trim().toLowerCase();
@@ -663,24 +661,21 @@ document.querySelector(`[data-box="${blockId}"]`).hidden = true;
 
   productsByName[productName].forEach(t => {
     typeCell.innerHTML += `
-      <label>
-        <input type="checkbox"
-          onchange="toggleLine(${blockId}, '${productName}', '${t.type}', ${t.price}, this.checked)">
-        ${t.type}
-      </label><br>
-    `;
+  <label>
+    <input type="checkbox"
+      onchange="toggleLine(${blockId}, '${productName}', '${t.type}', ${t.price}, this.checked)">
+    <span class="type-text">${t.type}</span>
+  </label><br>
+`;
+
   });
 }
 function removeProductBlock(blockId) {
   // Remove all invoice lines tied to this block
-  invoiceLines = invoiceLines.filter(
-    l => l.blockId !== blockId
-  );
+  invoiceLines = invoiceLines.filter(l => l.blockId !== blockId);
 
   // Remove the table row
-  const row = document.querySelector(
-    `tr[data-block-id="${blockId}"]`
-  );
+  const row = document.querySelector(`tr[data-block-id="${blockId}"]`);
   if (row) row.remove();
 
   calculateTotals();
@@ -704,9 +699,7 @@ function toggleLine(blockId, product, type, price, checked) {
     );
   }
   renderBlock(blockId);
-  calculateTotals(); // ✅ ADD THIS
 }
-
 
 /* RENDER BLOCK */
 function renderBlock(blockId) {
@@ -738,11 +731,9 @@ function updateQty(id, val) {
   renderBlock(line.blockId);
 }
 
-
 /* INITIAL ROW */
 addProductBlock();
 </script>
-
 
 <!-- =============== END PRODUCT SECTION =============== -->
 <!-- ================= TOTALS SECTION ================= -->
@@ -958,6 +949,7 @@ function updatePaymentFooter() {
 
 <div style="margin-top:20px; text-align:right">
   <button onclick="saveInvoice()">💾 Save Invoice</button>
+  <button onclick="window.print()">🖨 Print / Save PDF</button>
 </div>
 <script>
 /******************************************************
@@ -1018,10 +1010,9 @@ deposit: Number(document.getElementById("depositInput").value) || 0,
     alert("Invoice saved successfully");
 
     // LOCK UI
-    document.querySelectorAll("input, button, select").forEach(el => {
-      el.disabled = true;
-    });
-
+     document.querySelectorAll("input, select").forEach(el => {
+    el.disabled = true;
+});
   } else {
     alert("Save failed");
   }
@@ -1031,6 +1022,82 @@ deposit: Number(document.getElementById("depositInput").value) || 0,
       alert("Save failed");
     });
 }
+</script>
+<style>
+/* ================= PRINT STYLES ================= */
+@media print {
+  .type-text {
+    display: inline;
+  }
+  
+  .print-qty {
+    display: inline-block;
+    min-width: 24px;
+    text-align: right;
+  }
+
+  /* Hide interactive UI */
+  button:not([onclick*="print"]),
+.autocomplete-box,
+.autocomplete-list,
+input:not([type="hidden"]),
+select {
+  display: none !important;
+}
+
+  /* Invoice sizing */
+  body {
+    margin: 0.5in;
+  }
+
+  /* Product table cleanup */
+  .product-table th,
+  .product-table td {
+    padding: 6px;
+    font-size: 12px;
+  }
+
+  /* Remove delete column */
+  .product-table th:last-child,
+  .product-table td:last-child {
+    display: none;
+  }
+
+  /* Hide checkbox inputs but keep text */
+  td[data-types] input {
+    display: none;
+  }
+
+  /* Header tightening */
+  .invoice-header {
+    padding-bottom: 12px;
+  }
+
+  /* Totals emphasis */
+  .grand-total {
+    font-size: 18px;
+  }
+
+  /* Payment footer always visible */
+  #paymentFooter {
+    display: block;
+    margin-top: 20px;
+    font-size: 14px;
+  }
+}
+</style>
+
+<script>
+window.onbeforeprint = () => {
+  document.querySelectorAll(".qty-input").forEach(input => {
+    const span = document.createElement("span");
+    span.textContent = input.value;
+    span.className = "print-qty";
+    input.parentNode.replaceChild(span, input);
+  });
+};
+  window.onafterprint = () => location.reload();
+
 </script>
 
 </body>
