@@ -154,17 +154,6 @@
 })();
 </script>
 <!-- =============== END HEADER SECTION =============== -->
-<!-- ================= CUSTOMER SECTION ================= -->
-<style>
-.customer-section {
-  margin-top: 20px;
-  font-size: 14px;
-  position: relative;
-}
-.section-divider {
-  margin: 24px 0;
-  border-top: 2px solid #222;
-}
 <style>
 .customer-section {
   margin-top: 20px;
@@ -195,7 +184,7 @@
   font-size: 14px;
 }
 
-/* AUTOCOMPLETE DROPDOWN */
+/* AUTOCOMPLETE */
 .autocomplete-list {
   position: absolute;
   top: 36px;
@@ -236,17 +225,18 @@
     >
   </div>
 
-  <!-- Autocomplete dropdown -->
   <div id="customerAutocomplete" class="autocomplete-list" hidden></div>
 
-  <!-- Hidden customer fields -->
+ <!-- Hidden fields for logic -->
   <input type="hidden" id="customerAddress">
   <input type="hidden" id="customerType">
   <input type="hidden" id="paymentMethod">
 
 </section>
 
-<script>
+<div class="section-divider"></div>
+  
+ <script>
 /******************************************************
  * CUSTOMER SECTION LOGIC (FRONTEND)
  ******************************************************/
@@ -564,10 +554,11 @@ function saveNewCustomer() {
 
 <script>
 /******************************************************
- * PRODUCT SECTION — MULTI PRODUCT BLOCKS (FINAL)
+ * PRODUCT SECTION — MULTI PRODUCT BLOCKS (STABLE)
  ******************************************************/
 
-let products = [];
+let rawProducts = [];
+let productsByName = {};
 let invoiceLines = [];
 let productBlockId = 0;
 
@@ -576,7 +567,21 @@ const blocks = document.getElementById("productBlocks");
 /* LOAD PRODUCTS */
 fetch(`${API_URL}?action=getProducts`)
   .then(r => r.json())
-  .then(d => products = d || []);
+  .then(data => {
+    rawProducts = data || [];
+
+    // GROUP BY PRODUCT NAME
+    productsByName = {};
+    rawProducts.forEach(p => {
+      if (!productsByName[p.name]) {
+        productsByName[p.name] = [];
+      }
+      productsByName[p.name].push({
+        type: p.type,
+        price: p.price
+      });
+    });
+  });
 
 /* ADD PRODUCT BLOCK */
 function addProductBlock() {
@@ -609,13 +614,13 @@ function setupAutocomplete(id) {
     box.hidden = true;
     if (!q) return;
 
-    products
-      .filter(p => p.name.toLowerCase().includes(q))
-      .forEach(p => {
+    Object.keys(productsByName)
+      .filter(name => name.toLowerCase().includes(q))
+      .forEach(name => {
         const div = document.createElement("div");
         div.className = "autocomplete-item";
-        div.textContent = p.name;
-        div.onclick = () => selectProduct(id, p);
+        div.textContent = name;
+        div.onclick = () => selectProduct(id, name);
         box.appendChild(div);
       });
 
@@ -624,18 +629,18 @@ function setupAutocomplete(id) {
 }
 
 /* SELECT PRODUCT */
-function selectProduct(id, product) {
-  document.querySelector(`[data-id="${id}"]`).value = product.name;
-  document.querySelector(`[data-box="${id}"]`).hidden = true;
+function selectProduct(blockId, productName) {
+  document.querySelector(`[data-id="${blockId}"]`).value = productName;
+  document.querySelector(`[data-box="${blockId}"]`).hidden = true;
 
-  const typeCell = document.querySelector(`[data-types="${id}"]`);
+  const typeCell = document.querySelector(`[data-types="${blockId}"]`);
   typeCell.innerHTML = "";
 
-  product.types.forEach(t => {
+  productsByName[productName].forEach(t => {
     typeCell.innerHTML += `
       <label>
         <input type="checkbox"
-          onchange="toggleLine(${id}, '${product.name}', '${t.type}', ${t.price}, this.checked)">
+          onchange="toggleLine(${blockId}, '${productName}', '${t.type}', ${t.price}, this.checked)">
         ${t.type}
       </label><br>
     `;
@@ -645,10 +650,17 @@ function selectProduct(id, product) {
 /* TOGGLE LINE */
 function toggleLine(blockId, product, type, price, checked) {
   if (checked) {
-    invoiceLines.push({ blockId, product, type, qty: 1, price });
+    invoiceLines.push({
+      id: crypto.randomUUID(),
+      blockId,
+      product,
+      type,
+      qty: 1,
+      price
+    });
   } else {
     invoiceLines = invoiceLines.filter(
-      l => !(l.blockId === blockId && l.type === type)
+      l => !(l.blockId === blockId && l.product === product && l.type === type)
     );
   }
   renderBlock(blockId);
@@ -664,20 +676,31 @@ function renderBlock(blockId) {
   priceCell.innerHTML = "";
   totalCell.innerHTML = "";
 
-  invoiceLines.filter(l => l.blockId === blockId).forEach((l, i) => {
-    qtyCell.innerHTML += `
-      <input type="number" min="1" value="${l.qty}"
-        onchange="invoiceLines[${i}].qty=this.value;renderBlock(${blockId})"
-        style="width:60px"><br>
-    `;
-    priceCell.innerHTML += `$${l.price.toFixed(2)}<br>`;
-    totalCell.innerHTML += `$${(l.qty * l.price).toFixed(2)}<br>`;
-  });
+  invoiceLines
+    .filter(l => l.blockId === blockId)
+    .forEach(l => {
+      qtyCell.innerHTML += `
+        <input type="number" min="1" value="${l.qty}"
+          onchange="updateQty('${l.id}', this.value)"
+          class="qty-input"><br>
+      `;
+      priceCell.innerHTML += `$${l.price.toFixed(2)}<br>`;
+      totalCell.innerHTML += `$${(l.qty * l.price).toFixed(2)}<br>`;
+    });
 }
 
-/* INITIAL BLOCK */
+function updateQty(id, val) {
+  const line = invoiceLines.find(l => l.id === id);
+  if (!line) return;
+  line.qty = Number(val) || 1;
+  renderBlock(line.blockId);
+}
+
+
+/* INITIAL ROW */
 addProductBlock();
 </script>
+
 
 <!-- =============== END PRODUCT SECTION =============== -->
 
