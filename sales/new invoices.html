@@ -181,8 +181,7 @@
   white-space: nowrap;
 }
 
-.customer-row input,
-.customer-row select {
+.customer-row input {
   flex: 1;
   padding: 6px;
   font-size: 14px;
@@ -218,57 +217,34 @@
       >
     </div>
 
-    <!-- CUSTOMER TYPE (TAX LOGIC ONLY) -->
-    <div class="customer-row">
-      <label for="customerType">Customer Type:</label>
-      <select id="customerType">
-        <option value="">Select type</option>
-        <option value="restaurant">Restaurant (Tax)</option>
-        <option value="wholesale">Wholesale (No Tax)</option>
-      </select>
-    </div>
-
-    <!-- PAYMENT METHOD (FOOTER MESSAGE ONLY) -->
-    <div class="customer-row">
-      <label for="paymentMethod">Payment Method:</label>
-      <select id="paymentMethod">
-        <option value="">Select method</option>
-        <option value="check">Check</option>
-        <option value="fintech">Fintech</option>
-      </select>
-    </div>
-
   </div>
 </section>
 
 <script>
-/* ===== CUSTOMER STATE (FRONTEND ONLY) ===== */
+/* ===== CUSTOMER STATE (INTERNAL ONLY) ===== */
 const customerState = {
   name: "",
   address: "",
-  type: "",      // restaurant | wholesale
-  payment: ""    // check | fintech
+  type: "",      // restaurant | wholesale (used for tax logic)
+  payment: ""    // check | fintech (used for footer message)
 };
 
 const customerNameInput = document.getElementById("customerName");
 const customerAddressInput = document.getElementById("customerAddress");
-const customerTypeSelect = document.getElementById("customerType");
-const paymentMethodSelect = document.getElementById("paymentMethod");
 
 /* Track customer name */
 customerNameInput.addEventListener("input", e => {
   customerState.name = e.target.value.trim();
 });
 
-/* Track customer type (TAX LOGIC) */
-customerTypeSelect.addEventListener("change", e => {
-  customerState.type = e.target.value;
-});
-
-/* Track payment method (FOOTER MESSAGE) */
-paymentMethodSelect.addEventListener("change", e => {
-  customerState.payment = e.target.value;
-});
+/*
+  NOTE:
+  customerState.type and customerState.payment
+  will be set later by:
+  - autocomplete match
+  - new customer modal
+  - backend response
+*/
 </script>
 <!-- =============== END CUSTOMER SECTION =============== -->
 
