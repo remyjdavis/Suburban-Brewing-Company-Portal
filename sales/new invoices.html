@@ -164,18 +164,19 @@
 .customer-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px 40px;
-  max-width: 800px;
+  column-gap: 40px;
+  row-gap: 16px;
+  max-width: 900px;
 }
 
 .customer-row {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 10px;
 }
 
 .customer-row label {
-  min-width: 120px;
+  min-width: 130px;
   font-weight: bold;
   white-space: nowrap;
 }
@@ -184,10 +185,12 @@
 .customer-row select {
   flex: 1;
   padding: 6px;
+  font-size: 14px;
 }
 
 .customer-row input[readonly] {
   background: #f3f4f6;
+  cursor: default;
 }
 </style>
 
@@ -196,29 +199,38 @@
 
     <!-- CUSTOMER NAME (AUTOCOMPLETE TARGET) -->
     <div class="customer-row">
-      <label>Customer Name:</label>
-      <input id="customerName" type="text" placeholder="Start typing customer name">
+      <label for="customerName">Customer Name:</label>
+      <input
+        id="customerName"
+        type="text"
+        placeholder="Start typing customer name"
+        autocomplete="off"
+      >
     </div>
 
-    <!-- CUSTOMER ADDRESS -->
+    <!-- CUSTOMER ADDRESS (AUTO-FILLED LATER) -->
     <div class="customer-row">
-      <label>Address:</label>
-      <input id="customerAddress" type="text" readonly>
+      <label for="customerAddress">Address:</label>
+      <input
+        id="customerAddress"
+        type="text"
+        readonly
+      >
     </div>
 
-    <!-- CUSTOMER TYPE -->
+    <!-- CUSTOMER TYPE (TAX LOGIC ONLY) -->
     <div class="customer-row">
-      <label>Customer Type:</label>
+      <label for="customerType">Customer Type:</label>
       <select id="customerType">
         <option value="">Select type</option>
-        <option value="restaurant">Restaurant (Taxable)</option>
+        <option value="restaurant">Restaurant (Tax)</option>
         <option value="wholesale">Wholesale (No Tax)</option>
       </select>
     </div>
 
-    <!-- PAYMENT METHOD -->
+    <!-- PAYMENT METHOD (FOOTER MESSAGE ONLY) -->
     <div class="customer-row">
-      <label>Payment Method:</label>
+      <label for="paymentMethod">Payment Method:</label>
       <select id="paymentMethod">
         <option value="">Select method</option>
         <option value="check">Check</option>
@@ -228,6 +240,36 @@
 
   </div>
 </section>
+
+<script>
+/* ===== CUSTOMER STATE (FRONTEND ONLY) ===== */
+const customerState = {
+  name: "",
+  address: "",
+  type: "",      // restaurant | wholesale
+  payment: ""    // check | fintech
+};
+
+const customerNameInput = document.getElementById("customerName");
+const customerAddressInput = document.getElementById("customerAddress");
+const customerTypeSelect = document.getElementById("customerType");
+const paymentMethodSelect = document.getElementById("paymentMethod");
+
+/* Track customer name */
+customerNameInput.addEventListener("input", e => {
+  customerState.name = e.target.value.trim();
+});
+
+/* Track customer type (TAX LOGIC) */
+customerTypeSelect.addEventListener("change", e => {
+  customerState.type = e.target.value;
+});
+
+/* Track payment method (FOOTER MESSAGE) */
+paymentMethodSelect.addEventListener("change", e => {
+  customerState.payment = e.target.value;
+});
+</script>
 <!-- =============== END CUSTOMER SECTION =============== -->
 
 </body>
