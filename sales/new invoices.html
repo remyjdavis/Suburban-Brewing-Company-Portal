@@ -223,6 +223,11 @@ let lastGeneratedPdfId = null;
 </style>
 
 <section class="customer-section">
+<!-- PRINT-ONLY CUSTOMER INFO -->
+<div id="printCustomerInfo" style="display:none">
+  <strong id="printCustomerName"></strong><br>
+  <span id="printCustomerAddress"></span>
+</div>
 
   <div class="customer-row">
     <label for="customerName">Customer Name:</label>
@@ -1002,40 +1007,42 @@ async function saveInvoice() {
     }
 
     /* BUILD PAYLOAD */
-    const payload = {
-      invoiceNumber: document.getElementById("invoiceNumber").value,
-      date: document.getElementById("invoiceDateValue").value,
+const payload = {
+  invoiceNumber: document.getElementById("invoiceNumber").value,
+  date: document.getElementById("invoiceDateValue").value,
 
-      customer: {
-        name: customerState.name,
-        address: customerState.address,
-        type: customerState.type,
-        payment: customerState.payment
-      },
+  barcodeBase64: getBarcodeBase64(), // ✅ FIXED
 
-      items: invoiceLines.map(l => ({
-        product: l.product,
-        type: l.type,
-        qty: l.qty,
-        price: l.price
-      })),
+  customer: {
+    name: customerState.name,
+    address: customerState.address,
+    type: customerState.type,
+    payment: customerState.payment
+  },
 
-      subtotal: Number(
-        document.getElementById("subtotal").textContent.replace("$","")
-      ),
-      tax: Number(
-        document.getElementById("salesTax").textContent.replace("$","")
-      ),
-      discount: Number(
-        document.getElementById("discountInput").value || 0
-      ),
-      deposit: Number(
-        document.getElementById("depositInput").value || 0
-      ),
-      total: Number(
-        document.getElementById("grandTotal").textContent.replace("$","")
-      )
-    };
+  items: invoiceLines.map(l => ({
+    product: l.product,
+    type: l.type,
+    qty: l.qty,
+    price: l.price
+  })),
+
+  subtotal: Number(
+    document.getElementById("subtotal").textContent.replace("$","")
+  ),
+  tax: Number(
+    document.getElementById("salesTax").textContent.replace("$","")
+  ),
+  discount: Number(
+    document.getElementById("discountInput").value || 0
+  ),
+  deposit: Number(
+    document.getElementById("depositInput").value || 0
+  ),
+  total: Number(
+    document.getElementById("grandTotal").textContent.replace("$","")
+  )
+};
 
     /* SAVE TO SHEETS */
     const saveRes = await fetch(`${API_URL}?action=saveInvoice`, {
@@ -1071,6 +1078,10 @@ async function saveInvoice() {
     alert("Save failed — see console");
   }
 }
+function getBarcodeBase64() {
+  const canvas = document.getElementById("barcodeCanvas");
+  return canvas.toDataURL("image/png");
+}
 
 async function emailInvoice() {
   if (!invoiceSaved || !invoicePdfGenerated) {
@@ -1105,6 +1116,12 @@ async function emailInvoice() {
   <style>
 /* ================= PRINT STYLES ================= */
 @media print {
+  .invoice-title {
+    position: static !important;
+    transform: none !important;
+    text-align: center;
+    margin-bottom: 10px;
+  }
   .type-text {
     display: inline;
   }
@@ -1144,7 +1161,7 @@ async function emailInvoice() {
   }
 
   .invoice-header {
-    padding-bottom: 12px;
+    align-items: flex-start;
   }
 
   .grand-total {
@@ -1159,18 +1176,47 @@ async function emailInvoice() {
 
   /* ✅ BARCODE — PRINT ONLY */
   #barcodeCanvas {
-    width: 220px !important;
-    height: auto !important;
-  }
+  width: 220px !important;
+  height: auto !important;
 }
 
+#printCustomerInfo {
+  display: block !important;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.print-product {
+  display: inline-block;
+  font-size: 12px;
+}
+
+}
 </style>
 
 <script>
 window.onbeforeprint = () => {
-  document.querySelectorAll(".qty-input").forEach(input => {
-    input.dataset.originalValue = input.value;
 
+  // CUSTOMER PRINT
+  document.getElementById("printCustomerName").textContent =
+    customerState.name || "";
+
+  document.getElementById("printCustomerAddress").textContent =
+    customerState.address || "";
+
+  document.getElementById("printCustomerInfo").style.display = "block";
+
+  // PRODUCT NAME PRINT
+  document.querySelectorAll(".product-search").forEach(input => {
+    const span = document.createElement("span");
+    span.textContent = input.value;
+    span.className = "print-product";
+    input.style.display = "none";
+    input.after(span);
+  });
+
+  // QTY PRINT
+  document.querySelectorAll(".qty-input").forEach(input => {
     const span = document.createElement("span");
     span.textContent = input.value;
     span.className = "print-qty";
@@ -1180,6 +1226,8 @@ window.onbeforeprint = () => {
 };
 
 window.onafterprint = () => {
+
+  // RESTORE QTY INPUTS
   document.querySelectorAll(".print-qty").forEach(span => {
     const input = span.previousElementSibling;
     if (input && input.classList.contains("qty-input")) {
@@ -1188,8 +1236,21 @@ window.onafterprint = () => {
     span.remove();
   });
 
-  // ✅ ENABLE EMAIL BUTTON
-  const emailBtn = document.querySelector('button[onclick="emailInvoice()"]');
+  // RESTORE PRODUCT INPUTS
+  document.querySelectorAll(".print-product").forEach(span => {
+    const input = span.previousElementSibling;
+    if (input && input.classList.contains("product-search")) {
+      input.style.display = "";
+    }
+    span.remove();
+  });
+
+  // HIDE CUSTOMER PRINT BLOCK
+  document.getElementById("printCustomerInfo").style.display = "none";
+
+  // ENABLE EMAIL BUTTON
+  const emailBtn =
+    document.querySelector('button[onclick="emailInvoice()"]');
   if (emailBtn) emailBtn.disabled = false;
 };
 
