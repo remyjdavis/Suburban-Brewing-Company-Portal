@@ -483,10 +483,24 @@ function saveNewCustomer() {
   };
 
   fetch(`${API_URL}?action=addCustomer`, {
-    method: "POST",
-    body: JSON.stringify(payload)
-  })
-    .then(res => res.json())
+  method: "POST",
+  mode: "no-cors",
+  body: JSON.stringify(payload)
+});
+
+const normalized = {
+  name: payload.name,
+  address: payload.address,
+  type: payload.type,
+  payment: payload.payment,
+  email: payload.email
+};
+
+customers.push(normalized);
+selectCustomer(normalized);
+updatePaymentFooter();
+closeNewCustomerModal();
+
     .then(saved => {
   const normalized = {
     name: payload.name,
