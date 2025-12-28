@@ -11,7 +11,6 @@
 
 <body>
 <!-- ================= HEADER SECTION ================= -->
-<!-- ================= HEADER SECTION ================= -->
 <style>
 .invoice-header {
   display: flex;
@@ -57,7 +56,7 @@
 }
 
 #barcodeCanvas {
-  margin-top: 8px;
+  margin-top: 10px;
 }
 </style>
 
@@ -76,12 +75,12 @@
   </div>
 
   <div class="invoice-meta">
-    <label>Invoice Number</label>
-    <input id="invoiceNumber" type="text">
-
     <label>Date</label>
     <input id="invoiceDate" type="date" disabled>
     <input type="hidden" id="invoiceDateValue">
+
+    <label>Invoice Number</label>
+    <input id="invoiceNumber" type="text">
 
     <canvas id="barcodeCanvas"></canvas>
   </div>
@@ -97,7 +96,7 @@
   // Default invoice number
   invoiceNumber.value = "INV-" + Date.now();
 
-  // Lock date to today (Safari-safe)
+  // Locked date (Safari-safe)
   const today = new Date().toISOString().split("T")[0];
   invoiceDate.value = today;
   invoiceDateValue.value = today;
@@ -119,6 +118,5 @@
 </script>
 <!-- =============== END HEADER SECTION =============== -->
 
-<!-- =============== END HEADER SECTION =============== -->
 </body>
 </html>
