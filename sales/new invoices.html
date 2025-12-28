@@ -972,7 +972,8 @@ function updatePaymentFooter() {
   <button onclick="saveInvoice()">💾 Save Invoice</button>
  <button class="print-btn" onclick="printInvoice()">Print</button>
   <button onclick="goBackToInvoices()">⬅ Back to Invoices</button>
-  <button onclick="emailInvoice()" disabled>📧 Email Invoice</button>
+ <button disabled>📧 Sent Automatically</button>
+
 </div>
 <script>
 function lockInvoiceAfterSave() {
@@ -1052,24 +1053,14 @@ const payload = {
 
     if (!saveRes.success) throw new Error("Invoice save failed");
 
-    invoiceSaved = true;
+   invoiceSaved = true;
 
-    /* GENERATE PDF */
-    const pdfRes = await fetch(`${API_URL}?action=generateInvoicePdf`, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    }).then(r => r.json());
+/* PDF IS GENERATED SERVER-SIDE */
+invoicePdfGenerated = true;
+lastGeneratedPdfId = saveRes.fileId;
 
-    if (!pdfRes.success) throw new Error("PDF generation failed");
-
-    invoicePdfGenerated = true;
-    lastGeneratedPdfId = pdfRes.fileId;
 
     lockInvoiceAfterSave();
-
-    const emailBtn =
-      document.querySelector('button[onclick="emailInvoice()"]');
-    if (emailBtn) emailBtn.disabled = false;
 
     alert("Invoice saved and PDF generated ✅");
 
@@ -1081,34 +1072,6 @@ const payload = {
 function getBarcodeBase64() {
   const canvas = document.getElementById("barcodeCanvas");
   return canvas.toDataURL("image/png");
-}
-
-async function emailInvoice() {
-  if (!invoiceSaved || !invoicePdfGenerated) {
-    alert("Save and generate PDF first.");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}?action=emailInvoice`, {
-      method: "POST",
-      body: JSON.stringify({
-        fileId: lastGeneratedPdfId,
-        invoiceNumber: document.getElementById("invoiceNumber").value,
-        date: document.getElementById("invoiceDateValue").value,
-        total: Number(document.getElementById("grandTotal").textContent.replace("$","")),
-        customer: customerState
-      })
-    }).then(r => r.json());
-
-    if (!res.success) throw new Error("Email failed");
-
-    alert("Invoice emailed with PDF attached");
-
-  } catch (err) {
-    alert("Email failed");
-    console.error(err);
-  }
 }
 
 </script>
@@ -1247,11 +1210,6 @@ window.onafterprint = () => {
 
   // HIDE CUSTOMER PRINT BLOCK
   document.getElementById("printCustomerInfo").style.display = "none";
-
-  // ENABLE EMAIL BUTTON
-  const emailBtn =
-    document.querySelector('button[onclick="emailInvoice()"]');
-  if (emailBtn) emailBtn.disabled = false;
 };
 
 /******************************************************
