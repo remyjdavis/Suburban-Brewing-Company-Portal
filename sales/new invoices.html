@@ -798,7 +798,10 @@ function calculateTotals() {
   const discount = Number(discountInput.value) || 0;
   const deposit = Number(depositInput.value) || 0;
 
-  const total = subtotal + salesTax + deposit - discount;
+  const total = Math.max(
+  0,
+  subtotal + salesTax + deposit - discount
+);
 
   document.getElementById("subtotal").textContent =
     `$${subtotal.toFixed(2)}`;
