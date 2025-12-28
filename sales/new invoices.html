@@ -10,6 +10,12 @@
 </head>
 
 <body>
+
+<script>
+/* ===== GLOBAL STATE ===== */
+let invoicePdfGenerated = false;
+</script>
+
 <!-- ================= HEADER SECTION ================= -->
 <style>
 .invoice-header {
@@ -134,7 +140,7 @@
   const invoiceDateValue = document.getElementById("invoiceDateValue");
 
   invoiceNumber.value = "INV-" + Date.now();
-
+  
   const today = new Date().toISOString().split("T")[0];
   invoiceDate.value = today;
   invoiceDateValue.value = today;
@@ -632,18 +638,19 @@ function setupAutocomplete(id) {
     box.hidden = true;
     if (!q) return;
 
-    Object.keys(productsByName)
-      .filter(name => name.toLowerCase().includes(q))
-      .forEach(name => {
-        const div = document.createElement("div");
-        div.className = "autocomplete-item";
-        div.textContent = name;
-        div.onclick = () => selectProduct(id, name);
-        box.appendChild(div);
-      });
+    if (!Object.keys(productsByName).length) return;
 
-    box.hidden = false;
+Object.keys(productsByName)
+  .filter(name => name.toLowerCase().includes(q))
+  .forEach(name => {
+    const div = document.createElement("div");
+    div.className = "autocomplete-item";
+    div.textContent = name;
+    div.onclick = () => selectProduct(id, name);
+    box.appendChild(div);
   });
+
+box.hidden = false;
 }
 document.addEventListener("click", e => {
   if (!e.target.closest(".product-section")) {
@@ -722,6 +729,7 @@ function renderBlock(blockId) {
       priceCell.innerHTML += `$${l.price.toFixed(2)}<br>`;
       totalCell.innerHTML += `$${(l.qty * l.price).toFixed(2)}<br>`;
     });
+    calculateTotals();
 }
 
 function updateQty(id, val) {
@@ -729,6 +737,7 @@ function updateQty(id, val) {
   if (!line) return;
   line.qty = Number(val) || 1;
   renderBlock(line.blockId);
+  
 }
 
 /* INITIAL ROW */
@@ -909,13 +918,6 @@ if (kegCount > 0) {
     `$${total.toFixed(2)}`;
 }
 
-/* Hook totals into product updates */
-const originalRenderBlock = renderBlock;
-renderBlock = function(blockId) {
-  originalRenderBlock(blockId);
-  calculateTotals();
-};
-
 </script>
   <!-- ================= PAYMENT FOOTER ================= -->
 <style>
@@ -951,9 +953,14 @@ function updatePaymentFooter() {
   <button onclick="saveInvoice()">💾 Save Invoice</button>
   <button onclick="window.print()">🖨 Print / Save PDF</button>
   <button onclick="goBackToInvoices()">⬅ Back to Invoices</button>
-  <button onclick="emailInvoice()">📧 Email Invoice</button>
+  <button onclick="emailInvoice()" disabled>📧 Email Invoice</button>
 </div>
 <script>
+  function lockInvoiceAfterSave() {
+  document.querySelectorAll("input, select").forEach(el => {
+    if (el.type !== "hidden") el.disabled = true;
+  });
+}
 /******************************************************
  * SAVE INVOICE (FRONTEND) — FIXED
  ******************************************************/
@@ -1010,11 +1017,9 @@ deposit: Number(document.getElementById("depositInput").value) || 0,
     .then(res => {
   if (res.success) {
     alert("Invoice saved successfully");
-
+  lockInvoiceAfterSave();
     // LOCK UI
-     document.querySelectorAll("input, select").forEach(el => {
-    el.disabled = true;
-});
+
   } else {
     alert("Save failed");
   }
@@ -1091,17 +1096,35 @@ select {
 
 <script>
 window.onbeforeprint = () => {
+  invoicePdfGenerated = true;
+
   document.querySelectorAll(".qty-input").forEach(input => {
+    input.dataset.originalValue = input.value;
+
     const span = document.createElement("span");
     span.textContent = input.value;
     span.className = "print-qty";
-    input.parentNode.replaceChild(span, input);
+    input.style.display = "none";
+    input.after(span);
   });
 };
-  window.onafterprint = () => location.reload();
+
+window.onafterprint = () => {
+  document.querySelectorAll(".print-qty").forEach(span => {
+    const input = span.previousElementSibling;
+    if (input && input.classList.contains("qty-input")) {
+      input.style.display = "";
+    }
+    span.remove();
+  });
+
+  // ✅ ENABLE EMAIL BUTTON
+  const emailBtn = document.querySelector('button[onclick="emailInvoice()"]');
+  if (emailBtn) emailBtn.disabled = false;
+};
 
 </script>
- <script>
+  <script>
 /******************************************************
  * INTERNAL EMAIL DISTRIBUTION
  ******************************************************/
@@ -1124,16 +1147,21 @@ function goBackToInvoices() {
 /******************************************************
  * EMAIL INVOICE — INTERNAL ONLY
  ******************************************************/
-function emailInvoice() {
-  // ⛔ Prevent emailing before save
+ function emailInvoice() {
   const anyEnabledInput = Array.from(
-  document.querySelectorAll("input:not([type='hidden']), select")
+  document.querySelectorAll("input, select")
 ).some(el => !el.disabled);
 
-  if (anyEnabledInput) {
-    alert("Please save the invoice before emailing.");
+if (anyEnabledInput) {
+  alert("Please save the invoice before emailing.");
+  return;
+}
+
+  if (!invoicePdfGenerated) {
+    alert("Please print and save the invoice as a PDF before emailing.");
     return;
   }
+
   const invoiceNum = document.getElementById("invoiceNumber").value;
   const total = document.getElementById("grandTotal").textContent;
   const customer = customerState.name || "Unknown Customer";
@@ -1151,7 +1179,7 @@ Date: ${date}
 Customer: ${customer}
 Total: ${total}
 
-Please attach the PDF of this invoice.
+PDF has been generated and saved.
 
 — Suburban Brewing Company
 `
@@ -1162,6 +1190,19 @@ Please attach the PDF of this invoice.
   window.location.href =
     `mailto:${to}?subject=${subject}&body=${body}`;
 }
+</script>
+<script>
+/******************************************************
+ * GLOBAL CHANGE DETECTOR — PDF INVALIDATION
+ ******************************************************/
+document.addEventListener("input", () => {
+  invoicePdfGenerated = false;
+
+  const emailBtn =
+    document.querySelector('button[onclick="emailInvoice()"]');
+
+  if (emailBtn) emailBtn.disabled = true;
+});
 </script>
 
 
