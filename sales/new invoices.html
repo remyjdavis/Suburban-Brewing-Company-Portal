@@ -475,11 +475,20 @@ function saveNewCustomer() {
   })
     .then(res => res.json())
     .then(saved => {
-  customers.push(saved);
-  selectCustomer(saved);
-  updatePaymentFooter(); // ✅ ADD THIS
+  const normalized = {
+    name: payload.name,
+    address: payload.address,
+    type: payload.type,
+    payment: payload.payment,
+    email: payload.email
+  };
+
+  customers.push(normalized);
+  selectCustomer(normalized);
+  updatePaymentFooter();
   closeNewCustomerModal();
 })
+
     .catch(err => {
       alert("Failed to save customer");
       console.error(err);
@@ -963,7 +972,8 @@ function updatePaymentFooter() {
 <script>
 function lockInvoiceAfterSave() {
   document.querySelectorAll("input, select").forEach(el => {
-    if (el.type !== "hidden") el.disabled = true;
+    if (el.type !== "hidden" && !el.classList.contains("qty-input"))
+  el.disabled = true;
   });
 }
 
@@ -1188,17 +1198,18 @@ function goBackToInvoices() {
 /******************************************************
  * GLOBAL CHANGE DETECTOR — PDF INVALIDATION
  ******************************************************/
-document.addEventListener("input", e => {
-  if (e.target.type === "hidden") return;
+ddocument.addEventListener("input", e => {
+  if (
+    e.target.type === "hidden" ||
+    e.target.classList.contains("qty-input")
+  ) return;
 
   invoicePdfGenerated = false;
 
   const emailBtn =
     document.querySelector('button[onclick="emailInvoice()"]');
-
   if (emailBtn) emailBtn.disabled = true;
 });
-
 </script>
 
 
