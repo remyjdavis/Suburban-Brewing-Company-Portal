@@ -15,13 +15,42 @@ body { font-family: Arial; background:#f4f4f4; padding:20px }
 header { display:flex; justify-content:space-between }
 .company { display:flex; gap:15px }
 .company img { width:80px }
+
 table { width:100%; border-collapse:collapse; margin-top:15px }
 th,td { border:1px solid #ccc; padding:8px }
 th { background:#18b89a; color:#fff }
-input,select { width:100%; padding:6px }
+
+input,select,textarea { width:100%; padding:6px }
 button { padding:8px 14px; margin:6px 4px }
+
 .totals { max-width:320px; margin-left:auto }
 .totals div { display:flex; justify-content:space-between; margin:6px 0 }
+
+/* ===== MODAL ===== */
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+.modal{
+  background:#fff;
+  padding:20px;
+  width:420px;
+  border-radius:8px;
+}
+.modal h3{margin-top:0}
+.modal label{font-weight:bold;margin-top:10px;display:block}
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:15px
+}
+.secondary{background:#6b7280;color:#fff}
 </style>
 </head>
 
@@ -40,7 +69,8 @@ button { padding:8px 14px; margin:6px 4px }
     </div>
   </div>
   <div>
-    Invoice # <input id="invoiceNumber" oninput="refreshBarcode()"><br>
+    Invoice #
+    <input id="invoiceNumber"><br>
     Date: <span id="invoiceDate"></span><br>
     <canvas id="barcodeCanvas"></canvas>
   </div>
@@ -49,13 +79,11 @@ button { padding:8px 14px; margin:6px 4px }
 <hr>
 
 <h3>Customer</h3>
-<input id="customerName" list="customerList" autocomplete="off"
-       oninput="handleCustomerInput(this.value)">
-<div id="customerAddress" style="margin-top:6px;font-style:italic;"></div>
+<input id="customerName" list="customerList" autocomplete="off">
 <datalist id="customerList"></datalist>
+<div id="customerAddress" style="margin-top:6px;font-style:italic;"></div>
 
 <h3>Invoice Items</h3>
-
 <table id="itemsTable">
 <thead>
 <tr>
@@ -80,406 +108,169 @@ button { padding:8px 14px; margin:6px 4px }
   <div><strong>Total</strong><strong id="total">$0.00</strong></div>
 </div>
 
-<button onclick="printInvoice()">Print</button>
-<button onclick="saveInvoice()">Save</button>
-<button onclick="emailInvoice()">Email</button>
-<button onclick="goBack()">Back</button>
-
 <p id="paymentNote">Make checks payable to Suburban Brewing Company.</p>
+
+</div>
+
+<!-- ================= CUSTOMER MODAL ================= -->
+<div id="customerModal" class="modal-overlay">
+  <div class="modal">
+    <h3>New Customer</h3>
+
+    <label>Name</label>
+    <input id="mcName">
+
+    <label>Address</label>
+    <textarea id="mcAddress" rows="3"></textarea>
+
+    <label>Payment Method</label>
+    <select id="mcPayment">
+      <option value="Check">Check</option>
+      <option value="Fintech">Fintech</option>
+    </select>
+
+    <label>Customer Type</label>
+    <select id="mcType">
+      <option value="Restaurant">Restaurant</option>
+      <option value="Wholesale">Wholesale</option>
+    </select>
+
+    <div class="modal-actions">
+      <button onclick="saveNewCustomer()">Save</button>
+      <button class="secondary" onclick="cancelCustomer()">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbys580shBiRLtAW0jAYFoinwKJrycSJQyW8qy95nvLr7dxqOGtzI3e_h9QQn8-ULTT3/exec";
-const TYPES = ["Case","Bottle","1/6 Keg","1/2 Keg"];
 const SALES_TAX_RATE = 0.06;
 const KEG_DEPOSIT = 30;
 
-let customers=[], selectedCustomer=null;
+let customers = [];
+let selectedCustomer = null;
 
 invoiceDate.innerText = new Date().toLocaleDateString();
 invoiceNumber.value = "INV-" + Date.now();
-refreshBarcode();
+
+JsBarcode("#barcodeCanvas", invoiceNumber.value, {displayValue:false});
 
 /* LOAD CUSTOMERS */
-fetch(API+"?action=getCustomers")
-  .then(r=>r.json())
-  .then(d=>{
-    customers=d;
-    customerList.innerHTML=d.map(c=>`<option value="${c.name}">`).join("");
-  });
+fetch(API + "?action=getCustomers")
+.then(r=>r.json())
+.then(d=>{
+  customers = d;
+  customerList.innerHTML = d.map(c=>`<option value="${c.name}">`).join("");
+});
 
-function handleCustomerInput(val){
-  const c = customers.find(x=>x.name.toLowerCase()===val.toLowerCase());
+/* CUSTOMER SELECT */
+customerName.addEventListener("input",()=>{
+  const c = customers.find(x=>x.name.toLowerCase()===customerName.value.toLowerCase());
   if(c){
     selectedCustomer=c;
     customerAddress.innerText=c.address;
-  } else {
-    selectedCustomer=null;
-    customerAddress.innerText="";
+    paymentNote.innerText =
+      c.payment==="Fintech"
+      ? "Paid through Fintech."
+      : "Make checks payable to Suburban Brewing Company.";
+    calc();
   }
+});
+
+/* BLUR = NEW CUSTOMER */
+customerName.addEventListener("blur",()=>{
+  const val = customerName.value.trim();
+  if(!val) return;
+
+  const exists = customers.some(c=>c.name.toLowerCase()===val.toLowerCase());
+  if(!exists){
+    setTimeout(()=>{
+      mcName.value = val;
+      mcAddress.value="";
+      mcPayment.value="Check";
+      mcType.value="Restaurant";
+      customerModal.style.display="flex";
+    },150);
+  }
+});
+
+/* MODAL ACTIONS */
+function cancelCustomer(){
+  customerModal.style.display="none";
+  customerName.value="";
 }
 
-/* ---------- TOTALS ---------- */
+function saveNewCustomer(){
+  const customer={
+    name:mcName.value.trim(),
+    address:mcAddress.value.trim(),
+    payment:mcPayment.value,
+    type:mcType.value
+  };
+
+  fetch(API,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({action:"saveCustomer",...customer})
+  }).then(()=>{
+    customers.push(customer);
+    const o=document.createElement("option");
+    o.value=customer.name;
+    customerList.appendChild(o);
+
+    selectedCustomer=customer;
+    customerName.value=customer.name;
+    customerAddress.innerText=customer.address;
+
+    paymentNote.innerText =
+      customer.payment==="Fintech"
+      ? "Paid through Fintech."
+      : "Make checks payable to Suburban Brewing Company.";
+
+    customerModal.style.display="none";
+    calc();
+  });
+}
+
+/* ===== INVOICE ===== */
+function addRow(){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td><input></td>
+    <td><select>
+      <option>Case</option>
+      <option>Bottle</option>
+      <option>1/6 Keg</option>
+      <option>1/2 Keg</option>
+    </select></td>
+    <td><input type="number" min="0" value="0"></td>
+    <td><input type="number" step="0.01" value="0"></td>
+    <td>$0.00</td>`;
+  itemsTable.querySelector("tbody").appendChild(tr);
+  tr.querySelectorAll("input,select").forEach(i=>i.oninput=calc);
+}
+
 function calc(){
-  let subtotal=0,cases=0,kegs=0;
+  let subtotal=0,kegs=0;
   document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
+    const qty=+r.children[2].firstChild.value;
     const price=+r.children[3].firstChild.value;
-    let qty=0;
-    r.children[2].querySelectorAll("input").forEach(i=>{
-      qty+=+i.value;
-      if(i.dataset.type==="Case") cases+=+i.value;
-      if(i.dataset.type.includes("Keg")) kegs+=+i.value;
-    });
-    const line=price*qty;
+    const type=r.children[1].firstChild.value;
+    if(type.includes("Keg")) kegs+=qty;
+    const line=qty*price;
     r.children[4].innerText="$"+line.toFixed(2);
     subtotal+=line;
   });
 
-  const discount = cases>10 ? subtotal*0.10 : 0;
-  const tax = selectedCustomer?.type==="Restaurant" ? subtotal*SALES_TAX_RATE : 0;
-  const deposit = kegs*KEG_DEPOSIT;
+  const tax=selectedCustomer?.type==="Restaurant"?subtotal*SALES_TAX_RATE:0;
+  const deposit=kegs*KEG_DEPOSIT;
 
   sub.innerText="$"+subtotal.toFixed(2);
-  disc.innerText="$"+discount.toFixed(2);
-  tax.innerText="$"+tax.toFixed(2);
+  taxEl=document.getElementById("tax");
+  taxEl.innerText="$"+tax.toFixed(2);
   keg.innerText="$"+deposit.toFixed(2);
-  total.innerText="$"+(subtotal-discount+tax+deposit).toFixed(2);
+  total.innerText="$"+(subtotal+tax+deposit).toFixed(2);
 }
 </script>
-
-<!-- ========================================================= -->
-<!-- ===================== ADDITIONS ONLY ==================== -->
-<!-- ========================================================= -->
-
-<script>
-/* === ADDITION: SAFE BARCODE FUNCTION (NO EXISTING CODE TOUCHED) === */
-function refreshBarcode(){
-  try{
-    JsBarcode("#barcodeCanvas", document.getElementById("invoiceNumber").value || "", {
-      displayValue:false
-    });
-  }catch(e){}
-}
-/* ================================================================ */
-</script>
-
-<script>
-/* === ADDITION: PRODUCT AUTOCOMPLETE DATALIST (ADD-ONLY) === */
-const productDatalist=document.createElement("datalist");
-productDatalist.id="productList";
-document.body.appendChild(productDatalist);
-
-fetch(API+"?action=getProducts")
-  .then(r=>r.json())
-  .then(list=>{
-    list.forEach(p=>{
-      const o=document.createElement("option");
-      o.value=p.product;
-      productDatalist.appendChild(o);
-    });
-  });
-
-const _addRow=addRow;
-addRow=function(){
-  _addRow();
-  const i=document.querySelector("#itemsTable tbody tr:last-child input");
-  if(i) i.setAttribute("list","productList");
-};
-/* ============================================================ */
-</script>
-
-<script>
-/* === ADDITION: BACK BUTTON TARGET FIX === */
-function goBack(){
-  window.location.href="invoices.html";
-}
-/* ===================================== */
-</script>
-<!-- ========================================================= -->
-<!-- =============== BACKEND WIRING (ADD ONLY) =============== -->
-<!-- ========================================================= -->
-
-<script>
-/* ===================== BACKEND CONSTANT ===================== */
-const BACKEND_API = "https://script.google.com/macros/s/AKfycbys580shBiRLtAW0jAYFoinwKJrycSJQyW8qy95nvLr7dxqOGtzI3e_h9QQn8-ULTT3/exec";
-/* ============================================================ */
-
-
-/* ===================== SAVE NEW CUSTOMER ===================== */
-/* Wrap existing confirmCustomer() WITHOUT touching it */
-if (typeof confirmCustomer === "function") {
-  const __confirmCustomer = confirmCustomer;
-  confirmCustomer = function () {
-    const name = mcName.value.trim();
-    const address = mcAddress.value.trim();
-    const type = mcType.value;
-    const payment = mcPayment.value;
-
-    fetch(
-      BACKEND_API +
-        "?action=saveCustomer" +
-        "&name=" + encodeURIComponent(name) +
-        "&address=" + encodeURIComponent(address) +
-        "&type=" + encodeURIComponent(type) +
-        "&payment=" + encodeURIComponent(payment)
-    )
-      .then(r => r.json())
-      .then(() => {
-        __confirmCustomer(); // preserve existing behavior
-      });
-  };
-}
-/* ============================================================ */
-
-
-/* ===================== SAVE NEW PRODUCT ===================== */
-/* Supports MULTI-TYPE + MULTI-PRICE */
-if (typeof confirmProduct === "function") {
-  const __confirmProduct = confirmProduct;
-  confirmProduct = function () {
-    const productName = mpName.value.trim();
-
-    document.querySelectorAll("#productTypes input").forEach(row => {
-      const type = row.dataset.type;
-      const price = parseFloat(row.value || 0);
-
-      fetch(
-        BACKEND_API +
-          "?action=saveProduct" +
-          "&product=" + encodeURIComponent(productName) +
-          "&type=" + encodeURIComponent(type) +
-          "&price=" + encodeURIComponent(price)
-      );
-    });
-
-    __confirmProduct(); // keep existing UI logic
-  };
-}
-/* ============================================================ */
-
-
-/* ===================== SAVE INVOICE ===================== */
-/* Wrap existing saveInvoice() */
-if (typeof saveInvoice === "function") {
-  const __saveInvoice = saveInvoice;
-
-  saveInvoice = function () {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-
-    pdf.text("Invoice " + invoiceNumber.value, 14, 14);
-    pdf.autoTable({ html: "#itemsTable" });
-
-    const pdfBase64 = btoa(
-      new Uint8Array(pdf.output("arraybuffer"))
-        .reduce((d, b) => d + String.fromCharCode(b), "")
-    );
-
-    let subtotal = parseFloat(sub.innerText.replace("$", ""));
-    let discount = parseFloat(disc.innerText.replace("$", ""));
-    let tax = parseFloat(taxEl.innerText.replace("$", ""));
-    let deposit = parseFloat(keg.innerText.replace("$", ""));
-    let totalVal = parseFloat(total.innerText.replace("$", ""));
-
-    let totalCases = 0;
-    let totalKegs = 0;
-
-    document.querySelectorAll("#itemsTable tbody tr").forEach(r => {
-      r.children[2].querySelectorAll("input").forEach(i => {
-        if (i.dataset.type === "Case") totalCases += +i.value;
-        if (i.dataset.type.includes("Keg")) totalKegs += +i.value;
-      });
-    });
-
-    const payload = {
-      invoice: invoiceNumber.value,
-      customer: customerName.value,
-      customerType: selectedCustomer?.type || "",
-      subtotal,
-      totalCases,
-      kegs: totalKegs,
-      pdfBase64
-    };
-
-    fetch(BACKEND_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "action=saveInvoice&payload=" + encodeURIComponent(JSON.stringify(payload))
-    })
-      .then(r => r.json())
-      .then(() => {
-        __saveInvoice(); // preserve any existing behavior
-        alert("Invoice saved to Sheets and Drive");
-      });
-  };
-}
-/* ============================================================ */
-
-
-/* ===================== SAVE LINE ITEMS ===================== */
-/* Additive – no UI change */
-function saveInvoiceLineItems(invoiceNumberValue) {
-  document.querySelectorAll("#itemsTable tbody tr").forEach(r => {
-    const product = r.children[0].querySelector("input").value;
-    const price = r.children[3].querySelector("input").value;
-
-    r.children[2].querySelectorAll("input").forEach(i => {
-      fetch(
-        BACKEND_API +
-          "?action=saveInvoiceItem" +
-          "&invoice=" + encodeURIComponent(invoiceNumberValue) +
-          "&product=" + encodeURIComponent(product) +
-          "&type=" + encodeURIComponent(i.dataset.type) +
-          "&qty=" + encodeURIComponent(i.value) +
-          "&price=" + encodeURIComponent(price)
-      );
-    });
-  });
-}
-/* ============================================================ */
-</script>
-<script>
-/* ========================================================= */
-/* ========== ADDITION: GUARANTEED CUSTOMER SAVE ============ */
-/* ========================================================= */
-
-(function(){
-  let __customerSaved = false;
-
-  function saveCustomerToBackend(customer){
-    if(__customerSaved) return;
-    __customerSaved = true;
-
-    fetch(
-      API +
-      "?action=saveCustomer" +
-      "&name=" + encodeURIComponent(customer.name) +
-      "&address=" + encodeURIComponent(customer.address || "") +
-      "&type=" + encodeURIComponent(customer.type || "") +
-      "&payment=" + encodeURIComponent(customer.payment || "")
-    ).then(()=> {
-      console.log("Customer saved to Sheets:", customer.name);
-    });
-  }
-
-  /* Hook into EXISTING customer selection */
-  const __handleCustomerInput = handleCustomerInput;
-  handleCustomerInput = function(val){
-    __handleCustomerInput(val);
-
-    if(selectedCustomer && selectedCustomer.__isNew){
-      saveCustomerToBackend(selectedCustomer);
-    }
-  };
-
-  /* Hook into modal confirm if it exists */
-  if(typeof confirmCustomer === "function"){
-    const __confirmCustomer = confirmCustomer;
-    confirmCustomer = function(){
-      __confirmCustomer();
-
-      if(window.selectedCustomer){
-        saveCustomerToBackend(selectedCustomer);
-      }
-    };
-  }
-})();
-</script>
-<script>
-function postSaveCustomer(customer){
-  return fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "saveCustomer",
-      name: customer.name,
-      address: customer.address || "",
-      type: customer.type || "",
-      payment: customer.payment || ""
-    })
-  }).then(r => r.json());
-}
-</script>
-<script>
-/* =========================================================
-   FINAL CUSTOMER SAVE OVERRIDE (LOCKED)
-   Forces POST + JSON
-========================================================= */
-
-(function(){
-  const _handleCustomerInput = handleCustomerInput;
-
-  handleCustomerInput = function(val){
-    _handleCustomerInput(val);
-
-    if (!selectedCustomer) return;
-    if (selectedCustomer.__saved) show;
-
-    selectedCustomer.__saved = true;
-
-    fetch(API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "saveCustomer",
-        name: selectedCustomer.name,
-        address: selectedCustomer.address || "",
-        type: selectedCustomer.type || "",
-        payment: selectedCustomer.payment || ""
-      })
-    }).then(()=>console.log("Customer POST saved"));
-  };
-})();
-</script>
-<script>
-/* =========================================================
-   FINAL INVOICE SAVE OVERRIDE (LOCKED)
-========================================================= */
-
-(function(){
-  const _saveInvoice = saveInvoice;
-
-  saveInvoice = function(){
-    const pdf = buildPDF();
-
-    const pdfBase64 = btoa(
-      new Uint8Array(pdf.output("arraybuffer"))
-        .reduce((d,b)=>d+String.fromCharCode(b),"")
-    );
-
-    let subtotal = parseFloat(sub.innerText.replace("$",""));
-    let totalCases = 0;
-    let totalKegs = 0;
-
-    document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
-      r.children[2].querySelectorAll("input").forEach(i=>{
-        if(i.dataset.type==="Case") totalCases+=+i.value;
-        if(i.dataset.type.includes("Keg")) totalKegs+=+i.value;
-      });
-    });
-
-    fetch(API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "saveInvoice",
-        invoice: invoiceNumber.value,
-        customer: customerName.value,
-        customerType: selectedCustomer?.type || "",
-        subtotal,
-        totalCases,
-        kegs: totalKegs,
-        pdfBase64
-      })
-    })
-    .then(r=>r.json())
-    .then(()=>{
-      alert("Invoice saved to Sheets & Drive");
-      _saveInvoice(); // preserve UI behavior
-    });
-  };
-})();
-</script>
-
 </body>
 </html>
