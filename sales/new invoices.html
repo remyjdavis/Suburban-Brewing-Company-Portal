@@ -640,6 +640,11 @@ function setupAutocomplete(id) {
     box.hidden = false;
   });
 }
+document.addEventListener("click", e => {
+  if (!e.target.closest(".product-section")) {
+    closeAllProductAutocompletes();
+  }
+});
 
 /* SELECT PRODUCT */
 function selectProduct(blockId, productName) {
@@ -677,7 +682,9 @@ function toggleLine(blockId, product, type, price, checked) {
     );
   }
   renderBlock(blockId);
+  calculateTotals(); // ✅ ADD THIS
 }
+
 
 /* RENDER BLOCK */
 function renderBlock(blockId) {
