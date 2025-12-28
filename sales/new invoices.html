@@ -953,7 +953,7 @@ function updatePaymentFooter() {
 
 <div style="margin-top:20px; text-align:right">
   <button onclick="saveInvoice()">💾 Save Invoice</button>
-  <button onclick="window.print()">🖨 Print / Save PDF</button>
+ <button onclick="generateDrivePdf()">🖨 Save PDF to Drive</button>
   <button onclick="goBackToInvoices()">⬅ Back to Invoices</button>
   <button onclick="emailInvoice()" disabled>📧 Email Invoice</button>
 </div>
@@ -1035,7 +1035,47 @@ deposit: Number(document.getElementById("depositInput").value) || 0,
     });
 }
 </script>
-<style>
+<script>
+function generateDrivePdf() {
+  const payload = {
+    invoiceNumber: document.getElementById("invoiceNumber").value,
+    date: document.getElementById("invoiceDateValue").value,
+    customer: customerState,
+    items: invoiceLines,
+    subtotal: document.getElementById("subtotal").textContent,
+    tax: document.getElementById("salesTax").textContent,
+    discount: document.getElementById("discountInput").value,
+    deposit: document.getElementById("depositInput").value,
+    total: document.getElementById("grandTotal").textContent
+  };
+
+  fetch(`${API_URL}?action=generateInvoicePdf`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (!res.success) {
+        alert("PDF generation failed");
+        return;
+      }
+
+      invoicePdfGenerated = true;
+
+      console.log("PDF saved:", res.fileUrl);
+
+      const emailBtn =
+        document.querySelector('button[onclick="emailInvoice()"]');
+      if (emailBtn) emailBtn.disabled = false;
+    })
+    .catch(err => {
+      console.error(err);
+      alert("PDF generation failed");
+    });
+}
+</script>
+
+  <style>
 /* ================= PRINT STYLES ================= */
 @media print {
   .type-text {
