@@ -13,6 +13,7 @@
 
 <script>
 /* ===== GLOBAL STATE ===== */
+let invoiceSaved = false;
 let invoicePdfGenerated = false;
 </script>
 
@@ -953,22 +954,22 @@ function updatePaymentFooter() {
 
 <div style="margin-top:20px; text-align:right">
   <button onclick="saveInvoice()">💾 Save Invoice</button>
- <button onclick="generateDrivePdf()">🖨 Save PDF to Drive</button>
+ <button class="print-btn" onclick="printInvoice()">Print</button>
   <button onclick="goBackToInvoices()">⬅ Back to Invoices</button>
   <button onclick="emailInvoice()" disabled>📧 Email Invoice</button>
 </div>
 <script>
-  function lockInvoiceAfterSave() {
+function lockInvoiceAfterSave() {
   document.querySelectorAll("input, select").forEach(el => {
     if (el.type !== "hidden") el.disabled = true;
   });
 }
+
 /******************************************************
- * SAVE INVOICE (FRONTEND) — FIXED
+ * SAVE INVOICE (FRONTEND)
  ******************************************************/
 function saveInvoice() {
- const discountInput = document.getElementById("discountInput");
-const depositInput = document.getElementById("depositInput");
+  if (invoiceSaved) return;
 
   if (!customerState.name) {
     alert("Select a customer first");
@@ -983,32 +984,23 @@ const depositInput = document.getElementById("depositInput");
   const payload = {
     invoiceNumber: document.getElementById("invoiceNumber").value,
     date: document.getElementById("invoiceDateValue").value,
-
     customer: {
       name: customerState.name,
       address: customerState.address,
       type: customerState.type,
       payment: customerState.payment
     },
-
     items: invoiceLines.map(l => ({
       product: l.product,
       type: l.type,
       qty: l.qty,
       price: l.price
     })),
-
-    subtotal: Number(
-      document.getElementById("subtotal").textContent.replace("$", "")
-    ),
-    tax: Number(
-      document.getElementById("salesTax").textContent.replace("$", "")
-    ),
+    subtotal: Number(document.getElementById("subtotal").textContent.replace("$","")),
+    tax: Number(document.getElementById("salesTax").textContent.replace("$","")),
     discount: Number(document.getElementById("discountInput").value) || 0,
-deposit: Number(document.getElementById("depositInput").value) || 0,
-    total: Number(
-      document.getElementById("grandTotal").textContent.replace("$", "")
-    )
+    deposit: Number(document.getElementById("depositInput").value) || 0,
+    total: Number(document.getElementById("grandTotal").textContent.replace("$",""))
   };
 
   fetch(`${API_URL}?action=saveInvoice`, {
@@ -1017,26 +1009,24 @@ deposit: Number(document.getElementById("depositInput").value) || 0,
   })
     .then(r => r.json())
     .then(res => {
-  if (res.success) {
-    alert("Invoice saved successfully");
-    lockInvoiceAfterSave();
+      if (!res.success) {
+        alert("Save failed");
+        return;
+      }
 
-    const emailBtn =
-      document.querySelector('button[onclick="emailInvoice()"]');
-    if (emailBtn) emailBtn.disabled = true; // stays disabled until print
-  } else {
-    alert("Save failed");
-  }
-})
-
-    .catch(err => {
-      console.error(err);
-      alert("Save failed");
-    });
+      invoiceSaved = true;
+      lockInvoiceAfterSave();
+      alert("Invoice saved successfully");
+    })
+    .catch(() => alert("Save failed"));
 }
-</script>
 <script>
 function generateDrivePdf() {
+  if (!invoiceSaved) {
+    alert("Save the invoice first.");
+    return;
+  }
+
   const payload = {
     invoiceNumber: document.getElementById("invoiceNumber").value,
     date: document.getElementById("invoiceDateValue").value,
@@ -1062,16 +1052,13 @@ function generateDrivePdf() {
 
       invoicePdfGenerated = true;
 
-      console.log("PDF saved:", res.fileUrl);
+      document
+        .querySelector('button[onclick="emailInvoice()"]')
+        .disabled = false;
 
-      const emailBtn =
-        document.querySelector('button[onclick="emailInvoice()"]');
-      if (emailBtn) emailBtn.disabled = false;
+      alert("Invoice PDF saved to Google Drive.");
     })
-    .catch(err => {
-      console.error(err);
-      alert("PDF generation failed");
-    });
+    .catch(() => alert("PDF generation failed"));
 }
 </script>
 
@@ -1081,7 +1068,7 @@ function generateDrivePdf() {
   .type-text {
     display: inline;
   }
-  
+
   .print-qty {
     display: inline-block;
     min-width: 24px;
@@ -1089,48 +1076,41 @@ function generateDrivePdf() {
   }
 
   /* Hide interactive UI */
-  button:not([onclick*="print"]),
-.autocomplete-box,
-.autocomplete-list,
-input:not([type="hidden"]),
-select {
-  display: none !important;
-}
+  button:not(.print-btn),
+  .autocomplete-box,
+  .autocomplete-list,
+  input:not([type="hidden"]),
+  select {
+    display: none !important;
+  }
 
-  /* Invoice sizing */
   body {
     margin: 0.5in;
   }
 
-  /* Product table cleanup */
   .product-table th,
   .product-table td {
     padding: 6px;
     font-size: 12px;
   }
 
-  /* Remove delete column */
   .product-table th:last-child,
   .product-table td:last-child {
     display: none;
   }
 
-  /* Hide checkbox inputs but keep text */
   td[data-types] input {
     display: none;
   }
 
-  /* Header tightening */
   .invoice-header {
     padding-bottom: 12px;
   }
 
-  /* Totals emphasis */
   .grand-total {
     font-size: 18px;
   }
 
-  /* Payment footer always visible */
   #paymentFooter {
     display: block;
     margin-top: 20px;
@@ -1141,8 +1121,6 @@ select {
 
 <script>
 window.onbeforeprint = () => {
-  invoicePdfGenerated = true;
-
   document.querySelectorAll(".qty-input").forEach(input => {
     input.dataset.originalValue = input.value;
 
@@ -1192,18 +1170,15 @@ function goBackToInvoices() {
 /******************************************************
  * EMAIL INVOICE — INTERNAL ONLY
  ******************************************************/
- function emailInvoice() {
-  const anyEnabledInput = Array.from(
-  document.querySelectorAll("input, select")
-).some(el => !el.disabled);
-
-if (anyEnabledInput) {
-  alert("Please save the invoice before emailing.");
-  return;
-}
+ <script>
+function emailInvoice() {
+  if (!invoiceSaved) {
+    alert("Save the invoice first.");
+    return;
+  }
 
   if (!invoicePdfGenerated) {
-    alert("Please print and save the invoice as a PDF before emailing.");
+    alert("Generate the PDF before emailing.");
     return;
   }
 
@@ -1226,17 +1201,13 @@ Total: ${total}
 
 PDF has been generated and saved.
 
-— Suburban Brewing Company
-`
+— Suburban Brewing Company`
   );
 
-  const to = INTERNAL_EMAILS.join(",");
-
   window.location.href =
-    `mailto:${to}?subject=${subject}&body=${body}`;
+    `mailto:${INTERNAL_EMAILS.join(",")}?subject=${subject}&body=${body}`;
 }
 </script>
-<script>
 /******************************************************
  * GLOBAL CHANGE DETECTOR — PDF INVALIDATION
  ******************************************************/
