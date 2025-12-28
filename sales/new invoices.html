@@ -15,6 +15,8 @@
 /* ===== GLOBAL STATE ===== */
 let invoiceSaved = false;
 let invoicePdfGenerated = false;
+let lastGeneratedPdfId = null;
+
 </script>
 
 <!-- ================= HEADER SECTION ================= -->
@@ -970,77 +972,124 @@ function printInvoice() {
 }
 
 /******************************************************
- * SAVE INVOICE (FRONTEND)
+ * SAVE INVOICE — FINAL (SHEETS + DRIVE PDF)
  ******************************************************/
 async function saveInvoice() {
-  if (invoiceSaved) return;
-
-  if (!customerState.name) {
-    alert("Select a customer first");
-    return;
-  }
-
-  if (invoiceLines.length === 0) {
-    alert("Add at least one product");
-    return;
-  }
-
-  const payload = {
-    invoiceNumber: document.getElementById("invoiceNumber").value,
-    date: document.getElementById("invoiceDateValue").value,
-    customer: {
-      name: customerState.name,
-      address: customerState.address,
-      type: customerState.type,
-      payment: customerState.payment
-    },
-    items: invoiceLines.map(l => ({
-      product: l.product,
-      type: l.type,
-      qty: l.qty,
-      price: l.price
-    })),
-    subtotal: Number(document.getElementById("subtotal").textContent.replace("$","")),
-    tax: Number(document.getElementById("salesTax").textContent.replace("$","")),
-    discount: Number(document.getElementById("discountInput").value) || 0,
-    deposit: Number(document.getElementById("depositInput").value) || 0,
-    total: Number(document.getElementById("grandTotal").textContent.replace("$",""))
-  };
-
   try {
-    /* 1️⃣ SAVE TO SHEETS */
+    if (invoiceSaved) {
+      alert("This invoice has already been saved.");
+      return;
+    }
+
+    if (!customerState.name) {
+      alert("Select a customer first.");
+      return;
+    }
+
+    if (invoiceLines.length === 0) {
+      alert("Add at least one product.");
+      return;
+    }
+
+    /* BUILD PAYLOAD */
+    const payload = {
+      invoiceNumber: document.getElementById("invoiceNumber").value,
+      date: document.getElementById("invoiceDateValue").value,
+
+      customer: {
+        name: customerState.name,
+        address: customerState.address,
+        type: customerState.type,
+        payment: customerState.payment
+      },
+
+      items: invoiceLines.map(l => ({
+        product: l.product,
+        type: l.type,
+        qty: l.qty,
+        price: l.price
+      })),
+
+      subtotal: Number(
+        document.getElementById("subtotal").textContent.replace("$","")
+      ),
+      tax: Number(
+        document.getElementById("salesTax").textContent.replace("$","")
+      ),
+      discount: Number(
+        document.getElementById("discountInput").value || 0
+      ),
+      deposit: Number(
+        document.getElementById("depositInput").value || 0
+      ),
+      total: Number(
+        document.getElementById("grandTotal").textContent.replace("$","")
+      )
+    };
+
+    /* SAVE TO SHEETS */
     const saveRes = await fetch(`${API_URL}?action=saveInvoice`, {
       method: "POST",
       body: JSON.stringify(payload)
     }).then(r => r.json());
 
-    if (!saveRes.success) throw new Error("Sheet save failed");
+    if (!saveRes.success) throw new Error("Invoice save failed");
 
     invoiceSaved = true;
 
-    /* 2️⃣ SAVE PDF TO DRIVE */
+    /* GENERATE PDF */
     const pdfRes = await fetch(`${API_URL}?action=generateInvoicePdf`, {
       method: "POST",
       body: JSON.stringify(payload)
     }).then(r => r.json());
 
-    if (!pdfRes.success) throw new Error("PDF save failed");
+    if (!pdfRes.success) throw new Error("PDF generation failed");
 
     invoicePdfGenerated = true;
+    lastGeneratedPdfId = pdfRes.fileId;
 
-    /* 3️⃣ LOCK UI */
     lockInvoiceAfterSave();
 
-    /* 4️⃣ ENABLE EMAIL */
-    document.querySelector('button[onclick="emailInvoice()"]').disabled = false;
+    const emailBtn =
+      document.querySelector('button[onclick="emailInvoice()"]');
+    if (emailBtn) emailBtn.disabled = false;
 
-    alert("Invoice saved to Sheets and Google Drive");
+    alert("Invoice saved and PDF generated ✅");
 
   } catch (err) {
-    alert("Save failed");
+    console.error(err);
+    alert("Save failed — see console");
+  }
+}
+
+async function emailInvoice() {
+  if (!invoiceSaved || !invoicePdfGenerated) {
+    alert("Save and generate PDF first.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}?action=emailInvoice`, {
+      method: "POST",
+      body: JSON.stringify({
+        fileId: lastGeneratedPdfId,
+        invoiceNumber: document.getElementById("invoiceNumber").value,
+        date: document.getElementById("invoiceDateValue").value,
+        total: Number(document.getElementById("grandTotal").textContent.replace("$","")),
+        customer: customerState
+      })
+    }).then(r => r.json());
+
+    if (!res.success) throw new Error("Email failed");
+
+    alert("Invoice emailed with PDF attached");
+
+  } catch (err) {
+    alert("Email failed");
     console.error(err);
   }
 }
+
 </script>
 
   <style>
@@ -1128,16 +1177,6 @@ window.onafterprint = () => {
 };
 
 /******************************************************
- * INTERNAL EMAIL DISTRIBUTION
- ******************************************************/
-const INTERNAL_EMAILS = [
-  "eric@suburbanbg.com",
-  "lambertj9@gmail.com",
-  "cassandra.reeser@gmail.com",
-  "remyjdavis90@gmail.com"
-];
-
-/******************************************************
  * NAVIGATION
  ******************************************************/
 function goBackToInvoices() {
@@ -1146,45 +1185,6 @@ function goBackToInvoices() {
   }
 }
 
-/******************************************************
- * EMAIL INVOICE — INTERNAL ONLY
- ******************************************************/
-function emailInvoice() {
-  if (!invoiceSaved) {
-    alert("Save the invoice first.");
-    return;
-  }
-
-  if (!invoicePdfGenerated) {
-    alert("Generate the PDF before emailing.");
-    return;
-  }
-
-  const invoiceNum = document.getElementById("invoiceNumber").value;
-  const total = document.getElementById("grandTotal").textContent;
-  const customer = customerState.name || "Unknown Customer";
-  const date = document.getElementById("invoiceDateValue").value;
-
-  const subject = encodeURIComponent(
-    `Invoice ${invoiceNum} | ${customer} | ${total}`
-  );
-
-  const body = encodeURIComponent(
-`Internal Invoice Copy
-
-Invoice #: ${invoiceNum}
-Date: ${date}
-Customer: ${customer}
-Total: ${total}
-
-PDF has been generated and saved.
-
-— Suburban Brewing Company`
-  );
-
-  window.location.href =
-    `mailto:${INTERNAL_EMAILS.join(",")}?subject=${subject}&body=${body}`;
-}
 /******************************************************
  * GLOBAL CHANGE DETECTOR — PDF INVALIDATION
  ******************************************************/
