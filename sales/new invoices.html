@@ -501,39 +501,43 @@ function saveNewCustomer() {
 .product-table td {
   border: 1px solid #ddd;
   padding: 6px;
+  vertical-align: top;
 }
 
 .product-table th {
   background: #f3f4f6;
-  text-align: left;
 }
 
-.product-table input {
+.product-search {
   width: 100%;
-  padding: 4px;
-  box-sizing: border-box;
+  padding: 6px;
 }
 
-.product-autocomplete {
+.autocomplete-box {
   position: absolute;
   background: #fff;
   border: 1px solid #ccc;
-  z-index: 2000;
-  max-height: 200px;
+  max-height: 180px;
   overflow-y: auto;
+  z-index: 1000;
 }
 
-.product-item {
+.autocomplete-item {
   padding: 6px 10px;
   cursor: pointer;
 }
 
-.product-item:hover {
+.autocomplete-item:hover {
   background: #f3f4f6;
 }
 
-.add-row-btn {
-  margin-top: 10px;
+.type-list label {
+  display: block;
+  font-size: 13px;
+}
+
+.qty-input {
+  width: 60px;
 }
 </style>
 
@@ -542,117 +546,144 @@ function saveNewCustomer() {
   <table class="product-table">
     <thead>
       <tr>
-        <th style="width:40%">Product</th>
-        <th style="width:10%">Qty</th>
+        <th style="width:25%">Product</th>
+        <th style="width:25%">Type</th>
+        <th style="width:15%">Qty</th>
         <th style="width:15%">Price</th>
-        <th style="width:15%">Deposit</th>
-        <th style="width:15%">Line Total</th>
-        <th style="width:5%"></th>
+        <th style="width:20%">Total</th>
       </tr>
     </thead>
-    <tbody id="productTableBody"></tbody>
+    <tbody id="productTableBody">
+      <tr>
+        <td style="position:relative">
+          <input id="productSearch" class="product-search" autocomplete="off">
+          <div id="productAutocomplete" class="autocomplete-box" hidden></div>
+        </td>
+        <td id="typeCell"></td>
+        <td id="qtyCell"></td>
+        <td id="priceCell"></td>
+        <td id="totalCell"></td>
+      </tr>
+    </tbody>
   </table>
 
-  <button class="add-row-btn" onclick="addEmptyProductRow()">+ Add Product</button>
-
 </section>
+
 <script>
 /******************************************************
- * PRODUCT SECTION LOGIC (TABLE-BASED)
+ * PRODUCT SECTION LOGIC (MULTI-TYPE)
  ******************************************************/
 
 let products = [];
-const productLines = [];
+let selectedProduct = null;
+let productLines = [];
 
+const searchInput = document.getElementById("productSearch");
+const autoBox = document.getElementById("productAutocomplete");
+const typeCell = document.getElementById("typeCell");
+const qtyCell = document.getElementById("qtyCell");
+const priceCell = document.getElementById("priceCell");
+const totalCell = document.getElementById("totalCell");
+
+/* LOAD PRODUCTS */
 fetch(`${API_URL}?action=getProducts`)
-  .then(res => res.json())
+  .then(r => r.json())
   .then(data => products = data || []);
 
-function addEmptyProductRow() {
-  const line = {
-    name: "",
-    qty: 1,
-    price: 0,
-    deposit: 0
-  };
-  productLines.push(line);
-  renderProductTable();
+/* AUTOCOMPLETE */
+searchInput.addEventListener("input", () => {
+  const q = searchInput.value.toLowerCase();
+  autoBox.innerHTML = "";
+  autoBox.hidden = true;
+
+  if (!q) return;
+
+  products.filter(p => p.name.toLowerCase().includes(q))
+    .forEach(p => {
+      const div = document.createElement("div");
+      div.className = "autocomplete-item";
+      div.textContent = p.name;
+      div.onclick = () => selectProduct(p);
+      autoBox.appendChild(div);
+    });
+
+  autoBox.hidden = false;
+});
+
+function selectProduct(product) {
+  selectedProduct = product;
+  searchInput.value = product.name;
+  autoBox.hidden = true;
+
+  renderTypes(product);
 }
 
-function renderProductTable() {
-  const tbody = document.getElementById("productTableBody");
-  tbody.innerHTML = "";
+/* RENDER TYPES (MULTI SELECT) */
+function renderTypes(product) {
+  typeCell.innerHTML = "";
+  qtyCell.innerHTML = "";
+  priceCell.innerHTML = "";
+  totalCell.innerHTML = "";
 
-  productLines.forEach((line, index) => {
-    const tr = document.createElement("tr");
+  const types = ["1/6 BBL", "1/2 BBL"]; // expandable later
 
-    tr.innerHTML = `
-      <td style="position:relative">
-        <input
-          type="text"
-          value="${line.name}"
-          oninput="productSearch(this, ${index})"
-          autocomplete="off"
-        >
-        <div class="product-autocomplete" hidden></div>
-      </td>
+  types.forEach(type => {
+    const id = `${type.replace(/\s/g,"")}`;
 
-      <td>
-        <input type="number" min="1" value="${line.qty}"
-          onchange="updateQty(${index}, this.value)">
-      </td>
-
-      <td>$${line.price.toFixed(2)}</td>
-      <td>$${line.deposit.toFixed(2)}</td>
-      <td>$${((line.price * line.qty) + (line.deposit * line.qty)).toFixed(2)}</td>
-      <td><button onclick="removeProductRow(${index})">✕</button></td>
+    typeCell.innerHTML += `
+      <div class="type-list">
+        <label>
+          <input type="checkbox" onchange="toggleType('${type}', this.checked)">
+          ${type}
+        </label>
+      </div>
     `;
-
-    tbody.appendChild(tr);
   });
 }
 
-function productSearch(input, index) {
-  const wrapper = input.nextElementSibling;
-  const q = input.value.toLowerCase();
+/* TOGGLE TYPE → CREATE LINE */
+function toggleType(type, checked) {
+  if (checked) {
+    const line = {
+      product: selectedProduct.name,
+      type,
+      qty: 1,
+      price: selectedProduct.price
+    };
+    productLines.push(line);
+  } else {
+    productLines = productLines.filter(
+      l => !(l.product === selectedProduct.name && l.type === type)
+    );
+  }
 
-  wrapper.innerHTML = "";
-  if (!q) return wrapper.hidden = true;
-
-  products
-    .filter(p => p.name.toLowerCase().includes(q))
-    .forEach(p => {
-      const div = document.createElement("div");
-      div.className = "product-item";
-      div.textContent = p.name;
-      div.onclick = () => selectProduct(p, index);
-      wrapper.appendChild(div);
-    });
-
-  wrapper.hidden = false;
+  renderLineItems();
 }
 
-function selectProduct(product, index) {
-  const line = productLines[index];
-  line.name = product.name;
-  line.price = product.price;
-  line.deposit = product.deposit;
+/* RENDER LINE ITEMS */
+function renderLineItems() {
+  qtyCell.innerHTML = "";
+  priceCell.innerHTML = "";
+  totalCell.innerHTML = "";
 
-  renderProductTable();
+  productLines.forEach((l, i) => {
+    qtyCell.innerHTML += `
+      <div>
+        <input class="qty-input" type="number" min="1"
+          value="${l.qty}"
+          onchange="updateQty(${i}, this.value)">
+      </div>
+    `;
+
+    priceCell.innerHTML += `<div>$${l.price.toFixed(2)}</div>`;
+    totalCell.innerHTML += `<div>$${(l.qty * l.price).toFixed(2)}</div>`;
+  });
 }
 
-function updateQty(index, qty) {
-  productLines[index].qty = parseInt(qty || 1);
-  renderProductTable();
+function updateQty(i, val) {
+  productLines[i].qty = Number(val) || 1;
+  renderLineItems();
 }
-
-function removeProductRow(index) {
-  productLines.splice(index, 1);
-  renderProductTable();
-}
-
-/* Initialize with one empty row */
-addEmptyProductRow();
 </script>
 <!-- =============== END PRODUCT SECTION =============== -->
 
