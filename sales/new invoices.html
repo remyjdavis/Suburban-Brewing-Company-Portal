@@ -965,10 +965,14 @@ function lockInvoiceAfterSave() {
   });
 }
 
+function printInvoice() {
+  window.print();
+}
+
 /******************************************************
  * SAVE INVOICE (FRONTEND)
  ******************************************************/
-function saveInvoice() {
+async function saveInvoice() {
   if (invoiceSaved) return;
 
   if (!customerState.name) {
@@ -1003,62 +1007,39 @@ function saveInvoice() {
     total: Number(document.getElementById("grandTotal").textContent.replace("$",""))
   };
 
-  fetch(`${API_URL}?action=saveInvoice`, {
-    method: "POST",
-    body: JSON.stringify(payload)
-  })
-    .then(r => r.json())
-    .then(res => {
-      if (!res.success) {
-        alert("Save failed");
-        return;
-      }
+  try {
+    /* 1️⃣ SAVE TO SHEETS */
+    const saveRes = await fetch(`${API_URL}?action=saveInvoice`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }).then(r => r.json());
 
-      invoiceSaved = true;
-      lockInvoiceAfterSave();
-      alert("Invoice saved successfully");
-    })
-    .catch(() => alert("Save failed"));
-}
-<script>
-function generateDrivePdf() {
-  if (!invoiceSaved) {
-    alert("Save the invoice first.");
-    return;
+    if (!saveRes.success) throw new Error("Sheet save failed");
+
+    invoiceSaved = true;
+
+    /* 2️⃣ SAVE PDF TO DRIVE */
+    const pdfRes = await fetch(`${API_URL}?action=generateInvoicePdf`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }).then(r => r.json());
+
+    if (!pdfRes.success) throw new Error("PDF save failed");
+
+    invoicePdfGenerated = true;
+
+    /* 3️⃣ LOCK UI */
+    lockInvoiceAfterSave();
+
+    /* 4️⃣ ENABLE EMAIL */
+    document.querySelector('button[onclick="emailInvoice()"]').disabled = false;
+
+    alert("Invoice saved to Sheets and Google Drive");
+
+  } catch (err) {
+    alert("Save failed");
+    console.error(err);
   }
-
-  const payload = {
-    invoiceNumber: document.getElementById("invoiceNumber").value,
-    date: document.getElementById("invoiceDateValue").value,
-    customer: customerState,
-    items: invoiceLines,
-    subtotal: document.getElementById("subtotal").textContent,
-    tax: document.getElementById("salesTax").textContent,
-    discount: document.getElementById("discountInput").value,
-    deposit: document.getElementById("depositInput").value,
-    total: document.getElementById("grandTotal").textContent
-  };
-
-  fetch(`${API_URL}?action=generateInvoicePdf`, {
-    method: "POST",
-    body: JSON.stringify(payload)
-  })
-    .then(r => r.json())
-    .then(res => {
-      if (!res.success) {
-        alert("PDF generation failed");
-        return;
-      }
-
-      invoicePdfGenerated = true;
-
-      document
-        .querySelector('button[onclick="emailInvoice()"]')
-        .disabled = false;
-
-      alert("Invoice PDF saved to Google Drive.");
-    })
-    .catch(() => alert("PDF generation failed"));
 }
 </script>
 
@@ -1146,8 +1127,6 @@ window.onafterprint = () => {
   if (emailBtn) emailBtn.disabled = false;
 };
 
-</script>
-  <script>
 /******************************************************
  * INTERNAL EMAIL DISTRIBUTION
  ******************************************************/
@@ -1170,7 +1149,6 @@ function goBackToInvoices() {
 /******************************************************
  * EMAIL INVOICE — INTERNAL ONLY
  ******************************************************/
- <script>
 function emailInvoice() {
   if (!invoiceSaved) {
     alert("Save the invoice first.");
@@ -1207,7 +1185,6 @@ PDF has been generated and saved.
   window.location.href =
     `mailto:${INTERNAL_EMAILS.join(",")}?subject=${subject}&body=${body}`;
 }
-</script>
 /******************************************************
  * GLOBAL CHANGE DETECTOR — PDF INVALIDATION
  ******************************************************/
