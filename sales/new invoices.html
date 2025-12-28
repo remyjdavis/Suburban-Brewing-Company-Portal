@@ -482,11 +482,16 @@ function saveNewCustomer() {
     email: document.getElementById("newCustEmail").value
   };
 
-  fetch(`${API_URL}?action=addCustomer`, {
-    method: "POST",
-    mode: "no-cors",
-    body: JSON.stringify(payload)
-  });
+  fetch(API_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    action: "addCustomer",
+    payload
+  })
+});
 
   const normalized = {
     name: payload.name,
@@ -1049,14 +1054,17 @@ const payload = {
 };
 
     /* SAVE TO SHEETS (NO-CORS — GAS SAFE) */
-await fetch(`${API_URL}?action=saveInvoice`, {
+await fetch(API_URL, {
   method: "POST",
-  mode: "no-cors",
   headers: {
     "Content-Type": "application/json"
   },
-  body: JSON.stringify(payload)
+  body: JSON.stringify({
+    action: "saveInvoice",
+    payload
+  })
 });
+
 
 /* ASSUME SUCCESS — GAS EXECUTED */
 invoiceSaved = true;
