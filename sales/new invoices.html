@@ -598,7 +598,7 @@ function addProductBlock() {
   const id = productBlockId++;
 
   const row = document.createElement("tr");
-row.dataset.blockId = id;
+row.setAttribute("data-block-id", id);
 
 row.innerHTML = `
   <td style="position:relative">
@@ -640,18 +640,20 @@ function setupAutocomplete(id) {
 
     if (!Object.keys(productsByName).length) return;
 
-Object.keys(productsByName)
-  .filter(name => name.toLowerCase().includes(q))
-  .forEach(name => {
-    const div = document.createElement("div");
-    div.className = "autocomplete-item";
-    div.textContent = name;
-    div.onclick = () => selectProduct(id, name);
-    box.appendChild(div);
-  });
+    Object.keys(productsByName)
+      .filter(name => name.toLowerCase().includes(q))
+      .forEach(name => {
+        const div = document.createElement("div");
+        div.className = "autocomplete-item";
+        div.textContent = name;
+        div.onclick = () => selectProduct(id, name);
+        box.appendChild(div);
+      });
 
-box.hidden = false;
+    box.hidden = false;
+  });
 }
+
 document.addEventListener("click", e => {
   if (!e.target.closest(".product-section")) {
     closeAllProductAutocompletes();
@@ -1017,13 +1019,16 @@ deposit: Number(document.getElementById("depositInput").value) || 0,
     .then(res => {
   if (res.success) {
     alert("Invoice saved successfully");
-  lockInvoiceAfterSave();
-    // LOCK UI
+    lockInvoiceAfterSave();
 
+    const emailBtn =
+      document.querySelector('button[onclick="emailInvoice()"]');
+    if (emailBtn) emailBtn.disabled = true; // stays disabled until print
   } else {
     alert("Save failed");
   }
 })
+
     .catch(err => {
       console.error(err);
       alert("Save failed");
@@ -1195,7 +1200,9 @@ PDF has been generated and saved.
 /******************************************************
  * GLOBAL CHANGE DETECTOR — PDF INVALIDATION
  ******************************************************/
-document.addEventListener("input", () => {
+document.addEventListener("input", e => {
+  if (e.target.type === "hidden") return;
+
   invoicePdfGenerated = false;
 
   const emailBtn =
@@ -1203,6 +1210,7 @@ document.addEventListener("input", () => {
 
   if (emailBtn) emailBtn.disabled = true;
 });
+
 </script>
 
 
