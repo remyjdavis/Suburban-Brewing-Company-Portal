@@ -1156,7 +1156,14 @@ async function emailInvoice() {
     margin-top: 20px;
     font-size: 14px;
   }
+
+  /* ✅ BARCODE — PRINT ONLY */
+  #barcodeCanvas {
+    width: 220px !important;
+    height: auto !important;
+  }
 }
+
 </style>
 
 <script>
@@ -1204,11 +1211,10 @@ document.addEventListener("input", e => {
     e.target.classList.contains("qty-input")
   ) return;
 
-  if (e.target.id === "invoiceNumber") {
-    invoiceSaved = false;
-  }
-
+  if (["invoiceNumber", "customerName"].includes(e.target.id)) {
+  invoiceSaved = false;
   invoicePdfGenerated = false;
+}
 
   const emailBtn =
     document.querySelector('button[onclick="emailInvoice()"]');
