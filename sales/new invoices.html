@@ -772,6 +772,53 @@ addProductBlock();
   </table>
 </section>
 <!-- =============== END TOTALS SECTION =============== -->
+<script>
+/******************************************************
+ * TOTALS LOGIC
+ ******************************************************/
+const TAX_RATE = 0.06; // PA sales tax
+
+const discountInput = document.getElementById("discountInput");
+const depositInput = document.getElementById("depositInput");
+
+function calculateTotals() {
+  const subtotal = invoiceLines.reduce(
+    (sum, l) => sum + (l.qty * l.price),
+    0
+  );
+
+  const customerType =
+    document.getElementById("customerType").value;
+
+  const taxable = customerType === "Restaurant";
+  const salesTax = taxable ? subtotal * TAX_RATE : 0;
+
+  const discount = Number(discountInput.value) || 0;
+  const deposit = Number(depositInput.value) || 0;
+
+  const total = subtotal + salesTax + deposit - discount;
+
+  document.getElementById("subtotal").textContent =
+    `$${subtotal.toFixed(2)}`;
+
+  document.getElementById("salesTax").textContent =
+    `$${salesTax.toFixed(2)}`;
+
+  document.getElementById("grandTotal").textContent =
+    `$${total.toFixed(2)}`;
+}
+
+/* Recalculate when anything changes */
+discountInput.addEventListener("input", calculateTotals);
+depositInput.addEventListener("input", calculateTotals);
+
+/* Hook totals into product updates */
+const originalRenderBlock = renderBlock;
+renderBlock = function(blockId) {
+  originalRenderBlock(blockId);
+  calculateTotals();
+};
+</script>
 
 
 </body>
