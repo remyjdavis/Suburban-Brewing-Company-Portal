@@ -278,11 +278,19 @@ const autocompleteBox = document.getElementById("customerAutocomplete");
 fetch(`${API_URL}?action=getCustomers`)
   .then(res => res.json())
   .then(data => {
-    customers = data || [];
+    if (Array.isArray(data)) {
+      customers = data;
+    } else if (Array.isArray(data.data)) {
+      customers = data.data;
+    } else {
+      console.error("Unexpected customers payload:", data);
+      customers = [];
+    }
   })
   .catch(err => {
     console.error("Customer load failed", err);
   });
+
 
 /* ===== HELPERS ===== */
 function clearAutocomplete() {
