@@ -11,6 +11,7 @@
 
 <body>
 <!-- ================= HEADER SECTION ================= -->
+<!-- ================= HEADER SECTION ================= -->
 <style>
 .invoice-header {
   display: flex;
@@ -50,6 +51,11 @@
   margin-top: 2px;
 }
 
+.invoice-meta input[disabled] {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+
 #barcodeCanvas {
   margin-top: 8px;
 }
@@ -74,37 +80,45 @@
     <input id="invoiceNumber" type="text">
 
     <label>Date</label>
-    <input id="invoiceDate" type="date">
+    <input id="invoiceDate" type="date" disabled>
+    <input type="hidden" id="invoiceDateValue">
 
     <canvas id="barcodeCanvas"></canvas>
   </div>
 </header>
 
 <script>
-/* ===== HEADER LOGIC ONLY ===== */
+/* ===== HEADER LOGIC ONLY (FINAL) ===== */
 (function(){
   const invoiceNumber = document.getElementById("invoiceNumber");
   const invoiceDate = document.getElementById("invoiceDate");
+  const invoiceDateValue = document.getElementById("invoiceDateValue");
 
-  // Default values
+  // Default invoice number
   invoiceNumber.value = "INV-" + Date.now();
-  invoiceDate.value = new Date().toISOString().split("T")[0];
+
+  // Lock date to today (Safari-safe)
+  const today = new Date().toISOString().split("T")[0];
+  invoiceDate.value = today;
+  invoiceDateValue.value = today;
 
   // Barcode generation
   function refreshBarcode(){
-    if(!window.JsBarcode) return;
+    if (!window.JsBarcode) return;
     try {
       JsBarcode("#barcodeCanvas", invoiceNumber.value || "", {
         displayValue: false,
         height: 50
       });
-    } catch(e){}
+    } catch (e) {}
   }
 
   invoiceNumber.addEventListener("input", refreshBarcode);
   refreshBarcode();
 })();
 </script>
+<!-- =============== END HEADER SECTION =============== -->
+
 <!-- =============== END HEADER SECTION =============== -->
 </body>
 </html>
