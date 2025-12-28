@@ -626,22 +626,24 @@ function renderTypes(product) {
   qtyCell.innerHTML = "";
   priceCell.innerHTML = "";
   totalCell.innerHTML = "";
+  productLines = [];
 
-  const types = ["1/6 BBL", "1/2 BBL"]; // expandable later
-
-  types.forEach(type => {
-    const id = `${type.replace(/\s/g,"")}`;
+  product.types.forEach(t => {
+    const id = `${product.name}-${t.type}`.replace(/\s/g,"");
 
     typeCell.innerHTML += `
-      <div class="type-list">
+      <div>
         <label>
-          <input type="checkbox" onchange="toggleType('${type}', this.checked)">
-          ${type}
+          <input type="checkbox"
+            onchange="toggleType('${product.name}','${t.type}',${t.price},this.checked)">
+          ${t.type}
         </label>
       </div>
     `;
   });
 }
+
+
 
 /* TOGGLE TYPE → CREATE LINE */
 function toggleType(type, checked) {
