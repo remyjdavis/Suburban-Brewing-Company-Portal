@@ -950,6 +950,8 @@ function updatePaymentFooter() {
 <div style="margin-top:20px; text-align:right">
   <button onclick="saveInvoice()">💾 Save Invoice</button>
   <button onclick="window.print()">🖨 Print / Save PDF</button>
+  <button onclick="goBackToInvoices()">⬅ Back to Invoices</button>
+  <button onclick="emailInvoice()">📧 Email Invoice</button>
 </div>
 <script>
 /******************************************************
@@ -1099,6 +1101,60 @@ window.onbeforeprint = () => {
   window.onafterprint = () => location.reload();
 
 </script>
+ <script>
+/******************************************************
+ * INTERNAL EMAIL DISTRIBUTION
+ ******************************************************/
+const INTERNAL_EMAILS = [
+  "eric@suburbanbg.com",
+  "lambertj9@gmail.com",
+  "cassandra.reeser@gmail.com",
+  "remyjdavis90@gmail.com"
+];
+
+/******************************************************
+ * NAVIGATION
+ ******************************************************/
+function goBackToInvoices() {
+  if (confirm("Leave this invoice? Unsaved changes will be lost.")) {
+    window.location.href = "invoices.html";
+  }
+}
+
+/******************************************************
+ * EMAIL INVOICE — INTERNAL ONLY
+ ******************************************************/
+function emailInvoice() {
+  const invoiceNum = document.getElementById("invoiceNumber").value;
+  const total = document.getElementById("grandTotal").textContent;
+  const customer = customerState.name || "Unknown Customer";
+  const date = document.getElementById("invoiceDateValue").value;
+
+  const subject = encodeURIComponent(
+    `Invoice ${invoiceNum} | ${customer} | ${total}`
+  );
+
+  const body = encodeURIComponent(
+`Internal Invoice Copy
+
+Invoice #: ${invoiceNum}
+Date: ${date}
+Customer: ${customer}
+Total: ${total}
+
+Please attach the PDF of this invoice.
+
+— Suburban Brewing Company
+`
+  );
+
+  const to = INTERNAL_EMAILS.join(",");
+
+  window.location.href =
+    `mailto:${to}?subject=${subject}&body=${body}`;
+}
+</script>
+
 
 </body>
 </html>
