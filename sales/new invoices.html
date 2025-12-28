@@ -646,21 +646,14 @@ function renderTypes(product) {
 
 
 /* TOGGLE TYPE → CREATE LINE */
-function toggleType(type, checked) {
+function toggleType(product, type, price, checked) {
   if (checked) {
-    const line = {
-      product: selectedProduct.name,
-      type,
-      qty: 1,
-      price: selectedProduct.price
-    };
-    productLines.push(line);
+    productLines.push({ product, type, qty: 1, price });
   } else {
     productLines = productLines.filter(
-      l => !(l.product === selectedProduct.name && l.type === type)
+      l => !(l.product === product && l.type === type)
     );
   }
-
   renderLineItems();
 }
 
