@@ -16,7 +16,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .company-block {
@@ -26,8 +26,8 @@
 
 .company-block img {
   width: 90px;
-  height: 90px;          /* forces square */
-  object-fit: contain;  /* use "cover" if you want full crop */
+  height: 90px;
+  object-fit: contain;
   object-position: center;
   display: block;
 }
@@ -43,7 +43,6 @@
   min-width: 260px;
 }
 
-/* INLINE ROWS */
 .meta-row {
   display: flex;
   align-items: center;
@@ -72,6 +71,11 @@
   margin-top: 10px;
   margin-left: auto;
 }
+
+.header-divider {
+  margin-top: 16px;
+  border-top: 2px solid #222;
+}
 </style>
 
 <header class="invoice-header">
@@ -91,23 +95,22 @@
   </div>
 
   <div class="invoice-meta">
-    <!-- DATE -->
     <div class="meta-row">
-      <label for="invoiceDate">Date:</label>
+      <label>Date:</label>
       <input id="invoiceDate" type="date" disabled>
       <input type="hidden" id="invoiceDateValue">
     </div>
 
-    <!-- INVOICE NUMBER -->
     <div class="meta-row">
-      <label for="invoiceNumber">Invoice #:</label>
+      <label>Invoice #:</label>
       <input id="invoiceNumber" type="text">
     </div>
 
-    <!-- BARCODE -->
     <canvas id="barcodeCanvas"></canvas>
   </div>
 </header>
+
+<div class="header-divider"></div>
 
 <script>
 /* ===== HEADER LOGIC ONLY (FINAL) ===== */
@@ -116,15 +119,12 @@
   const invoiceDate = document.getElementById("invoiceDate");
   const invoiceDateValue = document.getElementById("invoiceDateValue");
 
-  // Default invoice number
   invoiceNumber.value = "INV-" + Date.now();
 
-  // Locked date (Safari-safe)
   const today = new Date().toISOString().split("T")[0];
   invoiceDate.value = today;
   invoiceDateValue.value = today;
 
-  // Barcode generation
   function refreshBarcode(){
     if (!window.JsBarcode) return;
     try {
