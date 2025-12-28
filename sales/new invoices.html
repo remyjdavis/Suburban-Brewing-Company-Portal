@@ -468,6 +468,167 @@ function saveNewCustomer() {
 }
 </script>
 <!-- =============== END NEW CUSTOMER MODAL =============== -->
+<!-- ================= PRODUCT SECTION ================= -->
+<style>
+.product-section {
+  margin-top: 25px;
+  font-size: 14px;
+}
+
+.product-row {
+  display: flex;
+  gap: 10px;
+  max-width: 700px;
+}
+
+.product-row input {
+  padding: 6px;
+  flex: 1;
+}
+
+.product-row button {
+  padding: 6px 14px;
+}
+
+.product-autocomplete {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  width: 400px;
+  z-index: 1000;
+}
+
+.product-item {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.product-item:hover {
+  background: #f3f4f6;
+}
+
+.product-table {
+  margin-top: 15px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.product-table th,
+.product-table td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: left;
+}
+</style>
+
+<section class="product-section">
+
+  <div class="product-row">
+    <input id="productSearch" placeholder="Start typing product name" autocomplete="off">
+    <input id="productQty" type="number" min="1" value="1" style="width:80px">
+    <button onclick="addProduct()">Add</button>
+  </div>
+
+  <div id="productAutocomplete" class="product-autocomplete" hidden></div>
+
+  <table class="product-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Deposit</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="productTableBody"></tbody>
+  </table>
+
+</section>
+
+<script>
+/******************************************************
+ * PRODUCT SECTION LOGIC (FRONTEND)
+ ******************************************************/
+
+let products = [];
+let selectedProduct = null;
+const productLines = [];
+
+const prodSearch = document.getElementById("productSearch");
+const prodAuto = document.getElementById("productAutocomplete");
+const prodQty = document.getElementById("productQty");
+const tableBody = document.getElementById("productTableBody");
+
+/* ===== LOAD PRODUCTS ===== */
+fetch(`${API_URL}?action=getProducts`)
+  .then(res => res.json())
+  .then(data => products = data || []);
+
+/* ===== AUTOCOMPLETE ===== */
+prodSearch.addEventListener("input", () => {
+  const q = prodSearch.value.toLowerCase();
+  prodAuto.innerHTML = "";
+  selectedProduct = null;
+
+  if (!q) return prodAuto.hidden = true;
+
+  products.filter(p => p.name.toLowerCase().includes(q))
+    .forEach(p => {
+      const div = document.createElement("div");
+      div.className = "product-item";
+      div.textContent = p.name;
+      div.onclick = () => {
+        prodSearch.value = p.name;
+        selectedProduct = p;
+        prodAuto.hidden = true;
+      };
+      prodAuto.appendChild(div);
+    });
+
+  prodAuto.hidden = false;
+});
+
+/* ===== ADD PRODUCT ===== */
+function addProduct() {
+  if (!selectedProduct) return alert("Select a product");
+
+  const qty = parseInt(prodQty.value || 1);
+
+  productLines.push({
+    ...selectedProduct,
+    qty
+  });
+
+  renderProducts();
+
+  prodSearch.value = "";
+  prodQty.value = 1;
+  selectedProduct = null;
+}
+
+function renderProducts() {
+  tableBody.innerHTML = "";
+
+  productLines.forEach((p, i) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${p.name}</td>
+      <td>${p.qty}</td>
+      <td>$${p.price.toFixed(2)}</td>
+      <td>$${p.deposit.toFixed(2)}</td>
+      <td><button onclick="removeProduct(${i})">✕</button></td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+function removeProduct(i) {
+  productLines.splice(i, 1);
+  renderProducts();
+}
+</script>
+<!-- =============== END PRODUCT SECTION =============== -->
 
 </body>
 </html>
