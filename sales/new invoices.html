@@ -492,27 +492,35 @@ function saveNewCustomer() {
   font-size: 14px;
 }
 
-.product-row {
-  display: flex;
-  gap: 10px;
-  max-width: 700px;
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.product-row input {
+.product-table th,
+.product-table td {
+  border: 1px solid #ddd;
   padding: 6px;
-  flex: 1;
 }
 
-.product-row button {
-  padding: 6px 14px;
+.product-table th {
+  background: #f3f4f6;
+  text-align: left;
+}
+
+.product-table input {
+  width: 100%;
+  padding: 4px;
+  box-sizing: border-box;
 }
 
 .product-autocomplete {
   position: absolute;
   background: #fff;
   border: 1px solid #ccc;
-  width: 400px;
-  z-index: 1000;
+  z-index: 2000;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .product-item {
@@ -524,128 +532,130 @@ function saveNewCustomer() {
   background: #f3f4f6;
 }
 
-.product-table {
-  margin-top: 15px;
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.product-table th,
-.product-table td {
-  border: 1px solid #ddd;
-  padding: 6px;
-  text-align: left;
+.add-row-btn {
+  margin-top: 10px;
 }
 </style>
 
 <section class="product-section">
 
-  <div class="product-row">
-    <input id="productSearch" placeholder="Start typing product name" autocomplete="off">
-    <input id="productQty" type="number" min="1" value="1" style="width:80px">
-    <button onclick="addProduct()">Add</button>
-  </div>
-
-  <div id="productAutocomplete" class="product-autocomplete" hidden></div>
-
   <table class="product-table">
     <thead>
       <tr>
-        <th>Product</th>
-        <th>Qty</th>
-        <th>Price</th>
-        <th>Deposit</th>
-        <th></th>
+        <th style="width:40%">Product</th>
+        <th style="width:10%">Qty</th>
+        <th style="width:15%">Price</th>
+        <th style="width:15%">Deposit</th>
+        <th style="width:15%">Line Total</th>
+        <th style="width:5%"></th>
       </tr>
     </thead>
     <tbody id="productTableBody"></tbody>
   </table>
 
-</section>
+  <button class="add-row-btn" onclick="addEmptyProductRow()">+ Add Product</button>
 
+</section>
 <script>
 /******************************************************
- * PRODUCT SECTION LOGIC (FRONTEND)
+ * PRODUCT SECTION LOGIC (TABLE-BASED)
  ******************************************************/
 
 let products = [];
-let selectedProduct = null;
 const productLines = [];
 
-const prodSearch = document.getElementById("productSearch");
-const prodAuto = document.getElementById("productAutocomplete");
-const prodQty = document.getElementById("productQty");
-const tableBody = document.getElementById("productTableBody");
-
-/* ===== LOAD PRODUCTS ===== */
 fetch(`${API_URL}?action=getProducts`)
   .then(res => res.json())
   .then(data => products = data || []);
 
-/* ===== AUTOCOMPLETE ===== */
-prodSearch.addEventListener("input", () => {
-  const q = prodSearch.value.toLowerCase();
-  prodAuto.innerHTML = "";
-  selectedProduct = null;
+function addEmptyProductRow() {
+  const line = {
+    name: "",
+    qty: 1,
+    price: 0,
+    deposit: 0
+  };
+  productLines.push(line);
+  renderProductTable();
+}
 
-  if (!q) return prodAuto.hidden = true;
+function renderProductTable() {
+  const tbody = document.getElementById("productTableBody");
+  tbody.innerHTML = "";
 
-  products.filter(p => p.name.toLowerCase().includes(q))
+  productLines.forEach((line, index) => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td style="position:relative">
+        <input
+          type="text"
+          value="${line.name}"
+          oninput="productSearch(this, ${index})"
+          autocomplete="off"
+        >
+        <div class="product-autocomplete" hidden></div>
+      </td>
+
+      <td>
+        <input type="number" min="1" value="${line.qty}"
+          onchange="updateQty(${index}, this.value)">
+      </td>
+
+      <td>$${line.price.toFixed(2)}</td>
+      <td>$${line.deposit.toFixed(2)}</td>
+      <td>$${((line.price * line.qty) + (line.deposit * line.qty)).toFixed(2)}</td>
+      <td><button onclick="removeProductRow(${index})">✕</button></td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function productSearch(input, index) {
+  const wrapper = input.nextElementSibling;
+  const q = input.value.toLowerCase();
+
+  wrapper.innerHTML = "";
+  if (!q) return wrapper.hidden = true;
+
+  products
+    .filter(p => p.name.toLowerCase().includes(q))
     .forEach(p => {
       const div = document.createElement("div");
       div.className = "product-item";
       div.textContent = p.name;
-      div.onclick = () => {
-        prodSearch.value = p.name;
-        selectedProduct = p;
-        prodAuto.hidden = true;
-      };
-      prodAuto.appendChild(div);
+      div.onclick = () => selectProduct(p, index);
+      wrapper.appendChild(div);
     });
 
-  prodAuto.hidden = false;
-});
-
-/* ===== ADD PRODUCT ===== */
-function addProduct() {
-  if (!selectedProduct) return alert("Select a product");
-
-  const qty = parseInt(prodQty.value || 1);
-
-  productLines.push({
-    ...selectedProduct,
-    qty
-  });
-
-  renderProducts();
-
-  prodSearch.value = "";
-  prodQty.value = 1;
-  selectedProduct = null;
+  wrapper.hidden = false;
 }
 
-function renderProducts() {
-  tableBody.innerHTML = "";
+function selectProduct(product, index) {
+  const line = productLines[index];
+  line.name = product.name;
+  line.price = product.price;
+  line.deposit = product.deposit;
 
-  productLines.forEach((p, i) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${p.name}</td>
-      <td>${p.qty}</td>
-      <td>$${p.price.toFixed(2)}</td>
-      <td>$${p.deposit.toFixed(2)}</td>
-      <td><button onclick="removeProduct(${i})">✕</button></td>
-    `;
-    tableBody.appendChild(row);
-  });
+  renderProductTable();
 }
 
-function removeProduct(i) {
-  productLines.splice(i, 1);
-  renderProducts();
+function updateQty(index, qty) {
+  productLines[index].qty = parseInt(qty || 1);
+  renderProductTable();
 }
+
+function removeProductRow(index) {
+  productLines.splice(index, 1);
+  renderProductTable();
+}
+
+/* Initialize with one empty row */
+addEmptyProductRow();
 </script>
 <!-- =============== END PRODUCT SECTION =============== -->
+
 
 </body>
 </html>
