@@ -161,24 +161,16 @@
   font-size: 14px;
 }
 
-.customer-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 40px;
-  row-gap: 16px;
-  max-width: 900px;
-}
-
 .customer-row {
   display: flex;
   align-items: center;
   gap: 10px;
+  max-width: 500px;
 }
 
 .customer-row label {
   min-width: 130px;
   font-weight: bold;
-  white-space: nowrap;
 }
 
 .customer-row input {
@@ -186,38 +178,23 @@
   padding: 6px;
   font-size: 14px;
 }
-
-.customer-row input[readonly] {
-  background: #f3f4f6;
-  cursor: default;
-}
 </style>
 
 <section class="customer-section">
-  <div class="customer-grid">
 
-    <!-- CUSTOMER NAME (AUTOCOMPLETE TARGET) -->
-    <div class="customer-row">
-      <label for="customerName">Customer Name:</label>
-      <input
-        id="customerName"
-        type="text"
-        placeholder="Start typing customer name"
-        autocomplete="off"
-      >
-    </div>
-
-    <!-- CUSTOMER ADDRESS (AUTO-FILLED LATER) -->
-    <div class="customer-row">
-      <label for="customerAddress">Address:</label>
-      <input
-        id="customerAddress"
-        type="text"
-        readonly
-      >
-    </div>
-
+  <div class="customer-row">
+    <label for="customerName">Customer Name:</label>
+    <input
+      id="customerName"
+      type="text"
+      placeholder="Start typing customer name"
+      autocomplete="off"
+    >
   </div>
+
+  <!-- Hidden address (auto-populated later) -->
+  <input type="hidden" id="customerAddress">
+
 </section>
 
 <script>
@@ -225,26 +202,13 @@
 const customerState = {
   name: "",
   address: "",
-  type: "",      // restaurant | wholesale (used for tax logic)
-  payment: ""    // check | fintech (used for footer message)
+  type: "",
+  payment: ""
 };
 
-const customerNameInput = document.getElementById("customerName");
-const customerAddressInput = document.getElementById("customerAddress");
-
-/* Track customer name */
-customerNameInput.addEventListener("input", e => {
+document.getElementById("customerName").addEventListener("input", e => {
   customerState.name = e.target.value.trim();
 });
-
-/*
-  NOTE:
-  customerState.type and customerState.payment
-  will be set later by:
-  - autocomplete match
-  - new customer modal
-  - backend response
-*/
 </script>
 <!-- =============== END CUSTOMER SECTION =============== -->
 
