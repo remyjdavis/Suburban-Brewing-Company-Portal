@@ -26,6 +26,8 @@
 
 .company-block img {
   width: 90px;
+  height: auto;
+  display: block;
 }
 
 .company-info {
@@ -56,13 +58,16 @@
 }
 
 #barcodeCanvas {
-  margin-top: 10px;
+  display: block;
+  margin-top: 8px;
 }
 </style>
 
 <header class="invoice-header">
   <div class="company-block">
-    <img src="sales/background.jpg" alt="Suburban Brewing Company Logo">
+    <img src="background.jpg"
+         alt="Suburban Brewing Company Logo"
+         onerror="this.style.display='none'">
 
     <div class="company-info">
       <strong>Suburban Brewing Company</strong><br>
@@ -75,13 +80,16 @@
   </div>
 
   <div class="invoice-meta">
+    <!-- DATE (TOP) -->
     <label>Date</label>
     <input id="invoiceDate" type="date" disabled>
     <input type="hidden" id="invoiceDateValue">
 
+    <!-- INVOICE NUMBER -->
     <label>Invoice Number</label>
     <input id="invoiceNumber" type="text">
 
+    <!-- BARCODE (DIRECTLY BELOW INVOICE NUMBER) -->
     <canvas id="barcodeCanvas"></canvas>
   </div>
 </header>
