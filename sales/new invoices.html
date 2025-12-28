@@ -280,7 +280,7 @@ function selectCustomer(cust) {
   nameInput.value = cust.name;
 
   customerState.name = cust.name;
-  customerState.address = cust.address;
+  customerState.address = cust.address; // ✅ REQUIRED
   customerState.type = cust.type;
   customerState.payment = cust.payment;
   customerState.isNew = false;
@@ -290,7 +290,7 @@ function selectCustomer(cust) {
   document.getElementById("paymentMethod").value = cust.payment;
 
   clearAutocomplete();
-  calculateTotals(); // ✅ ADD THIS
+  calculateTotals();
 }
 
 
@@ -825,7 +825,76 @@ renderBlock = function(blockId) {
 };
 
 </script>
+<div style="margin-top:20px; text-align:right">
+  <button onclick="saveInvoice()">💾 Save Invoice</button>
+</div>
+<script>
+/******************************************************
+ * SAVE INVOICE (FRONTEND) — FIXED
+ ******************************************************/
+function saveInvoice() {
+  if (!customerState.name) {
+    alert("Select a customer first");
+    return;
+  }
 
+  if (invoiceLines.length === 0) {
+    alert("Add at least one product");
+    return;
+  }
+
+  const payload = {
+    invoiceNumber: document.getElementById("invoiceNumber").value,
+    date: document.getElementById("invoiceDateValue").value,
+
+    customer: {
+      name: customerState.name,
+      address: customerState.address,
+      type: customerState.type,
+      payment: customerState.payment
+    },
+
+    items: invoiceLines.map(l => ({
+      product: l.product,
+      type: l.type,
+      qty: l.qty,
+      price: l.price
+    })),
+
+    subtotal: Number(
+      document.getElementById("subtotal").textContent.replace("$", "")
+    ),
+    tax: Number(
+      document.getElementById("salesTax").textContent.replace("$", "")
+    ),
+    discount: Number(discountInput.value) || 0,
+    deposit: Number(depositInput.value) || 0,
+    total: Number(
+      document.getElementById("grandTotal").textContent.replace("$", "")
+    )
+  };
+
+  fetch(`${API_URL}?action=saveInvoice`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success) {
+        alert("Invoice saved successfully");
+        document.querySelector(
+          "button[onclick='saveInvoice()']"
+        ).disabled = true;
+      } else {
+        alert("Save failed");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Save failed");
+    });
+}
+</script>
 
 </body>
 </html>
