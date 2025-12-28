@@ -594,16 +594,22 @@ function addProductBlock() {
   const id = productBlockId++;
 
   const row = document.createElement("tr");
-  row.innerHTML = `
-    <td style="position:relative">
-      <input class="product-search" data-id="${id}" autocomplete="off">
-      <div class="autocomplete-box" data-box="${id}" hidden></div>
-    </td>
-    <td data-types="${id}"></td>
-    <td data-qty="${id}"></td>
-    <td data-price="${id}"></td>
-    <td data-total="${id}"></td>
-  `;
+row.dataset.blockId = id;
+
+row.innerHTML = `
+  <td style="position:relative">
+    <input class="product-search" data-id="${id}" autocomplete="off">
+    <div class="autocomplete-box" data-box="${id}" hidden></div>
+  </td>
+  <td data-types="${id}"></td>
+  <td data-qty="${id}"></td>
+  <td data-price="${id}"></td>
+  <td data-total="${id}"></td>
+  <td style="text-align:center">
+    <button onclick="removeProductBlock(${id})">🗑</button>
+  </td>
+`;
+
   blocks.appendChild(row);
 
   setupAutocomplete(id);
@@ -664,6 +670,20 @@ document.querySelector(`[data-box="${blockId}"]`).hidden = true;
       </label><br>
     `;
   });
+}
+function removeProductBlock(blockId) {
+  // Remove all invoice lines tied to this block
+  invoiceLines = invoiceLines.filter(
+    l => l.blockId !== blockId
+  );
+
+  // Remove the table row
+  const row = document.querySelector(
+    `tr[data-block-id="${blockId}"]`
+  );
+  if (row) row.remove();
+
+  calculateTotals();
 }
 
 /* TOGGLE LINE */
