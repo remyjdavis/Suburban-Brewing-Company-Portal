@@ -325,6 +325,149 @@ document.addEventListener("click", e => {
 });
 </script>
 <!-- =============== END CUSTOMER SECTION =============== -->
+<!-- ================= NEW CUSTOMER MODAL ================= -->
+<style>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal {
+  background: #fff;
+  padding: 20px;
+  width: 420px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.modal h3 {
+  margin-top: 0;
+}
+
+.modal-row {
+  margin-bottom: 10px;
+}
+
+.modal-row label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.modal-row input,
+.modal-row select {
+  width: 100%;
+  padding: 6px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.modal-actions button {
+  padding: 6px 14px;
+}
+</style>
+
+<div id="newCustomerBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <h3>New Customer</h3>
+
+    <div class="modal-row">
+      <label>Name</label>
+      <input id="newCustName" disabled>
+    </div>
+
+    <div class="modal-row">
+      <label>Address</label>
+      <input id="newCustAddress">
+    </div>
+
+    <div class="modal-row">
+      <label>Customer Type</label>
+      <select id="newCustType">
+        <option value="Restaurant">Restaurant</option>
+        <option value="Wholesale">Wholesale</option>
+      </select>
+    </div>
+
+    <div class="modal-row">
+      <label>Payment Method</label>
+      <select id="newCustPayment">
+        <option value="Check">Check</option>
+        <option value="Fintech">Fintech</option>
+      </select>
+    </div>
+
+    <div class="modal-row">
+      <label>Email</label>
+      <input id="newCustEmail" type="email">
+    </div>
+
+    <div class="modal-actions">
+      <button onclick="closeNewCustomerModal()">Cancel</button>
+      <button onclick="saveNewCustomer()">Save Customer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/******************************************************
+ * NEW CUSTOMER MODAL LOGIC
+ ******************************************************/
+const modalBackdrop = document.getElementById("newCustomerBackdrop");
+
+function openNewCustomerModal(name) {
+  document.getElementById("newCustName").value = name;
+  modalBackdrop.style.display = "flex";
+}
+
+function closeNewCustomerModal() {
+  modalBackdrop.style.display = "none";
+}
+
+/* Trigger modal when pressing Enter on new customer */
+document.getElementById("customerName").addEventListener("keydown", e => {
+  if (e.key === "Enter" && customerState.isNew) {
+    openNewCustomerModal(e.target.value);
+  }
+});
+
+/* Save new customer */
+function saveNewCustomer() {
+  const payload = {
+    name: document.getElementById("newCustName").value,
+    address: document.getElementById("newCustAddress").value,
+    type: document.getElementById("newCustType").value,
+    payment: document.getElementById("newCustPayment").value,
+    email: document.getElementById("newCustEmail").value
+  };
+
+  fetch(`${API_URL}?action=addCustomer`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  })
+    .then(res => res.json())
+    .then(saved => {
+      customers.push(saved);
+      selectCustomer(saved);
+      closeNewCustomerModal();
+    })
+    .catch(err => {
+      alert("Failed to save customer");
+      console.error(err);
+    });
+}
+</script>
+<!-- =============== END NEW CUSTOMER MODAL =============== -->
 
 </body>
 </html>
