@@ -1125,6 +1125,15 @@ function goBackToInvoices() {
  * EMAIL INVOICE — INTERNAL ONLY
  ******************************************************/
 function emailInvoice() {
+  // ⛔ Prevent emailing before save
+  const anyEnabledInput = Array.from(
+  document.querySelectorAll("input:not([type='hidden']), select")
+).some(el => !el.disabled);
+
+  if (anyEnabledInput) {
+    alert("Please save the invoice before emailing.");
+    return;
+  }
   const invoiceNum = document.getElementById("invoiceNumber").value;
   const total = document.getElementById("grandTotal").textContent;
   const customer = customerState.name || "Unknown Customer";
