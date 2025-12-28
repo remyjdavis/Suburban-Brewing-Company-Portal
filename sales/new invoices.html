@@ -1,276 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>New Invoice | Suburban Brewing Company</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <title>New Invoice | Suburban Brewing Company</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-
-<style>
-body { font-family: Arial; background:#f4f4f4; padding:20px }
-.container { background:#fff; padding:20px; max-width:1100px; margin:auto }
-header { display:flex; justify-content:space-between }
-.company { display:flex; gap:15px }
-.company img { width:80px }
-
-table { width:100%; border-collapse:collapse; margin-top:15px }
-th,td { border:1px solid #ccc; padding:8px }
-th { background:#18b89a; color:#fff }
-
-input,select,textarea { width:100%; padding:6px }
-button { padding:8px 14px; margin:6px 4px }
-
-.totals { max-width:320px; margin-left:auto }
-.totals div { display:flex; justify-content:space-between; margin:6px 0 }
-
-/* ===== MODAL ===== */
-.modal-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:1000;
-}
-.modal{
-  background:#fff;
-  padding:20px;
-  width:420px;
-  border-radius:8px;
-}
-.modal h3{margin-top:0}
-.modal label{font-weight:bold;margin-top:10px;display:block}
-.modal-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:15px
-}
-.secondary{background:#6b7280;color:#fff}
-</style>
+  <!-- Global libs -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 
 <body>
-<div class="container">
+<!-- ================= HEADER SECTION ================= -->
+<style>
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
 
-<header>
-  <div class="company">
-    <img src="background.jpg">
-    <div>
+.company-block {
+  display: flex;
+  gap: 15px;
+}
+
+.company-block img {
+  width: 90px;
+}
+
+.company-info {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.invoice-meta {
+  text-align: right;
+  font-size: 14px;
+}
+
+.invoice-meta label {
+  font-weight: bold;
+  display: block;
+  margin-top: 6px;
+}
+
+.invoice-meta input {
+  padding: 6px;
+  width: 180px;
+  margin-top: 2px;
+}
+
+#barcodeCanvas {
+  margin-top: 8px;
+}
+</style>
+
+<header class="invoice-header">
+  <div class="company-block">
+    <img src="background.jpg" alt="Suburban Brewing Company Logo">
+
+    <div class="company-info">
       <strong>Suburban Brewing Company</strong><br>
-      3041 Horseshoe Pike Suite 120 & 130<br>
+      Address: 3041 Horseshoe Pike Suite 120 & 130<br>
       Honey Brook, PA 19344<br>
-      Sales Rep: Remy Davis | 908-642-1019<br>
-      Remyjdavis90@gmail.com
+      Sales Rep: Remy Davis<br>
+      Phone: 908-642-1019<br>
+      Email: Remyjdavis90@gmail.com
     </div>
   </div>
-  <div>
-    Invoice #
-    <input id="invoiceNumber"><br>
-    Date: <span id="invoiceDate"></span><br>
+
+  <div class="invoice-meta">
+    <label>Invoice Number</label>
+    <input id="invoiceNumber" type="text">
+
+    <label>Date</label>
+    <input id="invoiceDate" type="date">
+
     <canvas id="barcodeCanvas"></canvas>
   </div>
 </header>
 
-<hr>
-
-<h3>Customer</h3>
-<input id="customerName" list="customerList" autocomplete="off">
-<datalist id="customerList"></datalist>
-<div id="customerAddress" style="margin-top:6px;font-style:italic;"></div>
-
-<h3>Invoice Items</h3>
-<table id="itemsTable">
-<thead>
-<tr>
-  <th>Product</th>
-  <th>Type</th>
-  <th>Qty</th>
-  <th>Unit Price</th>
-  <th>Total</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-
-<button onclick="addRow()">Add Item</button>
-
-<div class="totals">
-  <div><span>Subtotal</span><span id="sub">$0.00</span></div>
-  <div><span>Discount</span><span id="disc">$0.00</span></div>
-  <div><span>Sales Tax</span><span id="tax">$0.00</span></div>
-  <div><span>Keg Deposit</span><span id="keg">$0.00</span></div>
-  <hr>
-  <div><strong>Total</strong><strong id="total">$0.00</strong></div>
-</div>
-
-<p id="paymentNote">Make checks payable to Suburban Brewing Company.</p>
-
-</div>
-
-<!-- ================= CUSTOMER MODAL ================= -->
-<div id="customerModal" class="modal-overlay">
-  <div class="modal">
-    <h3>New Customer</h3>
-
-    <label>Name</label>
-    <input id="mcName">
-
-    <label>Address</label>
-    <textarea id="mcAddress" rows="3"></textarea>
-
-    <label>Payment Method</label>
-    <select id="mcPayment">
-      <option value="Check">Check</option>
-      <option value="Fintech">Fintech</option>
-    </select>
-
-    <label>Customer Type</label>
-    <select id="mcType">
-      <option value="Restaurant">Restaurant</option>
-      <option value="Wholesale">Wholesale</option>
-    </select>
-
-    <div class="modal-actions">
-      <button onclick="saveNewCustomer()">Save</button>
-      <button class="secondary" onclick="cancelCustomer()">Cancel</button>
-    </div>
-  </div>
-</div>
-
 <script>
-const API = "https://script.google.com/macros/s/AKfycbys580shBiRLtAW0jAYFoinwKJrycSJQyW8qy95nvLr7dxqOGtzI3e_h9QQn8-ULTT3/exec";
-const SALES_TAX_RATE = 0.06;
-const KEG_DEPOSIT = 30;
+/* ===== HEADER LOGIC ONLY ===== */
+(function(){
+  const invoiceNumber = document.getElementById("invoiceNumber");
+  const invoiceDate = document.getElementById("invoiceDate");
 
-let customers = [];
-let selectedCustomer = null;
+  // Default values
+  invoiceNumber.value = "INV-" + Date.now();
+  invoiceDate.value = new Date().toISOString().split("T")[0];
 
-invoiceDate.innerText = new Date().toLocaleDateString();
-invoiceNumber.value = "INV-" + Date.now();
-
-JsBarcode("#barcodeCanvas", invoiceNumber.value, {displayValue:false});
-
-/* LOAD CUSTOMERS */
-fetch(API + "?action=getCustomers")
-.then(r=>r.json())
-.then(d=>{
-  customers = d;
-  customerList.innerHTML = d.map(c=>`<option value="${c.name}">`).join("");
-});
-
-/* CUSTOMER SELECT */
-customerName.addEventListener("input",()=>{
-  const c = customers.find(x=>x.name.toLowerCase()===customerName.value.toLowerCase());
-  if(c){
-    selectedCustomer=c;
-    customerAddress.innerText=c.address;
-    paymentNote.innerText =
-      c.payment==="Fintech"
-      ? "Paid through Fintech."
-      : "Make checks payable to Suburban Brewing Company.";
-    calc();
+  // Barcode generation
+  function refreshBarcode(){
+    if(!window.JsBarcode) return;
+    try {
+      JsBarcode("#barcodeCanvas", invoiceNumber.value || "", {
+        displayValue: false,
+        height: 50
+      });
+    } catch(e){}
   }
-});
 
-/* BLUR = NEW CUSTOMER */
-customerName.addEventListener("blur",()=>{
-  const val = customerName.value.trim();
-  if(!val) return;
-
-  const exists = customers.some(c=>c.name.toLowerCase()===val.toLowerCase());
-  if(!exists){
-    setTimeout(()=>{
-      mcName.value = val;
-      mcAddress.value="";
-      mcPayment.value="Check";
-      mcType.value="Restaurant";
-      customerModal.style.display="flex";
-    },150);
-  }
-});
-
-/* MODAL ACTIONS */
-function cancelCustomer(){
-  customerModal.style.display="none";
-  customerName.value="";
-}
-
-function saveNewCustomer(){
-  const customer={
-    name:mcName.value.trim(),
-    address:mcAddress.value.trim(),
-    payment:mcPayment.value,
-    type:mcType.value
-  };
-
-  fetch(API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({action:"saveCustomer",...customer})
-  }).then(()=>{
-    customers.push(customer);
-    const o=document.createElement("option");
-    o.value=customer.name;
-    customerList.appendChild(o);
-
-    selectedCustomer=customer;
-    customerName.value=customer.name;
-    customerAddress.innerText=customer.address;
-
-    paymentNote.innerText =
-      customer.payment==="Fintech"
-      ? "Paid through Fintech."
-      : "Make checks payable to Suburban Brewing Company.";
-
-    customerModal.style.display="none";
-    calc();
-  });
-}
-
-/* ===== INVOICE ===== */
-function addRow(){
-  const tr=document.createElement("tr");
-  tr.innerHTML=`
-    <td><input></td>
-    <td><select>
-      <option>Case</option>
-      <option>Bottle</option>
-      <option>1/6 Keg</option>
-      <option>1/2 Keg</option>
-    </select></td>
-    <td><input type="number" min="0" value="0"></td>
-    <td><input type="number" step="0.01" value="0"></td>
-    <td>$0.00</td>`;
-  itemsTable.querySelector("tbody").appendChild(tr);
-  tr.querySelectorAll("input,select").forEach(i=>i.oninput=calc);
-}
-
-function calc(){
-  let subtotal=0,kegs=0;
-  document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
-    const qty=+r.children[2].firstChild.value;
-    const price=+r.children[3].firstChild.value;
-    const type=r.children[1].firstChild.value;
-    if(type.includes("Keg")) kegs+=qty;
-    const line=qty*price;
-    r.children[4].innerText="$"+line.toFixed(2);
-    subtotal+=line;
-  });
-
-  const tax=selectedCustomer?.type==="Restaurant"?subtotal*SALES_TAX_RATE:0;
-  const deposit=kegs*KEG_DEPOSIT;
-
-  sub.innerText="$"+subtotal.toFixed(2);
-  taxEl=document.getElementById("tax");
-  taxEl.innerText="$"+tax.toFixed(2);
-  keg.innerText="$"+deposit.toFixed(2);
-  total.innerText="$"+(subtotal+tax+deposit).toFixed(2);
-}
+  invoiceNumber.addEventListener("input", refreshBarcode);
+  refreshBarcode();
+})();
 </script>
+<!-- =============== END HEADER SECTION =============== -->
 </body>
 </html>
