@@ -291,18 +291,22 @@ const nameInput = document.getElementById("customerName");
 const autocompleteBox = document.getElementById("customerAutocomplete");
 
 /* ===== LOAD CUSTOMERS FROM BACKEND ===== */
-fetch(`${API_URL}?action=getCustomers`)
-  .then(res => res.json())
-  .then(data => {
-    if (Array.isArray(data)) {
-      customers = data;
-    } else if (Array.isArray(data.data)) {
-      customers = data.data;
-    } else {
-      console.error("Unexpected customers payload:", data);
-      customers = [];
-    }
-  })
+function loadCustomers() {
+  const cb = "cb_customers_" + Date.now();
+
+  window[cb] = function (data) {
+    customers = Array.isArray(data) ? data : [];
+    delete window[cb];
+    script.remove();
+  };
+
+  const script = document.createElement("script");
+  script.src = `${API_URL}?action=getCustomers&callback=${cb}`;
+  document.body.appendChild(script);
+}
+
+loadCustomers();
+
   .catch(err => {
     console.error("Customer load failed", err);
   });
