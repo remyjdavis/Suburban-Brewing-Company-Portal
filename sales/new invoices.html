@@ -16,6 +16,7 @@
 let invoiceSaved = false;
 let invoicePdfGenerated = false;
 let lastGeneratedPdfId = null;
+let cachedLogoBase64 = null;
 
 </script>
 
@@ -1023,7 +1024,36 @@ function printInvoice() {
 /******************************************************
  * SAVE INVOICE — FINAL (SHEETS + DRIVE PDF)
  ******************************************************/
-async function saveInvoice() {
+function isValidBase64Image(str) {
+  return (
+    typeof str === "string" &&
+    str.startsWith("data:image/") &&
+    str.length > 100
+  );
+}
+
+function validateInvoiceBeforeSave(payload) {
+  const errors = [];
+
+  if (!payload.invoiceNumber) errors.push("Invoice number missing");
+  if (!payload.date) errors.push("Invoice date missing");
+
+  if (!payload.customer?.name) errors.push("Customer not selected");
+  if (!payload.customer?.address) errors.push("Customer address missing");
+
+  if (!payload.items || payload.items.length === 0)
+    errors.push("No invoice items added");
+
+  if (!isValidBase64Image(payload.logoBase64))
+    errors.push("Logo not loaded");
+
+  if (!isValidBase64Image(payload.barcodeBase64))
+    errors.push("Barcode not generated");
+
+  return errors;
+}
+
+  async function saveInvoice() {
   try {
     if (invoiceSaved) {
       alert("This invoice has already been saved.");
@@ -1045,8 +1075,7 @@ const payload = {
   invoiceNumber: document.getElementById("invoiceNumber").value,
   date: document.getElementById("invoiceDateValue").value,
 
-  // 🔒 LOCKED FROM FRONTEND
-  logoBase64: getLogoBase64(),
+  logoBase64: await preloadLogoBase64(),
   barcodeBase64: getBarcodeBase64(),
 
   customer: {
@@ -1079,6 +1108,15 @@ const payload = {
     document.getElementById("grandTotal").textContent.replace("$","")
   )
 };
+const validationErrors = validateInvoiceBeforeSave(payload);
+
+if (validationErrors.length > 0) {
+  alert(
+    "Invoice cannot be saved:\n\n" +
+    validationErrors.map(e => "• " + e).join("\n")
+  );
+  return;
+}
 
     /* SAVE TO SHEETS (NO-CORS — GAS SAFE) */
 const res = await fetch(API_URL, {
@@ -1113,9 +1151,29 @@ alert("Invoice saved and PDF generated ✅");
     alert("Save failed — see console");
   }
 }
-function getBarcodeBase64() {
-  const canvas = document.getElementById("barcodeCanvas");
-  return canvas.toDataURL("image/png");
+async function preloadLogoBase64() {
+  if (cachedLogoBase64) return cachedLogoBase64;
+
+  const img = document.getElementById("logoImg");
+
+  if (!img) throw new Error("Logo element missing");
+
+  if (!img.complete || img.naturalWidth === 0) {
+    await new Promise(resolve => {
+      img.onload = resolve;
+      img.onerror = resolve;
+    });
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  cachedLogoBase64 = canvas.toDataURL("image/png");
+  return cachedLogoBase64;
 }
 
 </script>
@@ -1255,6 +1313,11 @@ window.onafterprint = () => {
   // HIDE CUSTOMER PRINT BLOCK
   document.getElementById("printCustomerInfo").style.display = "none";
 };
+function getBarcodeBase64() {
+  const canvas = document.getElementById("barcodeCanvas");
+  if (!canvas) return null;
+  return canvas.toDataURL("image/png");
+}
 
 /******************************************************
  * NAVIGATION
