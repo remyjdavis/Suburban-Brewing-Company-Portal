@@ -1035,7 +1035,10 @@ async function saveInvoice() {
 const payload = {
   invoiceNumber: document.getElementById("invoiceNumber").value,
   date: document.getElementById("invoiceDateValue").value,
-logoBase64: getLogoBase64(),
+
+  // 🔒 LOCKED FROM FRONTEND
+  logoBase64: getLogoBase64(),
+  barcodeBase64: getBarcodeBase64(),
 
   customer: {
     name: customerState.name,
