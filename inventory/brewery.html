@@ -282,28 +282,49 @@ const inventoryBody = document.getElementById("inventoryBody");
 /* ======================================================
    MOCK LOAD
 ====================================================== */
-document.addEventListener("DOMContentLoaded", () => {
-  renderInventory([
-    { product:"IPA", type:"Beer", pkg:"1/2 Keg", lifecycle:"Core", qty:24, unit:"Kegs" },
-    { product:"IPA", type:"Beer", pkg:"1/6 Keg", lifecycle:"Seasonal", qty:0, unit:"Kegs" },
-    { product:"Lager", type:"Beer", pkg:"Case", lifecycle:"Rotating", qty:120, unit:"Cans" }
-  ]);
-});
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+const inventoryBody = document.getElementById("inventoryBody");
+
+document.addEventListener("DOMContentLoaded", loadInventory);
+
+async function loadInventory() {
+  inventoryBody.innerHTML = `<tr><td colspan="8">Loading…</td></tr>`;
+
+  const res = await fetch(`${API_URL}?action=getBreweryInventory`);
+  const inventory = await res.json();
+
+  const prodRes = await fetch(`${API_URL}?action=getProducts`);
+  const products = await prodRes.json();
+
+  // Map lifecycle per product+package
+  const lifecycleMap = {};
+  products.forEach(p => {
+    lifecycleMap[`${p.name}|${p.package}`] = p.lifecycle;
+  });
+
+  renderInventory(inventory, lifecycleMap);
+}
+</script>
 
 /* ======================================================
    RENDER INVENTORY
 ====================================================== */
-function renderInventory(items) {
+<script>
+function renderInventory(items, lifecycleMap) {
   inventoryBody.innerHTML = "";
 
   items.forEach(i => {
+    const key = `${i.product}|${i.package}`;
+    const lifecycle = lifecycleMap[key] || "Core";
+
     let status = "OK";
     let cls = "ok";
 
-    if (i.qty === 0 && i.lifecycle !== "Core") {
+    if ((lifecycle === "Seasonal" || lifecycle === "Rotating") && i.qty <= 0) {
       status = "Unavailable";
       cls = "low";
-    } else if (i.qty < 10) {
+    } else if (i.qty <= 5) {
       status = "Low";
       cls = "low";
     }
@@ -311,18 +332,21 @@ function renderInventory(items) {
     inventoryBody.innerHTML += `
       <tr>
         <td>${i.product}</td>
-        <td>${i.type}</td>
-        <td>${i.pkg}</td>
-        <td>${i.lifecycle}</td>
+        <td>${i.package}</td>
+        <td>${lifecycle}</td>
         <td>${i.qty}</td>
-        <td>${i.unit}</td>
+        <td>${i.unit || ""}</td>
         <td class="${cls}">${status}</td>
-        <td><button class="small secondary" disabled>Adjust</button></td>
+        <td>
+          <button class="small secondary" disabled>Adjust</button>
+        </td>
       </tr>
     `;
   });
 }
+</script>
 
+ <script>
 /* ======================================================
    MODAL CONTROLS
 ====================================================== */
@@ -341,19 +365,21 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXl
 /* ======================================================
    SAVE PRODUCT (BACKEND CONNECTED)
 ====================================================== */
+<script>
 async function saveProduct() {
   const payload = {
-    name: prodName.value.trim(),
-    type: prodType.value.trim(),
+    action: "addBreweryProduct",
+    product: prodName.value.trim(),
     lifecycle: prodLifecycle.value,
-    packages: {
-      half: { qty:+halfQty.value||0, price:+halfPrice.value||0 },
-      sixth:{ qty:+sixthQty.value||0, price:+sixthPrice.value||0 },
-      case: { qty:+caseQty.value||0, price:+casePrice.value||0 }
-    }
+    halfKegQty: +halfQty.value || 0,
+    halfKegPrice: +halfPrice.value || 0,
+    sixthKegQty: +sixthQty.value || 0,
+    sixthKegPrice: +sixthPrice.value || 0,
+    caseQty: +caseQty.value || 0,
+    casePrice: +casePrice.value || 0
   };
 
-  if (!payload.name || !payload.lifecycle) {
+  if (!payload.product || !payload.lifecycle) {
     alert("Product name and lifecycle are required");
     return;
   }
@@ -361,31 +387,20 @@ async function saveProduct() {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-  action: "addBreweryProduct",
-  product: prodName.value.trim(),
-  lifecycle: prodLifecycle.value,
-  halfKegQty: +halfQty.value || 0,
-  halfKegPrice: +halfPrice.value || 0,
-  sixthKegQty: +sixthQty.value || 0,
-  sixthKegPrice: +sixthPrice.value || 0,
-  caseQty: +caseQty.value || 0,
-  casePrice: +casePrice.value || 0
-})
-
+    body: JSON.stringify(payload)
   });
 
   const data = await res.json();
 
   if (data.success) {
-    alert("Product added successfully");
     closeProductModal();
-    location.reload(); // temp refresh until live load
+    loadInventory();
   } else {
-    alert("Error saving product");
+    alert(data.error || "Error saving product");
   }
 }
 </script>
+
 
 
 </body>
