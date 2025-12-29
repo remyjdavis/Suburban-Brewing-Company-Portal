@@ -207,39 +207,54 @@ const productModal = document.getElementById("productModal");
 document.addEventListener("DOMContentLoaded", loadInventory);
 
 /* ================= LOAD INVENTORY ================= */
+let inventory = [];
+
 async function loadInventory() {
   try {
     const res = await fetch(`${API_URL}?action=getBreweryInventory`);
-    const data = await res.json();
-
-    inventoryBody.innerHTML = "";
-
-    if (!data.length) {
-      inventoryBody.innerHTML = `<tr><td colspan="7">No inventory found</td></tr>`;
-      return;
-    }
-
-    data.forEach(item => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-  <td>${item.product}</td>
-  <td>${item.type}</td>
-  <td>${item.lifecycle}</td>
-  <td>${item.qty}</td>
-  <td>${item.unit}</td>
-  <td class="${item.qty <= 0 ? "low" : "ok"}">
-    ${item.qty <= 0 ? "Low" : "OK"}
-  </td>
-  <td></td>
-`;
-
-      inventoryBody.appendChild(tr);
-    });
+    inventory = await res.json();
+    renderInventoryTables();
   } catch (err) {
-    console.error(err);
-    inventoryBody.innerHTML =
-      `<tr><td colspan="7">Failed to load inventory</td></tr>`;
+    console.error("Failed to load inventory", err);
   }
+}
+function renderInventoryTables() {
+  renderLifecycleTable("Core", "coreInventoryBody");
+  renderLifecycleTable("Seasonal", "seasonalInventoryBody");
+  renderLifecycleTable("Rotating", "rotatingInventoryBody");
+}
+function renderLifecycleTable(lifecycle, tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const rows = inventory.filter(item => item.lifecycle === lifecycle);
+
+  if (!rows.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6">No ${lifecycle} products</td>
+      </tr>
+    `;
+    return;
+  }
+
+  rows.forEach(item => {
+    const statusClass = Number(item.qty) <= 0 ? "low" : "ok";
+    const statusText = Number(item.qty) <= 0 ? "Low" : "OK";
+
+    tbody.insertAdjacentHTML("beforeend", `
+      <tr>
+        <td>${item.product}</td>
+        <td>${item.type}</td>
+        <td>${item.package}</td>
+        <td>${item.qty}</td>
+        <td>${item.unit}</td>
+        <td class="${statusClass}">${statusText}</td>
+      </tr>
+    `);
+  });
 }
 
 /* ================= MODAL ================= */
