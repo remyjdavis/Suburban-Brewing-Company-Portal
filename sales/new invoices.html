@@ -642,13 +642,13 @@ let productBlockId = 0;
 const blocks = document.getElementById("productBlocks");
 
 /* LOAD PRODUCTS */
-fetch(`${API_URL}?action=getProducts`)
-  .then(r => r.json())
-  .then(data => {
-    rawProducts = data || [];
+function loadProducts() {
+  const cb = "cb_products_" + Date.now();
 
-    // GROUP BY PRODUCT NAME
+  window[cb] = function (data) {
+    rawProducts = Array.isArray(data) ? data : [];
     productsByName = {};
+
     rawProducts.forEach(p => {
       if (!productsByName[p.name]) {
         productsByName[p.name] = [];
@@ -658,7 +658,17 @@ fetch(`${API_URL}?action=getProducts`)
         price: p.price
       });
     });
-  });
+
+    delete window[cb];
+    script.remove();
+  };
+
+  const script = document.createElement("script");
+  script.src = `${API_URL}?action=getProducts&callback=${cb}`;
+  document.body.appendChild(script);
+}
+
+loadProducts();
 
 /* ADD PRODUCT BLOCK */
 function addProductBlock() {
