@@ -488,37 +488,36 @@ document.getElementById("customerName").addEventListener("keydown", e => {
 });
 
 /* Save new customer */
-function saveNewCustomer() {
+async function saveNewCustomer() {
   const payload = {
-    name: document.getElementById("newCustName").value,
-    address: document.getElementById("newCustAddress").value,
-    type: document.getElementById("newCustType").value,
-    payment: document.getElementById("newCustPayment").value,
-    email: document.getElementById("newCustEmail").value
+    name: document.getElementById("newCustomerName").value.trim(),
+    address: document.getElementById("newCustomerAddress").value.trim(),
+    type: document.getElementById("newCustomerType").value,
+    payment: document.getElementById("newCustomerPayment").value,
+    email: document.getElementById("newCustomerEmail").value.trim()
   };
 
-  fetch(API_URL, {
+  if (!payload.name) {
+    alert("Customer name is required.");
+    return;
+  }
+
+  await fetch(`${API_URL}?action=addCustomer`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       action: "addCustomer",
-      payload
+      ...payload
     })
   });
 
-  const normalized = {
-    name: payload.name,
-    address: payload.address,
-    type: payload.type,
-    payment: payload.payment,
-    email: payload.email
-  };
-
-  customers.push(normalized);
-  selectCustomer(normalized);
-  updatePaymentFooter();
   closeNewCustomerModal();
+
+  customerState = { ...payload, isNew: false };
+  document.getElementById("customerName").value = payload.name;
+  document.getElementById("customerAddress").value = payload.address;
 }
+
 </script>   <!-- ✅ THIS WAS MISSING -->
 
 <script>
@@ -1077,8 +1076,16 @@ function validateInvoiceBeforeSave(payload) {
   async function saveInvoice() {
   try {
     if (invoiceSaved) {
-      alert("This invoice has already been saved.");
+      alert("Invoice already saved.");
       return;
+    }
+
+    const nameInput = document.getElementById("customerName");
+
+    if (!customerState.name && nameInput.value.trim()) {
+      customerState.name = nameInput.value.trim();
+      customerState.address =
+        document.getElementById("customerAddress").value || "";
     }
 
     if (!customerState.name) {
@@ -1086,15 +1093,7 @@ function validateInvoiceBeforeSave(payload) {
       return;
     }
 
-    if (invoiceLines.length === 0) {
-      alert("Add at least one product.");
-      return;
-    }
-if (!customerState.name && nameInput.value.trim()) {
-  customerState.name = nameInput.value.trim();
-  customerState.address =
-    document.getElementById("customerAddress").value || "";
-}
+    await new Promise(r => setTimeout(r, 100)); // 👈 REQUIRED
 
     /* BUILD PAYLOAD */
 const payload = {
