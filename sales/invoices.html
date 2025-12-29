@@ -219,11 +219,12 @@ invoiceDate.value = selectedInvoice.date || "";
 
     window[cb] = function (items) {
       selectedInvoice.items = (Array.isArray(items) ? items : []).map(i => ({
-        qty: i.qty ?? i.quantity ?? 0,
-        product: i.product ?? i.productName ?? "",
-        type: i.type ?? i.productType ?? "",
-        lineTotal: Number(i.lineTotal ?? i.total ?? 0)
-      }));
+  qty: Number(i.qty) || 0,
+  product: String(i.product || "").trim(),
+  type: String(i.type || "").trim(),   // ← SHEETS "Type"
+  price: Number(i.price) || 0,
+  lineTotal: Number(i.lineTotal) || 0
+}));
 
       delete window[cb];
       script.remove();
