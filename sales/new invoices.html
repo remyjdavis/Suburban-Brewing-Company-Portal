@@ -1181,18 +1181,28 @@ async function preloadLogoBase64() {
   <style>
 /* ================= PRINT STYLES ================= */
 /* ================= PRINT STYLES ================= */
+/* ================= PRINT STYLES ================= */
 @media print {
 
   body {
     margin: 0.5in;
   }
 
-  /* ===== HEADER LAYOUT ===== */
+  /* ===== HEADER CONTAINER ===== */
   .invoice-header {
-    display: flex !important;
-    align-items: flex-start;
+    display: grid !important;
+    grid-template-columns: auto 1fr;
+    column-gap: 20px;
+    align-items: start;
     padding-bottom: 60px !important;
     position: relative;
+  }
+
+  /* ===== COMPANY BLOCK ===== */
+  .company-block {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
   }
 
   .company-block img {
@@ -1200,42 +1210,66 @@ async function preloadLogoBase64() {
     height: 75px !important;
   }
 
+  /* FORCE COMPANY INFO TO 3 LINES */
   .company-info {
-    font-size: 10.8px;
+    font-size: 11px;
     line-height: 1.35;
   }
 
-  /* ===== INVOICE TITLE ===== */
-  .invoice-title {
-    position: static;
-    margin: 10px auto 6px auto;
-    text-align: center;
-    font-size: 24px;
-    letter-spacing: 3px;
+  .company-info strong {
+    display: block;
   }
 
-  /* ===== DATE / INVOICE META ===== */
+  .company-info br {
+    display: none;
+  }
+
+  .company-info::after {
+    content:
+      "3041 Horseshoe Pike Suite 120 & 130, Honey Brook, PA 19344\A"
+      "Sales Rep: Remy Davis · 908-642-1019 · Remyjdavis90@gmail.com";
+    white-space: pre;
+    display: block;
+  }
+
+  /* ===== RIGHT META BLOCK ===== */
+  .invoice-meta {
+    justify-self: start;
+    text-align: left;
+    font-size: 13px;
+  }
+
+  .invoice-meta .meta-row {
+    margin-top: 2px;
+  }
+
   #printInvoiceDate,
   #printInvoiceNumber {
     display: inline !important;
     font-weight: 600;
   }
 
-  .invoice-meta {
-    font-size: 13px;
+  /* ===== INVOICE TITLE ===== */
+  .invoice-title {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin: 12px 0 6px 0;
+    font-size: 24px;
+    letter-spacing: 3px;
   }
 
   /* ===== BARCODE ===== */
   #barcodeCanvas {
+    grid-column: 1 / -1;
     display: block !important;
+    margin: 0 auto;
     width: 220px !important;
     height: 60px !important;
-    margin-top: 6px;
   }
 
-  /* ===== DIVIDERS ===== */
+  /* ===== DIVIDER ===== */
   .header-divider {
-    margin-top: 6px;
+    margin-top: 8px;
     border-top: 2px solid #222;
   }
 
@@ -1251,7 +1285,7 @@ async function preloadLogoBase64() {
     display: none;
   }
 
-  /* ===== GRAND TOTAL ===== */
+  /* ===== TOTAL ===== */
   .grand-total {
     font-size: 18px;
   }
@@ -1263,7 +1297,7 @@ async function preloadLogoBase64() {
     font-size: 14px;
   }
 
-  /* ===== CUSTOMER PRINT BLOCK ===== */
+  /* ===== CUSTOMER PRINT ===== */
   #printCustomerInfo {
     display: block !important;
     margin-top: 10px;
@@ -1279,7 +1313,7 @@ async function preloadLogoBase64() {
     display: none !important;
   }
 
-  /* ===== PRODUCT PRINT HELPERS ===== */
+  /* ===== PRINT HELPERS ===== */
   .print-product {
     display: inline-block;
     font-size: 12px;
