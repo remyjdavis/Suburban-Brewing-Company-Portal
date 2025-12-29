@@ -1180,49 +1180,66 @@ async function preloadLogoBase64() {
 
   <style>
 /* ================= PRINT STYLES ================= */
+/* ================= PRINT STYLES ================= */
 @media print {
-  .invoice-header {
-    display: flex !important;
-    align-items: flex-start;
-    padding-bottom: 48px !important;
-  }
-
-  .invoice-title {
-  position: absolute;
-  left: 50%;
-  top: 28%;
-  transform: translateX(-50%);
-  font-size: 26px;
-  letter-spacing: 3px;
-}
-
-  .type-text {
-    display: inline;
-  }
-
-  .print-qty {
-    display: inline-block;
-    min-width: 24px;
-    text-align: right;
-  }
-.company-block img {
-  width: 75px !important;
-  height: 75px !important;
-}
-
-  /* Hide interactive UI */
-  button:not(.print-btn),
-.autocomplete-box,
-.autocomplete-list,
-input:not([type="hidden"]):not(.qty-input):not(.product-search),
-select {
-  display: none !important;
-}
 
   body {
     margin: 0.5in;
   }
 
+  /* ===== HEADER LAYOUT ===== */
+  .invoice-header {
+    display: flex !important;
+    align-items: flex-start;
+    padding-bottom: 60px !important;
+    position: relative;
+  }
+
+  .company-block img {
+    width: 75px !important;
+    height: 75px !important;
+  }
+
+  .company-info {
+    font-size: 10.8px;
+    line-height: 1.35;
+  }
+
+  /* ===== INVOICE TITLE ===== */
+  .invoice-title {
+    position: static;
+    margin: 10px auto 6px auto;
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 3px;
+  }
+
+  /* ===== DATE / INVOICE META ===== */
+  #printInvoiceDate,
+  #printInvoiceNumber {
+    display: inline !important;
+    font-weight: 600;
+  }
+
+  .invoice-meta {
+    font-size: 13px;
+  }
+
+  /* ===== BARCODE ===== */
+  #barcodeCanvas {
+    display: block !important;
+    width: 220px !important;
+    height: 60px !important;
+    margin-top: 6px;
+  }
+
+  /* ===== DIVIDERS ===== */
+  .header-divider {
+    margin-top: 6px;
+    border-top: 2px solid #222;
+  }
+
+  /* ===== TABLE ===== */
   .product-table th,
   .product-table td {
     padding: 6px;
@@ -1234,43 +1251,47 @@ select {
     display: none;
   }
 
-  td[data-types] input {
-    display: none;
-  }
-
-  .invoice-header {
-    align-items: flex-start;
-  }
-
+  /* ===== GRAND TOTAL ===== */
   .grand-total {
     font-size: 18px;
   }
 
+  /* ===== PAYMENT FOOTER ===== */
   #paymentFooter {
     display: block;
     margin-top: 20px;
     font-size: 14px;
   }
 
-  /* ✅ BARCODE — PRINT ONLY */
-  #barcodeCanvas {
-  display: block !important;
-  width: 220px !important;
-  height: 60px !important;
+  /* ===== CUSTOMER PRINT BLOCK ===== */
+  #printCustomerInfo {
+    display: block !important;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+
+  /* ===== HIDE INTERACTIVE UI ===== */
+  button:not(.print-btn),
+  .autocomplete-box,
+  .autocomplete-list,
+  input:not([type="hidden"]):not(.qty-input):not(.product-search),
+  select {
+    display: none !important;
+  }
+
+  /* ===== PRODUCT PRINT HELPERS ===== */
+  .print-product {
+    display: inline-block;
+    font-size: 12px;
+  }
+
+  .print-qty {
+    display: inline-block;
+    min-width: 24px;
+    text-align: right;
+  }
 }
 
-#printCustomerInfo {
-  display: block !important;
-  margin-top: 10px;
-  font-size: 14px;
-}
-
-.print-product {
-  display: inline-block;
-  font-size: 12px;
-}
-
-}
 </style>
 
 <script>
