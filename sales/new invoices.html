@@ -1069,25 +1069,32 @@ logoBase64: getLogoBase64(),
 };
 
     /* SAVE TO SHEETS (NO-CORS — GAS SAFE) */
-await fetch(API_URL, {
+const res = await fetch(API_URL, {
   method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     action: "saveInvoice",
     payload
   })
 });
 
+const result = await res.json();
 
-/* ASSUME SUCCESS — GAS EXECUTED */
+if (!result.success) {
+  console.error(result);
+  alert("Invoice saved, but PDF failed ❌");
+  return;
+}
+
 invoiceSaved = true;
 invoicePdfGenerated = true;
 
 lockInvoiceAfterSave();
-alert("Invoice saved and PDF generated ✅");
 
+console.log("PDF File ID:", result.fileId);
+console.log("PDF URL:", result.fileUrl);
+
+alert("Invoice saved and PDF generated ✅");
 
   } catch (err) {
     console.error(err);
