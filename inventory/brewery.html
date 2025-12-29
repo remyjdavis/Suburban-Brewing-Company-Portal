@@ -206,18 +206,62 @@ const productModal = document.getElementById("productModal");
 
 document.addEventListener("DOMContentLoaded", loadInventory);
 
-/* ============ LOAD INVENTORY ============ */
+/* ================= LOAD INVENTORY ================= */
+async function loadInventory() {
+  try {
+    const res = await fetch(`${API_URL}?action=getBreweryInventory`);
+    const data = await res.json();
+
+    inventoryBody.innerHTML = "";
+
+    if (!data.length) {
+      inventoryBody.innerHTML = `<tr><td colspan="7">No inventory found</td></tr>`;
+      return;
+    }
+
+    data.forEach(item => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.product}</td>
+        <td>${item.package}</td>
+        <td>${item.lifecycle || ""}</td>
+        <td>${item.qty}</td>
+        <td>${item.unit || ""}</td>
+        <td class="${item.status === "Low" ? "low" : "ok"}">
+          ${item.status || ""}
+        </td>
+        <td></td>
+      `;
+      inventoryBody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error(err);
+    inventoryBody.innerHTML =
+      `<tr><td colspan="7">Failed to load inventory</td></tr>`;
+  }
+}
+
+/* ================= MODAL ================= */
+function openProductModal() {
+  productModal.style.display = "flex";
+}
+
+function closeProductModal() {
+  productModal.style.display = "none";
+}
+
+/* ================= SAVE PRODUCT (NO CORS PREFLIGHT) ================= */
 async function saveProduct() {
   const payload = {
     action: "addBreweryProduct",
     product: prodName.value.trim(),
     lifecycle: prodLifecycle.value,
-    halfKegQty: +halfQty.value || 0,
-    halfKegPrice: +halfPrice.value || 0,
-    sixthKegQty: +sixthQty.value || 0,
-    sixthKegPrice: +sixthPrice.value || 0,
-    caseQty: +caseQty.value || 0,
-    casePrice: +casePrice.value || 0
+    halfKegQty: halfQty.value || "",
+    halfKegPrice: halfPrice.value || "",
+    sixthKegQty: sixthQty.value || "",
+    sixthKegPrice: sixthPrice.value || "",
+    caseQty: caseQty.value || "",
+    casePrice: casePrice.value || ""
   };
 
   if (!payload.product || !payload.lifecycle) {
@@ -229,62 +273,29 @@ async function saveProduct() {
     .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(payload[k]))
     .join("&");
 
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: formBody
-  });
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formBody
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (data.success) {
+    if (!data.success) {
+      alert(data.error || "Failed to save product");
+      return;
+    }
+
     closeProductModal();
     loadInventory();
-  } else {
-    alert(data.error || "Error saving product");
+  } catch (err) {
+    console.error(err);
+    alert("Network error saving product");
   }
-}
-
-/* ============ MODAL ============ */
-function openProductModal() {
-  productModal.style.display = "flex";
-}
-
-function closeProductModal() {
-  productModal.style.display = "none";
-}
-
-/* ============ SAVE PRODUCT ============ */
-async function saveProduct() {
-  const payload = {
-    action: "addBreweryProduct",
-    product: prodName.value.trim(),
-    lifecycle: prodLifecycle.value,
-    halfKegQty: +halfQty.value || 0,
-    halfKegPrice: +halfPrice.value || 0,
-    sixthKegQty: +sixthQty.value || 0,
-    sixthKegPrice: +sixthPrice.value || 0,
-    caseQty: +caseQty.value || 0,
-    casePrice: +casePrice.value || 0
-  };
-
-  if (!payload.product || !payload.lifecycle) {
-    alert("Product name and lifecycle are required");
-    return;
-  }
-
-  await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  closeProductModal();
-  loadInventory();
 }
 </script>
+
 
 </body>
 </html>
