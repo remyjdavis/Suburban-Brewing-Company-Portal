@@ -307,11 +307,6 @@ function loadCustomers() {
 
 loadCustomers();
 
-  .catch(err => {
-    console.error("Customer load failed", err);
-  });
-
-
 /* ===== HELPERS ===== */
 function clearAutocomplete() {
   autocompleteBox.innerHTML = "";
@@ -1095,6 +1090,11 @@ function validateInvoiceBeforeSave(payload) {
       alert("Add at least one product.");
       return;
     }
+if (!customerState.name && nameInput.value.trim()) {
+  customerState.name = nameInput.value.trim();
+  customerState.address =
+    document.getElementById("customerAddress").value || "";
+}
 
     /* BUILD PAYLOAD */
 const payload = {
@@ -1205,8 +1205,7 @@ async function preloadLogoBase64() {
 </script>
 
   <style>
-/* ================= PRINT STYLES ================= */
-/* ================= PRINT STYLES ================= */
+
 /* ================= PRINT STYLES ================= */
 @media print {
 
