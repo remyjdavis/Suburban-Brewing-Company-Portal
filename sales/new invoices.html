@@ -44,8 +44,9 @@ let cachedLogoBase64 = null;
 }
 
 .company-info {
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.25;
+  max-width: 260px;
 }
 
 .invoice-meta {
@@ -123,6 +124,8 @@ let cachedLogoBase64 = null;
   <div class="meta-row">
     <label>Date:</label>
     <span id="printInvoiceDate"></span>
+    <input type="hidden" id="invoiceNumber">
+<input type="hidden" id="invoiceDateValue">
   </div>
 
   <div class="meta-row">
@@ -133,14 +136,6 @@ let cachedLogoBase64 = null;
   <canvas id="barcodeCanvas"></canvas>
 </div>
 
-    <div class="meta-row">
-      <label>Invoice #:</label>
-      <input id="invoiceNumber" type="text">
-    </div>
-
-    <canvas id="barcodeCanvas"></canvas>
-  </div>
-
   <!-- MUST be here -->
   <div class="invoice-title">INVOICE</div>
 </header>
@@ -150,14 +145,15 @@ let cachedLogoBase64 = null;
 /* ===== HEADER LOGIC ONLY (FINAL) ===== */
 (function(){
   const invoiceNumber = document.getElementById("invoiceNumber");
-  const invoiceDate = document.getElementById("invoiceDate");
   const invoiceDateValue = document.getElementById("invoiceDateValue");
 
   invoiceNumber.value = "INV-" + Date.now();
-  
+
   const today = new Date().toISOString().split("T")[0];
-  invoiceDate.value = today;
   invoiceDateValue.value = today;
+
+  document.getElementById("printInvoiceDate").textContent = today;
+  document.getElementById("printInvoiceNumber").textContent = invoiceNumber.value;
 
   function refreshBarcode(){
     if (!window.JsBarcode) return;
@@ -1210,8 +1206,8 @@ async function preloadLogoBase64() {
     text-align: right;
   }
 .company-block img {
-  width: 90px !important;
-  height: auto !important;
+  width: 75px !important;
+  height: 75px !important;
 }
 
   /* Hide interactive UI */
@@ -1284,6 +1280,12 @@ if (barcode) {
   barcode.style.width = "220px";
   barcode.style.height = "60px";
 }
+  // INVOICE META (RUN ONCE)
+  document.getElementById("printInvoiceDate").textContent =
+    document.getElementById("invoiceDateValue").value;
+
+  document.getElementById("printInvoiceNumber").textContent =
+    document.getElementById("invoiceNumber").value;
 
   // CUSTOMER PRINT
   document.getElementById("printCustomerName").textContent =
