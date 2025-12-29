@@ -333,6 +333,7 @@ function openProductModal() {
 function closeProductModal() {
   productModal.style.display = "none";
 }
+</script>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
@@ -361,9 +362,17 @@ async function saveProduct() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      action: "addProduct",
-      payload
-    })
+  action: "addBreweryProduct",
+  product: prodName.value.trim(),
+  lifecycle: prodLifecycle.value,
+  halfKegQty: +halfQty.value || 0,
+  halfKegPrice: +halfPrice.value || 0,
+  sixthKegQty: +sixthQty.value || 0,
+  sixthKegPrice: +sixthPrice.value || 0,
+  caseQty: +caseQty.value || 0,
+  casePrice: +casePrice.value || 0
+})
+
   });
 
   const data = await res.json();
