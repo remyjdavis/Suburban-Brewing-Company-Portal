@@ -222,16 +222,17 @@ async function loadInventory() {
     data.forEach(item => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${item.product}</td>
-        <td>${item.package}</td>
-        <td>${item.lifecycle || ""}</td>
-        <td>${item.qty}</td>
-        <td>${item.unit || ""}</td>
-        <td class="${item.status === "Low" ? "low" : "ok"}">
-          ${item.status || ""}
-        </td>
-        <td></td>
-      `;
+  <td>${item.product}</td>
+  <td>${item.type}</td>
+  <td>${item.lifecycle || ""}</td>
+  <td>${item.qty}</td>
+  <td>${item.unit || ""}</td>
+  <td class="${item.status === "Low" ? "low" : "ok"}">
+    ${item.status || ""}
+  </td>
+  <td></td>
+`;
+
       inventoryBody.appendChild(tr);
     });
   } catch (err) {
