@@ -1081,27 +1081,21 @@ function validateInvoiceBeforeSave(payload) {
   return errors;
 }
 
-  async function saveInvoice() {
-  try {
-    if (invoiceSaved) {
-      alert("Invoice already saved.");
-      return;
-    }
+  const nameInput = document.getElementById("customerName");
 
-    const nameInput = document.getElementById("customerName");
+if (!customerState.name && nameInput.value.trim()) {
+  customerState.name = nameInput.value.trim();
+  customerState.address =
+    document.getElementById("customerAddress").value || "";
+}
 
-    if (!customerState.name && nameInput.value.trim()) {
-      customerState.name = nameInput.value.trim();
-      customerState.address =
-        document.getElementById("customerAddress").value || "";
-    }
+if (!customerState.name) {
+  alert("Select a customer first.");
+  return;
+}
 
-    if (!customerState.name) {
-      alert("Select a customer first.");
-      return;
-    }
-
-    await new Promise(r => setTimeout(r, 100)); // 👈 REQUIRED
+// barcode / DOM race guard
+await new Promise(r => setTimeout(r, 100));
 
     /* BUILD PAYLOAD */
 const payload = {
