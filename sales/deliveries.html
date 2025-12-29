@@ -1,85 +1,242 @@
 <!DOCTYPE html>
-<textarea id="deliveryNotes" style="width:100%; height:80px;"></textarea>
+<html lang="en">
+<head>
+  <!-- ======================================================
+       BASIC META
+  ======================================================= -->
+  <meta charset="UTF-8" />
+  <title>Deliveries | Suburban Brewing Company</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<div style="margin-top:16px;">
-<button onclick="markDelivered()">Mark Delivered</button>
-<button class="secondary" onclick="cancelDelivery()">Cancel</button>
-</div>
-</div>
+  <!-- ======================================================
+       STYLES
+  ======================================================= -->
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+    }
 
-</section>
-</div>
-</div>
+    header {
+      background: #0f766e;
+      color: white;
+      padding: 16px 24px;
+      font-size: 20px;
+      font-weight: 600;
+    }
 
+    main {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+      padding: 20px;
+    }
+
+    .section h2 {
+      margin: 0 0 16px;
+      font-size: 18px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: #f1f5f9;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    th {
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background: #f9fafb;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-deliver {
+      background: #16a34a;
+      color: white;
+    }
+
+    .btn-deliver:hover {
+      background: #15803d;
+    }
+
+    .status {
+      font-weight: 600;
+      color: #b45309;
+    }
+
+    .loading,
+    .empty {
+      padding: 24px;
+      text-align: center;
+      color: #6b7280;
+      font-size: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ======================================================
+     HEADER
+======================================================= -->
+<header>
+  Suburban Brewing Company — Deliveries
+</header>
+
+<main>
+
+  <!-- ======================================================
+       OPEN DELIVERIES SECTION
+  ======================================================= -->
+  <div class="section">
+    <h2>Open Deliveries</h2>
+
+    <div id="loading" class="loading">
+      Loading undelivered invoices…
+    </div>
+
+    <div id="empty" class="empty" style="display:none;">
+      No undelivered invoices 🎉
+    </div>
+
+    <table id="deliveryTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="deliveryBody">
+        <!-- Rows injected here -->
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<!-- ======================================================
+     JAVASCRIPT
+======================================================= -->
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+  /*********************************************************
+   * CONFIG
+   *********************************************************/
+  const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 
-let selectedInvoice = null;
+  /*********************************************************
+   * PAGE LOAD
+   *********************************************************/
+  document.addEventListener("DOMContentLoaded", () => {
+    loadOpenDeliveries();
+  });
 
-function loadOpenInvoices() {
-const cb = "cb_deliveries_" + Date.now();
+  /*********************************************************
+   * LOAD OPEN DELIVERIES
+   *********************************************************/
+  async function loadOpenDeliveries() {
+    try {
+      const res = await fetch(`${API_URL}?action=getOpenDeliveries`);
+      const data = await res.json();
 
-window[cb] = function (data) {
-delete window[cb];
-script.remove();
+      document.getElementById("loading").style.display = "none";
 
-const tbody = document.getElementById("deliveryBody");
-tbody.innerHTML = "";
+      if (!data || data.length === 0) {
+        document.getElementById("empty").style.display = "block";
+        return;
+      }
 
-if (!data.length) {
-tbody.innerHTML = "<tr><td colspan='5'>No open deliveries.</td></tr>";
-return;
-}
+      document.getElementById("deliveryTable").style.display = "table";
 
-data.forEach(inv => {
-const tr = document.createElement("tr");
-tr.innerHTML = `
-<td>${inv.invoiceNumber}</td>
-<td>${inv.date}</td>
-<td>${inv.customer}</td>
-<td>$${Number(inv.total).toFixed(2)}</td>
-<td><button onclick="selectDelivery('${inv.invoiceNumber}')">Deliver</button></td>
-`;
-tbody.appendChild(tr);
-});
-};
+      const tbody = document.getElementById("deliveryBody");
+      tbody.innerHTML = "";
 
-const script = document.createElement("script");
-script.src = `${API_URL}?action=getOpenDeliveries&callback=${cb}`;
-document.body.appendChild(script);
-}
+      data.forEach(inv => {
+        const tr = document.createElement("tr");
 
-function selectDelivery(invNum) {
-selectedInvoice = invNum;
-document.getElementById("dInvoice").textContent = invNum;
-document.getElementById("deliveryDate").valueAsDate = new Date();
-document.getElementById("deliveryPanel").style.display = "block";
-}
+        tr.innerHTML = `
+          <td>${inv.invoiceNumber}</td>
+          <td>${inv.date}</td>
+          <td>${inv.customer}</td>
+          <td>$${Number(inv.total).toFixed(2)}</td>
+          <td class="status">${inv.status}</td>
+          <td>
+            <button class="btn btn-deliver"
+              onclick="markDelivered('${inv.invoiceNumber}')">
+              Mark Delivered
+            </button>
+          </td>
+        `;
 
-function cancelDelivery() {
-selectedInvoice = null;
-document.getElementById("deliveryPanel").style.display = "none";
-}
+        tbody.appendChild(tr);
+      });
 
-async function markDelivered() {
-if (!selectedInvoice) return;
+    } catch (err) {
+      console.error("Failed to load deliveries:", err);
+      document.getElementById("loading").innerText =
+        "Error loading deliveries.";
+    }
+  }
 
-await fetch(API_URL, {
-method: "POST",
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify({
-action: "markDelivered",
-invoiceNumber: selectedInvoice,
-deliveryDate: document.getElementById("deliveryDate").value,
-notes: document.getElementById("deliveryNotes").value
-})
-});
+  /*********************************************************
+   * MARK DELIVERED
+   *********************************************************/
+  async function markDelivered(invoiceNumber) {
+    if (!confirm(`Mark invoice ${invoiceNumber} as delivered?`)) return;
 
-cancelDelivery();
-loadOpenInvoices();
-}
+    try {
+      await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "markDelivered",
+          invoiceNumber
+        })
+      });
 
-loadOpenInvoices();
+      // Reload list after update
+      document.getElementById("deliveryTable").style.display = "none";
+      document.getElementById("loading").style.display = "block";
+      loadOpenDeliveries();
+
+    } catch (err) {
+      alert("Failed to mark delivered.");
+      console.error(err);
+    }
+  }
 </script>
+
 </body>
 </html>
