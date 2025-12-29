@@ -223,7 +223,9 @@ async function loadInventory() {
 
   inventoryBody.innerHTML = "";
 
-  inventory.forEach(i => {
+inventory
+  .filter(i => i.product && i.product.toString().trim() !== "")
+  .forEach(i => {
     const lifecycle = lifecycleMap[`${i.product}|${i.package}`] || "Core";
 
     let status = "OK";
@@ -251,6 +253,7 @@ async function loadInventory() {
       </tr>
     `;
   });
+
 }
 
 /* ============ MODAL ============ */
