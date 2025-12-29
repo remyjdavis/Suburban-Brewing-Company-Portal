@@ -101,12 +101,13 @@ let lastGeneratedPdfId = null;
 
 <header class="invoice-header">
   <div class="company-block">
-    <img
-  src="https://raw.githubusercontent.com/remyjdavis/remyjdavis.github.io/main/background.jpg"
-  crossorigin="anonymous"
+   <img
+  id="logoImg"
+  src="background.jpg"
   alt="Suburban Brewing Company Logo"
-  onerror="this.style.display='none'"
 >
+
+
     <div class="company-info">
       <strong>Suburban Brewing Company</strong><br>
       Address: 3041 Horseshoe Pike Suite 120 & 130<br>
@@ -510,8 +511,16 @@ function saveNewCustomer() {
 
 <script>
 function getLogoBase64() {
-  const img = document.querySelector(".company-block img");
-  if (!img || !img.complete) return null;
+  const img = document.getElementById("logoImg");
+  if (!img) {
+    console.error("Logo img not found");
+    return null;
+  }
+
+  if (!img.complete || img.naturalWidth === 0) {
+    console.error("Logo not loaded yet");
+    return null;
+  }
 
   const canvas = document.createElement("canvas");
   canvas.width = img.naturalWidth;
