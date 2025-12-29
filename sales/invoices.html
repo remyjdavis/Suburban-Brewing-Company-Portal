@@ -130,6 +130,14 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXl
 
 let debounceTimer = null;
 let selectedInvoice = null;
+let invoiceHistory = [];
+// DOM ELEMENTS (REQUIRED – DO NOT REMOVE)
+const customerName  = document.getElementById("customerName");
+const historyBody   = document.getElementById("historyBody");
+const invoiceNumber = document.getElementById("invoiceNumber");
+const invoiceDate   = document.getElementById("invoiceDate");
+const previewPanel  = document.getElementById("previewPanel");
+const previewContent = document.getElementById("previewContent");
 
 /* ---------------- LOAD INVOICES ---------------- */
 function debouncedLoadInvoices() {
@@ -146,61 +154,94 @@ async function loadInvoices() {
     return;
   }
 
-  const res = await fetch(`${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`);
+  const res = await fetch(
+    `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`
+  );
   const invoices = await res.json();
 
-  if (!invoices.length) {
+  invoiceHistory = Array.isArray(invoices) ? invoices : [];
+
+  if (!invoiceHistory.length) {
     historyBody.innerHTML = `<tr><td colspan="4">No invoices found.</td></tr>`;
     return;
   }
 
-  invoices.forEach(inv => {
+  invoiceHistory.forEach(inv => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${inv.invoiceNumber}</td>
       <td>${inv.date}</td>
       <td>$${Number(inv.total).toFixed(2)}</td>
-      <td><button onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button></td>
+      <td>
+        <button onclick="selectInvoice('${inv.invoiceNumber}', this)">
+          Load
+        </button>
+      </td>
     `;
     historyBody.appendChild(tr);
   });
 }
 
-/* ---------------- SELECT INVOICE ---------------- */
 async function selectInvoice(invNum, btn) {
-  document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
+  selectedInvoice = invoiceHistory.find(i => i.invoiceNumber === invNum);
+  if (!selectedInvoice) return;
+
+  document.querySelectorAll("#historyBody tr").forEach(r =>
+    r.classList.remove("selected")
+  );
   btn.closest("tr").classList.add("selected");
 
-  const headerRes = await fetch(`${API_URL}?action=getInvoiceHeader&invoiceNumber=${encodeURIComponent(invNum)}`);
-  const header = await headerRes.json();
+  invoiceNumber.value = selectedInvoice.invoiceNumber || "";
+invoiceDate.value = selectedInvoice.date || "";
 
-  const itemsRes = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`);
-  const items = await itemsRes.json();
-
-  selectedInvoice = { header, items };
-
-  invoiceNumber.value = header.invoiceNumber;
-  invoiceDate.value = header.date;
+  try {
+    const res = await fetch(
+      `${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`
+    );
+    const items = await res.json();
+    selectedInvoice.items = Array.isArray(items) ? items : [];
+  } catch (err) {
+    console.error("Invoice item load failed", err);
+    selectedInvoice.items = [];
+  }
 
   renderPreview();
 }
 
 /* ---------------- PREVIEW ---------------- */
 function renderPreview() {
-  previewContent.innerHTML = `
-    <strong>Customer:</strong> ${selectedInvoice.header.customer.name}<br>
-    <strong>Address:</strong> ${selectedInvoice.header.customer.address}<br>
-    <strong>Total:</strong> $${Number(selectedInvoice.header.total).toFixed(2)}<br><br>
-    <strong>Items:</strong><br>
-    ${selectedInvoice.items.map(i => `${i.qty} × ${i.product} ($${i.price})`).join("<br>")}
-  `;
-  previewPanel.style.display = "block";
-}
+  if (!selectedInvoice) return;
 
+  const panel = document.getElementById("previewPanel");
+  const content = document.getElementById("previewContent");
+
+  const itemsHtml = selectedInvoice.items.length
+    ? selectedInvoice.items.map(item => `
+        <div style="margin-bottom:6px;">
+         ${item.qty || 0} × <strong>${item.product || "Unknown Product"}</strong>
+(${item.type || "N/A"}) — $${Number(item.lineTotal || 0).toFixed(2)}
+        </div>
+      `).join("")
+    : "<em>No line items found.</em>";
+
+  content.innerHTML = `
+    <strong>Invoice #:</strong> ${selectedInvoice.invoiceNumber}<br>
+    <strong>Date:</strong> ${selectedInvoice.date}<br>
+    <strong>Status:</strong> Delivered<br>
+    <strong>Total:</strong> $${Number(selectedInvoice.total).toFixed(2)}<br><br>
+
+    <strong>Items:</strong><br>
+    ${itemsHtml}
+  `;
+
+  panel.style.display = "block";
+}
 /* ---------------- EDIT ---------------- */
 function editInvoice() {
   if (!selectedInvoice) return alert("Select an invoice first.");
-  location.href = `new invoices.html?invoice=${encodeURIComponent(selectedInvoice.header.invoiceNumber)}`;
+  location.href = `new invoices.html?invoice=${encodeURIComponent(
+    selectedInvoice.invoiceNumber
+  )}`;
 }
 
 /* ---------------- CLEAR ---------------- */
@@ -209,8 +250,10 @@ function clearSelection() {
   invoiceNumber.value = "";
   invoiceDate.value = "";
   previewPanel.style.display = "none";
+previewContent.innerHTML = "";
 }
 </script>
+
 
 </body>
 </html>
