@@ -287,16 +287,21 @@ function renderPreview() {
         </div>
       `).join("")
     : "<em>No line items found.</em>";
+const deliveryStatus =
+  selectedInvoice.status &&
+  String(selectedInvoice.status).trim() === "Delivered"
+    ? "Delivered"
+    : "Undelivered";
 
-  content.innerHTML = `
-    <strong>Invoice #:</strong> ${selectedInvoice.invoiceNumber}<br>
-    <strong>Date:</strong> ${selectedInvoice.date}<br>
-    <strong>Status:</strong> Delivered<br>
-    <strong>Total:</strong> $${Number(selectedInvoice.total).toFixed(2)}<br><br>
+  ccontent.innerHTML = `
+  <strong>Invoice #:</strong> ${selectedInvoice.invoiceNumber}<br>
+  <strong>Date:</strong> ${selectedInvoice.date}<br>
+  <strong>Status:</strong> ${deliveryStatus}<br>
+  <strong>Total:</strong> $${Number(selectedInvoice.total).toFixed(2)}<br><br>
 
-    <strong>Items:</strong><br>
-    ${itemsHtml}
-  `;
+  <strong>Items:</strong><br>
+  ${itemsHtml}
+`;
 
   panel.style.display = "block";
 }
