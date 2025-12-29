@@ -65,6 +65,11 @@ tr.selected { background:#eff6ff; }
 </header>
 
 <section class="content">
+<div style="margin-bottom:16px;">
+  <button onclick="location.href='new invoices.html'">
+    Create New Invoice
+  </button>
+</div>
 
 <!-- ======================================================
      SEARCH CUSTOMER
@@ -212,25 +217,36 @@ async function selectInvoice(invNum, btn) {
 invoiceDate.value = selectedInvoice.date || "";
 
   try {
-    await new Promise(resolve => {
-  const cb = "cb_items_" + Date.now();
+  await new Promise(resolve => {
+    const cb = "cb_items_" + Date.now();
 
-  window[cb] = function (items) {
-    selectedInvoice.items = Array.isArray(items) ? items : [];
-    delete window[cb];
-    script.remove();
-    resolve();
-  };
+    window[cb] = function (items) {
+      selectedInvoice.items = (Array.isArray(items) ? items : []).map(i => ({
+        qty: i.qty ?? i.quantity ?? 0,
+        product: i.product ?? i.productName ?? "",
+        type: i.type ?? i.productType ?? "",
+        lineTotal: Number(i.lineTotal ?? i.total ?? 0)
+      }));
 
-  const script = document.createElement("script");
-  script.src =
-    `${API_URL}?action=getInvoiceItems` +
-    `&invoiceNumber=${encodeURIComponent(invNum)}` +
-    `&callback=${cb}`;
+      delete window[cb];
+      script.remove();
+      resolve();
+    };
 
-  document.body.appendChild(script);
-});
+    const script = document.createElement("script");
+    script.src =
+      `${API_URL}?action=getInvoiceItems` +
+      `&invoiceNumber=${encodeURIComponent(invNum)}` +
+      `&callback=${cb}`;
 
+    document.body.appendChild(script);
+  });
+
+  renderPreview();
+
+} catch (err) {
+  console.error("Failed to load invoice items", err);
+  selectedInvoice.items = [];
   renderPreview();
 }
 
