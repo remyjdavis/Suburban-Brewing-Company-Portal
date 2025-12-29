@@ -334,13 +334,16 @@ function closeProductModal() {
   productModal.style.display = "none";
 }
 
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+
 /* ======================================================
-   SAVE PRODUCT (UI ONLY)
+   SAVE PRODUCT (BACKEND CONNECTED)
 ====================================================== */
-function saveProduct() {
-  const product = {
-    name: prodName.value,
-    type: prodType.value,
+async function saveProduct() {
+  const payload = {
+    name: prodName.value.trim(),
+    type: prodType.value.trim(),
     lifecycle: prodLifecycle.value,
     packages: {
       half: { qty:+halfQty.value||0, price:+halfPrice.value||0 },
@@ -349,11 +352,32 @@ function saveProduct() {
     }
   };
 
-  console.log("NEW PRODUCT:", product);
-  alert("Captured — backend wiring next");
-  closeProductModal();
+  if (!payload.name || !payload.lifecycle) {
+    alert("Product name and lifecycle are required");
+    return;
+  }
+
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "addProduct",
+      payload
+    })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    alert("Product added successfully");
+    closeProductModal();
+    location.reload(); // temp refresh until live load
+  } else {
+    alert("Error saving product");
+  }
 }
 </script>
+
 
 </body>
 </html>
