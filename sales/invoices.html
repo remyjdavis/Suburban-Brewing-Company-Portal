@@ -21,7 +21,9 @@ body { margin:0; background:#f4f6f8; color:#1f2937; }
 .content { padding:24px; }
 .section { background:#fff; border-radius:8px; padding:20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
 h2 { margin-top:0; font-size:16px; font-weight:600; }
-
+<button onclick="location.href='new invoices.html'">
+  Create New Invoice
+</button>
 .form-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
 label { font-size:12px; font-weight:600; margin-bottom:4px; display:block; }
 input { width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; }
@@ -142,44 +144,59 @@ const previewContent = document.getElementById("previewContent");
 /* ---------------- LOAD INVOICES ---------------- */
 function debouncedLoadInvoices() {
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(loadInvoices, 300);
+  debounceTimer = setTimeout(() => {
+    const name = customerName.value.trim();
+    if (name.length < 2) return;
+    loadInvoices(name);
+  }, 300);
 }
+function loadInvoices(customer) {
+  historyBody.innerHTML =
+    "<tr><td colspan='4'>Loading invoices...</td></tr>";
 
-async function loadInvoices() {
-  const customer = customerName.value.trim();
-  historyBody.innerHTML = "";
+  const cb = "cb_" + Date.now();
 
-  if (!customer) {
-    historyBody.innerHTML = `<tr><td colspan="4">Enter a customer name.</td></tr>`;
-    return;
-  }
+  window[cb] = function (data) {
+    delete window[cb];
+    script.remove();
 
-  const res = await fetch(
-    `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`
-  );
-  const invoices = await res.json();
+    invoiceHistory = Array.isArray(data) ? data : [];
+    historyBody.innerHTML = "";
 
-  invoiceHistory = Array.isArray(invoices) ? invoices : [];
+    if (!invoiceHistory.length) {
+      historyBody.innerHTML =
+        "<tr><td colspan='4'>No invoices found.</td></tr>";
+      return;
+    }
 
-  if (!invoiceHistory.length) {
-    historyBody.innerHTML = `<tr><td colspan="4">No invoices found.</td></tr>`;
-    return;
-  }
+    invoiceHistory.forEach(inv => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${inv.invoiceNumber}</td>
+        <td>${inv.date}</td>
+        <td>$${Number(inv.total).toFixed(2)}</td>
+        <td>
+          <button onclick="selectInvoice('${inv.invoiceNumber}', this)">
+            Load
+          </button>
+        </td>
+      `;
+      historyBody.appendChild(tr);
+    });
+  };
 
-  invoiceHistory.forEach(inv => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${inv.invoiceNumber}</td>
-      <td>${inv.date}</td>
-      <td>$${Number(inv.total).toFixed(2)}</td>
-      <td>
-        <button onclick="selectInvoice('${inv.invoiceNumber}', this)">
-          Load
-        </button>
-      </td>
-    `;
-    historyBody.appendChild(tr);
-  });
+  const script = document.createElement("script");
+  script.src =
+    `${API_URL}?action=getInvoicesByCustomer` +
+    `&customer=${encodeURIComponent(customer)}` +
+    `&callback=${cb}`;
+
+  script.onerror = () => {
+    historyBody.innerHTML =
+      "<tr><td colspan='4'>Failed to load invoices.</td></tr>";
+  };
+
+  document.body.appendChild(script);
 }
 
 async function selectInvoice(invNum, btn) {
@@ -195,15 +212,24 @@ async function selectInvoice(invNum, btn) {
 invoiceDate.value = selectedInvoice.date || "";
 
   try {
-    const res = await fetch(
-      `${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`
-    );
-    const items = await res.json();
+    await new Promise(resolve => {
+  const cb = "cb_items_" + Date.now();
+
+  window[cb] = function (items) {
     selectedInvoice.items = Array.isArray(items) ? items : [];
-  } catch (err) {
-    console.error("Invoice item load failed", err);
-    selectedInvoice.items = [];
-  }
+    delete window[cb];
+    script.remove();
+    resolve();
+  };
+
+  const script = document.createElement("script");
+  script.src =
+    `${API_URL}?action=getInvoiceItems` +
+    `&invoiceNumber=${encodeURIComponent(invNum)}` +
+    `&callback=${cb}`;
+
+  document.body.appendChild(script);
+});
 
   renderPreview();
 }
