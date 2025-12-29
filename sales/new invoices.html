@@ -101,10 +101,12 @@ let lastGeneratedPdfId = null;
 
 <header class="invoice-header">
   <div class="company-block">
-    <img src="background.jpg"
-         alt="Suburban Brewing Company Logo"
-         onerror="this.style.display='none'">
-
+    <img
+  src="https://raw.githubusercontent.com/remyjdavis/remyjdavis.github.io/main/background.jpg"
+  crossorigin="anonymous"
+  alt="Suburban Brewing Company Logo"
+  onerror="this.style.display='none'"
+>
     <div class="company-info">
       <strong>Suburban Brewing Company</strong><br>
       Address: 3041 Horseshoe Pike Suite 120 & 130<br>
@@ -483,15 +485,13 @@ function saveNewCustomer() {
   };
 
   fetch(API_URL, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    action: "addCustomer",
-    payload
-  })
-});
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "addCustomer",
+      payload
+    })
+  });
 
   const normalized = {
     name: payload.name,
@@ -506,8 +506,24 @@ function saveNewCustomer() {
   updatePaymentFooter();
   closeNewCustomerModal();
 }
+</script>   <!-- ✅ THIS WAS MISSING -->
 
+<script>
+function getLogoBase64() {
+  const img = document.querySelector(".company-block img");
+  if (!img || !img.complete) return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  return canvas.toDataURL("image/png");
+}
 </script>
+
 <!-- =============== END NEW CUSTOMER MODAL =============== -->
 <!-- ================= PRODUCT SECTION ================= -->
 <style>
@@ -1019,8 +1035,7 @@ async function saveInvoice() {
 const payload = {
   invoiceNumber: document.getElementById("invoiceNumber").value,
   date: document.getElementById("invoiceDateValue").value,
-
-  barcodeBase64: getBarcodeBase64(), // ✅ FIXED
+logoBase64: getLogoBase64(),
 
   customer: {
     name: customerState.name,
