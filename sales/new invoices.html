@@ -490,11 +490,11 @@ document.getElementById("customerName").addEventListener("keydown", e => {
 /* Save new customer */
 async function saveNewCustomer() {
   const payload = {
-    name: document.getElementById("newCustomerName").value.trim(),
-    address: document.getElementById("newCustomerAddress").value.trim(),
-    type: document.getElementById("newCustomerType").value,
-    payment: document.getElementById("newCustomerPayment").value,
-    email: document.getElementById("newCustomerEmail").value.trim()
+    name: document.getElementById("newCustName").value.trim(),
+    address: document.getElementById("newCustAddress").value.trim(),
+    type: document.getElementById("newCustType").value,
+    payment: document.getElementById("newCustPayment").value,
+    email: document.getElementById("newCustEmail").value.trim()
   };
 
   if (!payload.name) {
@@ -502,7 +502,7 @@ async function saveNewCustomer() {
     return;
   }
 
-  await fetch(`${API_URL}?action=addCustomer`, {
+  await fetch(API_URL + "?action=addCustomer", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -511,11 +511,18 @@ async function saveNewCustomer() {
     })
   });
 
-  closeNewCustomerModal();
+  const normalized = {
+    name: payload.name,
+    address: payload.address,
+    type: payload.type,
+    payment: payload.payment,
+    email: payload.email
+  };
 
-  customerState = { ...payload, isNew: false };
-  document.getElementById("customerName").value = payload.name;
-  document.getElementById("customerAddress").value = payload.address;
+  customers.push(normalized);
+  selectCustomer(normalized);
+  updatePaymentFooter();
+  closeNewCustomerModal();
 }
 
 </script>   <!-- ✅ THIS WAS MISSING -->
