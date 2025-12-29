@@ -105,8 +105,8 @@ th, td {
 }
 
 th {
-  text-align: left;
   background: #f9fafb;
+  text-align: left;
 }
 
 .low {
@@ -195,6 +195,7 @@ button.small {
         <th>Product</th>
         <th>Type</th>
         <th>Package</th>
+        <th>Lifecycle</th>
         <th>On Hand</th>
         <th>Unit</th>
         <th>Status</th>
@@ -203,27 +204,10 @@ button.small {
     </thead>
     <tbody id="inventoryBody">
       <tr>
-        <td colspan="7">Loading inventory…</td>
+        <td colspan="8">Loading inventory…</td>
       </tr>
     </tbody>
   </table>
-</div>
-
-<!-- ======================================================
-     MANUAL ADJUSTMENT (FUTURE)
-====================================================== -->
-<div class="section">
-  <h2>Manual Inventory Adjustment</h2>
-  <p style="font-size:13px; color:#6b7280;">
-    Manual adjustments will be logged and restricted to admin users.
-  </p>
-
-  <button class="secondary" disabled>Add Inventory</button>
-  <button class="secondary" disabled>Remove Inventory</button>
-</div>
-
-</section>
-</div>
 </div>
 
 <!-- ======================================================
@@ -238,22 +222,28 @@ button.small {
   justify-content:center;
   z-index:999;
 ">
-  <div style="background:#fff; padding:20px; border-radius:8px; width:460px;">
+  <div style="background:#fff; padding:20px; border-radius:8px; width:480px;">
     <h3>Add Brewery Product</h3>
 
     <!-- BASIC INFO -->
     <div style="display:grid; gap:10px; margin-top:12px;">
-      <input id="prodName" placeholder="Product Name (IPA, Lager)" />
+      <input id="prodName" placeholder="Product Name" />
       <input id="prodType" placeholder="Type (Beer, Seltzer)" />
+      <select id="prodLifecycle">
+        <option value="">Select Lifecycle</option>
+        <option value="Core">Core</option>
+        <option value="Seasonal">Seasonal</option>
+        <option value="Rotating">Rotating</option>
+      </select>
     </div>
 
-    <!-- PACKAGE INVENTORY -->
+    <!-- PACKAGES -->
     <h4 style="margin:16px 0 8px;">Packages</h4>
 
     <div style="display:grid; gap:8px;">
       <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
         <strong>Package</strong>
-        <strong>Quantity</strong>
+        <strong>Qty</strong>
         <strong>Price</strong>
       </div>
 
@@ -290,13 +280,13 @@ button.small {
 const inventoryBody = document.getElementById("inventoryBody");
 
 /* ======================================================
-   MOCK INVENTORY LOAD (SAFE)
+   MOCK LOAD
 ====================================================== */
 document.addEventListener("DOMContentLoaded", () => {
   renderInventory([
-    { product:"IPA", type:"Beer", package:"1/2 Keg", qty:24, unit:"Kegs" },
-    { product:"IPA", type:"Beer", package:"1/6 Keg", qty:6, unit:"Kegs" },
-    { product:"Lager", type:"Beer", package:"Case", qty:120, unit:"Cans" }
+    { product:"IPA", type:"Beer", pkg:"1/2 Keg", lifecycle:"Core", qty:24, unit:"Kegs" },
+    { product:"IPA", type:"Beer", pkg:"1/6 Keg", lifecycle:"Seasonal", qty:0, unit:"Kegs" },
+    { product:"Lager", type:"Beer", pkg:"Case", lifecycle:"Rotating", qty:120, unit:"Cans" }
   ]);
 });
 
@@ -306,17 +296,26 @@ document.addEventListener("DOMContentLoaded", () => {
 function renderInventory(items) {
   inventoryBody.innerHTML = "";
 
-  items.forEach(item => {
-    const status = item.qty < 10 ? "Low" : "OK";
-    const cls = item.qty < 10 ? "low" : "ok";
+  items.forEach(i => {
+    let status = "OK";
+    let cls = "ok";
+
+    if (i.qty === 0 && i.lifecycle !== "Core") {
+      status = "Unavailable";
+      cls = "low";
+    } else if (i.qty < 10) {
+      status = "Low";
+      cls = "low";
+    }
 
     inventoryBody.innerHTML += `
       <tr>
-        <td>${item.product}</td>
-        <td>${item.type}</td>
-        <td>${item.package}</td>
-        <td>${item.qty}</td>
-        <td>${item.unit}</td>
+        <td>${i.product}</td>
+        <td>${i.type}</td>
+        <td>${i.pkg}</td>
+        <td>${i.lifecycle}</td>
+        <td>${i.qty}</td>
+        <td>${i.unit}</td>
         <td class="${cls}">${status}</td>
         <td><button class="small secondary" disabled>Adjust</button></td>
       </tr>
@@ -328,20 +327,21 @@ function renderInventory(items) {
    MODAL CONTROLS
 ====================================================== */
 function openProductModal() {
-  document.getElementById("productModal").style.display = "flex";
+  productModal.style.display = "flex";
 }
 
 function closeProductModal() {
-  document.getElementById("productModal").style.display = "none";
+  productModal.style.display = "none";
 }
 
 /* ======================================================
-   SAVE PRODUCT (UI ONLY FOR NOW)
+   SAVE PRODUCT (UI ONLY)
 ====================================================== */
 function saveProduct() {
   const product = {
-    name: prodName.value.trim(),
-    type: prodType.value.trim(),
+    name: prodName.value,
+    type: prodType.value,
+    lifecycle: prodLifecycle.value,
     packages: {
       half: { qty:+halfQty.value||0, price:+halfPrice.value||0 },
       sixth:{ qty:+sixthQty.value||0, price:+sixthPrice.value||0 },
@@ -350,7 +350,7 @@ function saveProduct() {
   };
 
   console.log("NEW PRODUCT:", product);
-  alert("Product captured — backend wiring next");
+  alert("Captured — backend wiring next");
   closeProductModal();
 }
 </script>
