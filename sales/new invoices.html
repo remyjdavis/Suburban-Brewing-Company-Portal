@@ -1181,13 +1181,16 @@ async function preloadLogoBase64() {
   <style>
 /* ================= PRINT STYLES ================= */
 @media print {
+  .invoice-header {
+    display: flex !important;
+    align-items: flex-start;
+  }
+
   .invoice-title {
-  position: static;
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  text-align: center;
-  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
   .type-text {
@@ -1199,12 +1202,6 @@ async function preloadLogoBase64() {
     min-width: 24px;
     text-align: right;
   }
-.invoice-header {
-  display: grid !important;
-  grid-template-columns: 110px 1fr 260px;
-  align-items: start;
-  column-gap: 16px;
-}
 .company-block img {
   width: 90px !important;
   height: auto !important;
@@ -1212,12 +1209,12 @@ async function preloadLogoBase64() {
 
   /* Hide interactive UI */
   button:not(.print-btn),
-  .autocomplete-box,
-  .autocomplete-list,
-  input:not([type="hidden"]),
-  select {
-    display: none !important;
-  }
+.autocomplete-box,
+.autocomplete-list,
+input:not([type="hidden"]):not(.qty-input):not(.product-search),
+select {
+  display: none !important;
+}
 
   body {
     margin: 0.5in;
@@ -1275,6 +1272,11 @@ async function preloadLogoBase64() {
 
 <script>
 window.onbeforeprint = () => {
+const barcode = document.getElementById("barcodeCanvas");
+if (barcode) {
+  barcode.style.width = "220px";
+  barcode.style.height = "60px";
+}
 
   // CUSTOMER PRINT
   document.getElementById("printCustomerName").textContent =
