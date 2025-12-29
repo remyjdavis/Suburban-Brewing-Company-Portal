@@ -1049,160 +1049,101 @@ function printInvoice() {
   window.print();
 }
 
-/******************************************************
- * SAVE INVOICE — FINAL (SHEETS + DRIVE PDF)
- ******************************************************/
-function isValidBase64Image(str) {
-  return (
-    typeof str === "string" &&
-    str.startsWith("data:image/") &&
-    str.length > 100
-  );
-}
+<script>
+async function saveInvoice() {
+  try {
+    const nameInput = document.getElementById("customerName");
 
-function validateInvoiceBeforeSave(payload) {
-  const errors = [];
+    if (!customerState.name && nameInput.value.trim()) {
+      customerState.name = nameInput.value.trim();
+      customerState.address =
+        document.getElementById("customerAddress").value || "";
+    }
 
-  if (!payload.invoiceNumber) errors.push("Invoice number missing");
-  if (!payload.date) errors.push("Invoice date missing");
+    if (!customerState.name) {
+      alert("Select a customer first.");
+      return;
+    }
 
-  if (!payload.customer?.name) errors.push("Customer not selected");
-  if (!payload.customer?.address) errors.push("Customer address missing");
+    // DOM / barcode race guard
+    await new Promise(r => setTimeout(r, 100));
 
-  if (!payload.items || payload.items.length === 0)
-    errors.push("No invoice items added");
+    const payload = {
+      invoiceNumber: document.getElementById("invoiceNumber").value,
+      date: document.getElementById("invoiceDateValue").value,
 
-  if (!isValidBase64Image(payload.logoBase64))
-    errors.push("Logo not loaded");
+      logoBase64: await preloadLogoBase64(),
+      barcodeBase64: getBarcodeBase64(),
 
-  if (!isValidBase64Image(payload.barcodeBase64))
-    errors.push("Barcode not generated");
+      customer: {
+        name: customerState.name,
+        address: customerState.address,
+        type: customerState.type,
+        payment: customerState.payment
+      },
 
-  return errors;
-}
+      items: invoiceLines.map(l => ({
+        product: l.product,
+        type: l.type,
+        qty: l.qty,
+        price: l.price
+      })),
 
-  const nameInput = document.getElementById("customerName");
+      subtotal: Number(
+        document.getElementById("subtotal").textContent.replace("$","")
+      ),
+      tax: Number(
+        document.getElementById("salesTax").textContent.replace("$","")
+      ),
+      discount: Number(
+        document.getElementById("discountInput").value || 0
+      ),
+      deposit: Number(
+        document.getElementById("depositInput").value || 0
+      ),
+      total: Number(
+        document.getElementById("grandTotal").textContent.replace("$","")
+      )
+    };
 
-if (!customerState.name && nameInput.value.trim()) {
-  customerState.name = nameInput.value.trim();
-  customerState.address =
-    document.getElementById("customerAddress").value || "";
-}
+    const validationErrors = validateInvoiceBeforeSave(payload);
+    if (validationErrors.length) {
+      alert(
+        "Invoice cannot be saved:\n\n" +
+        validationErrors.map(e => "• " + e).join("\n")
+      );
+      return;
+    }
 
-if (!customerState.name) {
-  alert("Select a customer first.");
-  return;
-}
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-// barcode / DOM race guard
-await new Promise(r => setTimeout(r, 100));
+    const result = await res.json();
 
-    /* BUILD PAYLOAD */
-const payload = {
-  invoiceNumber: document.getElementById("invoiceNumber").value,
-  date: document.getElementById("invoiceDateValue").value,
+    if (!result.success) {
+      console.error(result);
+      alert("Invoice saved, but PDF failed ❌");
+      return;
+    }
 
-  logoBase64: await preloadLogoBase64(),
-  barcodeBase64: getBarcodeBase64(),
+    invoiceSaved = true;
+    invoicePdfGenerated = true;
 
-  customer: {
-    name: customerState.name,
-    address: customerState.address,
-    type: customerState.type,
-    payment: customerState.payment
-  },
+    lockInvoiceAfterSave();
 
-  items: invoiceLines.map(l => ({
-    product: l.product,
-    type: l.type,
-    qty: l.qty,
-    price: l.price
-  })),
+    console.log("PDF File ID:", result.fileId);
+    console.log("PDF URL:", result.fileUrl);
 
-  subtotal: Number(
-    document.getElementById("subtotal").textContent.replace("$","")
-  ),
-  tax: Number(
-    document.getElementById("salesTax").textContent.replace("$","")
-  ),
-  discount: Number(
-    document.getElementById("discountInput").value || 0
-  ),
-  deposit: Number(
-    document.getElementById("depositInput").value || 0
-  ),
-  total: Number(
-    document.getElementById("grandTotal").textContent.replace("$","")
-  )
-};
-const validationErrors = validateInvoiceBeforeSave(payload);
-
-if (validationErrors.length > 0) {
-  alert(
-    "Invoice cannot be saved:\n\n" +
-    validationErrors.map(e => "• " + e).join("\n")
-  );
-  return;
-}
-
-    /* SAVE TO SHEETS (NO-CORS — GAS SAFE) */
-const res = await fetch(API_URL, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    action: "saveInvoice",
-    payload
-  })
-});
-
-const result = await res.json();
-
-if (!result.success) {
-  console.error(result);
-  alert("Invoice saved, but PDF failed ❌");
-  return;
-}
-
-invoiceSaved = true;
-invoicePdfGenerated = true;
-
-lockInvoiceAfterSave();
-
-console.log("PDF File ID:", result.fileId);
-console.log("PDF URL:", result.fileUrl);
-
-alert("Invoice saved and PDF generated ✅");
+    alert("Invoice saved and PDF generated ✅");
 
   } catch (err) {
     console.error(err);
     alert("Save failed — see console");
   }
 }
-async function preloadLogoBase64() {
-  if (cachedLogoBase64) return cachedLogoBase64;
-
-  const img = document.getElementById("logoImg");
-
-  if (!img) throw new Error("Logo element missing");
-
-  if (!img.complete || img.naturalWidth === 0) {
-    await new Promise(resolve => {
-      img.onload = resolve;
-      img.onerror = resolve;
-    });
-  }
-
-  const canvas = document.createElement("canvas");
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0);
-
-  cachedLogoBase64 = canvas.toDataURL("image/png");
-  return cachedLogoBase64;
-}
-
 </script>
 
   <style>
