@@ -23,12 +23,14 @@ let cachedLogoBase64 = null;
 <!-- ================= HEADER SECTION ================= -->
 <style>
 .invoice-header {
-  position: relative;              /* REQUIRED */
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding-bottom: 28px;             /* space for barcode */
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 30px;
+  align-items: start;
+  padding-bottom: 28px;
 }
+
 
 .company-block {
   display: flex;
@@ -55,6 +57,7 @@ let cachedLogoBase64 = null;
   text-align: left;
   font-size: 14px;
   min-width: 260px;
+  grid-column: 2;
 }
 
 .meta-row {
@@ -1262,12 +1265,12 @@ async function preloadLogoBase64() {
 
   /* ===== BARCODE ===== */
   #barcodeCanvas {
-    grid-column: 1 / -1;
-    display: block !important;
-    margin: 0 auto;
-    width: 220px !important;
-    height: 60px !important;
-  }
+  grid-column: 2;
+  display: block !important;
+  margin: 6px 0 0 0;
+  width: 220px !important;
+  height: 60px !important;
+}
 
   /* ===== DIVIDER ===== */
   .header-divider {
