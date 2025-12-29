@@ -25,9 +25,7 @@ body {
   min-height: 100vh;
 }
 
-/* ======================================================
-   SIDEBAR
-====================================================== */
+/* SIDEBAR */
 .sidebar {
   width: 240px;
   background: #1f2937;
@@ -53,9 +51,7 @@ body {
   color: #fff;
 }
 
-/* ======================================================
-   MAIN LAYOUT
-====================================================== */
+/* MAIN */
 .main {
   flex: 1;
   display: flex;
@@ -72,9 +68,7 @@ body {
   padding: 24px;
 }
 
-/* ======================================================
-   SECTIONS
-====================================================== */
+/* SECTIONS */
 .section {
   background: #fff;
   border-radius: 8px;
@@ -86,42 +80,27 @@ body {
 h2 {
   margin-top: 0;
   font-size: 16px;
-  font-weight: 600;
 }
 
-/* ======================================================
-   TABLE
-====================================================== */
+/* TABLE */
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 12px;
 }
 
 th, td {
   padding: 10px;
   border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
 }
 
 th {
-  text-align: left;
   background: #f9fafb;
 }
 
-.low {
-  color: #b91c1c;
-  font-weight: 600;
-}
+.low { color: #b91c1c; font-weight: 600; }
+.ok { color: #065f46; font-weight: 600; }
 
-.ok {
-  color: #065f46;
-  font-weight: 600;
-}
-
-/* ======================================================
-   BUTTONS
-====================================================== */
+/* BUTTONS */
 button {
   padding: 8px 14px;
   border: none;
@@ -131,14 +110,8 @@ button {
   cursor: pointer;
 }
 
-button.secondary {
-  background: #6b7280;
-}
-
-button.small {
-  padding: 6px 10px;
-  font-size: 12px;
-}
+button.secondary { background: #6b7280; }
+button.small { padding: 6px 10px; font-size: 12px; }
 </style>
 </head>
 
@@ -146,32 +119,24 @@ button.small {
 
 <div class="layout">
 
-<!-- ======================================================
-     SIDEBAR
-====================================================== -->
+<!-- SIDEBAR -->
 <aside class="sidebar">
   <h2>Suburban Brewing</h2>
 
-  <!-- SALES -->
   <a class="nav-link" href="../sales/invoices.html">Invoices</a>
   <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
   <a class="nav-link" href="../sales/sampling.html">Sampling</a>
 
-  <!-- INVENTORY -->
   <a class="nav-link active" href="brewery-inventory.html">Brewery Inventory</a>
   <a class="nav-link" href="store-inventory.html">Store Inventory</a>
 
-  <div style="margin-top:32px; font-size:12px; opacity:0.6; padding-left:20px;">
+  <div style="margin-top:32px; font-size:12px; opacity:.6; padding-left:20px;">
     Back
   </div>
-
-  <!-- DASHBOARD -->
   <a class="nav-link" href="../index.html">Dashboard</a>
 </aside>
 
-<!-- ======================================================
-     MAIN
-====================================================== -->
+<!-- MAIN -->
 <div class="main">
 
 <header class="topbar">
@@ -180,14 +145,12 @@ button.small {
 
 <section class="content">
 
-<!-- ======================================================
-     INVENTORY OVERVIEW
-====================================================== -->
 <div class="section">
   <h2>Current Brewery Inventory</h2>
-<div style="margin-bottom:12px;">
-  <button onclick="openProductModal()">+ Add Product</button>
-</div>
+
+  <div style="margin-bottom:12px;">
+    <button onclick="openProductModal()">+ Add Product</button>
+  </div>
 
   <table>
     <thead>
@@ -202,129 +165,90 @@ button.small {
       </tr>
     </thead>
     <tbody id="inventoryBody">
-      <tr>
-        <td colspan="7">Loading inventory…</td>
-      </tr>
+      <tr><td colspan="7">Loading inventory…</td></tr>
     </tbody>
   </table>
-</div>
-
-<!-- ======================================================
-     MANUAL ADJUSTMENT (PLACEHOLDER)
-====================================================== -->
-<div class="section">
-  <h2>Manual Inventory Adjustment</h2>
-  <p style="font-size:13px; color:#6b7280;">
-    Manual adjustments will be logged and later restricted to admin users.
-  </p>
-
-  <div style="display:flex; gap:12px; flex-wrap:wrap;">
-    <button class="secondary" disabled>Add Inventory</button>
-    <button class="secondary" disabled>Remove Inventory</button>
-  </div>
 </div>
 
 </section>
 </div>
 </div>
 
-<!-- ======================================================
-     SCRIPT
-====================================================== -->
+<!-- SCRIPT -->
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
-
 const inventoryBody = document.getElementById("inventoryBody");
 
-/* ======================================================
-   LOAD INVENTORY (TEMP MOCK DATA)
-====================================================== */
+/* LOAD INVENTORY (TEMP MOCK) */
 document.addEventListener("DOMContentLoaded", () => {
-  loadInventory();
+  renderInventory([
+    { product: "IPA", type: "Beer", package: "Half Keg", qty: 24, unit: "Kegs" },
+    { product: "Lager", type: "Beer", package: "Sixth Keg", qty: 4, unit: "Kegs" }
+  ]);
 });
 
-function loadInventory() {
-  // TEMP MOCK DATA until backend sheet is wired
-  const data = [
-    { product: "IPA", type: "Beer", package: "Half Keg", qty: 24, unit: "Kegs" },
-    { product: "Lager", type: "Beer", package: "Sixth Keg", qty: 4, unit: "Kegs" },
-    { product: "Pilsner", type: "Beer", package: "Case", qty: 120, unit: "Cans" }
-  ];
-
-  renderInventory(data);
-}
-
-/* ======================================================
-   RENDER INVENTORY
-====================================================== */
+/* RENDER */
 function renderInventory(items) {
   inventoryBody.innerHTML = "";
-
-  if (!items.length) {
-    inventoryBody.innerHTML =
-      "<tr><td colspan='7'>No inventory records found.</td></tr>";
-    return;
-  }
-
-  items.forEach(item => {
-    const statusClass = item.qty < 10 ? "low" : "ok";
-    const statusText = item.qty < 10 ? "Low" : "OK";
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${item.product}</td>
-      <td>${item.type}</td>
-      <td>${item.package}</td>
-      <td>${item.qty}</td>
-      <td>${item.unit}</td>
-      <td class="${statusClass}">${statusText}</td>
-      <td>
-        <button class="small secondary" disabled>Adjust</button>
-      </td>
+  items.forEach(i => {
+    const low = i.qty < 10;
+    inventoryBody.innerHTML += `
+      <tr>
+        <td>${i.product}</td>
+        <td>${i.type}</td>
+        <td>${i.package}</td>
+        <td>${i.qty}</td>
+        <td>${i.unit}</td>
+        <td class="${low ? "low" : "ok"}">${low ? "Low" : "OK"}</td>
+        <td><button class="small secondary" disabled>Adjust</button></td>
+      </tr>
     `;
-
-    inventoryBody.appendChild(tr);
   });
 }
+
+/* MODAL FUNCTIONS */
+function openProductModal() {
+  productModal.style.display = "flex";
+}
+
+function closeProductModal() {
+  productModal.style.display = "none";
+}
+
+function saveProduct() {
+  alert("Backend hook comes next ✔");
+  closeProductModal();
+}
 </script>
-<!-- ======================================================
-     ADD PRODUCT MODAL
-====================================================== -->
+
+<!-- PRODUCT MODAL -->
 <div id="productModal" style="
   display:none;
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.5);
+  background:rgba(0,0,0,.5);
   align-items:center;
   justify-content:center;
   z-index:999;
 ">
-  <div style="
-    background:#fff;
-    padding:20px;
-    border-radius:8px;
-    width:420px;
-  ">
+  <div style="background:#fff;padding:20px;border-radius:8px;width:420px;">
     <h3>Add Brewery Product</h3>
 
-    <div style="display:grid; gap:10px; margin-top:12px;">
-      <input id="prodName" placeholder="Product Name" />
-      <input id="prodType" placeholder="Type (Beer, Seltzer)" />
-      <input id="prodPackage" placeholder="Package (1/2 Keg, Case)" />
-      <input id="prodQty" type="number" placeholder="Starting Quantity" />
-      <input id="prodUnit" placeholder="Unit (Kegs, Cans)" />
-      <input id="prodReorder" type="number" placeholder="Reorder Level" />
+    <div style="display:grid;gap:10px;margin-top:12px;">
+      <input placeholder="Product Name">
+      <input placeholder="Type">
+      <input placeholder="Package">
+      <input type="number" placeholder="Starting Quantity">
+      <input placeholder="Unit">
+      <input type="number" placeholder="Reorder Level">
     </div>
 
-    <div style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end;">
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">
       <button class="secondary" onclick="closeProductModal()">Cancel</button>
       <button onclick="saveProduct()">Save</button>
     </div>
   </div>
 </div>
-
-</body>
-</html>
 
 </body>
 </html>
