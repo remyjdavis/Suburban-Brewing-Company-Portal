@@ -1,282 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Invoices | Suburban Brewing Company</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8" />
+<title>Invoices | Suburban Brewing Company</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- ========== GLOBAL STYLES ========== -->
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-    body {
-      margin: 0;
-      background: #f4f6f8;
-      color: #1f2937;
-    }
-    .layout {
-      display: flex;
-      min-height: 100vh;
-    }
-    .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; }
-    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; }
-    .nav-link { display: block; padding: 10px 20px; color: #d1d5db; text-decoration: none; }
-    .nav-link.active, .nav-link:hover { background: #374151; color: #fff; }
-    .main { flex:1; display: flex; flex-direction: column; }
-    .topbar { background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 24px; }
-    .content { padding: 24px; }
-    .section { background:#fff; border-radius:8px; padding:20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
-    h2 { margin-top:0; font-size:16px; font-weight:600; }
+<!-- ======================================================
+     GLOBAL STYLES
+====================================================== -->
+<style>
+* { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { margin:0; background:#f4f6f8; color:#1f2937; }
+.layout { display:flex; min-height:100vh; }
+.sidebar { width:240px; background:#1f2937; color:#fff; padding:20px 0; }
+.sidebar h2 { margin:0 20px 20px; font-size:18px; }
+.nav-link { display:block; padding:10px 20px; color:#d1d5db; text-decoration:none; }
+.nav-link.active, .nav-link:hover { background:#374151; color:#fff; }
+.main { flex:1; display:flex; flex-direction:column; }
+.topbar { background:#fff; border-bottom:1px solid #e5e7eb; padding:16px 24px; }
+.content { padding:24px; }
+.section { background:#fff; border-radius:8px; padding:20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+h2 { margin-top:0; font-size:16px; font-weight:600; }
 
-    /* FORM */
-    .form-grid {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
-    label { font-size:12px; font-weight:600; display:block; margin-bottom:4px; }
-    input, select { width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-size:14px; }
-    input:disabled, select:disabled { background:#f3f4f6; }
+.form-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
+label { font-size:12px; font-weight:600; margin-bottom:4px; display:block; }
+input { width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; }
+input:disabled { background:#f3f4f6; }
 
-    button {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      background: #2563eb;
-      color: #fff;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    button.secondary { background: #6b7280; }
+button { padding:8px 14px; border:none; border-radius:6px; background:#2563eb; color:#fff; cursor:pointer; }
+button.secondary { background:#6b7280; }
 
-    table { width:100%; border-collapse: collapse; margin-top:12px; }
-    th, td { padding:10px; border-bottom:1px solid #e5e7eb; font-size:14px; text-align:left; }
-    tr.selected { background:#eff6ff; }
+table { width:100%; border-collapse:collapse; margin-top:12px; }
+th, td { padding:10px; border-bottom:1px solid #e5e7eb; font-size:14px; }
+tr.selected { background:#eff6ff; }
 
-    .preview { background:#fafafa; padding:16px; border-left:4px solid #2563eb; }
-    .link-button {
-      background: none;
-      border: none;
-      color: #2563eb;
-      cursor: pointer;
-      text-decoration: underline;
-      padding: 0;
-      font-size: 14px;
-    }
-  </style>
+.preview { background:#fafafa; padding:16px; border-left:4px solid #2563eb; }
+</style>
 </head>
 
 <body>
 <div class="layout">
 
-  <!-- ========== SIDEBAR ========== -->
-  <aside class="sidebar">
-    <h2>Suburban Brewing</h2>
-    <a class="nav-link active" href="invoices.html">Invoices</a>
-    <a class="nav-link" href="leads.html">Sales Leads</a>
-    <a class="nav-link" href="deliveries.html">Deliveries</a>
-    <a class="nav-link" href="sampling.html">Sampling</a>
-    <div style="margin-top:32px; font-size:12px; opacity:0.6; padding-left:20px;">Back</div>
-    <a class="nav-link" href="../index.html">Dashboard</a>
-  </aside>
+<!-- ======================================================
+     SIDEBAR
+====================================================== -->
+<aside class="sidebar">
+  <h2>Suburban Brewing</h2>
+  <a class="nav-link active" href="invoices.html">Invoices</a>
+  <a class="nav-link" href="leads.html">Sales Leads</a>
+  <a class="nav-link" href="deliveries.html">Deliveries</a>
+  <a class="nav-link" href="sampling.html">Sampling</a>
+  <div style="margin-top:32px; font-size:12px; opacity:0.6; padding-left:20px;">Back</div>
+  <a class="nav-link" href="../index.html">Dashboard</a>
+</aside>
 
-  <!-- ========== MAIN ========== -->
-  <div class="main">
+<!-- ======================================================
+     MAIN
+====================================================== -->
+<div class="main">
+<header class="topbar">
+  <h1>Invoices</h1>
+</header>
 
-    <header class="topbar">
-      <h1>Invoices</h1>
-    </header>
+<section class="content">
 
-    <section class="content">
-
-      <!-- ========= SEARCH FORM ========= -->
-      <div class="section">
-        <h2>Find Customer Invoices</h2>
-
-        <div class="form-grid">
-          <div>
-            <label>Invoice #</label>
-            <input id="invoiceNumber" disabled>
-          </div>
-          <div>
-            <label>Customer Name</label>
-            <input id="customerName" placeholder="Type to search..." oninput="debouncedLoadInvoices()">
-          </div>
-          <div>
-            <label>Invoice Date</label>
-            <input type="date" id="invoiceDate" disabled>
-          </div>
-          <div>
-            <label>Sales Type</label>
-            <select id="salesType" disabled>
-              <option>Retail</option>
-              <option>Wholesale</option>
-              <option>Sample</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="margin-top:16px;">
-          <button onclick="cancelSelection()" class="secondary">Clear Selection</button>
-          <button onclick="editFullInvoice()">Edit Full Invoice</button>
-        </div>
-      </div>
-
-      <!-- ========= INVOICE HISTORY TABLE ========= -->
-      <div class="section">
-        <h2>Invoice History</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Invoice #</th>
-              <th>Date</th>
-              <th>Total</th>
-              <th>Status</th>
-              <th>PDF</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="historyBody">
-            <tr><td colspan="6">Search a customer to load invoices.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- ========= PREVIEW PANEL ========= -->
-      <div class="section preview" id="previewPanel" style="display:none;">
-        <h2>Invoice Preview</h2>
-        <div id="previewContent"></div>
-      </div>
-
-    </section>
+<!-- ======================================================
+     SEARCH CUSTOMER
+====================================================== -->
+<div class="section">
+<h2>Find Customer Invoices</h2>
+<div class="form-grid">
+  <div>
+    <label>Customer Name</label>
+    <input id="customerName" placeholder="Type customer name..." oninput="debouncedLoadInvoices()">
+  </div>
+  <div>
+    <label>Invoice #</label>
+    <input id="invoiceNumber" disabled>
+  </div>
+  <div>
+    <label>Date</label>
+    <input id="invoiceDate" disabled>
   </div>
 </div>
 
+<div style="margin-top:16px;">
+  <button class="secondary" onclick="clearSelection()">Clear</button>
+  <button onclick="editInvoice()">Edit Invoice</button>
+</div>
+</div>
+
+<!-- ======================================================
+     INVOICE HISTORY
+====================================================== -->
+<div class="section">
+<h2>Invoice History</h2>
+<table>
+<thead>
+<tr>
+  <th>Invoice #</th>
+  <th>Date</th>
+  <th>Total</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody id="historyBody">
+<tr><td colspan="4">Search a customer to load invoices.</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ======================================================
+     PREVIEW
+====================================================== -->
+<div class="section preview" id="previewPanel" style="display:none;">
+<h2>Invoice Preview</h2>
+<div id="previewContent"></div>
+</div>
+
+</section>
+</div>
+</div>
+
+<!-- ======================================================
+     SCRIPT
+====================================================== -->
 <script>
-/* ======================================================
-     CONFIG
-====================================================== */
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 
-/* ======================================================
-     STATE
-====================================================== */
-let invoiceHistory = [];
-let selectedInvoice = null;
 let debounceTimer = null;
+let selectedInvoice = null;
 
-/* ======================================================
-     LOAD INVOICES FOR CUSTOMER
-====================================================== */
+/* ---------------- LOAD INVOICES ---------------- */
 function debouncedLoadInvoices() {
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => loadInvoices(), 300);
+  debounceTimer = setTimeout(loadInvoices, 300);
 }
 
 async function loadInvoices() {
-  const customer = document.getElementById("customerName").value.trim();
-  const body = document.getElementById("historyBody");
-  body.innerHTML = "";
+  const customer = customerName.value.trim();
+  historyBody.innerHTML = "";
 
   if (!customer) {
-    body.innerHTML = `<tr><td colspan="6">Enter customer name to load invoices.</td></tr>`;
+    historyBody.innerHTML = `<tr><td colspan="4">Enter a customer name.</td></tr>`;
     return;
   }
 
-  try {
-    const res = await fetch(`${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`);
-    const data = await res.json();
+  const res = await fetch(`${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`);
+  const invoices = await res.json();
 
-    invoiceHistory = Array.isArray(data) ? data : [];
-
-    if (!invoiceHistory.length) {
-      body.innerHTML = `<tr><td colspan="6">No invoices found for this customer.</td></tr>`;
-      return;
-    }
-
-    invoiceHistory.forEach(inv => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${inv.invoiceNumber}</td>
-        <td>${inv.date}</td>
-        <td>$${Number(inv.total).toFixed(2)}</td>
-        <td>${inv.status}</td>
-        <td>${inv.pdfUrl ? `<button class="link-button" onclick="openPDF('${inv.pdfUrl}')">Open PDF</button>` : ""}</td>
-        <td><button onclick="selectInvoice('${inv.invoiceNumber}')">Load</button></td>
-      `;
-      body.appendChild(tr);
-    });
-
-  } catch(err) {
-    console.error("Error loading invoices:", err);
-    body.innerHTML = `<tr><td colspan="6">Error loading invoices.</td></tr>`;
+  if (!invoices.length) {
+    historyBody.innerHTML = `<tr><td colspan="4">No invoices found.</td></tr>`;
+    return;
   }
+
+  invoices.forEach(inv => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${inv.invoiceNumber}</td>
+      <td>${inv.date}</td>
+      <td>$${Number(inv.total).toFixed(2)}</td>
+      <td><button onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button></td>
+    `;
+    historyBody.appendChild(tr);
+  });
 }
 
-/* ======================================================
-     SELECT INVOICE
-====================================================== */
-async function selectInvoice(invNum) {
-  selectedInvoice = invoiceHistory.find(i => i.invoiceNumber === invNum);
-  if (!selectedInvoice) return;
-
+/* ---------------- SELECT INVOICE ---------------- */
+async function selectInvoice(invNum, btn) {
   document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
-  event.target.closest("tr").classList.add("selected");
+  btn.closest("tr").classList.add("selected");
 
-  document.getElementById("invoiceNumber").value = selectedInvoice.invoiceNumber;
-  document.getElementById("invoiceDate").value = selectedInvoice.date;
-  document.getElementById("salesType").value = selectedInvoice.salesType || "";
+  const headerRes = await fetch(`${API_URL}?action=getInvoiceHeader&invoiceNumber=${encodeURIComponent(invNum)}`);
+  const header = await headerRes.json();
 
-  // SHOW PREVIEW
+  const itemsRes = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`);
+  const items = await itemsRes.json();
+
+  selectedInvoice = { header, items };
+
+  invoiceNumber.value = header.invoiceNumber;
+  invoiceDate.value = header.date;
+
   renderPreview();
 }
 
-/* ======================================================
-     RENDER PREVIEW
-====================================================== */
+/* ---------------- PREVIEW ---------------- */
 function renderPreview() {
-  if (!selectedInvoice) return;
-
-  const preview = document.getElementById("previewPanel");
-  const container = document.getElementById("previewContent");
-  container.innerHTML = `
-    <strong>Invoice #:</strong> ${selectedInvoice.invoiceNumber}<br>
-    <strong>Date:</strong> ${selectedInvoice.date}<br>
-    <strong>Sales Type:</strong> ${selectedInvoice.salesType || ""}<br>
-    <strong>Status:</strong> ${selectedInvoice.status}<br>
-    <strong>Total:</strong> $${Number(selectedInvoice.total).toFixed(2)}<br>
+  previewContent.innerHTML = `
+    <strong>Customer:</strong> ${selectedInvoice.header.customer.name}<br>
+    <strong>Address:</strong> ${selectedInvoice.header.customer.address}<br>
+    <strong>Total:</strong> $${Number(selectedInvoice.header.total).toFixed(2)}<br><br>
+    <strong>Items:</strong><br>
+    ${selectedInvoice.items.map(i => `${i.qty} × ${i.product} ($${i.price})`).join("<br>")}
   `;
-
-  preview.style.display = "block";
+  previewPanel.style.display = "block";
 }
 
-/* ======================================================
-     OPEN PDF
-====================================================== */
-function openPDF(url) {
-  window.open(url, "_blank");
-}
-
-/* ======================================================
-     EDIT FULL INVOICE
-====================================================== */
-function editFullInvoice() {
+/* ---------------- EDIT ---------------- */
+function editInvoice() {
   if (!selectedInvoice) return alert("Select an invoice first.");
-  window.location.href = `new invoices.html?invoice=${encodeURIComponent(selectedInvoice.invoiceNumber)}`;
+  location.href = `new invoices.html?invoice=${encodeURIComponent(selectedInvoice.header.invoiceNumber)}`;
 }
 
-/* ======================================================
-     CLEAR SELECTION
-====================================================== */
-function cancelSelection() {
+/* ---------------- CLEAR ---------------- */
+function clearSelection() {
   selectedInvoice = null;
-  document.getElementById("invoiceNumber").value = "";
-  document.getElementById("invoiceDate").value = "";
-  document.getElementById("salesType").value = "";
-  document.getElementById("previewPanel").style.display = "none";
-  document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
+  invoiceNumber.value = "";
+  invoiceDate.value = "";
+  previewPanel.style.display = "none";
 }
 </script>
 
