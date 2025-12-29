@@ -5,6 +5,9 @@
   <title>Invoices | Suburban Brewing Company</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- ======================================================
+       GLOBAL STYLES
+  ====================================================== -->
   <style>
     * {
       box-sizing: border-box;
@@ -22,6 +25,9 @@
       min-height: 100vh;
     }
 
+    /* ======================================================
+       SIDEBAR
+    ====================================================== */
     .sidebar {
       width: 240px;
       background: #1f2937;
@@ -32,7 +38,6 @@
     .sidebar h2 {
       margin: 0 20px 20px;
       font-size: 18px;
-      font-weight: 600;
     }
 
     .nav-section-title {
@@ -43,30 +48,21 @@
     }
 
     .nav-link {
-      position: relative;
       display: block;
-      padding: 10px 20px 10px 24px;
+      padding: 10px 20px;
       color: #d1d5db;
       text-decoration: none;
-      font-size: 14px;
     }
 
-    .nav-link:hover,
-    .nav-link.active {
+    .nav-link.active,
+    .nav-link:hover {
       background: #374151;
-      color: #ffffff;
+      color: #fff;
     }
 
-    .nav-link.active::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 4px;
-      height: 100%;
-      background: #3b82f6;
-    }
-
+    /* ======================================================
+       MAIN LAYOUT
+    ====================================================== */
     .main {
       flex: 1;
       display: flex;
@@ -91,25 +87,38 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+    h2 {
+      margin-top: 0;
+      font-size: 16px;
     }
 
     label {
       font-size: 12px;
       font-weight: 600;
-      margin-bottom: 4px;
-      display: block;
     }
 
     input, select {
       width: 100%;
-      padding: 8px 10px;
+      padding: 8px;
       border-radius: 6px;
       border: 1px solid #d1d5db;
-      font-size: 14px;
+    }
+
+    input[disabled] {
+      background: #f3f4f6;
+    }
+
+    button {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #6b7280;
     }
 
     table {
@@ -124,34 +133,18 @@
       font-size: 14px;
     }
 
-    th {
+    tr.selected {
+      background: #eff6ff;
+    }
+
+    /* ======================================================
+       INVOICE PREVIEW PANEL
+    ====================================================== */
+    .preview {
+      border-left: 4px solid #2563eb;
       background: #f9fafb;
-      font-weight: 600;
-      text-align: left;
-    }
-
-    .actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    .empty-note {
-      font-size: 13px;
-      color: #6b7280;
-    }
-
-    button {
-      padding: 10px 16px;
-      border-radius: 6px;
-      border: none;
-      background: #2563eb;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    button.secondary {
-      background: #6b7280;
+      padding: 16px;
+      margin-top: 12px;
     }
   </style>
 </head>
@@ -159,151 +152,166 @@
 <body>
 <div class="layout">
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <h2>Suburban Brewing</h2>
+<!-- ======================================================
+     SIDEBAR
+====================================================== -->
+<aside class="sidebar">
+  <h2>Suburban Brewing</h2>
+  <div class="nav-section-title">Sales</div>
+  <a class="nav-link active" href="invoices.html">Invoices</a>
+  <a class="nav-link" href="sampling.html">Sampling</a>
+  <div class="nav-section-title">Back</div>
+  <a class="nav-link" href="../index.html">Dashboard</a>
+</aside>
 
-    <div class="nav-section-title">Sales</div>
-    <a class="nav-link active" href="invoices.html">Invoices</a>
-    <a class="nav-link" href="leads.html">Sales Leads</a>
-    <a class="nav-link" href="deliveries.html">Deliveries</a>
-    <a class="nav-link" href="sampling.html">Sampling</a>
+<!-- ======================================================
+     MAIN
+====================================================== -->
+<div class="main">
 
-    <div class="nav-section-title">Back</div>
-    <a class="nav-link" href="../index.html">Dashboard</a>
-  </aside>
+<header class="topbar">
+  <h1>Invoices</h1>
+</header>
 
-  <!-- Main -->
-  <div class="main">
-    <div class="topbar">
-      <h1>Invoices</h1>
-      <div class="breadcrumb">Sales / Invoices</div>
+<section class="content">
+
+<!-- ======================================================
+     LOAD / SEARCH FORM
+====================================================== -->
+<div class="section">
+  <h2>Find Customer Invoices</h2>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+    <div>
+      <label>Invoice #</label>
+      <input id="invoiceNumber" disabled>
     </div>
-
-    <div class="content">
-
-      <!-- LOAD / CREATE -->
-      <div class="section">
-        <h2>Load or Create Invoice</h2>
-
-        <div class="form-grid">
-          <div>
-            <label>Invoice Number</label>
-            <input type="text" id="invoiceNumber">
-          </div>
-          <div>
-            <label>Customer Name</label>
-            <input type="text" id="customerName">
-          </div>
-          <div>
-            <label>Invoice Date</label>
-            <input type="date" id="invoiceDate">
-          </div>
-          <div>
-            <label>Sales Type</label>
-            <select id="salesType">
-              <option>Retail</option>
-              <option>Wholesale</option>
-              <option>Sample</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="actions">
-          <button onclick="loadInvoice()">Load Invoice</button>
-          <button class="secondary" onclick="window.location.href='new-invoice.html'">
-            Create New Invoice
-          </button>
-        </div>
-      </div>
-
-      <!-- INVOICE HISTORY -->
-      <div class="section">
-        <h2>Invoice History</h2>
-        <p id="historyNote" class="empty-note">
-          Search for a customer to view invoice history.
-        </p>
-
-        <table id="historyTable" hidden>
-          <thead>
-            <tr>
-              <th>Invoice #</th>
-              <th>Date</th>
-              <th>Total</th>
-              <th>Payment</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="historyBody"></tbody>
-        </table>
-      </div>
-
+    <div>
+      <label>Customer Name</label>
+      <input id="customerName" placeholder="Start typing customer..." onblur="loadInvoices()">
     </div>
+    <div>
+      <label>Date</label>
+      <input type="date" id="invoiceDate" disabled>
+    </div>
+    <div>
+      <label>Sales Type</label>
+      <select id="salesType" disabled>
+        <option>Retail</option>
+        <option>Wholesale</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="margin-top:16px">
+    <button class="secondary" onclick="editFullInvoice()">Edit Full Invoice</button>
   </div>
 </div>
 
+<!-- ======================================================
+     INVOICE HISTORY
+====================================================== -->
+<div class="section">
+  <h2>Invoice History</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Invoice #</th>
+        <th>Date</th>
+        <th>Total</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="historyBody">
+      <tr><td colspan="5">Search for a customer to load invoices.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ======================================================
+     PREVIEW PANEL
+====================================================== -->
+<div class="section preview" id="preview" style="display:none">
+  <h2>Invoice Preview</h2>
+  <div id="previewContent"></div>
+</div>
+
+</section>
+</div>
+</div>
+
+<!-- ======================================================
+     SCRIPT LOGIC
+====================================================== -->
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+/* -------------------------------
+   MOCK DATA (REPLACE WITH BACKEND)
+-------------------------------- */
+const mockInvoices = [
+  { invoiceNumber:"INV-1001", customer:"Joe's Pub", date:"2025-12-20", total:220.50, status:"Paid", salesType:"Retail" },
+  { invoiceNumber:"INV-1002", customer:"Joe's Pub", date:"2025-12-28", total:180.00, status:"Open", salesType:"Retail" }
+];
 
-  document.getElementById("invoiceDate").value =
-    new Date().toISOString().split("T")[0];
+/* -------------------------------
+   LOAD INVOICES BY CUSTOMER
+-------------------------------- */
+function loadInvoices() {
+  const name = document.getElementById("customerName").value.trim();
+  const body = document.getElementById("historyBody");
+  body.innerHTML = "";
 
-  document.getElementById("customerName").addEventListener("change", () => {
-    loadInvoiceHistory();
+  const results = mockInvoices.filter(i => i.customer.toLowerCase() === name.toLowerCase());
+
+  if (!results.length) {
+    body.innerHTML = `<tr><td colspan="5">No invoices found.</td></tr>`;
+    return;
+  }
+
+  results.forEach(inv => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${inv.invoiceNumber}</td>
+      <td>${inv.date}</td>
+      <td>$${inv.total.toFixed(2)}</td>
+      <td>${inv.status}</td>
+      <td><button onclick='selectInvoice(${JSON.stringify(inv)})'>Load</button></td>
+    `;
+    body.appendChild(row);
   });
+}
 
-  async function loadInvoiceHistory() {
-    const customer = document.getElementById("customerName").value.trim();
-    if (!customer) return;
+/* -------------------------------
+   SELECT INVOICE
+-------------------------------- */
+function selectInvoice(inv) {
+  document.querySelectorAll("tbody tr").forEach(r => r.classList.remove("selected"));
+  event.target.closest("tr").classList.add("selected");
 
-    const res = await fetch(
-      `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`
-    );
-    const data = await res.json();
+  invoiceNumber.value = inv.invoiceNumber;
+  invoiceDate.value = inv.date;
+  salesType.value = inv.salesType;
 
-    const table = document.getElementById("historyTable");
-    const body = document.getElementById("historyBody");
-    const note = document.getElementById("historyNote");
+  document.getElementById("preview").style.display = "block";
+  document.getElementById("previewContent").innerHTML = `
+    <strong>Invoice #:</strong> ${inv.invoiceNumber}<br>
+    <strong>Date:</strong> ${inv.date}<br>
+    <strong>Total:</strong> $${inv.total.toFixed(2)}<br>
+    <strong>Status:</strong> ${inv.status}
+  `;
+}
 
-    body.innerHTML = "";
-
-    if (!Array.isArray(data) || data.length === 0) {
-      table.hidden = true;
-      note.textContent = "No invoices found for this customer.";
-      return;
-    }
-
-    data.forEach(inv => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${inv.invoiceNumber}</td>
-        <td>${inv.date}</td>
-        <td>$${Number(inv.total).toFixed(2)}</td>
-        <td>${inv.payment}</td>
-        <td>${inv.status}</td>
-        <td>
-          <a href="${inv.pdfUrl}" target="_blank">View</a> |
-          <button onclick="editInvoice('${inv.invoiceNumber}')">Edit</button>
-        </td>
-      `;
-      body.appendChild(row);
-    });
-
-    note.textContent = "";
-    table.hidden = false;
+/* -------------------------------
+   EDIT FULL INVOICE
+-------------------------------- */
+function editFullInvoice() {
+  if (!invoiceNumber.value) {
+    alert("Select an invoice first.");
+    return;
   }
-
-  function editInvoice(invoiceNumber) {
-    window.location.href =
-      `new-invoice.html?invoice=${encodeURIComponent(invoiceNumber)}`;
-  }
-
-  function loadInvoice() {
-    const inv = document.getElementById("invoiceNumber").value.trim();
-    if (!inv) return alert("Enter an invoice number.");
-    editInvoice(inv);
-  }
+  window.location.href = `new invoices.html?invoice=${invoiceNumber.value}`;
+}
 </script>
 
 </body>
