@@ -207,53 +207,44 @@ const productModal = document.getElementById("productModal");
 document.addEventListener("DOMContentLoaded", loadInventory);
 
 /* ============ LOAD INVENTORY ============ */
-async function loadInventory() {
-  inventoryBody.innerHTML = `<tr><td colspan="7">Loading…</td></tr>`;
+async function saveProduct() {
+  const payload = {
+    action: "addBreweryProduct",
+    product: prodName.value.trim(),
+    lifecycle: prodLifecycle.value,
+    halfKegQty: +halfQty.value || 0,
+    halfKegPrice: +halfPrice.value || 0,
+    sixthKegQty: +sixthQty.value || 0,
+    sixthKegPrice: +sixthPrice.value || 0,
+    caseQty: +caseQty.value || 0,
+    casePrice: +casePrice.value || 0
+  };
 
-  const invRes = await fetch(`${API_URL}?action=getBreweryInventory`);
-  const inventory = await invRes.json();
+  if (!payload.product || !payload.lifecycle) {
+    alert("Product name and lifecycle are required");
+    return;
+  }
 
-  const prodRes = await fetch(`${API_URL}?action=getProducts`);
-  const products = await prodRes.json();
+  const formBody = Object.keys(payload)
+    .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(payload[k]))
+    .join("&");
 
-  const lifecycleMap = {};
-  products.forEach(p => {
-    lifecycleMap[`${p.name}|${p.package}`] = p.lifecycle;
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: formBody
   });
 
-  inventoryBody.innerHTML = "";
+  const data = await res.json();
 
-inventory
-  .filter(i => i.product && i.product.toString().trim() !== "")
-  .forEach(i => {
-    const lifecycle = lifecycleMap[`${i.product}|${i.package}`] || "Core";
-
-    let status = "OK";
-    let cls = "ok";
-
-    if ((lifecycle === "Seasonal" || lifecycle === "Rotating") && i.qty <= 0) {
-      status = "Unavailable";
-      cls = "low";
-    } else if (i.qty <= 5) {
-      status = "Low";
-      cls = "low";
-    }
-
-    inventoryBody.innerHTML += `
-      <tr>
-        <td>${i.product}</td>
-        <td>${i.package}</td>
-        <td>${lifecycle}</td>
-        <td>${i.qty}</td>
-        <td>${i.unit || ""}</td>
-        <td class="${cls}">${status}</td>
-        <td>
-          <button class="small secondary" disabled>Adjust</button>
-        </td>
-      </tr>
-    `;
-  });
-
+  if (data.success) {
+    closeProductModal();
+    loadInventory();
+  } else {
+    alert(data.error || "Error saving product");
+  }
 }
 
 /* ============ MODAL ============ */
