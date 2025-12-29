@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<textarea id="deliveryNotes" style="width:100%; height:80px;"></textarea>
+
+<div style="margin-top:16px;">
+<button onclick="markDelivered()">Mark Delivered</button>
+<button class="secondary" onclick="cancelDelivery()">Cancel</button>
+</div>
+</div>
+
+</section>
+</div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+
+let selectedInvoice = null;
+
+function loadOpenInvoices() {
+const cb = "cb_deliveries_" + Date.now();
+
+window[cb] = function (data) {
+delete window[cb];
+script.remove();
+
+const tbody = document.getElementById("deliveryBody");
+tbody.innerHTML = "";
+
+if (!data.length) {
+tbody.innerHTML = "<tr><td colspan='5'>No open deliveries.</td></tr>";
+return;
+}
+
+data.forEach(inv => {
+const tr = document.createElement("tr");
+tr.innerHTML = `
+<td>${inv.invoiceNumber}</td>
+<td>${inv.date}</td>
+<td>${inv.customer}</td>
+<td>$${Number(inv.total).toFixed(2)}</td>
+<td><button onclick="selectDelivery('${inv.invoiceNumber}')">Deliver</button></td>
+`;
+tbody.appendChild(tr);
+});
+};
+
+const script = document.createElement("script");
+script.src = `${API_URL}?action=getOpenDeliveries&callback=${cb}`;
+document.body.appendChild(script);
+}
+
+function selectDelivery(invNum) {
+selectedInvoice = invNum;
+document.getElementById("dInvoice").textContent = invNum;
+document.getElementById("deliveryDate").valueAsDate = new Date();
+document.getElementById("deliveryPanel").style.display = "block";
+}
+
+function cancelDelivery() {
+selectedInvoice = null;
+document.getElementById("deliveryPanel").style.display = "none";
+}
+
+async function markDelivered() {
+if (!selectedInvoice) return;
+
+await fetch(API_URL, {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+action: "markDelivered",
+invoiceNumber: selectedInvoice,
+deliveryDate: document.getElementById("deliveryDate").value,
+notes: document.getElementById("deliveryNotes").value
+})
+});
+
+cancelDelivery();
+loadOpenInvoices();
+}
+
+loadOpenInvoices();
+</script>
+</body>
+</html>
