@@ -5,9 +5,6 @@
 <title>Brewery Inventory | Suburban Brewing Company</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<!-- ======================================================
-     GLOBAL STYLES
-====================================================== -->
 <style>
 * {
   box-sizing: border-box;
@@ -25,9 +22,7 @@ body {
   min-height: 100vh;
 }
 
-/* ======================================================
-   SIDEBAR
-====================================================== */
+/* ================= SIDEBAR ================= */
 .sidebar {
   width: 240px;
   background: #1f2937;
@@ -53,9 +48,7 @@ body {
   color: #fff;
 }
 
-/* ======================================================
-   MAIN LAYOUT
-====================================================== */
+/* ================= MAIN ================= */
 .main {
   flex: 1;
   display: flex;
@@ -72,26 +65,14 @@ body {
   padding: 24px;
 }
 
-/* ======================================================
-   SECTIONS
-====================================================== */
 .section {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
-  margin-bottom: 24px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
-h2 {
-  margin-top: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-/* ======================================================
-   TABLE
-====================================================== */
+/* ================= TABLE ================= */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -109,19 +90,10 @@ th {
   text-align: left;
 }
 
-.low {
-  color: #b91c1c;
-  font-weight: 600;
-}
+.low { color: #b91c1c; font-weight: 600; }
+.ok { color: #065f46; font-weight: 600; }
 
-.ok {
-  color: #065f46;
-  font-weight: 600;
-}
-
-/* ======================================================
-   BUTTONS
-====================================================== */
+/* ================= BUTTONS ================= */
 button {
   padding: 8px 14px;
   border: none;
@@ -131,14 +103,8 @@ button {
   cursor: pointer;
 }
 
-button.secondary {
-  background: #6b7280;
-}
-
-button.small {
-  padding: 6px 10px;
-  font-size: 12px;
-}
+button.secondary { background: #6b7280; }
+button.small { padding: 6px 10px; font-size: 12px; }
 </style>
 </head>
 
@@ -146,54 +112,34 @@ button.small {
 
 <div class="layout">
 
-<!-- ======================================================
-     SIDEBAR NAVIGATION
-====================================================== -->
+<!-- ================= SIDEBAR ================= -->
 <aside class="sidebar">
   <h2>Suburban Brewing</h2>
-
-  <!-- SALES -->
   <a class="nav-link" href="../sales/invoices.html">Invoices</a>
   <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
   <a class="nav-link" href="../sales/sampling.html">Sampling</a>
 
-  <!-- INVENTORY -->
   <a class="nav-link active" href="brewery-inventory.html">Brewery Inventory</a>
   <a class="nav-link" href="store-inventory.html">Store Inventory</a>
-
-  <div style="margin-top:32px; font-size:12px; opacity:0.6; padding-left:20px;">
-    Back
-  </div>
 
   <a class="nav-link" href="../index.html">Dashboard</a>
 </aside>
 
-<!-- ======================================================
-     MAIN CONTENT
-====================================================== -->
+<!-- ================= MAIN ================= -->
 <div class="main">
-
 <header class="topbar">
   <h1>Brewery Inventory</h1>
 </header>
 
 <section class="content">
-
-<!-- ======================================================
-     INVENTORY OVERVIEW
-====================================================== -->
 <div class="section">
-  <h2>Current Brewery Inventory</h2>
 
-  <div style="margin-bottom:12px;">
-    <button onclick="openProductModal()">+ Add Product</button>
-  </div>
+  <button onclick="openProductModal()">+ Add Product</button>
 
   <table>
     <thead>
       <tr>
         <th>Product</th>
-        <th>Type</th>
         <th>Package</th>
         <th>Lifecycle</th>
         <th>On Hand</th>
@@ -203,16 +149,16 @@ button.small {
       </tr>
     </thead>
     <tbody id="inventoryBody">
-      <tr>
-        <td colspan="8">Loading inventory…</td>
-      </tr>
+      <tr><td colspan="7">Loading inventory…</td></tr>
     </tbody>
   </table>
+
+</div>
+</section>
+</div>
 </div>
 
-<!-- ======================================================
-     ADD PRODUCT MODAL
-====================================================== -->
+<!-- ================= MODAL ================= -->
 <div id="productModal" style="
   display:none;
   position:fixed;
@@ -222,101 +168,63 @@ button.small {
   justify-content:center;
   z-index:999;
 ">
-  <div style="background:#fff; padding:20px; border-radius:8px; width:480px;">
+  <div style="background:#fff;padding:20px;border-radius:8px;width:480px;">
     <h3>Add Brewery Product</h3>
 
-    <!-- BASIC INFO -->
-    <div style="display:grid; gap:10px; margin-top:12px;">
-      <input id="prodName" placeholder="Product Name" />
-      <input id="prodType" placeholder="Type (Beer, Seltzer)" />
-      <select id="prodLifecycle">
-        <option value="">Select Lifecycle</option>
-        <option value="Core">Core</option>
-        <option value="Seasonal">Seasonal</option>
-        <option value="Rotating">Rotating</option>
-      </select>
-    </div>
+    <input id="prodName" placeholder="Product Name" />
+    <select id="prodLifecycle">
+      <option value="">Select Lifecycle</option>
+      <option value="Core">Core</option>
+      <option value="Seasonal">Seasonal</option>
+      <option value="Rotating">Rotating</option>
+    </select>
 
-    <!-- PACKAGES -->
-    <h4 style="margin:16px 0 8px;">Packages</h4>
+    <h4 style="margin-top:12px;">Packages</h4>
 
-    <div style="display:grid; gap:8px;">
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
-        <strong>Package</strong>
-        <strong>Qty</strong>
-        <strong>Price</strong>
-      </div>
+    <input id="halfQty" type="number" placeholder="1/2 Keg Qty" />
+    <input id="halfPrice" type="number" placeholder="1/2 Keg Price" />
 
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
-        <span>1/2 Keg</span>
-        <input id="halfQty" type="number" min="0" />
-        <input id="halfPrice" type="number" step="0.01" />
-      </div>
+    <input id="sixthQty" type="number" placeholder="1/6 Keg Qty" />
+    <input id="sixthPrice" type="number" placeholder="1/6 Keg Price" />
 
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
-        <span>1/6 Keg</span>
-        <input id="sixthQty" type="number" min="0" />
-        <input id="sixthPrice" type="number" step="0.01" />
-      </div>
+    <input id="caseQty" type="number" placeholder="Case Qty" />
+    <input id="casePrice" type="number" placeholder="Case Price" />
 
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
-        <span>Case</span>
-        <input id="caseQty" type="number" min="0" />
-        <input id="casePrice" type="number" step="0.01" />
-      </div>
-    </div>
-
-    <div style="margin-top:16px; display:flex; justify-content:flex-end; gap:8px;">
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
       <button class="secondary" onclick="closeProductModal()">Cancel</button>
       <button onclick="saveProduct()">Save Product</button>
     </div>
   </div>
 </div>
 
-<!-- ======================================================
-     JAVASCRIPT
-====================================================== -->
-<script>
-const inventoryBody = document.getElementById("inventoryBody");
-
-/* ======================================================
-   MOCK LOAD
-====================================================== */
+<!-- ================= JAVASCRIPT ================= -->
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+
 const inventoryBody = document.getElementById("inventoryBody");
+const productModal = document.getElementById("productModal");
 
 document.addEventListener("DOMContentLoaded", loadInventory);
 
+/* ============ LOAD INVENTORY ============ */
 async function loadInventory() {
-  inventoryBody.innerHTML = `<tr><td colspan="8">Loading…</td></tr>`;
+  inventoryBody.innerHTML = `<tr><td colspan="7">Loading…</td></tr>`;
 
-  const res = await fetch(`${API_URL}?action=getBreweryInventory`);
-  const inventory = await res.json();
+  const invRes = await fetch(`${API_URL}?action=getBreweryInventory`);
+  const inventory = await invRes.json();
 
   const prodRes = await fetch(`${API_URL}?action=getProducts`);
   const products = await prodRes.json();
 
-  // Map lifecycle per product+package
   const lifecycleMap = {};
   products.forEach(p => {
     lifecycleMap[`${p.name}|${p.package}`] = p.lifecycle;
   });
 
-  renderInventory(inventory, lifecycleMap);
-}
-</script>
-
-/* ======================================================
-   RENDER INVENTORY
-====================================================== */
-<script>
-function renderInventory(items, lifecycleMap) {
   inventoryBody.innerHTML = "";
 
-  items.forEach(i => {
-    const key = `${i.product}|${i.package}`;
-    const lifecycle = lifecycleMap[key] || "Core";
+  inventory.forEach(i => {
+    const lifecycle = lifecycleMap[`${i.product}|${i.package}`] || "Core";
 
     let status = "OK";
     let cls = "ok";
@@ -344,12 +252,8 @@ function renderInventory(items, lifecycleMap) {
     `;
   });
 }
-</script>
 
- <script>
-/* ======================================================
-   MODAL CONTROLS
-====================================================== */
+/* ============ MODAL ============ */
 function openProductModal() {
   productModal.style.display = "flex";
 }
@@ -357,15 +261,8 @@ function openProductModal() {
 function closeProductModal() {
   productModal.style.display = "none";
 }
-</script>
 
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
-
-/* ======================================================
-   SAVE PRODUCT (BACKEND CONNECTED)
-====================================================== */
-<script>
+/* ============ SAVE PRODUCT ============ */
 async function saveProduct() {
   const payload = {
     action: "addBreweryProduct",
@@ -384,24 +281,16 @@ async function saveProduct() {
     return;
   }
 
-  const res = await fetch(API_URL, {
+  await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
-  const data = await res.json();
-
-  if (data.success) {
-    closeProductModal();
-    loadInventory();
-  } else {
-    alert(data.error || "Error saving product");
-  }
+  closeProductModal();
+  loadInventory();
 }
 </script>
-
-
 
 </body>
 </html>
