@@ -152,16 +152,18 @@ function debouncedLoadInvoices() {
     loadInvoices(name);
   }, 300);
 }
-function loadInvoices(customer) {
+async function loadInvoices(customer) {
   historyBody.innerHTML =
     "<tr><td colspan='4'>Loading invoices...</td></tr>";
 
-  const cb = "cb_" + Date.now();
+  try {
+    const res = await fetch(
+      `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`
+    );
 
-  window[cb] = function (data) {
-    delete window[cb];
-    script.remove();
+    if (!res.ok) throw new Error("Request failed");
 
+    const data = await res.json();
     invoiceHistory = Array.isArray(data) ? data : [];
     historyBody.innerHTML = "";
 
@@ -185,21 +187,14 @@ function loadInvoices(customer) {
       `;
       historyBody.appendChild(tr);
     });
-  };
 
-  const script = document.createElement("script");
-  script.src =
-    `${API_URL}?action=getInvoicesByCustomer` +
-    `&customer=${encodeURIComponent(customer)}` +
-    `&callback=${cb}`;
-
-  script.onerror = () => {
+  } catch (err) {
+    console.error(err);
     historyBody.innerHTML =
       "<tr><td colspan='4'>Failed to load invoices.</td></tr>";
-  };
-
-  document.body.appendChild(script);
+  }
 }
+
 
 async function selectInvoice(invNum, btn) {
   selectedInvoice = invoiceHistory.find(i => i.invoiceNumber === invNum);
@@ -214,61 +209,51 @@ async function selectInvoice(invNum, btn) {
 invoiceDate.value = selectedInvoice.date || "";
 
   try {
-  await new Promise(resolve => {
-    const cb = "cb_items_" + Date.now();
+  const res = await fetch(
+    `${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`
+  );
 
-    window[cb] = function (items) {
-      selectedInvoice.items = (Array.isArray(items) ? items : []).map(i => ({
-  qty: Number(
-    i.quantity ??     // ← YOUR SHEET COLUMN (PRIMARY)
-    i.qty ??
-    i.Qty ??
-    0
-  ),
-  product: String(
-    i.product ??
-    i.Product ??
-    ""
-  ).trim(),
-  type: String(
-    i.type ??         // ← SHEET COLUMN "Type"
-    i.Type ??
-    ""
-  ).trim(),
-  price: Number(
-    i.price ??
-    i.Price ??
-    0
-  ),
-  lineTotal: Number(
-    i.lineTotal ??
-    i["Line Total"] ??
-    i.total ??
-    0
-  )
-}));
+  if (!res.ok) throw new Error("Failed to load items");
 
+  const items = await res.json();
 
-      delete window[cb];
-      script.remove();
-      resolve();
-    };
-
-    const script = document.createElement("script");
-    script.src =
-      `${API_URL}?action=getInvoiceItems` +
-      `&invoiceNumber=${encodeURIComponent(invNum)}` +
-      `&callback=${cb}`;
-
-    document.body.appendChild(script);
-  });
-
-  renderPreview();
+  selectedInvoice.items = (Array.isArray(items) ? items : []).map(i => ({
+    qty: Number(
+      i.quantity ??
+      i.qty ??
+      i.Qty ??
+      0
+    ),
+    product: String(
+      i.product ??
+      i.Product ??
+      ""
+    ).trim(),
+    type: String(
+      i.type ??
+      i.Type ??
+      ""
+    ).trim(),
+    price: Number(
+      i.price ??
+      i.Price ??
+      0
+    ),
+    lineTotal: Number(
+      i.lineTotal ??
+      i["Line Total"] ??
+      i.total ??
+      0
+    )
+  }));
 
 } catch (err) {
   console.error("Failed to load invoice items", err);
   selectedInvoice.items = [];
-  renderPreview();
+}
+
+renderPreview();
+
 }
 
 }
