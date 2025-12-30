@@ -2,144 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Sampling Report | Suburban Brewing Co.</title>
+  <title>Sales & Follow-Up | Suburban Brewing Co.</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    /* ... (Styles remain the same as your Dashboard for consistency) ... */
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f4f6f8; display: flex; min-height: 100vh; color: #1f2937; }
-    
-    /* Sidebar */
     .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; flex-shrink: 0; }
-    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; }
     .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; }
-    .nav-link:hover { background: #374151; color: #fff; }
     .nav-link.active { background: #2563eb; color: #fff; font-weight: 600; }
-
-    /* Main Content */
-    .main { flex: 1; padding: 40px; overflow-y: auto; }
-    .container { max-width: 800px; margin: 0 auto; }
-    .card { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    
-    h1 { margin: 0 0 10px; font-size: 24px; color: #111827; }
-    .subtitle { color: #6b7280; margin-bottom: 30px; }
-    
-    label { display: block; font-weight: 700; margin-bottom: 6px; font-size: 12px; color: #4b5563; text-transform: uppercase; }
-    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 20px; }
-
-    /* Depletion Section */
-    .depletion-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-    .product-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: white; border-radius: 6px; border: 1px solid #edf2f7; margin-bottom: 10px; }
-    .pack-input { width: 80px !important; margin-bottom: 0 !important; text-align: center; }
-
-    .summary-bar { display: flex; justify-content: space-between; align-items: center; background: #eff6ff; padding: 15px; border-radius: 8px; font-weight: 700; color: #1e40af; }
-
-    .btn-submit { width: 100%; padding: 16px; background: #1f2937; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 16px; transition: background 0.2s; }
-    .btn-submit:hover { background: #374151; }
+    .main { flex: 1; padding: 40px; }
+    .card { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: #374151; margin-top: 15px; }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; }
+    .info-note { font-size: 11px; color: #6b7280; margin-top: -10px; margin-bottom: 10px; font-style: italic; }
+    .btn-submit { width: 100%; padding: 16px; background: #1f2937; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 20px; }
   </style>
 </head>
 <body>
 
   <aside class="sidebar">
-    <h2>Suburban</h2>
+    <div style="padding: 0 24px 20px;"><h2>Suburban</h2></div>
     <a class="nav-link" href="../index.html">Dashboard</a>
-    <a class="nav-link" href="../sales/leads.html">Sales Leads</a>
-    <a class="nav-link" href="../sales/invoices.html">Invoices</a>
-    <a class="nav-link active" href="sampling-report.html">Log Report</a>
+    <a class="nav-link active" href="leads.html">Sales Leads</a>
+    <a class="nav-link" href="invoices.html">Invoices</a>
   </aside>
 
   <main class="main">
-    <div class="container">
-      <h1>Sampling Event Report</h1>
-      <p class="subtitle">Complete this after the event to track movement and set follow-ups.</p>
+    <div class="card">
+      <h1>Sales Activity</h1>
+      
+      <label>Entry Type</label>
+      <select id="entryType" onchange="toggleView()">
+        <option value="new">New Lead (Initial Visit)</option>
+        <option value="followup">Follow-Up (Existing Account)</option>
+      </select>
 
-      <form id="reportForm" onsubmit="handleReportSubmit(event)">
-        <div class="card">
-          <label>Account Name</label>
-          <input type="text" id="accName" placeholder="Search or enter account..." required>
+      <form id="leadForm" onsubmit="submitLead(event)">
+        <label>Account Name</label>
+        <input type="text" id="custName" placeholder="Enter business name..." onblur="fetchExistingData()" required>
 
-          <label>Event Date</label>
-          <input type="date" id="eventDate" required>
-        </div>
+        <label>Manager Name</label>
+        <input type="text" id="mgrName" placeholder="TBD / Unknown">
+        <p class="info-note" id="mgrNote">Leave blank if unknown; you can add this during follow-up.</p>
 
-        <div class="card depletion-box">
-          <h3 style="margin-top:0; font-size: 16px;">Depletion Tracking (Help to Sell)</h3>
-          <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Record how many 4-packs the customer sold while you were there.</p>
+        <div id="newFields">
+          <label>Address</label>
+          <input type="text" id="address">
           
-          <div id="productRows">
-            <div class="product-row">
-              <span style="font-weight: 600;">Suburban IPA</span>
-              <div>
-                <input type="number" class="pack-count" value="0" min="0" oninput="calculateTotalCases()">
-                <span style="font-size: 12px; color: #64748b; margin-left: 5px;">4-Pks</span>
-              </div>
-            </div>
-            <div class="product-row">
-              <span style="font-weight: 600;">Townie Lager</span>
-              <div>
-                <input type="number" class="pack-count" value="0" min="0" oninput="calculateTotalCases()">
-                <span style="font-size: 12px; color: #64748b; margin-left: 5px;">4-Pks</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="summary-bar">
-            <span>TOTAL CASES MOVED:</span>
-            <span id="caseDisplay">0.00 Cases</span>
+          <label>Phone / Email</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="tel" id="phone" placeholder="Phone">
+            <input type="email" id="email" placeholder="Email">
           </div>
         </div>
 
-        <div class="card">
-          <label>Sampling Outcome</label>
-          <select id="outcome" required>
-            <option value="">-- Select Result --</option>
-            <option value="Sale">Sale (Redirect to Invoice)</option>
-            <option value="Warm">Warm (Follow up in 14 days)</option>
-            <option value="Cold">Cold (Follow up in 60 days)</option>
-            <option value="Not Interested">Not Interested</option>
-          </select>
+        <label>Result</label>
+        <select id="outcome" required>
+          <option value="">-- Choose Outcome --</option>
+          <option value="Sale">Sale (Write Invoice)</option>
+          <option value="Warm">Warm (Back in 14 days)</option>
+          <option value="Cold">Cold (Back in 60 days)</option>
+          <option value="Not Interested">Not Interested</option>
+        </select>
 
-          <label>Notes & Feedback</label>
-          <textarea id="notes" rows="4" placeholder="What did customers say? Any specific feedback for the manager?"></textarea>
-          
-          <button type="submit" class="btn-submit">Submit Report & Update Inventory</button>
-        </div>
+        <label>Notes</label>
+        <textarea id="notes" rows="3" placeholder="Details about tap space, competition, or the conversation..."></textarea>
+
+        <button type="submit" class="btn-submit">Submit Activity</button>
       </form>
     </div>
   </main>
 
   <script>
-    function calculateTotalCases() {
-      const counts = document.querySelectorAll('.pack-count');
-      let totalPacks = 0;
-      counts.forEach(input => {
-        totalPacks += parseInt(input.value) || 0;
-      });
-      
-      // 6 four-packs to a 24-can case
-      const cases = (totalPacks / 6).toFixed(2);
-      document.getElementById('caseDisplay').innerText = cases + " Cases";
-      return cases;
+    function toggleView() {
+      const isNew = document.getElementById('entryType').value === 'new';
+      document.getElementById('newFields').style.display = isNew ? 'block' : 'none';
+      if (!isNew) {
+        document.getElementById('mgrNote').innerText = "Updating this will overwrite the previous manager name.";
+      } else {
+        document.getElementById('mgrNote').innerText = "Leave blank if unknown; you can add this during follow-up.";
+      }
     }
 
-    function handleReportSubmit(event) {
-      event.preventDefault();
+    // Function to pull data when typing an existing name
+    function fetchExistingData() {
+      const name = document.getElementById('custName').value;
+      const type = document.getElementById('entryType').value;
       
-      const outcome = document.getElementById('outcome').value;
-      const account = document.getElementById('accName').value;
-      const totalCases = calculateTotalCases();
-
-      // Here is where the Apps Script (google.script.run) would fire to save the data
-      console.log("Saving report data for " + account);
-      console.log("Total Cases Moved: " + totalCases);
-
-      if (outcome === 'Sale') {
-        // If a sale was made, send them to the invoices page
-        const name = encodeURIComponent(account);
-        window.location.href = `../sales/invoices.html?customer=${name}`;
-      } else {
-        alert("Report submitted successfully. Your follow-up date has been calculated.");
-        window.location.href = "../index.html";
+      if (type === 'followup' && name.length > 2) {
+        // This triggers the backend 'getLeadDetails' action we wrote in the Apps Script
+        google.script.run.withSuccessHandler(function(data) {
+          if (data && !data.error) {
+            document.getElementById('mgrName').value = data.manager || "";
+            document.getElementById('address').value = data.address || "";
+            document.getElementById('phone').value = data.phone || "";
+            document.getElementById('email').value = data.email || "";
+          }
+        }).getLeadDetails(name);
       }
+    }
+
+    function submitLead(event) {
+      event.preventDefault();
+      const outcome = document.getElementById('outcome').value;
+      
+      // Package data for backend
+      const formData = {
+        name: document.getElementById('custName').value,
+        manager: document.getElementById('mgrName').value,
+        address: document.getElementById('address').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        outcome: outcome,
+        notes: document.getElementById('notes').value
+      };
+
+      // Call the backend 'submitSalesActivity' action
+      google.script.run.withSuccessHandler(function(response) {
+        if (response.redirect) {
+          window.location.href = "invoices.html?customer=" + encodeURIComponent(formData.name);
+        } else {
+          alert("Activity Logged!");
+          location.reload();
+        }
+      }).submitSalesActivity(JSON.stringify(formData));
     }
   </script>
 </body>
