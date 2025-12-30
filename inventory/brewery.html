@@ -1,317 +1,348 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Brewery Inventory | Suburban Brewing Company</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-<style>
-* {
-  box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-body {
-  margin: 0;
-  background: #f4f6f8;
-  color: #1f2937;
-}
-
-.layout {
-  display: flex;
-  min-height: 100vh;
-}
-
-/* ================= SIDEBAR ================= */
-.sidebar {
-  width: 240px;
-  background: #1f2937;
-  color: #fff;
-  padding: 20px 0;
-}
-
-.sidebar h2 {
-  margin: 0 20px 20px;
-  font-size: 18px;
-}
-
-.nav-link {
-  display: block;
-  padding: 10px 20px;
-  color: #d1d5db;
-  text-decoration: none;
-}
-
-.nav-link.active,
-.nav-link:hover {
-  background: #374151;
-  color: #fff;
-}
-
-/* ================= MAIN ================= */
-.main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.topbar {
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 16px 24px;
-}
-
-.content {
-  padding: 24px;
-}
-
-.section {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-/* ================= TABLE ================= */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 12px;
-}
-
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-}
-
-th {
-  background: #f9fafb;
-  text-align: left;
-}
-
-.low { color: #b91c1c; font-weight: 600; }
-.ok { color: #065f46; font-weight: 600; }
-
-/* ================= BUTTONS ================= */
-button {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  background: #2563eb;
-  color: #fff;
-  cursor: pointer;
-}
-
-button.secondary { background: #6b7280; }
-button.small { padding: 6px 10px; font-size: 12px; }
-</style>
+    <meta charset="UTF-8" />
+    <title>Brewery Inventory | Suburban Brewing Company</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            margin: 0;
+            background: #f4f6f8;
+            color: #1f2937;
+        }
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        /* ================= SIDEBAR ================= */
+        .sidebar {
+            width: 240px;
+            background: #1f2937;
+            color: #fff;
+            padding: 20px 0;
+        }
+        .sidebar h2 {
+            margin: 0 20px 20px;
+            font-size: 18px;
+        }
+        .nav-link {
+            display: block;
+            padding: 10px 20px;
+            color: #d1d5db;
+            text-decoration: none;
+        }
+        .nav-link.active,
+        .nav-link:hover {
+            background: #374151;
+            color: #fff;
+        }
+        /* ================= MAIN ================= */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 24px;
+        }
+        .content {
+            padding: 24px;
+        }
+        .section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        h3 {
+            margin-top: 0;
+            color: #111827;
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 8px;
+        }
+        /* ================= TABLE ================= */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        th, td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+        th {
+            background: #f9fafb;
+            text-align: left;
+            font-weight: 600;
+            color: #4b5563;
+        }
+        .low { color: #b91c1c; font-weight: 600; }
+        .ok { color: #065f46; font-weight: 600; }
+        /* ================= BUTTONS & INPUTS ================= */
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        button.secondary { background: #6b7280; }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+    </style>
 </head>
-
 <body>
 
 <div class="layout">
+    <aside class="sidebar">
+        <h2>Suburban Brewing</h2>
+        <a class="nav-link" href="../sales/invoices.html">Invoices</a>
+        <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
+        <a class="nav-link" href="../sales/sampling.html">Sampling</a>
+        <a class="nav-link active" href="brewery-inventory.html">Brewery Inventory</a>
+        <a class="nav-link" href="store-inventory.html">Store Inventory</a>
+        <a class="nav-link" href="../index.html">Dashboard</a>
+    </aside>
 
-<!-- ================= SIDEBAR ================= -->
-<aside class="sidebar">
-  <h2>Suburban Brewing</h2>
-  <a class="nav-link" href="../sales/invoices.html">Invoices</a>
-  <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
-  <a class="nav-link" href="../sales/sampling.html">Sampling</a>
+    <div class="main">
+        <header class="topbar">
+            <h1>Brewery Inventory</h1>
+        </header>
 
-  <a class="nav-link active" href="brewery-inventory.html">Brewery Inventory</a>
-  <a class="nav-link" href="store-inventory.html">Store Inventory</a>
+        <section class="content">
+            <div style="margin-bottom: 20px;">
+                <button onclick="openProductModal()">+ Add Product</button>
+            </div>
 
-  <a class="nav-link" href="../index.html">Dashboard</a>
-</aside>
+            <div class="section">
+                <h3>Core Products</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Package</th>
+                            <th>On Hand</th>
+                            <th>Unit</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coreInventoryBody">
+                        <tr><td colspan="5">Loading core products...</td></tr>
+                    </tbody>
+                </table>
+            </div>
 
-<!-- ================= MAIN ================= -->
-<div class="main">
-<header class="topbar">
-  <h1>Brewery Inventory</h1>
-</header>
+            <div class="section">
+                <h3>Seasonal Products</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Package</th>
+                            <th>On Hand</th>
+                            <th>Unit</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="seasonalInventoryBody">
+                        <tr><td colspan="5">Loading seasonal products...</td></tr>
+                    </tbody>
+                </table>
+            </div>
 
-<section class="content">
-<div class="section">
-
-  <button onclick="openProductModal()">+ Add Product</button>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Package</th>
-        <th>Lifecycle</th>
-        <th>On Hand</th>
-        <th>Unit</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="inventoryBody">
-      <tr><td colspan="7">Loading inventory…</td></tr>
-    </tbody>
-  </table>
-
-</div>
-</section>
-</div>
-</div>
-
-<!-- ================= MODAL ================= -->
-<div id="productModal" style="
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.5);
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-">
-  <div style="background:#fff;padding:20px;border-radius:8px;width:480px;">
-    <h3>Add Brewery Product</h3>
-
-    <input id="prodName" placeholder="Product Name" />
-    <select id="prodLifecycle">
-      <option value="">Select Lifecycle</option>
-      <option value="Core">Core</option>
-      <option value="Seasonal">Seasonal</option>
-      <option value="Rotating">Rotating</option>
-    </select>
-
-    <h4 style="margin-top:12px;">Packages</h4>
-
-    <input id="halfQty" type="number" placeholder="1/2 Keg Qty" />
-    <input id="halfPrice" type="number" placeholder="1/2 Keg Price" />
-
-    <input id="sixthQty" type="number" placeholder="1/6 Keg Qty" />
-    <input id="sixthPrice" type="number" placeholder="1/6 Keg Price" />
-
-    <input id="caseQty" type="number" placeholder="Case Qty" />
-    <input id="casePrice" type="number" placeholder="Case Price" />
-
-    <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
-      <button class="secondary" onclick="closeProductModal()">Cancel</button>
-      <button onclick="saveProduct()">Save Product</button>
+            <div class="section">
+                <h3>Rotating Products</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Package</th>
+                            <th>On Hand</th>
+                            <th>Unit</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rotatingInventoryBody">
+                        <tr><td colspan="5">Loading rotating products...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
-  </div>
 </div>
 
-<!-- ================= JAVASCRIPT ================= -->
+<div id="productModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:999;">
+    <div style="background:#fff; padding:24px; border-radius:8px; width:480px; max-height: 90vh; overflow-y: auto;">
+        <h3 style="border:none;">Add Brewery Product</h3>
+        
+        <label>Product Name</label>
+        <input id="prodName" placeholder="e.g. Suburban IPA" />
+        
+        <label>Lifecycle</label>
+        <select id="prodLifecycle">
+            <option value="">Select Lifecycle</option>
+            <option value="Core">Core</option>
+            <option value="Seasonal">Seasonal</option>
+            <option value="Rotating">Rotating</option>
+        </select>
+
+        <h4 style="margin: 15px 0 10px 0;">Package Quantities & Prices</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+                <label style="font-size: 12px;">1/2 Keg Qty</label>
+                <input id="halfQty" type="number" placeholder="Qty" />
+            </div>
+            <div>
+                <label style="font-size: 12px;">1/2 Keg Price</label>
+                <input id="halfPrice" type="number" placeholder="Price" />
+            </div>
+            <div>
+                <label style="font-size: 12px;">1/6 Keg Qty</label>
+                <input id="sixthQty" type="number" placeholder="Qty" />
+            </div>
+            <div>
+                <label style="font-size: 12px;">1/6 Keg Price</label>
+                <input id="sixthPrice" type="number" placeholder="Price" />
+            </div>
+            <div>
+                <label style="font-size: 12px;">Case Qty</label>
+                <input id="caseQty" type="number" placeholder="Qty" />
+            </div>
+            <div>
+                <label style="font-size: 12px;">Case Price</label>
+                <input id="casePrice" type="number" placeholder="Price" />
+            </div>
+        </div>
+
+        <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
+            <button class="secondary" onclick="closeProductModal()">Cancel</button>
+            <button onclick="saveProduct()">Save Product</button>
+        </div>
+    </div>
+</div>
+
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+    const productModal = document.getElementById("productModal");
+    let inventory = [];
 
-const inventoryBody = document.getElementById("inventoryBody");
-const productModal = document.getElementById("productModal");
+    document.addEventListener("DOMContentLoaded", loadInventory);
 
-document.addEventListener("DOMContentLoaded", loadInventory);
-
-/* ================= LOAD INVENTORY ================= */
-let inventory = [];
-
-async function loadInventory() {
-  try {
-    const res = await fetch(`${API_URL}?action=getBreweryInventory`);
-    inventory = await res.json();
-    renderInventoryTables();
-  } catch (err) {
-    console.error("Failed to load inventory", err);
-  }
-}
-function renderInventoryTables() {
-  renderLifecycleTable("Core", "coreInventoryBody");
-  renderLifecycleTable("Seasonal", "seasonalInventoryBody");
-  renderLifecycleTable("Rotating", "rotatingInventoryBody");
-}
-function renderLifecycleTable(lifecycle, tbodyId) {
-  const tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-
-  tbody.innerHTML = "";
-
-  const rows = inventory.filter(item => item.lifecycle === lifecycle);
-
-  if (!rows.length) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6">No ${lifecycle} products</td>
-      </tr>
-    `;
-    return;
-  }
-
-  rows.forEach(item => {
-    const statusClass = Number(item.qty) <= 0 ? "low" : "ok";
-    const statusText = Number(item.qty) <= 0 ? "Low" : "OK";
-
-    tbody.insertAdjacentHTML("beforeend", `
-      <tr>
-        <td>${item.product}</td>
-        <td>${item.type}</td>
-        <td>${item.package}</td>
-        <td>${item.qty}</td>
-        <td>${item.unit}</td>
-        <td class="${statusClass}">${statusText}</td>
-      </tr>
-    `);
-  });
-}
-
-/* ================= MODAL ================= */
-function openProductModal() {
-  productModal.style.display = "flex";
-}
-
-function closeProductModal() {
-  productModal.style.display = "none";
-}
-
-/* ================= SAVE PRODUCT (NO CORS PREFLIGHT) ================= */
-async function saveProduct() {
-  const payload = {
-    action: "addBreweryProduct",
-    product: prodName.value.trim(),
-    lifecycle: prodLifecycle.value,
-    halfKegQty: halfQty.value || "",
-    halfKegPrice: halfPrice.value || "",
-    sixthKegQty: sixthQty.value || "",
-    sixthKegPrice: sixthPrice.value || "",
-    caseQty: caseQty.value || "",
-    casePrice: casePrice.value || ""
-  };
-
-  if (!payload.product || !payload.lifecycle) {
-    alert("Product name and lifecycle are required");
-    return;
-  }
-
-  const formBody = Object.keys(payload)
-    .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(payload[k]))
-    .join("&");
-
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: formBody
-    });
-
-    const data = await res.json();
-
-    if (!data.success) {
-      alert(data.error || "Failed to save product");
-      return;
+    async function loadInventory() {
+        try {
+            const res = await fetch(`${API_URL}?action=getBreweryInventory`);
+            inventory = await res.json();
+            renderInventoryTables();
+        } catch (err) {
+            console.error("Failed to load inventory", err);
+            alert("Error connecting to database. Please refresh.");
+        }
     }
 
-    closeProductModal();
-    loadInventory();
-  } catch (err) {
-    console.error(err);
-    alert("Network error saving product");
-  }
-}
-</script>
+    function renderInventoryTables() {
+        renderLifecycleTable("Core", "coreInventoryBody");
+        renderLifecycleTable("Seasonal", "seasonalInventoryBody");
+        renderLifecycleTable("Rotating", "rotatingInventoryBody");
+    }
 
+    function renderLifecycleTable(lifecycle, tbodyId) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        const rows = inventory.filter(item => 
+            String(item.lifecycle).trim().toLowerCase() === lifecycle.toLowerCase()
+        );
+
+        if (!rows.length) {
+            tbody.innerHTML = `<tr><td colspan="5" style="color: #9ca3af; font-style: italic; text-align: center; padding: 20px;">No ${lifecycle} products found</td></tr>`;
+            return;
+        }
+
+        rows.forEach(item => {
+            const isLow = Number(item.qty) <= 0;
+            const statusClass = isLow ? "low" : "ok";
+            const statusText = isLow ? "Low" : "OK";
+
+            tbody.insertAdjacentHTML("beforeend", `
+                <tr>
+                    <td><strong>${item.product}</strong></td>
+                    <td>${item.type}</td>
+                    <td>${item.qty}</td>
+                    <td>${item.unit || "Units"}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                </tr>
+            `);
+        });
+    }
+
+    function openProductModal() {
+        productModal.style.display = "flex";
+    }
+
+    function closeProductModal() {
+        productModal.style.display = "none";
+        // Reset inputs
+        document.querySelectorAll('#productModal input').forEach(i => i.value = "");
+        document.getElementById("prodLifecycle").value = "";
+    }
+
+    async function saveProduct() {
+        const payload = {
+            action: "addBreweryProduct",
+            product: document.getElementById("prodName").value.trim(),
+            lifecycle: document.getElementById("prodLifecycle").value,
+            halfKegQty: document.getElementById("halfQty").value,
+            halfKegPrice: document.getElementById("halfPrice").value,
+            sixthKegQty: document.getElementById("sixthQty").value,
+            sixthKegPrice: document.getElementById("sixthPrice").value,
+            caseQty: document.getElementById("caseQty").value,
+            casePrice: document.getElementById("casePrice").value
+        };
+
+        if (!payload.product || !payload.lifecycle) {
+            alert("Product Name and Lifecycle are required.");
+            return;
+        }
+
+        const formBody = Object.keys(payload)
+            .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(payload[k]))
+            .join("&");
+
+        try {
+            const res = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: formBody
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeProductModal();
+                loadInventory();
+            } else {
+                alert("Error: " + (data.error || "Unknown error"));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Network error saving product.");
+        }
+    }
+</script>
 
 </body>
 </html>
