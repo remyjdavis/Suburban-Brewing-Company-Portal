@@ -6,15 +6,19 @@
     <title>Sales Activity Log | Suburban Brewing Co.</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; padding: 20px; color: #1f2937; }
+        body { font-family: -apple-system, sans-serif; background: #f4f6f8; padding: 20px; color: #1f2937; }
         .card { background: #fff; padding: 25px; border-radius: 12px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         h2 { margin-top: 0; font-size: 20px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; }
         label { display: block; font-weight: 700; margin: 15px 0 5px; font-size: 11px; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; transition: border 0.2s; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #1f2937; box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.1); }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
+        
+        /* Visit Type Toggle */
+        .toggle-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .toggle-btn { flex: 1; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; text-align: center; }
+        .toggle-btn.active { background: #1f2937; color: white; border-color: #1f2937; }
+
         .btn { width: 100%; padding: 15px; background: #1f2937; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 25px; font-size: 16px; }
-        .btn:disabled { background: #9ca3af; cursor: not-allowed; }
-        .info-note { font-size: 11px; color: #6b7280; font-style: italic; margin-top: 4px; }
+        .btn:disabled { background: #9ca3af; }
         .row { display: flex; gap: 10px; }
         .col { flex: 1; }
     </style>
@@ -24,6 +28,12 @@
 <div class="card">
     <h2>Sales Activity Log</h2>
     <form id="salesForm">
+        <label>Visit Type</label>
+        <div class="toggle-group">
+            <div id="btnInitial" class="toggle-btn active" onclick="setVisitType('Initial')">Initial Visit</div>
+            <div id="btnFollow" class="toggle-btn" onclick="setVisitType('Follow-up')">Follow-up</div>
+        </div>
+        <input type="hidden" id="visitType" value="Initial">
         <input type="hidden" id="accountType" value="Restaurant">
 
         <label>Account Name</label>
@@ -32,20 +42,18 @@
 
         <label>Manager Name</label>
         <input type="text" id="manager" placeholder="Who did you speak with?">
-        <p class="info-note">Gemini uses this to personalize your daily route planning.</p>
 
         <div id="contactInfo">
             <label>Street Address</label>
             <input type="text" id="address">
-            
             <div class="row">
                 <div class="col">
                     <label>Phone</label>
-                    <input type="tel" id="phone" placeholder="555-555-5555">
+                    <input type="tel" id="phone">
                 </div>
                 <div class="col">
                     <label>Email</label>
-                    <input type="email" id="email" placeholder="manager@example.com">
+                    <input type="email" id="email">
                 </div>
             </div>
         </div>
@@ -60,58 +68,42 @@
         </select>
 
         <label>Notes (For AI Analysis)</label>
-        <textarea id="notes" rows="3" placeholder="Example: Manager was busy, come back Tuesday. They are low on IPA."></textarea>
+        <textarea id="notes" rows="3" placeholder="Example: Manager was busy, come back Tuesday..."></textarea>
 
         <button type="submit" id="submitBtn" class="btn">Submit & Save Activity</button>
     </form>
 </div>
 
 <script>
-    // THE WEB APP URL FOR YOUR INVENTORY MASTER CONTROLLER
     const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
     
-    let customerData = [];
-
-    // 1. On Load: Pull existing data to populate the search list
-    window.onload = async () => {
-        try {
-            // Fetching from Wholesaler inventory as a base list of customers
-            const resp = await fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" });
-            customerData = await resp.json();
-            
-            const dl = document.getElementById('customers');
-            customerData.forEach(cust => { 
-                let o = document.createElement('option'); 
-                o.value = cust.name; 
-                dl.appendChild(o); 
-            });
-        } catch (e) { 
-            console.error("Initialization Error:", e); 
-        }
-    };
-
-    // 2. Auto-fill: Detect if account is known and fill details
-    function checkExisting() {
-        const nameInput = document.getElementById('name').value;
-        if (!nameInput) return;
-        
-        const existing = customerData.find(c => c.name.toLowerCase() === nameInput.toLowerCase());
-        if (existing) {
-            // If found, we can pre-set the type based on which tab it came from
-            // For now, we assume data came from the getInventory call
-            document.getElementById('accountType').value = existing.type || "Restaurant";
-        }
+    function setVisitType(type) {
+        document.getElementById('visitType').value = type;
+        document.getElementById('btnInitial').classList.toggle('active', type === 'Initial');
+        document.getElementById('btnFollow').classList.toggle('active', type === 'Follow-up');
     }
 
-    // 3. Submit: Process with AI and Redirect if Sale
+    // Load unique customers for the search list
+    window.onload = async () => {
+        try {
+            const resp = await fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" });
+            const data = await resp.json();
+            const dl = document.getElementById('customers');
+            const uniqueNames = [...new Set(data.map(item => item.name))];
+            uniqueNames.forEach(n => { 
+                let o = document.createElement('option'); o.value = n; dl.appendChild(o); 
+            });
+        } catch (e) { console.error(e); }
+    };
+
     document.getElementById('salesForm').onsubmit = async function(e) {
         e.preventDefault();
-        
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
         btn.innerText = "Consulting Gemini AI...";
 
         const payload = {
+            visitType: document.getElementById('visitType').value,
             name: document.getElementById('name').value,
             type: document.getElementById('accountType').value,
             manager: document.getElementById('manager').value,
@@ -123,38 +115,29 @@
         };
 
         try {
-            const params = new URLSearchParams({
-                action: "submitSalesActivity",
-                data: JSON.stringify(payload)
-            });
-
+            const params = new URLSearchParams({ action: "submitSalesActivity", data: JSON.stringify(payload) });
             const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
             const res = await response.json();
 
             if (res.success) {
-                // POPUP SHOWING AI FOLLOW UP DATE
                 await Swal.fire({
                     title: 'Activity Logged',
-                    text: `Gemini has scheduled your next follow-up for: ${res.nextDate}`,
+                    text: `Visit Type: ${payload.visitType}. Next Follow-up: ${res.nextDate}`,
                     icon: 'success',
-                    confirmButtonText: 'Continue',
                     confirmButtonColor: '#1f2937'
                 });
 
                 if (res.redirect) {
-                    // Redirect to the invoice page with the space in name
                     window.location.href = "new invoices.html?customer=" + encodeURIComponent(payload.name);
                 } else {
                     location.reload();
                 }
             }
         } catch (err) {
-            Swal.fire('Error', 'Could not sync with Inventory Sheet: ' + err, 'error');
+            Swal.fire('Error', 'Sync failed: ' + err, 'error');
             btn.disabled = false;
-            btn.innerText = "Submit & Save Activity";
         }
     };
 </script>
-
 </body>
 </html>
