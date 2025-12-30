@@ -94,6 +94,161 @@
         </section>
     </div>
 </div>
+<script>
+    /**
+ * SUBURBAN BREWING CO. - UNIVERSAL DISTRIBUTION LOGIC
+ * Connects to: https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec
+ */
 
+const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+
+// 1. PAGE CONFIGURATION
+// Automatically determines if we are handling Wholesalers or Restaurants based on the filename
+const isWholesaler = window.location.pathname.includes("wholesaler");
+const PAGE_SETTINGS = {
+    action: isWholesaler ? "getWholesalerInventory" : "getRestaurantInventory",
+    typeLabel: isWholesaler ? "Wholesaler" : "Restaurant",
+    containerId: isWholesaler ? "wholesalerContainer" : "restaurantContainer"
+};
+
+// 2. INITIALIZATION
+document.addEventListener("DOMContentLoaded", () => {
+    console.log(`Initializing ${PAGE_SETTINGS.typeLabel} Dashboard...`);
+    loadInventoryData();
+});
+
+/**
+ * 3. DATA FETCHING
+ * Pulls the grouped inventory data from the Apps Script backend
+ */
+async function loadInventoryData() {
+    const container = document.getElementById(PAGE_SETTINGS.containerId);
+    if (!container) return;
+
+    container.innerHTML = `<div style="padding: 20px;">Fetching ${PAGE_SETTINGS.typeLabel} data from Master Sheet...</div>`;
+
+    try {
+        const response = await fetch(`${API_URL}?action=${PAGE_SETTINGS.action}`);
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+            container.innerHTML = `<div style="padding: 20px;">No ${PAGE_SETTINGS.typeLabel} accounts found. Please add a customer to begin tracking.</div>`;
+            return;
+        }
+
+        renderCards(data, container);
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        container.innerHTML = `<div style="padding: 20px; color: red;">Error connecting to Google Sheets. Verify the Web App URL is deployed.</div>`;
+    }
+}
+
+/**
+ * 4. UI RENDERING
+ * Dynamically builds the cards and tables based on the 'Customers' tab data
+ */
+function renderCards(data, container) {
+    container.innerHTML = ""; // Clear loader
+
+    data.forEach(account => {
+        const card = document.createElement("div");
+        card.className = isWholesaler ? "wholesaler-card" : "restaurant-card";
+
+        // Generate product rows for this specific account
+        let productHtml = "";
+        account.products.forEach(prod => {
+            let pkgRows = "";
+            prod.packages.forEach(pkg => {
+                pkgRows += `
+                    <div class="pkg-grid">
+                        <span>${pkg.type}</span>
+                        <strong>${pkg.qty} ${pkg.unit}</strong>
+                        <button style="font-size:10px;" onclick="updateStockPrompt('${account.name}', '${prod.name}', '${pkg.type}')">Update</button>
+                    </div>`;
+            });
+
+            productHtml += `
+                <tr>
+                    <td class="product-cell"><strong>${prod.name}</strong></td>
+                    <td style="padding: 0;">${pkgRows}</td>
+                </tr>`;
+        });
+
+        card.innerHTML = `
+            <div class="${isWholesaler ? 'wholesaler-header' : 'restaurant-header'}">
+                <span class="${isWholesaler ? 'wholesaler-name' : 'restaurant-name'}">${account.name}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>
+                           <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 0 20px;">
+                               <span>Package</span><span>On Hand</span><span>Action</span>
+                           </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${productHtml}
+                </tbody>
+            </table>
+        `;
+        container.appendChild(card);
+    });
+}
+
+/**
+ * 5. ADD CUSTOMER LOGIC
+ * Saves new customer info to the 'Customers' tab and updates the Master List
+ */
+async function submitNewCustomer() {
+    // Get values from your Modal/Form
+    const name = document.getElementById('custName').value;
+    const address = document.getElementById('custAddress').value;
+    const email = document.getElementById('custEmail').value;
+    const payment = document.getElementById('custPayment').value;
+
+    if (!name || !address) {
+        alert("Please provide at least a Business Name and Address.");
+        return;
+    }
+
+    const payload = {
+        action: "addCustomer",
+        name: name,
+        address: address,
+        type: PAGE_SETTINGS.typeLabel, // 'Wholesaler' or 'Restaurant'
+        payment: payment,
+        email: email
+    };
+
+    try {
+        // Using POST to send the JSON payload to doPost(e) in Apps Script
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors", 
+            body: JSON.stringify(payload)
+        });
+
+        alert(`${PAGE_SETTINGS.typeLabel} added! This customer will now appear in your Invoice dropdowns.`);
+        location.reload(); // Refresh to show the new card
+    } catch (error) {
+        console.error("Save Error:", error);
+        alert("Failed to save to Master List. Check Apps Script permissions.");
+    }
+}
+
+/**
+ * 6. STOCK UPDATE (STUB)
+ * Logic for manually overriding inventory counts
+ */
+function updateStockPrompt(account, product, pkg) {
+    const val = prompt(`Enter new inventory count for ${product} at ${account}:`);
+    if (val !== null) {
+        alert("Inventory update function is ready to be linked to your 'Invoice Items' sheet.");
+    }
+}
+</script>
 </body>
 </html>
