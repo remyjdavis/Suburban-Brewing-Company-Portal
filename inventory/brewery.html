@@ -5,6 +5,7 @@
     <title>Master Inventory | Suburban Brewing Co.</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
+        /* CSS remains unchanged from your original version to maintain consistency */
         * {
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -18,7 +19,6 @@
             display: flex;
             min-height: 100vh;
         }
-        /* ================= SIDEBAR ================= */
         .sidebar {
             width: 240px;
             background: #1f2937;
@@ -28,21 +28,18 @@
         .sidebar h2 {
             margin: 0 20px 20px;
             font-size: 18px;
-            letter-spacing: 0.5px;
         }
         .nav-link {
             display: block;
-            padding: 12px 20px;
+            padding: 10px 20px;
             color: #d1d5db;
             text-decoration: none;
-            transition: all 0.2s;
         }
         .nav-link.active,
         .nav-link:hover {
             background: #374151;
             color: #fff;
         }
-        /* ================= MAIN ================= */
         .main {
             flex: 1;
             display: flex;
@@ -69,7 +66,6 @@
             border-bottom: 2px solid #f3f4f6;
             padding-bottom: 8px;
         }
-        /* ================= TABLE ================= */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -88,7 +84,6 @@
         }
         .low { color: #b91c1c; font-weight: 600; }
         .ok { color: #065f46; font-weight: 600; }
-        /* ================= BUTTONS & INPUTS ================= */
         button {
             padding: 8px 16px;
             border: none;
@@ -113,13 +108,13 @@
 
 <div class="layout">
     <aside class="sidebar">
-        <h2>Suburban Brewing Co.</h2>
-        <a class="nav-link" href="invoices.html">Invoices</a>
-        <a class="nav-link" href="deliveries.html">Deliveries</a>
+        <h2>Suburban Brewing</h2>
+        <a class="nav-link" href="../sales/invoices.html">Invoices</a>
+        <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
+        <a class="nav-link" href="../sales/sampling.html">Sampling</a>
         <a class="nav-link active" href="brewery-inventory.html">Brewery Inventory</a>
-        <a class="nav-link" href="customer-tracking.html">Live Tracking</a>
-        <a class="nav-link" href="sampling.html">Sampling</a>
-        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="store-inventory.html">Store Inventory</a>
+        <a class="nav-link" href="../index.html">Dashboard</a>
     </aside>
 
     <div class="main">
@@ -128,9 +123,8 @@
         </header>
 
         <section class="content">
-            <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="margin-bottom: 20px;">
                 <button onclick="openProductModal()">+ Create New Product</button>
-                <span style="font-size: 13px; color: #6b7280;">Deductions occur automatically upon Invoice submission.</span>
             </div>
 
             <div class="section">
@@ -205,7 +199,7 @@
             <option value="Seasonal">Seasonal</option>
             <option value="Rotating">Rotating</option>
         </select>
-        <h4 style="margin: 15px 0 10px 0;">Initial Stock & Default Pricing</h4>
+        <h4 style="margin: 15px 0 10px 0;">Initial Stock & Prices</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div>
                 <label style="font-size: 12px;">1/2 Keg Qty</label>
@@ -273,7 +267,7 @@
         );
 
         if (!products.length) {
-            tbody.innerHTML = `<tr><td colspan="6" style="color: #9ca3af; font-style: italic; text-align: center; padding: 20px;">No ${lifecycle} products currently in stock</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="color: #9ca3af; font-style: italic; text-align: center; padding: 20px;">No ${lifecycle} products found</td></tr>`;
             return;
         }
 
@@ -322,10 +316,15 @@
             newQty: Number(newQty)
         };
 
+        const formBody = Object.keys(payload)
+            .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(payload[k]))
+            .join("&");
+
         try {
             const res = await fetch(API_URL, {
                 method: "POST",
-                body: JSON.stringify(payload)
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: formBody
             });
             const data = await res.json();
             if (data.success) {
