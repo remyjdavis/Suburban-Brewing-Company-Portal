@@ -5,7 +5,6 @@
     <title>Master Inventory | Suburban Brewing Co.</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
-        /* CSS remains unchanged from your original version to maintain consistency */
         * {
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -19,27 +18,45 @@
             display: flex;
             min-height: 100vh;
         }
+        /* ================= SIDEBAR ================= */
         .sidebar {
             width: 240px;
             background: #1f2937;
             color: #fff;
             padding: 20px 0;
+            flex-shrink: 0;
         }
         .sidebar h2 {
             margin: 0 20px 20px;
             font-size: 18px;
+            letter-spacing: 0.5px;
         }
         .nav-link {
             display: block;
-            padding: 10px 20px;
+            padding: 12px 20px;
             color: #d1d5db;
             text-decoration: none;
+            transition: all 0.2s;
+            font-size: 14px;
         }
         .nav-link.active,
         .nav-link:hover {
             background: #374151;
             color: #fff;
         }
+        .nav-link.active {
+            background: #2563eb;
+            font-weight: 600;
+        }
+        .nav-group-label {
+            padding: 20px 20px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        /* ================= MAIN ================= */
         .main {
             flex: 1;
             display: flex;
@@ -66,6 +83,7 @@
             border-bottom: 2px solid #f3f4f6;
             padding-bottom: 8px;
         }
+        /* ================= TABLE ================= */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -84,6 +102,7 @@
         }
         .low { color: #b91c1c; font-weight: 600; }
         .ok { color: #065f46; font-weight: 600; }
+        /* ================= BUTTONS & INPUTS ================= */
         button {
             padding: 8px 16px;
             border: none;
@@ -109,12 +128,20 @@
 <div class="layout">
     <aside class="sidebar">
         <h2>Suburban Brewing</h2>
+        <a class="nav-link" href="../index.html">Dashboard</a>
+
+        <div class="nav-group-label">Sales & Orders</div>
         <a class="nav-link" href="../sales/invoices.html">Invoices</a>
         <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
-        <a class="nav-link" href="../sales/sampling.html">Sampling</a>
-        <a class="nav-link active" href="brewery-inventory.html">Brewery Inventory</a>
-        <a class="nav-link" href="store-inventory.html">Store Inventory</a>
-        <a class="nav-link" href="../index.html">Dashboard</a>
+
+        <div class="nav-group-label">Sampling Outreach</div>
+        <a class="nav-link" href="../sales/schedule-sampling.html">Schedule New</a>
+        <a class="nav-link" href="../sales/sampling-report.html">Log Report</a>
+        <a class="nav-link" href="../sales/sampling-calendar.html">Calendar View</a>
+
+        <div class="nav-group-label">Inventory</div>
+        <a class="nav-link active" href="brewery-inventory.html">Brewery Master</a>
+        <a class="nav-link" href="store-inventory.html">Store Stock</a>
     </aside>
 
     <div class="main">
@@ -123,8 +150,9 @@
         </header>
 
         <section class="content">
-            <div style="margin-bottom: 20px;">
+            <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                 <button onclick="openProductModal()">+ Create New Product</button>
+                <span style="font-size: 13px; color: #6b7280;">Deductions occur automatically upon Invoice submission.</span>
             </div>
 
             <div class="section">
@@ -199,32 +227,14 @@
             <option value="Seasonal">Seasonal</option>
             <option value="Rotating">Rotating</option>
         </select>
-        <h4 style="margin: 15px 0 10px 0;">Initial Stock & Prices</h4>
+        <h4 style="margin: 15px 0 10px 0;">Initial Stock & Pricing</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div>
-                <label style="font-size: 12px;">1/2 Keg Qty</label>
-                <input id="halfQty" type="number" placeholder="Qty" />
-            </div>
-            <div>
-                <label style="font-size: 12px;">1/2 Keg Price</label>
-                <input id="halfPrice" type="number" placeholder="Price" />
-            </div>
-            <div>
-                <label style="font-size: 12px;">1/6 Keg Qty</label>
-                <input id="sixthQty" type="number" placeholder="Qty" />
-            </div>
-            <div>
-                <label style="font-size: 12px;">1/6 Keg Price</label>
-                <input id="sixthPrice" type="number" placeholder="Price" />
-            </div>
-            <div>
-                <label style="font-size: 12px;">Case Qty</label>
-                <input id="caseQty" type="number" placeholder="Qty" />
-            </div>
-            <div>
-                <label style="font-size: 12px;">Case Price</label>
-                <input id="casePrice" type="number" placeholder="Price" />
-            </div>
+            <div><label style="font-size: 12px;">1/2 Keg Qty</label><input id="halfQty" type="number" /></div>
+            <div><label style="font-size: 12px;">1/2 Keg Price</label><input id="halfPrice" type="number" /></div>
+            <div><label style="font-size: 12px;">1/6 Keg Qty</label><input id="sixthQty" type="number" /></div>
+            <div><label style="font-size: 12px;">1/6 Keg Price</label><input id="sixthPrice" type="number" /></div>
+            <div><label style="font-size: 12px;">Case Qty</label><input id="caseQty" type="number" /></div>
+            <div><label style="font-size: 12px;">Case Price</label><input id="casePrice" type="number" /></div>
         </div>
         <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
             <button class="secondary" onclick="closeProductModal()">Cancel</button>
@@ -235,7 +245,6 @@
 
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
-    const productModal = document.getElementById("productModal");
     let inventory = [];
 
     document.addEventListener("DOMContentLoaded", loadInventory);
@@ -247,111 +256,61 @@
             renderInventoryTables();
         } catch (err) {
             console.error("Failed to load inventory", err);
-            alert("Error connecting to database. Please refresh.");
         }
     }
 
     function renderInventoryTables() {
-        renderLifecycleTable("Core", "coreInventoryBody");
-        renderLifecycleTable("Seasonal", "seasonalInventoryBody");
-        renderLifecycleTable("Rotating", "rotatingInventoryBody");
-    }
+        ["Core", "Seasonal", "Rotating"].forEach(lc => {
+            const tbody = document.getElementById(lc.toLowerCase() + "InventoryBody");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+            const products = inventory.filter(i => String(i.lifecycle).toLowerCase() === lc.toLowerCase());
+            
+            if (!products.length) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#9ca3af; padding:20px;">No ${lc} products in stock</td></tr>`;
+                return;
+            }
 
-    function renderLifecycleTable(lifecycle, tbodyId) {
-        const tbody = document.getElementById(tbodyId);
-        if (!tbody) return;
-        tbody.innerHTML = "";
-
-        const products = inventory.filter(item => 
-            String(item.lifecycle).trim().toLowerCase() === lifecycle.toLowerCase()
-        );
-
-        if (!products.length) {
-            tbody.innerHTML = `<tr><td colspan="6" style="color: #9ca3af; font-style: italic; text-align: center; padding: 20px;">No ${lifecycle} products found</td></tr>`;
-            return;
-        }
-
-        products.forEach(item => {
-            let packageHtml = "";
-            let qtyHtml = "";
-            let unitHtml = "";
-            let statusHtml = "";
-            let actionHtml = "";
-
-            item.packages.forEach(pkg => {
-                const isLow = Number(pkg.qty) <= 0;
-                const statusClass = isLow ? "low" : "ok";
-                const statusText = isLow ? "Low" : "OK";
-
-                packageHtml += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.type}</div>`;
-                qtyHtml     += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.qty}</div>`;
-                unitHtml    += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.unit}</div>`;
-                statusHtml  += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;" class="${statusClass}">${statusText}</div>`;
-                actionHtml  += `<div style="padding: 2px 0; border-bottom: 1px solid #f3f4f6;">
-                                  <button class="small secondary" onclick="adjustQty('${item.product}', '${pkg.type}', ${pkg.qty})">Manual Adjust</button>
-                                </div>`;
+            products.forEach(item => {
+                let pkgH = "", qtyH = "", unitH = "", statH = "", actH = "";
+                item.packages.forEach(pkg => {
+                    const isLow = Number(pkg.qty) <= 0;
+                    pkgH  += `<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;">${pkg.type}</div>`;
+                    qtyH  += `<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;">${pkg.qty}</div>`;
+                    unitH += `<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;">${pkg.unit}</div>`;
+                    statH += `<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;" class="${isLow?'low':'ok'}">${isLow?'Low':'OK'}</div>`;
+                    actH  += `<div style="padding:2px 0; border-bottom:1px solid #f3f4f6;"><button class="small secondary" onclick="adjustQty('${item.product}','${pkg.type}',${pkg.qty})">Adjust</button></div>`;
+                });
+                tbody.insertAdjacentHTML("beforeend", `
+                    <tr>
+                        <td style="vertical-align:top;"><strong>${item.product}</strong></td>
+                        <td style="padding:0;">${pkgH}</td><td style="padding:0;">${qtyH}</td>
+                        <td style="padding:0;">${unitH}</td><td style="padding:0;">${statH}</td>
+                        <td style="padding:0;">${actH}</td>
+                    </tr>
+                `);
             });
-
-            tbody.insertAdjacentHTML("beforeend", `
-                <tr>
-                    <td style="vertical-align: top;"><strong>${item.product}</strong></td>
-                    <td style="padding: 0;">${packageHtml}</td>
-                    <td style="padding: 0;">${qtyHtml}</td>
-                    <td style="padding: 0;">${unitHtml}</td>
-                    <td style="padding: 0;">${statusHtml}</td>
-                    <td style="padding: 0;">${actionHtml}</td>
-                </tr>
-            `);
         });
     }
 
     async function adjustQty(product, type, currentQty) {
-        const newQty = prompt(`Manually update inventory for ${product} (${type}):`, currentQty);
-        if (newQty === null || newQty === "" || isNaN(newQty)) return;
-
-        const payload = {
-            action: "updateInventoryQty",
-            product: product,
-            type: type,
-            newQty: Number(newQty)
-        };
-
-        const formBody = Object.keys(payload)
-            .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(payload[k]))
-            .join("&");
-
-        try {
-            const res = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: formBody
-            });
-            const data = await res.json();
-            if (data.success) {
-                loadInventory();
-            } else {
-                alert("Error: " + (data.error || "Update failed"));
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Network error updating inventory.");
-        }
+        const newQty = prompt(`Update ${product} (${type}):`, currentQty);
+        if (newQty === null || isNaN(newQty)) return;
+        const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ action: "updateInventoryQty", product, type, newQty })
+        });
+        if ((await res.json()).success) loadInventory();
     }
 
-    function openProductModal() {
-        productModal.style.display = "flex";
-    }
-
-    function closeProductModal() {
-        productModal.style.display = "none";
-        document.querySelectorAll('#productModal input').forEach(i => i.value = "");
-        document.getElementById("prodLifecycle").value = "";
-    }
+    function openProductModal() { document.getElementById("productModal").style.display = "flex"; }
+    function closeProductModal() { document.getElementById("productModal").style.display = "none"; }
 
     async function saveProduct() {
         const payload = {
             action: "addBreweryProduct",
-            product: document.getElementById("prodName").value.trim(),
+            product: document.getElementById("prodName").value,
             lifecycle: document.getElementById("prodLifecycle").value,
             halfKegQty: document.getElementById("halfQty").value,
             halfKegPrice: document.getElementById("halfPrice").value,
@@ -360,33 +319,12 @@
             caseQty: document.getElementById("caseQty").value,
             casePrice: document.getElementById("casePrice").value
         };
-
-        if (!payload.product || !payload.lifecycle) {
-            alert("Product Name and Lifecycle are required.");
-            return;
-        }
-
-        const formBody = Object.keys(payload)
-            .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(payload[k]))
-            .join("&");
-
-        try {
-            const res = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: formBody
-            });
-            const data = await res.json();
-            if (data.success) {
-                closeProductModal();
-                loadInventory();
-            } else {
-                alert("Error: " + (data.error || "Unknown error"));
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Network error saving product.");
-        }
+        const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams(payload)
+        });
+        if ((await res.json()).success) { closeProductModal(); loadInventory(); }
     }
 </script>
 </body>
