@@ -261,38 +261,54 @@
     }
 
     function renderLifecycleTable(lifecycle, tbodyId) {
-        const tbody = document.getElementById(tbodyId);
-        if (!tbody) return;
-        tbody.innerHTML = "";
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    tbody.innerHTML = "";
 
-        const rows = inventory.filter(item => 
-            String(item.lifecycle).trim().toLowerCase() === lifecycle.toLowerCase()
-        );
+    // Filter grouped products by lifecycle
+    const products = inventory.filter(item => 
+        String(item.lifecycle).trim().toLowerCase() === lifecycle.toLowerCase()
+    );
 
-        if (!rows.length) {
-            tbody.innerHTML = `<tr><td colspan="6" style="color: #9ca3af; font-style: italic; text-align: center; padding: 20px;">No ${lifecycle} products found</td></tr>`;
-            return;
-        }
+    if (!products.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color: #9ca3af; font-style: italic; text-align: center; padding: 20px;">No ${lifecycle} products found</td></tr>`;
+        return;
+    }
 
-        rows.forEach(item => {
-            const isLow = Number(item.qty) <= 0;
+    products.forEach(item => {
+        // Create sub-rows for each package within the product row
+        let packageHtml = "";
+        let qtyHtml = "";
+        let unitHtml = "";
+        let statusHtml = "";
+        let actionHtml = "";
+
+        item.packages.forEach(pkg => {
+            const isLow = Number(pkg.qty) <= 0;
             const statusClass = isLow ? "low" : "ok";
             const statusText = isLow ? "Low" : "OK";
 
-            tbody.insertAdjacentHTML("beforeend", `
-                <tr>
-                    <td><strong>${item.product}</strong></td>
-                    <td>${item.type}</td>
-                    <td>${item.qty}</td>
-                    <td>${item.unit || "Units"}</td>
-                    <td class="${statusClass}">${statusText}</td>
-                    <td>
-                        <button class="small secondary" onclick="adjustQty('${item.product}', '${item.type}', ${item.qty})">Adjust</button>
-                    </td>
-                </tr>
-            `);
+            packageHtml += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.type}</div>`;
+            qtyHtml     += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.qty}</div>`;
+            unitHtml    += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.unit}</div>`;
+            statusHtml  += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;" class="${statusClass}">${statusText}</div>`;
+            actionHtml  += `<div style="padding: 2px 0; border-bottom: 1px solid #f3f4f6;">
+                              <button class="small secondary" onclick="adjustQty('${item.product}', '${pkg.type}', ${pkg.qty})">Adjust</button>
+                            </div>`;
         });
-    }
+
+        tbody.insertAdjacentHTML("beforeend", `
+            <tr>
+                <td style="vertical-align: top;"><strong>${item.product}</strong></td>
+                <td style="padding: 0;">${packageHtml}</td>
+                <td style="padding: 0;">${qtyHtml}</td>
+                <td style="padding: 0;">${unitHtml}</td>
+                <td style="padding: 0;">${statusHtml}</td>
+                <td style="padding: 0;">${actionHtml}</td>
+            </tr>
+        `);
+    });
+}
 
     async function adjustQty(product, type, currentQty) {
         const newQty = prompt(`Update inventory for ${product} (${type}):`, currentQty);
