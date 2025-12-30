@@ -801,15 +801,42 @@ function renderBlock(blockId) {
   invoiceLines
     .filter(l => l.blockId === blockId)
     .forEach(l => {
+      // 1. Create a unique ID for the badge so we can update it after the server responds
+      const badgeId = `badge-${l.id}`;
+      
+      // 2. Add the input and a placeholder badge to the HTML
       qtyCell.innerHTML += `
-        <input type="number" min="1" value="${l.qty}"
-          onchange="updateQty('${l.id}', this.value)"
-          class="qty-input"><br>
+        <div style="margin-bottom: 8px;">
+          <input type="number" min="1" value="${l.qty}"
+            onchange="updateQty('${l.id}', this.value)"
+            class="qty-input">
+          <div id="${badgeId}" class="stock-badge">Checking...</div>
+        </div>
       `;
-      priceCell.innerHTML += `$${l.price.toFixed(2)}<br>`;
-      totalCell.innerHTML += `$${(l.qty * l.price).toFixed(2)}<br>`;
+      
+      priceCell.innerHTML += `<div style="height: 42px;">$${l.price.toFixed(2)}</div>`;
+      totalCell.innerHTML += `<div style="height: 42px;">$${(l.qty * l.price).toFixed(2)}</div>`;
+
+      // 3. Call the Google Script to get the "On Hand" value from Column E
+      google.script.run.withSuccessHandler((qty) => {
+        const badge = document.getElementById(badgeId);
+        if (!badge) return;
+
+        badge.textContent = `Stock: ${qty}`;
+        
+        // Apply Red/Green styling based on quantity
+        if (qty <= 0) {
+          badge.className = "stock-badge stock-low";
+          badge.textContent = "OUT OF STOCK";
+        } else if (qty < 5) {
+          badge.className = "stock-badge stock-low";
+        } else {
+          badge.className = "stock-badge stock-ok";
+        }
+      }).getStockLevel(l.product, l.type); 
     });
-    calculateTotals();
+    
+  calculateTotals();
 }
 
 function updateQty(id, val) {
