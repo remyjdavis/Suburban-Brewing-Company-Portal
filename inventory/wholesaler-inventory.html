@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Distribution Inventory | Suburban Brewing Company</title>
+    <title>Wholesaler Inventory | Suburban Brewing Company</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -14,7 +14,7 @@
         .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 600; }
         .nav-section { margin-bottom: 24px; }
         .nav-section-title { font-size: 12px; text-transform: uppercase; opacity: 0.6; margin: 0 20px 8px; }
-        .nav-link { display: block; padding: 10px 20px; color: #d1d5db; text-decoration: none; font-size: 14px; border-left: 4px solid transparent; }
+        .nav-link { display: block; padding: 10px 20px; color: #d1d5db; text-decoration: none; font-size: 14px; border-left: 4px solid transparent; transition: 0.2s; }
         .nav-link:hover { background: #374151; color: #fff; }
         .nav-link.active { background: #374151; color: #fff; border-left: 4px solid #3b82f6; }
 
@@ -52,22 +52,29 @@
 <div class="layout">
     <aside class="sidebar">
         <h2>Suburban Brewing</h2>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Dashboard</div>
+            <a class="nav-link" href="../index.html">Main Overview</a>
+        </div>
+
         <div class="nav-section">
             <div class="nav-section-title">Sales</div>
-            <a class="nav-link" href="invoices.html">Invoices</a>
+            <a class="nav-link" href="../sales/invoices.html">Invoices</a>
         </div>
+
         <div class="nav-section">
             <div class="nav-section-title">Inventory</div>
             <a class="nav-link" href="brewery.html">Brewery Inventory</a>
-            <a class="nav-link" id="link-wholesale" href="wholesaler-inventory.html">Wholesaler Inventory</a>
+            <a class="nav-link active" id="link-wholesale" href="wholesaler-inventory.html">Wholesaler Inventory</a>
             <a class="nav-link" id="link-restaurant" href="restaurant-inventory.html">Restaurant Inventory</a>
         </div>
     </aside>
 
     <div class="main">
         <header class="topbar">
-            <h1 id="pageHeader">Gallery</h1>
-            <button class="btn-primary" id="addBtn" onclick="openAddModal()">+ Add Account</button>
+            <h1 id="pageHeader">Wholesaler Gallery</h1>
+            <button class="btn-primary" id="addBtn" onclick="openAddModal()">+ Add Wholesaler</button>
         </header>
 
         <section class="content" id="wholesalerContainer"></section>
@@ -77,21 +84,21 @@
 <div id="addModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="modalTitle">New Account Onboarding</h2>
+            <h2 id="modalTitle">Wholesaler Onboarding</h2>
             <button onclick="closeModal('addModal')" style="border:none;background:none;font-size:24px;">&times;</button>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <input type="text" id="newName" placeholder="Business Name" style="grid-column: span 2;">
-            <input type="text" id="newAddress" placeholder="Address" style="grid-column: span 2;">
+            <input type="text" id="newName" placeholder="Wholesale Business Name" style="grid-column: span 2;">
+            <input type="text" id="newAddress" placeholder="Full Address" style="grid-column: span 2;">
             <select id="newPayment">
                 <option value="Check">Check Customer</option>
                 <option value="Fintech">Fintech Customer</option>
             </select>
-            <input type="text" id="newType" readonly style="background: #f9fafb;">
+            <input type="text" id="newType" value="Wholesaler" readonly style="background: #f9fafb;">
         </div>
 
         <h4 style="margin: 20px 0 10px 0;">Initial Stock Setup</h4>
-        <div id="onboardingList" class="onboarding-list">Loading products from master list...</div>
+        <div id="onboardingList" class="onboarding-list">Loading brewery products...</div>
 
         <button class="btn-primary btn-full" id="submitBtn" onclick="submitNewAccount()">Create Account & Sync Stock</button>
     </div>
@@ -111,51 +118,17 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
 
-// Detect if we are on the Wholesaler or Restaurant page
-const isWholesalePage = window.location.pathname.includes("wholesaler");
-
 document.addEventListener("DOMContentLoaded", () => {
-    setupUI();
     loadDashboard();
 });
 
-/**
- * Configure UI labels based on page context
- */
-function setupUI() {
-    const pageHeader = document.getElementById("pageHeader");
-    const addBtn = document.getElementById("addBtn");
-    const modalTitle = document.getElementById("modalTitle");
-    const typeInput = document.getElementById("newType");
-
-    if (isWholesalePage) {
-        pageHeader.innerText = "Wholesaler Gallery";
-        addBtn.innerText = "+ Add Wholesaler";
-        modalTitle.innerText = "Wholesaler Onboarding";
-        typeInput.value = "Wholesaler";
-        document.getElementById("link-wholesale").classList.add("active");
-    } else {
-        pageHeader.innerText = "Restaurant Gallery";
-        addBtn.innerText = "+ Add Restaurant";
-        modalTitle.innerText = "Restaurant Onboarding";
-        typeInput.value = "Restaurant";
-        document.getElementById("link-restaurant").classList.add("active");
-    }
-}
-
-/**
- * Load accounts into the gallery
- */
 async function loadDashboard() {
     const container = document.getElementById("wholesalerContainer");
-    container.innerHTML = "Fetching accounts...";
-    
-    const action = isWholesalePage ? "getWholesalerInventory" : "getRestaurantInventory";
+    container.innerHTML = "Fetching wholesaler accounts...";
     
     try {
-        const response = await fetch(`${API_URL}?action=${action}`);
+        const response = await fetch(`${API_URL}?action=getWholesalerInventory`);
         const data = await response.json();
-        
         container.innerHTML = "";
         data.forEach(account => {
             const card = document.createElement("div");
@@ -163,28 +136,23 @@ async function loadDashboard() {
             card.innerHTML = `
                 <h3>${account.name}</h3>
                 <p>Tracking ${account.products.length} Products</p>
-                <span class="badge">${isWholesalePage ? 'Wholesaler' : 'Restaurant'}</span>
+                <span class="badge">Wholesaler</span>
             `;
             card.onclick = () => openAdjustModal(account);
             container.appendChild(card);
         });
     } catch (err) {
-        container.innerHTML = "Error loading dashboard. Please check API connection.";
+        container.innerHTML = "Error loading wholesaler data.";
     }
 }
 
-/**
- * Open onboarding modal and fetch master products
- */
 async function openAddModal() {
     document.getElementById("addModal").style.display = "block";
     const list = document.getElementById("onboardingList");
-    list.innerHTML = "Loading brewery products...";
-    
+    list.innerHTML = "Loading brewery master list...";
     try {
         const resp = await fetch(`${API_URL}?action=getProducts`);
         const products = await resp.json();
-        
         list.innerHTML = products.map((p, i) => `
             <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
                 <label style="font-size:13px; cursor:pointer;">
@@ -195,7 +163,7 @@ async function openAddModal() {
             </div>
         `).join("");
     } catch (e) {
-        list.innerHTML = "Error loading master products.";
+        list.innerHTML = "Error loading products.";
     }
 }
 
@@ -203,11 +171,10 @@ async function submitNewAccount() {
     const name = document.getElementById("newName").value;
     const address = document.getElementById("newAddress").value;
     const payment = document.getElementById("newPayment").value;
-    const type = document.getElementById("newType").value;
+    const type = "Wholesaler";
     const btn = document.getElementById("submitBtn");
 
     if (!name) return alert("Business Name is required.");
-
     btn.innerText = "Syncing...";
     btn.disabled = true;
 
@@ -225,16 +192,14 @@ async function submitNewAccount() {
         }
     });
 
-    const payload = {
+    const params = new URLSearchParams({
         action: "addCustomer",
         name, address, payment, type,
         initialStock: JSON.stringify(selectedProducts)
-    };
+    });
 
     try {
-        const params = new URLSearchParams(payload);
         await fetch(`${API_URL}?${params.toString()}`);
-        alert("Account created and inventory synced successfully.");
         location.reload();
     } catch (e) {
         alert("Error creating account.");
@@ -243,14 +208,10 @@ async function submitNewAccount() {
     }
 }
 
-/**
- * Adjust stock for an existing account
- */
 function openAdjustModal(account) {
     document.getElementById("adjustTitle").innerText = account.name;
     const body = document.getElementById("adjustBody");
     body.innerHTML = "";
-
     account.products.forEach(prod => {
         prod.packages.forEach(pkg => {
             body.innerHTML += `
@@ -278,8 +239,7 @@ async function saveInventoryAdjustments() {
     const accountName = document.getElementById("adjustTitle").innerText;
     const rows = document.querySelectorAll(".inventory-row");
     const btn = document.getElementById("saveBtn");
-    
-    btn.innerText = "Saving Changes...";
+    btn.innerText = "Saving...";
     btn.disabled = true;
 
     try {
@@ -287,18 +247,16 @@ async function saveInventoryAdjustments() {
             const product = row.dataset.product;
             const pkg = row.dataset.package;
             const qty = row.querySelector(".qty-input").value;
-
             const params = new URLSearchParams({
                 action: "updateStockItem",
                 name: accountName,
                 product: product,
                 package: pkg,
                 qty: qty,
-                type: isWholesalePage ? "Wholesaler" : "Restaurant"
+                type: "Wholesaler"
             });
             await fetch(`${API_URL}?${params.toString()}`);
         }
-        alert("Stock updated successfully.");
         location.reload();
     } catch (e) {
         alert("Update failed.");
