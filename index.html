@@ -126,6 +126,34 @@
       day: "numeric",
       year: "numeric"
     });
+  // This function will eventually fetch data from your Apps Script
+function updateSamplingPreview(events) {
+    const container = document.getElementById('samplingPreview');
+    const countBadge = document.getElementById('samplingCount');
+    
+    if (!events || events.length === 0) {
+        container.innerHTML = '<div style="font-size: 13px; color: #9ca3af;">Clear for the week!</div>';
+        countBadge.innerText = '0';
+        return;
+    }
+
+    countBadge.innerText = events.length;
+    container.innerHTML = events.slice(0, 3).map(ev => `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-left: 2px solid #3b82f6; padding-left: 8px;">
+            <span style="font-size: 13px; font-weight: 600; color: #1f2937;">${ev.account}</span>
+            <span style="font-size: 11px; color: #6b7280;">${ev.date}</span>
+        </div>
+    `).join('');
+}
+
+// Example Mock Data (We will replace this with your actual Sheet data)
+const mockEvents = [
+    { account: "Rusty Anchor Pub", date: "Dec 31" },
+    { account: "The Green Growler", date: "Jan 02" }
+];
+
+// Run on load
+updateSamplingPreview(mockEvents);
 </script>
 </body>
 </html>
