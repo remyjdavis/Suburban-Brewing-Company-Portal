@@ -5,7 +5,6 @@
     <title>Wholesaler Inventory | Suburban Brewing Company</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
-        /* Essential Layout Styles */
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { margin: 0; background: #f4f6f8; color: #1f2937; }
         .layout { display: flex; min-height: 100vh; }
@@ -16,27 +15,26 @@
         .nav-link { display: block; padding: 10px 20px; color: #d1d5db; text-decoration: none; }
         .nav-link.active { background: #374151; color: #fff; border-left: 4px solid #2563eb; }
 
-        /* Operational Containers */
+        /* Main */
         .main { flex: 1; display: flex; flex-direction: column; }
         .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;}
         .content { padding: 24px; }
         
-        .wholesaler-card { background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 24px; overflow: hidden; }
-        .wholesaler-header { background: #f9fafb; padding: 15px 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
-        .wholesaler-name { margin: 0; font-size: 18px; color: #111827; }
+        /* Wholesaler Cards */
+        .wholesaler-card { background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden; }
+        .wholesaler-header { background: #f9fafb; padding: 15px 20px; border-bottom: 1px solid #e5e7eb; }
+        .wholesaler-name { margin: 0; font-size: 18px; color: #111827; font-weight: 700; }
 
-        /* Table Logic */
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px 20px; background: #fff; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #f3f4f6; }
-        td { padding: 0; border-bottom: 1px solid #f3f4f6; }
+        th { text-align: left; padding: 12px 20px; background: #fff; color: #6b7280; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #f3f4f6; }
         
-        .product-info { padding: 12px 20px; vertical-align: top; width: 30%; border-right: 1px solid #f3f4f6; }
-        .pkg-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; align-items: center; padding: 8px 20px; border-bottom: 1px solid #f9fafb; }
-        .pkg-row:last-child { border-bottom: none; }
+        .product-cell { padding: 15px 20px; vertical-align: top; width: 30%; border-right: 1px solid #f3f4f6; background: #fafafa; }
+        .pkg-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; align-items: center; padding: 10px 20px; border-bottom: 1px solid #f3f4f6; }
+        .pkg-grid:last-child { border-bottom: none; }
 
-        .qty-badge { font-weight: 700; color: #111827; }
-        button.adjust-btn { padding: 4px 8px; font-size: 11px; background: #fff; border: 1px solid #d1d5db; color: #374151; border-radius: 4px; cursor: pointer; }
-        button.adjust-btn:hover { background: #f3f4f6; }
+        .qty-val { font-weight: 600; color: #2563eb; }
+        .adj-btn { padding: 4px 8px; font-size: 11px; background: #fff; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .adj-btn:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
     </style>
 </head>
 <body>
@@ -52,57 +50,87 @@
 
     <div class="main">
         <header class="topbar">
-            <h1>Wholesaler Stock Tracking</h1>
-            <div id="lastUpdated" style="font-size: 12px; color: #6b7280;"></div>
+            <h1>Wholesaler Distribution Inventory</h1>
+            <div id="syncStatus" style="font-size: 12px; color: #059669; font-weight: 500;">● System Ready</div>
         </header>
 
         <section class="content" id="wholesalerContainer">
-            <p>Syncing wholesaler data...</p>
-        </section>
+            </section>
     </div>
 </div>
 
 <script>
-    const API_URL = "YOUR_APPS_SCRIPT_URL";
-
-    document.addEventListener("DOMContentLoaded", loadWholesalerData);
-
-    async function loadWholesalerData() {
-        try {
-            const res = await fetch(`${API_URL}?action=getWholesalerInventory`);
-            const data = await res.json();
-            renderWholesalers(data);
-            document.getElementById('lastUpdated').innerText = "Last Synced: " + new Date().toLocaleTimeString();
-        } catch (err) {
-            console.error("Sync Error:", err);
+    // Sample Data for Operational Testing
+    const sampleData = [
+        {
+            name: "Standard Distributing",
+            products: [
+                {
+                    name: "Suburban IPA",
+                    packages: [
+                        { type: "1/2 Keg", qty: 14, unit: "Kegs" },
+                        { type: "1/6 Keg", qty: 22, unit: "Kegs" },
+                        { type: "24/12oz Case", qty: 45, unit: "Cases" }
+                    ]
+                },
+                {
+                    name: "Here Comes Sunshine",
+                    packages: [
+                        { type: "1/2 Keg", qty: 5, unit: "Kegs" },
+                        { type: "24/12oz Case", qty: 12, unit: "Cases" }
+                    ]
+                }
+            ]
+        },
+        {
+            name: "Breakthru Beverage",
+            products: [
+                {
+                    name: "Suburban IPA",
+                    packages: [
+                        { type: "1/2 Keg", qty: 8, unit: "Kegs" },
+                        { type: "24/12oz Case", qty: 110, unit: "Cases" }
+                    ]
+                },
+                {
+                    name: "Social Pilsner",
+                    packages: [
+                        { type: "1/6 Keg", qty: 15, unit: "Kegs" }
+                    ]
+                }
+            ]
         }
-    }
+    ];
 
-    function renderWholesalers(wholesalers) {
+    document.addEventListener("DOMContentLoaded", () => {
+        renderWholesalers(sampleData);
+    });
+
+    function renderWholesalers(data) {
         const container = document.getElementById("wholesalerContainer");
         container.innerHTML = "";
 
-        wholesalers.forEach(ws => {
+        data.forEach(ws => {
             const card = document.createElement('div');
             card.className = 'wholesaler-card';
             
-            let tableRows = "";
+            let productRows = "";
             ws.products.forEach(prod => {
-                let pkgRows = "";
+                let pkgContent = "";
                 prod.packages.forEach(pkg => {
-                    pkgRows += `
-                        <div class="pkg-row">
+                    pkgContent += `
+                        <div class="pkg-grid">
                             <span>${pkg.type}</span>
-                            <span class="qty-badge">${pkg.qty}</span>
-                            <span>${pkg.unit}</span>
-                            <button class="adjust-btn" onclick="adjustWsQty('${ws.name}', '${prod.name}', '${pkg.type}', ${pkg.qty})">Manual Adj</button>
+                            <span class="qty-val">${pkg.qty}</span>
+                            <span style="color: #6b7280; font-size: 12px;">${pkg.unit}</span>
+                            <button class="adj-btn" onclick="manualAdjust('${ws.name}', '${prod.name}', '${pkg.type}')">Adjust</button>
                         </div>`;
                 });
 
-                tableRows += `
+                productRows += `
                     <tr>
-                        <td class="product-info"><strong>${prod.name}</strong></td>
-                        <td>${pkgRows}</td>
+                        <td class="product-cell"><strong>${prod.name}</strong></td>
+                        <td style="padding: 0;">${pkgContent}</td>
                     </tr>`;
             });
 
@@ -113,26 +141,29 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Product</th>
+                            <th>Brand / Product</th>
                             <th>
                                 <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; padding: 0 20px;">
-                                    <span>Package</span><span>On Hand</span><span>Unit</span><span>Action</span>
+                                    <span>Packaging</span><span>In Warehouse</span><span>Unit</span><span>Manual Fix</span>
                                 </div>
                             </th>
                         </tr>
                     </thead>
-                    <tbody>${tableRows}</tbody>
+                    <tbody>${productRows}</tbody>
                 </table>`;
             container.appendChild(card);
         });
     }
 
-    async function adjustWsQty(wholesaler, product, type, current) {
-        const val = prompt(`Adjust ${wholesaler} - ${product} (${type}):`, current);
-        if (val === null || isNaN(val)) return;
-
-        // AJAX to update specific Wholesaler Sheet
-        // ... (POST logic)
+    function manualAdjust(wholesaler, product, type) {
+        const reason = prompt(`Reason for adjusting ${product} at ${wholesaler}? (e.g., Breakage, Audit, Transfer)`);
+        if (!reason) return;
+        
+        const newVal = prompt(`Enter new total quantity for ${type}:`);
+        if (newVal !== null && !isNaN(newVal)) {
+            alert(`Operational Log: Updated ${wholesaler} ${product} to ${newVal}. Reason: ${reason}`);
+            // In production, this will trigger the Apps Script update
+        }
     }
 </script>
 </body>
