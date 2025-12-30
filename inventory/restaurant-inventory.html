@@ -5,48 +5,39 @@
     <title>Restaurant Inventory | Suburban Brewing Company</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
+        /* [Styles same as above Wholesaler code for consistency] */
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { margin: 0; background: #f4f6f8; color: #1f2937; }
         .layout { display: flex; min-height: 100vh; }
-        
-        /* Sidebar Navigation */
         .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; flex-shrink: 0; }
         .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 600; }
         .nav-section { margin-bottom: 24px; }
         .nav-section-title { font-size: 12px; text-transform: uppercase; opacity: 0.6; margin: 0 20px 8px; }
-        .nav-link { position: relative; display: block; padding: 10px 20px 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: background 0.15s ease; }
-        .nav-link:hover { background: #374151; color: #ffffff; }
-        .nav-link.active { background: #374151; color: #ffffff; font-weight: 500; }
-        .nav-link.active::before { content: ""; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: #3b82f6; }
-
-        /* Main Area */
+        .nav-link { display: block; padding: 10px 20px; color: #d1d5db; text-decoration: none; font-size: 14px; border-left: 4px solid transparent; transition: 0.2s; }
+        .nav-link:hover { background: #374151; color: #fff; }
+        .nav-link.active { background: #374151; color: #fff; border-left: 4px solid #3b82f6; }
         .main { flex: 1; display: flex; flex-direction: column; }
-        .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;}
+        .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
         .content { padding: 24px; }
-        
-        /* Restaurant Cards */
-        .restaurant-card { background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; }
-        .restaurant-header { background: #f9fafb; padding: 15px 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
-        .restaurant-name { margin: 0; font-size: 16px; color: #111827; font-weight: 700; }
-
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px 20px; background: #fff; color: #6b7280; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #f3f4f6; }
-        .product-cell { padding: 15px 20px; vertical-align: top; width: 35%; border-right: 1px solid #f3f4f6; }
-        .pkg-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; align-items: center; padding: 10px 20px; border-bottom: 1px solid #f3f4f6; }
-        .pkg-grid:last-child { border-bottom: none; }
-
-        /* Modals */
+        #restaurantContainer { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .account-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.2s; }
+        .account-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .account-card h3 { margin: 0 0 5px 0; font-size: 18px; }
+        .badge { display: inline-block; margin-top: 10px; font-size: 11px; padding: 4px 8px; background: #f3f4f6; border-radius: 99px; font-weight: 600; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 50px auto; padding: 24px; width: 90%; max-width: 550px; border-radius: 16px; }
+        .modal-content { background: white; margin: 50px auto; padding: 24px; width: 90%; max-width: 550px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .inventory-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+        .qty-controls { display: flex; align-items: center; gap: 10px; }
+        .qty-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; }
+        .qty-input { width: 45px; text-align: center; border: none; font-weight: bold; font-size: 16px; }
         .onboarding-list { max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-top: 10px; }
-        
-        .btn-primary { background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; }
-        .btn-full { width: 100%; margin-top: 20px; padding: 12px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px; }
+        .btn-primary { background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-full { width: 100%; margin-top: 20px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
     </style>
 </head>
 <body>
-
 <div class="layout">
     <aside class="sidebar">
         <h2>Suburban Brewing</h2>
@@ -61,98 +52,68 @@
         <div class="nav-section">
             <div class="nav-section-title">Inventory</div>
             <a class="nav-link" href="brewery.html">Brewery Inventory</a>
-            <a class="nav-link" id="nav-wholesale" href="wholesaler-inventory.html">Wholesaler Inventory</a>
-            <a class="nav-link" id="nav-restaurant" href="restaurant-inventory.html">Restaurant Inventory</a>
+            <a class="nav-link" href="wholesaler-inventory.html">Wholesaler Inventory</a>
+            <a class="nav-link active" href="restaurant-inventory.html">Restaurant Inventory</a>
         </div>
     </aside>
-
     <div class="main">
         <header class="topbar">
-            <h1 id="pageTitle">Inventory Tracking</h1>
-            <button class="btn-primary" id="addBtn" onclick="openAddModal()">+ Add Account</button>
+            <h1>Restaurant Gallery</h1>
+            <button class="btn-primary" onclick="openAddModal()">+ Add Restaurant</button>
         </header>
-
-        <section class="content" id="dataContainer">
-            </section>
+        <section class="content" id="restaurantContainer"></section>
     </div>
 </div>
 
 <div id="addModal" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle">New Account Onboarding</h3>
-        <input type="text" id="newName" placeholder="Business Name">
-        <input type="text" id="newAddress" placeholder="Full Address">
-        <select id="newPayment">
-            <option value="Check">Check Customer</option>
-            <option value="Fintech">Fintech Customer</option>
-        </select>
-        
-        <h4 style="margin: 15px 0 5px 0;">Initial Stock</h4>
-        <div id="onboardingList" class="onboarding-list">Loading brewery master list...</div>
+        <div class="modal-header">
+            <h2>Restaurant Onboarding</h2>
+            <button onclick="closeModal('addModal')" style="border:none;background:none;font-size:24px;">&times;</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <input type="text" id="newName" placeholder="Restaurant Name" style="grid-column: span 2;">
+            <input type="text" id="newAddress" placeholder="Full Address" style="grid-column: span 2;">
+            <select id="newPayment"><option value="Check">Check Customer</option><option value="Fintech">Fintech Customer</option></select>
+            <input type="text" id="newType" value="Restaurant" readonly style="background: #f9fafb;">
+        </div>
+        <h4 style="margin: 20px 0 10px 0;">Initial Stock Setup</h4>
+        <div id="onboardingList" class="onboarding-list">Loading products...</div>
+        <button class="btn-primary btn-full" id="submitBtn" onclick="submitNewAccount()">Create Account & Sync Stock</button>
+    </div>
+</div>
 
-        <button class="btn-primary btn-full" id="submitBtn" onclick="submitNewAccount()">Create & Sync</button>
-        <button class="btn-full" style="background:#eee; color:black; border:none;" onclick="closeModal()">Cancel</button>
+<div id="adjustModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="adjustTitle">Account Name</h2>
+            <button onclick="closeModal('adjustModal')" style="border:none;background:none;font-size:24px;">&times;</button>
+        </div>
+        <div id="adjustBody"></div>
+        <button class="btn-primary btn-full" id="saveBtn" onclick="saveInventoryAdjustments()">Save Current Levels</button>
     </div>
 </div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-const isWholesale = window.location.pathname.includes("wholesaler");
 
-document.addEventListener("DOMContentLoaded", () => {
-    initUI();
-    loadInventoryData();
-});
+document.addEventListener("DOMContentLoaded", loadDashboard);
 
-function initUI() {
-    const label = isWholesale ? "Wholesaler" : "Restaurant";
-    document.getElementById("pageTitle").innerText = `${label} Stock Tracking`;
-    document.getElementById("addBtn").innerText = `+ Add ${label}`;
-    document.getElementById("modalTitle").innerText = `${label} Onboarding`;
-    
-    // Active Link Logic
-    if(isWholesale) {
-        document.getElementById("nav-wholesale").classList.add("active");
-    } else {
-        document.getElementById("nav-restaurant").classList.add("active");
-    }
-}
-
-async function loadInventoryData() {
-    const container = document.getElementById("dataContainer");
-    const action = isWholesale ? "getWholesalerInventory" : "getRestaurantInventory";
-    container.innerHTML = "Fetching current levels...";
-
+async function loadDashboard() {
+    const container = document.getElementById("restaurantContainer");
+    container.innerHTML = "Fetching restaurant accounts...";
     try {
-        const response = await fetch(`${API_URL}?action=${action}`);
+        const response = await fetch(`${API_URL}?action=getRestaurantInventory`);
         const data = await response.json();
-        renderCards(data, container);
-    } catch (e) { container.innerHTML = "Error loading data."; }
-}
-
-function renderCards(data, container) {
-    container.innerHTML = "";
-    data.forEach(account => {
-        const card = document.createElement("div");
-        card.className = "restaurant-card";
-        let productHtml = "";
-        account.products.forEach(prod => {
-            let pkgRows = "";
-            prod.packages.forEach(pkg => {
-                pkgRows += `
-                    <div class="pkg-grid">
-                        <span>${pkg.type}</span>
-                        <strong>${pkg.qty}</strong>
-                        <button style="font-size:10px;" onclick="updateStock('${account.name}', '${prod.name}', '${pkg.type}')">Update</button>
-                    </div>`;
-            });
-            productHtml += `<tr><td class="product-cell"><strong>${prod.name}</strong></td><td style="padding: 0;">${pkgRows}</td></tr>`;
+        container.innerHTML = "";
+        data.forEach(account => {
+            const card = document.createElement("div");
+            card.className = "account-card";
+            card.innerHTML = `<h3>${account.name}</h3><p>Tracking ${account.products.length} Products</p><span class="badge">Restaurant</span>`;
+            card.onclick = () => openAdjustModal(account);
+            container.appendChild(card);
         });
-        card.innerHTML = `<div class="restaurant-header"><span class="restaurant-name">${account.name}</span></div>
-            <table><thead><tr><th>Product</th><th><div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 0 20px;"><span>Package</span><span>On Hand</span><span>Action</span></div></th></tr></thead>
-            <tbody>${productHtml}</tbody></table>`;
-        container.appendChild(card);
-    });
+    } catch (err) { container.innerHTML = "Error loading data."; }
 }
 
 async function openAddModal() {
@@ -160,10 +121,10 @@ async function openAddModal() {
     const list = document.getElementById("onboardingList");
     const resp = await fetch(`${API_URL}?action=getProducts`);
     const products = await resp.json();
-    list.innerHTML = products.map(p => `
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <label style="font-size:13px;"><input type="checkbox" class="onboard-check" data-name="${p.name}" data-type="${p.type}"> ${p.name}</label>
-            <input type="number" class="onboard-qty" placeholder="0" style="width:50px; margin:0;">
+    list.innerHTML = products.map((p, i) => `
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
+            <label style="font-size:13px; cursor:pointer;"><input type="checkbox" class="onboard-check" data-name="${p.name}" data-type="${p.type}"> ${p.name} (${p.type})</label>
+            <input type="number" class="onboard-qty" placeholder="0" style="width:60px; height:30px;">
         </div>`).join("");
 }
 
@@ -172,7 +133,7 @@ async function submitNewAccount() {
     const address = document.getElementById("newAddress").value;
     const payment = document.getElementById("newPayment").value;
     const btn = document.getElementById("submitBtn");
-    if(!name) return alert("Name required");
+    if (!name) return alert("Name required.");
     btn.innerText = "Syncing...";
     btn.disabled = true;
     const selected = [];
@@ -180,20 +141,50 @@ async function submitNewAccount() {
         const qty = document.querySelectorAll(".onboard-qty")[i].value || 0;
         selected.push({ name: chk.dataset.name, type: chk.dataset.type, qty: qty });
     });
-    const params = new URLSearchParams({ action: "addCustomer", name, address, payment, type: isWholesale ? "Wholesaler" : "Restaurant", initialStock: JSON.stringify(selected) });
+    const params = new URLSearchParams({ action: "addCustomer", name, address, payment, type: "Restaurant", initialStock: JSON.stringify(selected) });
     await fetch(`${API_URL}?${params.toString()}`);
     location.reload();
 }
 
-async function updateStock(account, product, pkg) {
-    const newVal = prompt(`Update count for ${product} (${pkg}):`);
-    if (newVal === null || newVal === "") return;
-    const params = new URLSearchParams({ action: "updateStockItem", name: account, product: product, package: pkg, qty: newVal, type: isWholesale ? "Wholesaler" : "Restaurant" });
-    await fetch(`${API_URL}?${params.toString()}`);
-    loadInventoryData();
+function openAdjustModal(account) {
+    document.getElementById("adjustTitle").innerText = account.name;
+    const body = document.getElementById("adjustBody");
+    body.innerHTML = "";
+    account.products.forEach(prod => {
+        prod.packages.forEach(pkg => {
+            body.innerHTML += `
+                <div class="inventory-row" data-product="${prod.name}" data-package="${pkg.type}">
+                    <div><strong>${prod.name}</strong><br><small>${pkg.type}</small></div>
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="stepQty(this, -1)">-</button>
+                        <input type="number" class="qty-input" value="${pkg.qty}" readonly>
+                        <button class="qty-btn" onclick="stepQty(this, 1)">+</button>
+                    </div>
+                </div>`;
+        });
+    });
+    document.getElementById("adjustModal").style.display = "block";
 }
 
-function closeModal() { document.getElementById("addModal").style.display = "none"; }
+function stepQty(btn, amt) {
+    const input = btn.parentElement.querySelector('.qty-input');
+    input.value = Math.max(0, parseInt(input.value) + amt);
+}
+
+function closeModal(id) { document.getElementById(id).style.display = "none"; }
+
+async function saveInventoryAdjustments() {
+    const accountName = document.getElementById("adjustTitle").innerText;
+    const rows = document.querySelectorAll(".inventory-row");
+    for (let row of rows) {
+        const params = new URLSearchParams({
+            action: "updateStockItem", name: accountName, product: row.dataset.product, package: row.dataset.package,
+            qty: row.querySelector(".qty-input").value, type: "Restaurant"
+        });
+        await fetch(`${API_URL}?${params.toString()}`);
+    }
+    location.reload();
+}
 </script>
 </body>
 </html>
