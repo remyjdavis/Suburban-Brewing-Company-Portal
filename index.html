@@ -1,22 +1,244 @@
-<aside class="sidebar">
-  <h2>Suburban Brewing</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Suburban Brewing Company | Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <div class="nav-section">
-    <div class="nav-section-title">Dashboard</div>
-    <a class="nav-link active" href="index.html">Overview</a>
-  </div>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-  <div class="nav-section">
-    <div class="nav-section-title">Sales</div>
-    <a class="nav-link" href="sales/invoices.html">Invoices</a>
-    <a class="nav-link" href="sales/leads.html">Sales Leads</a>
-    <a class="nav-link" href="sales/deliveries.html">Deliveries</a>
-    <a class="nav-link" href="sales/sampling.html">Sampling</a>
-  </div>
+    body {
+      margin: 0;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
 
-  <div class="nav-section">
-    <div class="nav-section-title">Inventory</div>
-    <a class="nav-link" href="inventory/brewery-inventory.html">Brewery Inventory</a>
-    <a class="nav-link" href="inventory/wholesaler-inventory.html">Wholesaler Inventory</a>
+    /* ===== Layout ===== */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ===== Sidebar ===== */
+    .sidebar {
+      width: 240px;
+      background: #1f2937;
+      color: #ffffff;
+      padding: 20px 0;
+    }
+
+    .sidebar h2 {
+      margin: 0 20px 20px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      opacity: 0.6;
+      margin: 0 20px 8px;
+    }
+
+    .nav-link {
+      position: relative;
+      display: block;
+      padding: 10px 20px 10px 24px;
+      color: #d1d5db;
+      text-decoration: none;
+      font-size: 14px;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .nav-link:hover {
+      background: #374151;
+      color: #ffffff;
+    }
+
+    .nav-link.active {
+      background: #374151;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .nav-link.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 4px;
+      height: 100%;
+      background: #3b82f6;
+    }
+
+    /* ===== Main ===== */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== Top Bar ===== */
+    .topbar {
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .topbar h1 {
+      font-size: 20px;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .breadcrumb {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .date {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    /* ===== Content ===== */
+    .content {
+      padding: 24px;
+    }
+
+    /* ===== KPI Cards ===== */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .card .value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 13px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <h2>Suburban Brewing</h2>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Dashboard</div>
+      <a class="nav-link active" href="index.html">Overview</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Sales</div>
+      <a class="nav-link" href="sales/invoices.html">Invoices</a>
+      <a class="nav-link" href="sales/leads.html">Sales Leads</a>
+      <a class="nav-link" href="sales/deliveries.html">Deliveries</a>
+      <a class="nav-link" href="sales/sampling.html">Sampling</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Inventory</div>
+      <a class="nav-link" href="inventory/brewery-inventory.html">Brewery Inventory</a>
+      <a class="nav-link" href="inventory/wholesaler-inventory.html">Wholesaler Inventory</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Reports</div>
+      <a class="nav-link" href="reports/monthly-sales.html">Monthly Sales</a>
+      <a class="nav-link" href="reports/sales-route.html">Sales Route</a>
+      <a class="nav-link" href="reports/sampling-report.html">Sampling Report</a>
+      <a class="nav-link" href="reports/client-inventory.html">Client Inventory</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1>Dashboard Overview</h1>
+        <div class="breadcrumb">Home / Dashboard</div>
+      </div>
+      <div class="date" id="today"></div>
+    </header>
+
+    <section class="content">
+      <div class="cards">
+        <div class="card">
+          <h3>Today’s Sales</h3>
+          <div class="value">$0.00</div>
+          <p>Invoices created today</p>
+        </div>
+
+        <div class="card">
+          <h3>Open Invoices</h3>
+          <div class="value">0</div>
+          <p>Pending or unpaid</p>
+        </div>
+
+        <div class="card">
+          <h3>Active Deliveries</h3>
+          <div class="value">0</div>
+          <p>Scheduled for today</p>
+        </div>
+
+        <div class="card">
+          <h3>Upcoming Sampling</h3>
+          <div class="value">0</div>
+          <p>Events this week</p>
+        </div>
+      </div>
+    </section>
   </div>
-</aside>
+</div>
+
+<script>
+  document.getElementById("today").textContent =
+    new Date().toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+</script>
+</body>
+</html>
