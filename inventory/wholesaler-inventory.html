@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Wholesaler Inventory | Suburban Brewing Company</title>
+    <title>Distribution Inventory | Suburban Brewing Company</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -25,11 +25,9 @@
 
         /* Gallery Grid */
         #wholesalerContainer { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        
         .account-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.2s; }
         .account-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .account-card h3 { margin: 0 0 5px 0; font-size: 18px; }
-        .account-card p { font-size: 13px; color: #6b7280; margin: 0; }
         .badge { display: inline-block; margin-top: 10px; font-size: 11px; padding: 4px 8px; background: #f3f4f6; border-radius: 99px; font-weight: 600; }
 
         /* Modals */
@@ -37,16 +35,16 @@
         .modal-content { background: white; margin: 50px auto; padding: 24px; width: 90%; max-width: 550px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
         
-        /* Form & Inventory Controls */
+        /* Controls */
         .inventory-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
         .qty-controls { display: flex; align-items: center; gap: 10px; }
-        .qty-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; background: white; cursor: pointer; }
-        .qty-input { width: 45px; text-align: center; border: none; font-weight: bold; }
-        
+        .qty-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; }
+        .qty-input { width: 45px; text-align: center; border: none; font-weight: bold; font-size: 16px; }
         .onboarding-list { max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-top: 10px; }
 
         .btn-primary { background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
         .btn-full { width: 100%; margin-top: 20px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -61,41 +59,41 @@
         <div class="nav-section">
             <div class="nav-section-title">Inventory</div>
             <a class="nav-link" href="brewery.html">Brewery Inventory</a>
-            <a class="nav-link active" href="wholesaler-inventory.html">Wholesaler Inventory</a>
+            <a class="nav-link" id="link-wholesale" href="wholesaler-inventory.html">Wholesaler Inventory</a>
+            <a class="nav-link" id="link-restaurant" href="restaurant-inventory.html">Restaurant Inventory</a>
         </div>
     </aside>
 
     <div class="main">
         <header class="topbar">
-            <h1>Distribution Gallery</h1>
-            <button class="btn-primary" onclick="openAddModal()">+ Add Account</button>
+            <h1 id="pageHeader">Gallery</h1>
+            <button class="btn-primary" id="addBtn" onclick="openAddModal()">+ Add Account</button>
         </header>
 
-        <section class="content" id="wholesalerContainer">
-            </section>
+        <section class="content" id="wholesalerContainer"></section>
     </div>
 </div>
 
 <div id="addModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>New Account Onboarding</h2>
+            <h2 id="modalTitle">New Account Onboarding</h2>
             <button onclick="closeModal('addModal')" style="border:none;background:none;font-size:24px;">&times;</button>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <input type="text" id="newName" placeholder="Business Name" style="grid-column: span 2; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-            <input type="text" id="newAddress" placeholder="Address" style="grid-column: span 2; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-            <select id="newPayment" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+            <input type="text" id="newName" placeholder="Business Name" style="grid-column: span 2;">
+            <input type="text" id="newAddress" placeholder="Address" style="grid-column: span 2;">
+            <select id="newPayment">
                 <option value="Check">Check Customer</option>
                 <option value="Fintech">Fintech Customer</option>
             </select>
-            <input type="text" id="newType" value="Wholesaler" readonly style="padding: 10px; background: #f9fafb; border: 1px solid #ddd; border-radius: 6px;">
+            <input type="text" id="newType" readonly style="background: #f9fafb;">
         </div>
 
-        <h4 style="margin: 20px 0 10px 0;">Initial Product Stock</h4>
-        <div id="onboardingList" class="onboarding-list">Loading brewery products...</div>
+        <h4 style="margin: 20px 0 10px 0;">Initial Stock Setup</h4>
+        <div id="onboardingList" class="onboarding-list">Loading products from master list...</div>
 
-        <button class="btn-primary btn-full" onclick="submitNewAccount()">Create Account & Sync Stock</button>
+        <button class="btn-primary btn-full" id="submitBtn" onclick="submitNewAccount()">Create Account & Sync Stock</button>
     </div>
 </div>
 
@@ -106,86 +104,147 @@
             <button onclick="closeModal('adjustModal')" style="border:none;background:none;font-size:24px;">&times;</button>
         </div>
         <div id="adjustBody"></div>
-        <button class="btn-primary btn-full" onclick="saveInventoryAdjustments()">Save Current Levels</button>
+        <button class="btn-primary btn-full" id="saveBtn" onclick="saveInventoryAdjustments()">Save Current Levels</button>
     </div>
 </div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+
+// Detect if we are on the Wholesaler or Restaurant page
 const isWholesalePage = window.location.pathname.includes("wholesaler");
 
-document.addEventListener("DOMContentLoaded", loadDashboard);
+document.addEventListener("DOMContentLoaded", () => {
+    setupUI();
+    loadDashboard();
+});
 
 /**
- * LOADING DASHBOARD
+ * Configure UI labels based on page context
  */
-async function loadDashboard() {
-    const container = document.getElementById("wholesalerContainer");
-    container.innerHTML = "Fetching active accounts...";
-    
-    const action = isWholesalePage ? "getWholesalerInventory" : "getRestaurantInventory";
-    const response = await fetch(`${API_URL}?action=${action}`);
-    const data = await response.json();
-    
-    container.innerHTML = "";
-    data.forEach(account => {
-        const card = document.createElement("div");
-        card.className = "account-card";
-        card.innerHTML = `
-            <h3>${account.name}</h3>
-            <p>Tracking ${account.products.length} Products</p>
-            <span class="badge">${isWholesalePage ? 'Wholesale' : 'Restaurant'}</span>
-        `;
-        card.onclick = () => openAdjustModal(account);
-        container.appendChild(card);
-    });
+function setupUI() {
+    const pageHeader = document.getElementById("pageHeader");
+    const addBtn = document.getElementById("addBtn");
+    const modalTitle = document.getElementById("modalTitle");
+    const typeInput = document.getElementById("newType");
+
+    if (isWholesalePage) {
+        pageHeader.innerText = "Wholesaler Gallery";
+        addBtn.innerText = "+ Add Wholesaler";
+        modalTitle.innerText = "Wholesaler Onboarding";
+        typeInput.value = "Wholesaler";
+        document.getElementById("link-wholesale").classList.add("active");
+    } else {
+        pageHeader.innerText = "Restaurant Gallery";
+        addBtn.innerText = "+ Add Restaurant";
+        modalTitle.innerText = "Restaurant Onboarding";
+        typeInput.value = "Restaurant";
+        document.getElementById("link-restaurant").classList.add("active");
+    }
 }
 
 /**
- * ADD NEW ACCOUNT LOGIC
+ * Load accounts into the gallery
+ */
+async function loadDashboard() {
+    const container = document.getElementById("wholesalerContainer");
+    container.innerHTML = "Fetching accounts...";
+    
+    const action = isWholesalePage ? "getWholesalerInventory" : "getRestaurantInventory";
+    
+    try {
+        const response = await fetch(`${API_URL}?action=${action}`);
+        const data = await response.json();
+        
+        container.innerHTML = "";
+        data.forEach(account => {
+            const card = document.createElement("div");
+            card.className = "account-card";
+            card.innerHTML = `
+                <h3>${account.name}</h3>
+                <p>Tracking ${account.products.length} Products</p>
+                <span class="badge">${isWholesalePage ? 'Wholesaler' : 'Restaurant'}</span>
+            `;
+            card.onclick = () => openAdjustModal(account);
+            container.appendChild(card);
+        });
+    } catch (err) {
+        container.innerHTML = "Error loading dashboard. Please check API connection.";
+    }
+}
+
+/**
+ * Open onboarding modal and fetch master products
  */
 async function openAddModal() {
     document.getElementById("addModal").style.display = "block";
     const list = document.getElementById("onboardingList");
+    list.innerHTML = "Loading brewery products...";
     
-    const resp = await fetch(`${API_URL}?action=getProducts`);
-    const products = await resp.json();
-    
-    list.innerHTML = products.map(p => `
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <label style="font-size:13px;"><input type="checkbox" class="onboard-check" data-name="${p.name}" data-type="${p.type}"> ${p.name}</label>
-            <input type="number" class="onboard-qty" placeholder="0" style="width:50px;">
-        </div>
-    `).join("");
+    try {
+        const resp = await fetch(`${API_URL}?action=getProducts`);
+        const products = await resp.json();
+        
+        list.innerHTML = products.map((p, i) => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
+                <label style="font-size:13px; cursor:pointer;">
+                    <input type="checkbox" class="onboard-check" data-name="${p.name}" data-type="${p.type}"> 
+                    ${p.name} (${p.type})
+                </label>
+                <input type="number" class="onboard-qty" placeholder="0" style="width:60px; height:30px;">
+            </div>
+        `).join("");
+    } catch (e) {
+        list.innerHTML = "Error loading master products.";
+    }
 }
 
 async function submitNewAccount() {
     const name = document.getElementById("newName").value;
     const address = document.getElementById("newAddress").value;
     const payment = document.getElementById("newPayment").value;
-    
+    const type = document.getElementById("newType").value;
+    const btn = document.getElementById("submitBtn");
+
+    if (!name) return alert("Business Name is required.");
+
+    btn.innerText = "Syncing...";
+    btn.disabled = true;
+
     const selectedProducts = [];
-    document.querySelectorAll(".onboard-check:checked").forEach((chk, i) => {
-        const qty = document.querySelectorAll(".onboard-qty")[i].value || 0;
-        selectedProducts.push({ name: chk.dataset.name, type: chk.dataset.type, qty: qty });
+    const checks = document.querySelectorAll(".onboard-check");
+    const qtys = document.querySelectorAll(".onboard-qty");
+
+    checks.forEach((chk, i) => {
+        if (chk.checked) {
+            selectedProducts.push({ 
+                name: chk.dataset.name, 
+                type: chk.dataset.type, 
+                qty: qtys[i].value || 0 
+            });
+        }
     });
 
     const payload = {
         action: "addCustomer",
-        name, address, payment,
-        type: isWholesalePage ? "Wholesaler" : "Restaurant",
+        name, address, payment, type,
         initialStock: JSON.stringify(selectedProducts)
     };
 
-    const params = new URLSearchParams(payload);
-    await fetch(`${API_URL}?${params.toString()}`);
-    
-    alert("Syncing complete! Account is now live.");
-    location.reload();
+    try {
+        const params = new URLSearchParams(payload);
+        await fetch(`${API_URL}?${params.toString()}`);
+        alert("Account created and inventory synced successfully.");
+        location.reload();
+    } catch (e) {
+        alert("Error creating account.");
+        btn.innerText = "Create Account & Sync Stock";
+        btn.disabled = false;
+    }
 }
 
 /**
- * ADJUST STOCK LOGIC
+ * Adjust stock for an existing account
  */
 function openAdjustModal(account) {
     document.getElementById("adjustTitle").innerText = account.name;
@@ -195,7 +254,7 @@ function openAdjustModal(account) {
     account.products.forEach(prod => {
         prod.packages.forEach(pkg => {
             body.innerHTML += `
-                <div class="inventory-row">
+                <div class="inventory-row" data-product="${prod.name}" data-package="${pkg.type}">
                     <div><strong>${prod.name}</strong><br><small>${pkg.type}</small></div>
                     <div class="qty-controls">
                         <button class="qty-btn" onclick="stepQty(this, -1)">-</button>
@@ -214,7 +273,39 @@ function stepQty(btn, amt) {
 }
 
 function closeModal(id) { document.getElementById(id).style.display = "none"; }
-function saveInventoryAdjustments() { alert("Stock levels updated in Master Inventory."); closeModal('adjustModal'); }
+
+async function saveInventoryAdjustments() {
+    const accountName = document.getElementById("adjustTitle").innerText;
+    const rows = document.querySelectorAll(".inventory-row");
+    const btn = document.getElementById("saveBtn");
+    
+    btn.innerText = "Saving Changes...";
+    btn.disabled = true;
+
+    try {
+        for (let row of rows) {
+            const product = row.dataset.product;
+            const pkg = row.dataset.package;
+            const qty = row.querySelector(".qty-input").value;
+
+            const params = new URLSearchParams({
+                action: "updateStockItem",
+                name: accountName,
+                product: product,
+                package: pkg,
+                qty: qty,
+                type: isWholesalePage ? "Wholesaler" : "Restaurant"
+            });
+            await fetch(`${API_URL}?${params.toString()}`);
+        }
+        alert("Stock updated successfully.");
+        location.reload();
+    } catch (e) {
+        alert("Update failed.");
+        btn.innerText = "Save Current Levels";
+        btn.disabled = false;
+    }
+}
 </script>
 </body>
 </html>
