@@ -5,37 +5,50 @@
   <title>Schedule Sampling | Suburban Brewing Co.</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    /* Standardized Styling to match your Dashboard */
+    /* Standardized Styling */
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f4f6f8; display: flex; min-height: 100vh; }
     
     .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; flex-shrink: 0; }
+    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; }
+    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.6; margin: 15px 20px 8px; font-weight: 700; }
     .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; }
+    .nav-link:hover { background: #374151; color: #fff; }
     .nav-link.active { background: #2563eb; color: #fff; font-weight: 600; }
 
     .main { flex: 1; padding: 40px; }
     .card { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 900px; margin: 0 auto; }
     
+    h1 { margin-top: 0; font-size: 24px; color: #111827; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .full-width { grid-column: span 2; }
     
     label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: #4b5563; }
-    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 15px; }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 15px; font-size: 15px; }
     
     .info-bar { background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 20px; }
-    .info-item { font-size: 13px; }
-    .info-item strong { display: block; color: #374151; }
+    .info-item { font-size: 13px; flex: 1; }
+    .info-item strong { display: block; color: #374151; margin-bottom: 2px; }
 
-    .inventory-section { background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #bfdbfe; }
-    .alert-badge { display: inline-block; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; margin-top: 5px; }
+    .inventory-section { background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 20px; }
+    .alert-badge { display: inline-block; background: #fee2e2; color: #b91c1c; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-top: 10px; }
     
-    button { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    button { width: 100%; padding: 16px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 16px; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    #productCheckboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    .prod-label { font-weight: normal; display: flex; align-items: center; gap: 10px; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #d1e2ff; font-size: 14px; }
   </style>
 </head>
 <body>
 
   <aside class="sidebar">
-    <a class="nav-link" href="../index.html">Dashboard</a>
+    <h2>Suburban Brewing</h2>
+    <div class="nav-section-title">Dashboard</div>
+    <a class="nav-link" href="../index.html">Overview</a>
+
+    <div class="nav-section-title">Sampling Outreach</div>
     <a class="nav-link active" href="Schedule-Sampling.html">Schedule New</a>
     <a class="nav-link" href="sampling-report.html">Log Report</a>
     <a class="nav-link" href="sampling-calendar.html">Calendar View</a>
@@ -46,17 +59,13 @@
       <h1>Schedule New Sampling</h1>
       
       <div class="form-group">
-        <label>Select Customer (Leads/Existing)</label>
-        <select id="customerSelect" onchange="fetchCustomerDetails()">
-          <option value="">-- Start typing name... --</option>
-          <option value="rusty_anchor">Rusty Anchor Pub</option>
-        </select>
+        <label>Customer Name (Search Leads or Existing Accounts)</label>
+        <input type="text" id="customerInput" list="customerList" placeholder="Start typing name..." oninput="handleCustomerChange()">
+        <datalist id="customerList"></datalist>
       </div>
 
       <div class="info-bar" id="customerInfo">
-        <div class="info-item"><strong>Manager</strong> <span id="mgrName">--</span></div>
-        <div class="info-item"><strong>Phone</strong> <span id="mgrPhone">--</span></div>
-        <div class="info-item"><strong>Address</strong> <span id="mgrAddress">--</span></div>
+        <div class="info-item"><strong>Contact Info</strong> <span id="mgrDetails">Select a customer...</span></div>
       </div>
 
       <div class="grid">
@@ -70,111 +79,123 @@
         </div>
 
         <div class="full-width inventory-section">
-          <label>Available Products (Based on Customer Inventory)</label>
-          <div id="productCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div style="font-size: 13px; color: #6b7280;">Select a customer to see available stock...</div>
+          <label>Live Inventory Snapshot (On-Site Stock)</label>
+          <div id="productCheckboxes">
+            <div style="font-size: 13px; color: #6b7280; grid-column: span 2;">Enter a valid customer to see their current inventory...</div>
           </div>
-          <div class="alert-badge">Alerts Active: 2 Days, 1 Day, Day of</div>
+          <div class="alert-badge">SMS Alerts Enabled: 2-Day, 1-Day, & Day-Of</div>
         </div>
 
         <div class="full-width">
-          <label>Notes for Alert Notifications</label>
-          <textarea id="alertNotes" rows="3" placeholder="What do you need to bring? (e.g., specific glassware, cold samples, sell sheets)"></textarea>
+          <label>Notes for SMS Alert & Calendar</label>
+          <textarea id="alertNotes" rows="3" placeholder="Examples: Bring cold cans, specific glassware, or fresh IPA samples..."></textarea>
         </div>
       </div>
 
-      <button onclick="submitSchedule()">Schedule & Set Reminders</button>
+      <button id="submitBtn" onclick="submitSchedule()">Schedule & Set Reminders</button>
     </div>
   </main>
 
   <script>
-   const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-let allCustomers = [];
+    // Update this with your actual Web App URL from Apps Script
+    const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+    let allCustomers = [];
 
-// 1. Load all customers from both Wholesaler and Restaurant sheets on startup
-window.onload = async () => {
-  try {
-    const [whResp, resResp] = await Promise.all([
-      fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" }),
-      fetch(`${API_URL}?action=getRestaurantInventory`, { redirect: "follow" })
-    ]);
-    
-    const whData = await whResp.json();
-    const resData = await resResp.json();
-    allCustomers = [...whData, ...resData];
+    // Load customers from both inventory tabs on page load
+    window.onload = async () => {
+      try {
+        const [whResp, resResp] = await Promise.all([
+          fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" }),
+          fetch(`${API_URL}?action=getRestaurantInventory`, { redirect: "follow" })
+        ]);
+        
+        const whData = await whResp.json();
+        const resData = await resResp.json();
+        allCustomers = [...whData, ...resData];
 
-    const select = document.getElementById('customerSelect');
-    allCustomers.forEach(cust => {
-      let opt = document.createElement('option');
-      opt.value = cust.name;
-      opt.textContent = cust.name;
-      select.appendChild(opt);
-    });
-  } catch (e) {
-    console.error("Failed to load customers", e);
-  }
-};
+        const datalist = document.getElementById('customerList');
+        allCustomers.forEach(cust => {
+          let opt = document.createElement('option');
+          opt.value = cust.name;
+          datalist.appendChild(opt);
+        });
+      } catch (e) {
+        console.error("Failed to load customers", e);
+        alert("Error connecting to database. Please check your internet.");
+      }
+    };
 
-// 2. Fetch specific details and inventory when customer is selected
-function fetchCustomerDetails() {
-  const selectedName = document.getElementById('customerSelect').value;
-  const cust = allCustomers.find(c => c.name === selectedName);
-  
-  if (cust) {
-    // Note: To get Manager/Phone/Address, you'd need a separate "getContactInfo" 
-    // but for now, we'll populate the inventory they have on site
-    document.getElementById('mgrName').innerText = "On File";
-    
-    const prodContainer = document.getElementById('productCheckboxes');
-    prodContainer.innerHTML = cust.products.map(p => {
-      return p.packages.map(pkg => `
-        <label style="font-weight: normal; display: flex; align-items: center; gap: 8px;">
-          <input type="checkbox" name="samples" value="${p.name} (${pkg.type})" style="width: auto; margin: 0;"> 
-          ${p.name} - ${pkg.type} (Stock: ${pkg.qty})
-        </label>
-      `).join('');
-    }).join('');
-  }
-}
+    // Triggered when typing/selecting from the autocomplete
+    function handleCustomerChange() {
+      const val = document.getElementById('customerInput').value;
+      const cust = allCustomers.find(c => c.name === val);
+      
+      const prodContainer = document.getElementById('productCheckboxes');
+      const mgrSpan = document.getElementById('mgrDetails');
 
-// 3. Send the data to the backend to trigger Calendar sync and SMS Alerts
-async function submitSchedule() {
-  const btn = document.querySelector('button');
-  const selectedItems = Array.from(document.querySelectorAll('input[name="samples"]:checked')).map(cb => cb.value);
-  
-  const payload = {
-    customer: document.getElementById('customerSelect').value,
-    date: document.getElementById('sampleDate').value,
-    time: document.getElementById('sampleTime').value,
-    items: selectedItems.join(', '),
-    notes: document.getElementById('alertNotes').value
-  };
-
-  if (!payload.customer || !payload.date || !payload.time) {
-    alert("Please fill in Customer, Date, and Time.");
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerText = "Scheduling...";
-
-  try {
-    const params = new URLSearchParams({ action: "saveSamplingEvent", data: JSON.stringify(payload) });
-    const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
-    const result = await response.json();
-
-    if (result.success) {
-      alert("Success! Event added to Google Calendar and SMS alerts scheduled.");
-      window.location.href = "sampling-calendar.html";
-    } else {
-      alert("Error: " + result.error);
+      if (cust) {
+        mgrSpan.innerText = "Current Stock Level Displayed Below";
+        
+        // Generate Checkboxes based on their REAL inventory levels
+        prodContainer.innerHTML = cust.products.flatMap(p => 
+          p.packages.map(pkg => `
+            <label class="prod-label">
+              <input type="checkbox" name="samples" value="${p.name} (${pkg.type})" style="width: auto; margin: 0;"> 
+              <div><strong>${p.name}</strong><br><small>${pkg.type}: ${pkg.qty} units</small></div>
+            </label>
+          `)
+        ).join('');
+      } else {
+        mgrSpan.innerText = "Select a customer...";
+        prodContainer.innerHTML = `<div style="font-size: 13px; color: #6b7280; grid-column: span 2;">Customer not found or not yet selected.</div>`;
+      }
     }
-  } catch (err) {
-    alert("Connection Error: " + err);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "Schedule & Set Reminders";
-  }
+
+    // Submit everything to the Backend
+    async function submitSchedule() {
+      const btn = document.getElementById('submitBtn');
+      const customer = document.getElementById('customerInput').value;
+      const date = document.getElementById('sampleDate').value;
+      const time = document.getElementById('sampleTime').value;
+      const notes = document.getElementById('alertNotes').value;
+      
+      const selectedItems = Array.from(document.querySelectorAll('input[name="samples"]:checked'))
+                                .map(cb => cb.value);
+
+      if (!customer || !date || !time) {
+        alert("Please fill in the Customer, Date, and Time.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "Syncing with Calendar...";
+
+      const payload = {
+        customer: customer,
+        date: date,
+        time: time,
+        items: selectedItems.join(', '),
+        notes: notes
+      };
+
+      try {
+        const params = new URLSearchParams({ action: "saveSamplingEvent", data: JSON.stringify(payload) });
+        const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
+        const result = await response.json();
+
+        if (result.success) {
+          alert("Success! \n1. Added to Google/Apple Calendar \n2. SMS Reminders scheduled for 908-642-1019");
+          window.location.href = "sampling-calendar.html";
+        } else {
+          alert("Error: " + result.error);
+        }
+      } catch (err) {
+        alert("Connection Error. The script might still be updating, please try again in a moment.");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Schedule & Set Reminders";
+      }
+    }
   </script>
 </body>
 </html>
