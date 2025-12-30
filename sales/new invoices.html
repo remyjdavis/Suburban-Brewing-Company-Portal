@@ -594,6 +594,27 @@ function getLogoBase64() {
 .qty-input {
   width: 60px;
 }
+  .stock-badge {
+  display: block; /* Places it under the quantity input */
+  font-size: 11px;
+  font-weight: bold;
+  margin-top: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* Matches 'Low' status in Column H */
+.stock-low {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Matches 'OK' status in Column H */
+.stock-ok {
+  background-color: #dcfce7;
+  color: #15803d;
+}
 </style>
 
 <section class="product-section">
@@ -1355,7 +1376,23 @@ function goBackToInvoices() {
     window.location.href = "invoices.html";
   }
 }
+// Function to update the stock display when a product is picked
+async function updateStockDisplay(rowElement) {
+  const product = rowElement.querySelector(".product-search").value;
+  const type = rowElement.querySelector(".type-select").value;
+  const displayArea = rowElement.querySelector(".stock-status-display");
 
+  if (!product || !type) return;
+
+  // Call the Google Script function
+  google.script.run.withSuccessHandler((qty) => {
+    displayArea.textContent = `Stock: ${qty}`;
+    displayArea.className = "stock-badge " + (qty < 5 ? "stock-low" : "stock-ok");
+    
+    // Optional: Set a max attribute on the quantity input
+    rowElement.querySelector(".qty-input").max = qty;
+  }).getStockLevel(product, type);
+}
 /******************************************************
  * GLOBAL CHANGE DETECTOR — PDF INVALIDATION
  ******************************************************/
