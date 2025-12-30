@@ -106,12 +106,62 @@
   </main>
 
   <script>
-    function toggleFollowUp() {
-      const outcome = document.getElementById('outcome').value;
-      const group = document.getElementById('followUpGroup');
-      // Only show date picker if a follow-up is actually needed
-      group.style.display = (outcome === "No Sale - Follow Up Needed") ? 'block' : 'none';
+  const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+
+  // 1. Load scheduled events into the dropdown when the page opens
+  window.onload = async () => {
+    try {
+      const resp = await fetch(`${API_URL}?action=getSamplingEvents`, { redirect: "follow" });
+      const events = await resp.json();
+      const select = document.getElementById('eventSelect');
+      
+      events.forEach(ev => {
+        let opt = document.createElement('option');
+        // value is the Customer Name, text shows Name + Date
+        opt.value = ev.name; 
+        opt.textContent = `${ev.name} (${new Date(ev.date).toLocaleDateString()})`;
+        // Store the items requested in a data attribute to show as a reminder
+        opt.setAttribute('data-items', ev.items);
+        select.appendChild(opt);
+      });
+    } catch (e) { console.error("Error loading events", e); }
+  };
+
+  function toggleFollowUp() {
+    const outcome = document.getElementById('outcome').value;
+    const group = document.getElementById('followUpGroup');
+    group.style.display = (outcome === "No Sale - Follow Up Needed") ? 'block' : 'none';
+  }
+
+  // 2. Submit the report to the backend
+  document.getElementById('reportForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button');
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Processing Outcome...";
+
+    const payload = {
+      customerName: document.getElementById('eventSelect').value,
+      outcome: document.getElementById('outcome').value,
+      followUpDate: document.getElementById('followUpDate').value,
+      inventoryUsed: e.target.querySelector('textarea[placeholder*="Inventory"]').value,
+      notes: e.target.querySelector('textarea[placeholder*="feedback"]').value
+    };
+
+    try {
+      const params = new URLSearchParams({ action: "submitSamplingReport", data: JSON.stringify(payload) });
+      const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
+      const result = await response.json();
+
+      if (result.success) {
+        alert("Report Logged! Inventory deducted and Sales Lead updated.");
+        location.reload();
+      }
+    } catch (err) {
+      alert("Error: " + err);
+      submitBtn.disabled = false;
     }
-  </script>
+  };
+</script>
 </body>
 </html>
