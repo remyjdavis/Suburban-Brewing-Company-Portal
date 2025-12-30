@@ -9,7 +9,7 @@
         body { margin: 0; background: #f4f6f8; color: #1f2937; }
         .layout { display: flex; min-height: 100vh; }
         
-        /* ===== Sidebar (Restored Branding) ===== */
+        /* Sidebar Navigation */
         .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; flex-shrink: 0; }
         .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 600; }
         .nav-section { margin-bottom: 24px; }
@@ -35,7 +35,14 @@
         .pkg-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; align-items: center; padding: 10px 20px; border-bottom: 1px solid #f3f4f6; }
         .pkg-grid:last-child { border-bottom: none; }
 
+        /* Modals */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal-content { background: white; margin: 50px auto; padding: 24px; width: 90%; max-width: 550px; border-radius: 16px; }
+        .onboarding-list { max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-top: 10px; }
+        
         .btn-primary { background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-full { width: 100%; margin-top: 20px; padding: 12px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -44,14 +51,8 @@
     <aside class="sidebar">
         <h2>Suburban Brewing</h2>
         <div class="nav-section">
-            <div class="nav-section-title">Dashboard</div>
-            <a class="nav-link" href="../index.html">Overview</a>
-        </div>
-        <div class="nav-section">
             <div class="nav-section-title">Sales</div>
             <a class="nav-link" href="../sales/invoices.html">Invoices</a>
-            <a class="nav-link" href="../sales/leads.html">Sales Leads</a>
-            <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
         </div>
         <div class="nav-section">
             <div class="nav-section-title">Inventory</div>
@@ -63,98 +64,66 @@
 
     <div class="main">
         <header class="topbar">
-            <h1>Restaurant Stock Tracking</h1>
-            <button class="btn-primary" onclick="alert('Adding Restaurant...')">+ Add Restaurant</button>
+            <h1 id="pageTitle">Restaurant Stock Tracking</h1>
+            <button class="btn-primary" onclick="openAddModal()">+ Add Restaurant</button>
         </header>
 
         <section class="content" id="restaurantContainer">
-            <div class="restaurant-card">
-                <div class="restaurant-header">
-                    <span class="restaurant-name">The Rusty Anchor Grill</span>
-                    <span style="font-size: 12px; color: #6b7280;">Last Delivery: Dec 22, 2025</span>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th><div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 0 20px;"><span>Package</span><span>On Hand</span><span>Action</span></div></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="product-cell"><strong>Suburban IPA</strong></td>
-                            <td style="padding: 0;">
-                                <div class="pkg-grid"><span>1/2 Keg</span><strong>2</strong><button style="font-size:10px">Edit</button></div>
-                                <div class="pkg-grid"><span>24/12oz Case</span><strong>5</strong><button style="font-size:10px">Edit</button></div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+            </section>
     </div>
 </div>
+
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <h3>New Account Onboarding</h3>
+        <input type="text" id="newName" placeholder="Restaurant Name">
+        <input type="text" id="newAddress" placeholder="Full Address">
+        <select id="newPayment">
+            <option value="Check">Check Customer</option>
+            <option value="Fintech">Fintech Customer</option>
+        </select>
+        
+        <h4 style="margin: 15px 0 5px 0;">Select Initial Products</h4>
+        <div id="onboardingList" class="onboarding-list">Loading brewery master list...</div>
+
+        <button class="btn-primary btn-full" id="submitBtn" onclick="submitNewAccount()">Create Account & Sync Stock</button>
+        <button class="btn-full" style="background:#eee; color:black; border:none;" onclick="closeModal()">Cancel</button>
+    </div>
+</div>
+
 <script>
-    /**
- * SUBURBAN BREWING CO. - UNIVERSAL DISTRIBUTION LOGIC
- * Connects to: https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec
- */
-
 const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+const isWholesale = window.location.pathname.includes("wholesaler");
 
-// 1. PAGE CONFIGURATION
-// Automatically determines if we are handling Wholesalers or Restaurants based on the filename
-const isWholesaler = window.location.pathname.includes("wholesaler");
-const PAGE_SETTINGS = {
-    action: isWholesaler ? "getWholesalerInventory" : "getRestaurantInventory",
-    typeLabel: isWholesaler ? "Wholesaler" : "Restaurant",
-    containerId: isWholesaler ? "wholesalerContainer" : "restaurantContainer"
-};
-
-// 2. INITIALIZATION
-document.addEventListener("DOMContentLoaded", () => {
-    console.log(`Initializing ${PAGE_SETTINGS.typeLabel} Dashboard...`);
-    loadInventoryData();
-});
+document.addEventListener("DOMContentLoaded", loadInventoryData);
 
 /**
- * 3. DATA FETCHING
- * Pulls the grouped inventory data from the Apps Script backend
+ * 1. LOAD DASHBOARD DATA
  */
 async function loadInventoryData() {
-    const container = document.getElementById(PAGE_SETTINGS.containerId);
-    if (!container) return;
-
-    container.innerHTML = `<div style="padding: 20px;">Fetching ${PAGE_SETTINGS.typeLabel} data from Master Sheet...</div>`;
+    const container = document.getElementById("restaurantContainer");
+    const action = isWholesale ? "getWholesalerInventory" : "getRestaurantInventory";
+    
+    container.innerHTML = "Fetching current stock levels...";
 
     try {
-        const response = await fetch(`${API_URL}?action=${PAGE_SETTINGS.action}`);
+        const response = await fetch(`${API_URL}?action=${action}`);
         const data = await response.json();
-
-        if (!data || data.length === 0) {
-            container.innerHTML = `<div style="padding: 20px;">No ${PAGE_SETTINGS.typeLabel} accounts found. Please add a customer to begin tracking.</div>`;
-            return;
-        }
-
         renderCards(data, container);
-    } catch (error) {
-        console.error("Fetch Error:", error);
-        container.innerHTML = `<div style="padding: 20px; color: red;">Error connecting to Google Sheets. Verify the Web App URL is deployed.</div>`;
+    } catch (e) {
+        container.innerHTML = "Error loading data.";
     }
 }
 
 /**
- * 4. UI RENDERING
- * Dynamically builds the cards and tables based on the 'Customers' tab data
+ * 2. RENDER THE CARDS
  */
 function renderCards(data, container) {
-    container.innerHTML = ""; // Clear loader
-
+    container.innerHTML = "";
     data.forEach(account => {
         const card = document.createElement("div");
-        card.className = isWholesaler ? "wholesaler-card" : "restaurant-card";
+        card.className = "restaurant-card";
 
-        // Generate product rows for this specific account
         let productHtml = "";
         account.products.forEach(prod => {
             let pkgRows = "";
@@ -162,8 +131,8 @@ function renderCards(data, container) {
                 pkgRows += `
                     <div class="pkg-grid">
                         <span>${pkg.type}</span>
-                        <strong>${pkg.qty} ${pkg.unit}</strong>
-                        <button style="font-size:10px;" onclick="updateStockPrompt('${account.name}', '${prod.name}', '${pkg.type}')">Update</button>
+                        <strong>${pkg.qty}</strong>
+                        <button style="font-size:10px;" onclick="updateStock('${account.name}', '${prod.name}', '${pkg.type}')">Update</button>
                     </div>`;
             });
 
@@ -175,23 +144,14 @@ function renderCards(data, container) {
         });
 
         card.innerHTML = `
-            <div class="${isWholesaler ? 'wholesaler-header' : 'restaurant-header'}">
-                <span class="${isWholesaler ? 'wholesaler-name' : 'restaurant-name'}">${account.name}</span>
+            <div class="restaurant-header">
+                <span class="restaurant-name">${account.name}</span>
             </div>
             <table>
                 <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>
-                           <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 0 20px;">
-                               <span>Package</span><span>On Hand</span><span>Action</span>
-                           </div>
-                        </th>
-                    </tr>
+                    <tr><th>Product</th><th><div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 0 20px;"><span>Package</span><span>On Hand</span><span>Action</span></div></th></tr>
                 </thead>
-                <tbody>
-                    ${productHtml}
-                </tbody>
+                <tbody>${productHtml}</tbody>
             </table>
         `;
         container.appendChild(card);
@@ -199,56 +159,72 @@ function renderCards(data, container) {
 }
 
 /**
- * 5. ADD CUSTOMER LOGIC
- * Saves new customer info to the 'Customers' tab and updates the Master List
+ * 3. ONBOARDING LOGIC
  */
-async function submitNewCustomer() {
-    // Get values from your Modal/Form
-    const name = document.getElementById('custName').value;
-    const address = document.getElementById('custAddress').value;
-    const email = document.getElementById('custEmail').value;
-    const payment = document.getElementById('custPayment').value;
+async function openAddModal() {
+    document.getElementById("addModal").style.display = "block";
+    const list = document.getElementById("onboardingList");
+    
+    const resp = await fetch(`${API_URL}?action=getProducts`);
+    const products = await resp.json();
+    
+    list.innerHTML = products.map(p => `
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <label style="font-size:13px;"><input type="checkbox" class="onboard-check" data-name="${p.name}" data-type="${p.type}"> ${p.name} (${p.type})</label>
+            <input type="number" class="onboard-qty" placeholder="0" style="width:50px; margin:0;">
+        </div>
+    `).join("");
+}
 
-    if (!name || !address) {
-        alert("Please provide at least a Business Name and Address.");
-        return;
-    }
+async function submitNewAccount() {
+    const name = document.getElementById("newName").value;
+    const address = document.getElementById("newAddress").value;
+    const payment = document.getElementById("newPayment").value;
+    const btn = document.getElementById("submitBtn");
 
-    const payload = {
+    if(!name) return alert("Name required");
+    btn.innerText = "Syncing...";
+    btn.disabled = true;
+
+    const selected = [];
+    document.querySelectorAll(".onboard-check:checked").forEach((chk, i) => {
+        const qty = document.querySelectorAll(".onboard-qty")[i].value || 0;
+        selected.push({ name: chk.dataset.name, type: chk.dataset.type, qty: qty });
+    });
+
+    const params = new URLSearchParams({
         action: "addCustomer",
-        name: name,
-        address: address,
-        type: PAGE_SETTINGS.typeLabel, // 'Wholesaler' or 'Restaurant'
-        payment: payment,
-        email: email
-    };
+        name, address, payment,
+        type: isWholesale ? "Wholesaler" : "Restaurant",
+        initialStock: JSON.stringify(selected)
+    });
 
-    try {
-        // Using POST to send the JSON payload to doPost(e) in Apps Script
-        await fetch(API_URL, {
-            method: "POST",
-            mode: "no-cors", 
-            body: JSON.stringify(payload)
-        });
-
-        alert(`${PAGE_SETTINGS.typeLabel} added! This customer will now appear in your Invoice dropdowns.`);
-        location.reload(); // Refresh to show the new card
-    } catch (error) {
-        console.error("Save Error:", error);
-        alert("Failed to save to Master List. Check Apps Script permissions.");
-    }
+    await fetch(`${API_URL}?${params.toString()}`);
+    location.reload();
 }
 
 /**
- * 6. STOCK UPDATE (STUB)
- * Logic for manually overriding inventory counts
+ * 4. UPDATE STOCK LOGIC
  */
-function updateStockPrompt(account, product, pkg) {
-    const val = prompt(`Enter new inventory count for ${product} at ${account}:`);
-    if (val !== null) {
-        alert("Inventory update function is ready to be linked to your 'Invoice Items' sheet.");
-    }
+async function updateStock(account, product, pkg) {
+    const newVal = prompt(`Update count for ${product} (${pkg}):`);
+    if (newVal === null || newVal === "") return;
+
+    const params = new URLSearchParams({
+        action: "updateStockItem",
+        name: account,
+        product: product,
+        package: pkg,
+        qty: newVal,
+        type: isWholesale ? "Wholesaler" : "Restaurant"
+    });
+
+    await fetch(`${API_URL}?${params.toString()}`);
+    alert("Stock synced!");
+    loadInventoryData();
 }
+
+function closeModal() { document.getElementById("addModal").style.display = "none"; }
 </script>
 </body>
 </html>
