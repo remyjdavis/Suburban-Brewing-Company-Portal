@@ -2,26 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Leads & Follow-Ups | Suburban Brewing</title>
+  <title>Sales & Follow-Up | Suburban Brewing</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f4f6f8; display: flex; min-height: 100vh; }
+    
     .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; flex-shrink: 0; }
     .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; }
     .nav-link.active { background: #3b82f6; color: #fff; font-weight: 600; }
+
     .main { flex: 1; padding: 30px; }
-    .grid { display: grid; grid-template-columns: 350px 1fr; gap: 24px; }
-    .card { background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    label { display: block; font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 6px; }
-    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 16px; }
-    .lead-table { width: 100%; border-collapse: collapse; background: #fff; }
-    .lead-table th { background: #f9fafb; padding: 12px; text-align: left; font-size: 12px; color: #6b7280; }
-    .lead-table td { padding: 14px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
-    .btn-primary { width: 100%; padding: 12px; background: #1f2937; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .card { background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; }
+    
+    label { display: block; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 4px; margin-top: 12px; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+    
+    /* Inventory Status Badge */
+    .inventory-status { padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 13px; font-weight: 600; display: none; }
+    .status-check { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; } /* Restock Check */
+    .status-courtesy { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; } /* Courtesy Call */
+
+    .btn-submit { width: 100%; padding: 14px; background: #1f2937; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 20px; }
   </style>
 </head>
 <body>
+
   <aside class="sidebar">
     <div style="padding: 0 24px 20px;"><h2>Suburban</h2></div>
     <a class="nav-link" href="../index.html">Dashboard</a>
@@ -31,29 +37,106 @@
   </aside>
 
   <main class="main">
-    <h1>Sales Lead Management</h1>
-    <div class="grid">
-      <div class="card">
-        <h2>New Lead</h2>
-        <form id="leadForm">
-          <label>Account Name</label><input type="text" id="accName" required>
-          <label>Manager</label><input type="text" id="mgrName">
-          <label>Phone</label><input type="tel" id="mgrPhone">
-          <label>Temperature</label>
-          <select id="temp"><option>Warm</option><option>Hot</option><option>Cold</option></select>
-          <label>Notes</label><textarea id="notes" rows="3"></textarea>
-          <button type="submit" class="btn-primary">Save Lead</button>
-        </form>
-      </div>
-      <div class="card">
-        <h2>Active Follow-Ups</h2>
-        <table class="lead-table">
-          <thead><tr><th>Account</th><th>Contact</th><th>Follow-Up Date</th><th>Status</th><th>Action</th></tr></thead>
-          <tbody id="followUpList">
-            </tbody>
-        </table>
-      </div>
+    <div class="card">
+      <h2>Sales Activity Log</h2>
+      
+      <label>Entry Type</label>
+      <select id="entryType" onchange="toggleEntryView()">
+        <option value="new">New Lead (Cold Call/Intro)</option>
+        <option value="followup">Follow-Up (Existing Contact)</option>
+      </select>
+
+      <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+      <form id="salesForm" onsubmit="handleSalesSubmit(event)">
+        <label id="nameLabel">Customer Name</label>
+        <div id="customerInputContainer">
+          <input type="text" id="custName" placeholder="Enter business name..." required>
+        </div>
+
+        <div id="followUpData" style="display:none;">
+          <div id="invBadge" class="inventory-status"></div>
+          
+          <label>Manager</label>
+          <input type="text" id="mgrName" readonly style="background: #f9fafb;">
+          
+          <label>Phone</label>
+          <input type="tel" id="mgrPhone" readonly style="background: #f9fafb;">
+        </div>
+
+        <div id="newLeadFields">
+          <label>Street Address</label>
+          <input type="text" id="address">
+          
+          <label>Email</label>
+          <input type="email" id="email">
+        </div>
+
+        <label>Visit Outcome</label>
+        <select id="outcome" required>
+          <option value="">-- Select Result --</option>
+          <option value="Sale">Sale Made (Invoice Now)</option>
+          <option value="Warm">Warm (Come back soon)</option>
+          <option value="Cold">Cold (Come back much later)</option>
+          <option value="Not Interested">Not Interested</option>
+        </select>
+
+        <label>Notes</label>
+        <textarea id="notes" rows="4" placeholder="Mention beer styles, tap space, or next steps..."></textarea>
+        
+        <button type="submit" class="btn-submit">Submit Activity</button>
+      </form>
     </div>
   </main>
+
+  <script>
+    function toggleEntryView() {
+      const type = document.getElementById('entryType').value;
+      const followUpData = document.getElementById('followUpData');
+      const newLeadFields = document.getElementById('newLeadFields');
+      const nameInput = document.getElementById('custName');
+
+      if (type === 'followup') {
+        followUpData.style.display = 'block';
+        newLeadFields.style.display = 'none';
+        // Mocking an inventory check when name is entered
+        nameInput.onblur = function() { checkInventory(this.value); };
+      } else {
+        followUpData.style.display = 'none';
+        newLeadFields.style.display = 'block';
+        nameInput.onblur = null;
+      }
+    }
+
+    function checkInventory(name) {
+      const badge = document.getElementById('invBadge');
+      if (!name) return;
+      
+      // MOCK LOGIC: We will replace this with a Google Sheets lookup
+      const hasStock = (name.toLowerCase().includes("rusty")); // Example match
+      
+      badge.style.display = 'block';
+      if (hasStock) {
+        badge.innerText = "📋 ACTION: INVENTORY CHECK (This account has current stock)";
+        badge.className = "inventory-status status-check";
+      } else {
+        badge.innerText = "🤝 ACTION: COURTESY FOLLOW-UP (No current stock)";
+        badge.className = "inventory-status status-courtesy";
+      }
+    }
+
+    function handleSalesSubmit(event) {
+      event.preventDefault();
+      const outcome = document.getElementById('outcome').value;
+      const customer = encodeURIComponent(document.getElementById('custName').value);
+      
+      if (outcome === 'Sale') {
+        window.location.href = `invoices.html?customer=${customer}`;
+      } else {
+        alert("Visit logged. AI will update your next follow-up date.");
+        location.reload();
+      }
+    }
+  </script>
 </body>
 </html>
