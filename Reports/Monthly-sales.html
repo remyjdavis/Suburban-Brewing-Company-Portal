@@ -1,153 +1,91 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Monthly Sales & Commission | Suburban Brewing</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    :root {
-      --bg: #f4f6f8;
-      --sidebar: #1f2937;
-      --accent: #2563eb;
-      --success: #10b981;
-      --text: #1f2937;
-    }
+<div class="card">
+  <h3>Export Reports</h3>
+  <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+    <button onclick="generateCommissionPDF()" style="background: var(--sidebar); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      📄 Download Commission PDF
+    </button>
+    <button onclick="generateFullSalesReportPDF()" style="background: #4b5563; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      📊 Download Full Sales Audit
+    </button>
+  </div>
+</div>
 
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+<script>
+function generateCommissionPDF() {
+  const comm = document.getElementById('commissionValue').innerText;
+  const rate = document.getElementById('currentRate').innerText;
+  const sales = document.getElementById('grossSales').innerText;
+  const date = document.getElementById('current-date').textContent;
 
-    /* --- SIDEBAR --- */
-    .sidebar { width: 240px; background: var(--sidebar); color: #fff; padding: 20px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; }
-    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; color: #fff; letter-spacing: 1px; }
-    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 0.5px; }
-    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
-    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
-    .nav-link.active { border-left: 4px solid var(--accent); }
-
-    /* --- MAIN --- */
-    .main { flex: 1; margin-left: 240px; padding: 30px; }
-    .commission-header { background: #1f2937; color: white; padding: 40px; border-radius: 16px; margin-bottom: 30px; text-align: center; }
-    .sales-val { font-size: 48px; font-weight: 800; margin: 10px 0; }
-    
-    /* --- PROGRESS BAR --- */
-    .tier-container { max-width: 600px; margin: 20px auto; }
-    .progress-track { background: #374151; height: 14px; border-radius: 7px; overflow: hidden; margin-bottom: 10px; }
-    .progress-fill { background: var(--success); height: 100%; width: 0%; transition: width 1s ease; }
-    .tier-labels { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.7; }
-
-    /* --- GRID --- */
-    .report-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; }
-    .card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th { text-align: left; font-size: 12px; color: #6b7280; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #f3f4f6; }
-    td { padding: 12px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
-  </style>
-</head>
-<body>
-
-  <aside class="sidebar">
-    <h2>SUBURBAN</h2>
-    <div class="nav-section-title">Operations</div>
-    <a href="../index.html" class="nav-link">Command Center</a>
-    <a href="../Samplings/Schedule-Sampling.html" class="nav-link">Schedule Sampling</a>
-    <a href="../Samplings/sampling-calendar.html" class="nav-link">Sampling Calendar</a>
-    
-    <div class="nav-section-title">Sales & Outreach</div>
-    <a href="../sales/leads.html" class="nav-link">AI Sales Leads</a>
-    <a href="../sales/invoices.html" class="nav-link">Invoices & Master Inv</a>
-    <a href="../sales/deliveries.html" class="nav-link">Delivery Tracking</a>
-
-    <div class="nav-section-title">Production & Cellar</div>
-    <a href="../inventory/brewery.html" class="nav-link">Brewery Master Inventory</a>
-    <a href="../inventory/cellar.html" class="nav-link">Cellar Management</a>
-    
-    <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="monthly-sales.html" class="nav-link active">Monthly Sales Report</a>
-    <a href="sales-route.html" class="nav-link">Sales Route Optimization</a>
-  </aside>
-
-  <main class="main">
-    <div class="commission-header">
-      <div style="text-transform: uppercase; font-size: 12px; letter-spacing: 2px; opacity: 0.8;">Estimated Commission (MTD)</div>
-      <div id="commissionValue" class="sales-val">$0.00</div>
-      <div id="currentRate" style="font-size: 18px; font-weight: 700; color: var(--success);">Current Rate: 9%</div>
-      
-      <div class="tier-container">
-        <div class="progress-track">
-          <div id="progressFill" class="progress-fill"></div>
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head><title>Commission Report - ${date}</title></head>
+      <style>
+        body { font-family: sans-serif; padding: 40px; }
+        .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+        .val { font-size: 24px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+      </style>
+      <body>
+        <div class="header">
+          <h1>Commission Statement</h1>
+          <p>Suburban Brewing Co. | ${date}</p>
         </div>
-        <div class="tier-labels">
-          <span>Current Tier</span>
-          <span id="nextTierLabel">Goal: $100k (10%)</span>
-        </div>
-      </div>
-    </div>
+        <p><strong>Total Monthly Sales:</strong> ${sales}</p>
+        <p><strong>Calculated Tiered Rate:</strong> ${rate}</p>
+        <p class="val">Total Commission Due: ${comm}</p>
+        <hr>
+        <h3>Invoice Audit Trail</h3>
+        ${document.getElementById('invoiceList').parentElement.outerHTML}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+}
 
-    <div class="report-grid">
-      <div class="card">
-        <h3>Invoice Breakdown (Delivered)</h3>
+async function generateFullSalesReportPDF() {
+  // This will fetch ALL data including payment types from the server
+  const response = await fetch(`${API_URL}?action=getFullAuditData`, { redirect: "follow" });
+  const data = await response.json();
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head><title>Monthly Sales Audit</title></head>
+      <style>
+        body { font-family: sans-serif; font-size: 12px; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 5px; text-align: left; }
+        th { background: #eee; }
+      </style>
+      <body>
+        <h2>Suburban Brewing Co. - Full Sales Audit</h2>
         <table>
           <thead>
-            <tr><th>Invoice #</th><th>Customer</th><th>Total Sales</th><th>Date</th></tr>
+            <tr>
+              <th>Date</th><th>Inv #</th><th>Customer</th><th>Amount</th><th>Status</th><th>Payment Type</th>
+            </tr>
           </thead>
-          <tbody id="invoiceList">
-            </tbody>
+          <tbody>
+            ${data.map(inv => `
+              <tr>
+                <td>${inv.date}</td>
+                <td>${inv.number}</td>
+                <td>${inv.customer}</td>
+                <td>$${inv.amount.toFixed(2)}</td>
+                <td>${inv.status}</td>
+                <td>${inv.paymentType}</td>
+              </tr>
+            `).join('')}
+          </tbody>
         </table>
-      </div>
-
-      <div class="card">
-        <h3>Summary Metrics</h3>
-        <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-          <small style="color: #6b7280;">Total Gross Revenue</small>
-          <div id="grossSales" style="font-size: 28px; font-weight: 700;">$0.00</div>
-        </div>
-        <div style="margin-bottom: 20px;">
-          <small style="color: #6b7280;">Invoices Count</small>
-          <div id="invoiceCount" style="font-size: 20px; font-weight: 600;">0</div>
-        </div>
-        <button onclick="window.print()" style="width: 100%; background: #eee; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">Download Report</button>
-      </div>
-    </div>
-  </main>
-
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-
-    async function loadMonthlyReport() {
-      try {
-        const response = await fetch(`${API_URL}?action=getMonthlySalesData`, { redirect: "follow" });
-        const data = await response.json();
-
-        // 1. Set Gross and Commission
-        document.getElementById('grossSales').innerText = `$${data.totalSales.toLocaleString()}`;
-        document.getElementById('commissionValue').innerText = `$${data.commission.toLocaleString()}`;
-        document.getElementById('currentRate').innerText = `Current Rate: ${data.rate}`;
-        document.getElementById('invoiceCount').innerText = data.count;
-
-        // 2. Update Progress Bar
-        const currentSales = data.totalSales;
-        const tierAmount = Math.floor(currentSales / 100000) * 100000;
-        const progressPercent = ((currentSales - tierAmount) / 100000) * 100;
-        document.getElementById('progressFill').style.width = progressPercent + '%';
-        document.getElementById('nextTierLabel').innerText = `Goal: $${(tierAmount + 100000).toLocaleString()} (${parseInt(data.rate) + 1}%)`;
-
-        // 3. Populate Table
-        const tableBody = document.getElementById('invoiceList');
-        tableBody.innerHTML = data.invoices.map(inv => `
-          <tr>
-            <td>#${inv.number}</td>
-            <td><strong>${inv.customer}</strong></td>
-            <td>$${inv.amount.toLocaleString()}</td>
-            <td style="color:#6b7280;">${inv.date}</td>
-          </tr>
-        `).join('');
-
-      } catch (err) {
-        console.error("Error loading sales data", err);
-      }
-    }
-
-    window.onload = loadMonthlyReport;
-  </script>
-</body>
-</html>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+}
+</script>
