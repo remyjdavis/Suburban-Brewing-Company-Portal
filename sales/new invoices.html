@@ -842,9 +842,18 @@ function renderBlock(blockId) {
 function updateQty(id, val) {
   const line = invoiceLines.find(l => l.id === id);
   if (!line) return;
+  
   line.qty = Number(val) || 1;
+  
+  // Re-render the block to update totals and refresh the stock badge
   renderBlock(line.blockId);
   
+  // Update the badge to show it is checking the latest inventory
+  const badge = document.getElementById(`badge-${id}`);
+  if (badge) {
+    badge.textContent = "Syncing...";
+    badge.className = "stock-badge";
+  }
 }
 
 /* INITIAL ROW */
@@ -1201,7 +1210,8 @@ async function preloadLogoBase64() {
     width: 75px !important;
     height: 75px !important;
   }
-
+  .stock-badge { display: none !important; }
+}
  /* FORCE COMPANY INFO TO 3 LINES */
 .company-info {
   font-size: 11px;
