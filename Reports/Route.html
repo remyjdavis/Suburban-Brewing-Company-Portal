@@ -138,83 +138,95 @@
     </button>
   </div>
 
-  <script>
-    let currentRoute = [];
-    document.getElementById('routeDate').valueAsDate = new Date();
+    <script>
+  let currentRoute = [];
+  document.getElementById('routeDate').valueAsDate = new Date();
 
-    function fetchRoute() {
-      const date = document.getElementById('routeDate').value;
-      const list = document.getElementById('routeList');
-      const loader = document.getElementById('loading');
+  // SAFETY FIX: Wait for the Google object to be ready
+  function onInit() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      console.log("Google API Ready");
+      fetchRoute();
+    } else {
+      console.log("Waiting for Google API...");
+      setTimeout(onInit, 100); // Retry every 100ms
+    }
+  }
+
+  function fetchRoute() {
+    const date = document.getElementById('routeDate').value;
+    const list = document.getElementById('routeList');
+    const loader = document.getElementById('loading');
+    
+    list.innerHTML = "";
+    loader.style.display = "block";
+    document.getElementById('mainNavBtn').style.display = "none";
+
+    // Calls the function in your Code.gs
+    google.script.run
+      .withSuccessHandler(renderStops)
+      .withFailureHandler(function(err) {
+        document.getElementById('loading').innerText = "Error: " + err;
+      })
+      .getOptimizedDailyRoute(date);
+  }
+
+  function renderStops(stops) {
+    document.getElementById('loading').style.display = "none";
+    const list = document.getElementById('routeList');
+    currentRoute = stops;
+
+    if (!stops || stops.length === 0) {
+      list.innerHTML = "<div style='text-align:center; color:#666; margin-top:20px;'>No stops found for this date.</div>";
+      return;
+    }
+
+    stops.forEach((stop, index) => {
+      const card = document.createElement('div');
+      card.className = 'stop-card';
+      card.style.borderLeftColor = stop.color;
       
-      list.innerHTML = "";
-      loader.style.display = "block";
-      document.getElementById('mainNavBtn').style.display = "none";
+      card.innerHTML = `
+        <div class="stop-num">${index + 1}</div>
+        <div class="stop-info">
+          <span class="badge" style="background:${stop.color}33; color:${stop.color}; border: 1px solid ${stop.color}">${stop.type}</span>
+          <div class="stop-name">${stop.name}</div>
+          <div class="stop-addr">${stop.address}</div>
+        </div>
+        <div class="check-in-dot" id="dot-${index}"></div>
+      `;
+      list.appendChild(card);
+    });
 
-      google.script.run
-        .withSuccessHandler(renderStops)
-        .getOptimizedDailyRoute(date);
-    }
+    document.getElementById('mainNavBtn').style.display = "flex";
+  }
 
-    function renderStops(stops) {
-      document.getElementById('loading').style.display = "none";
-      const list = document.getElementById('routeList');
-      currentRoute = stops;
+  function pushToPolestar() {
+    if (currentRoute.length === 0) return;
 
-      if (!stops || stops.length === 0) {
-        list.innerHTML = "<div style='text-align:center; color:#666;'>No stops scheduled for today.</div>";
-        return;
-      }
+    const btn = document.getElementById('mainNavBtn');
+    btn.innerText = "OPENING MAPS...";
 
-      stops.forEach((stop, index) => {
-        const card = document.createElement('div');
-        card.className = 'stop-card';
-        card.style.borderLeftColor = stop.color;
-        
-        card.innerHTML = `
-          <div class="stop-num">${index + 1}</div>
-          <div class="stop-info">
-            <span class="badge" style="background:${stop.color}33; color:${stop.color}; border: 1px solid ${stop.color}">${stop.type}</span>
-            <div class="stop-name">${stop.name}</div>
-            <div class="stop-addr">${stop.address}</div>
-          </div>
-          <div class="check-in-dot" id="dot-${index}"></div>
-        `;
-        list.appendChild(card);
-      });
+    const origin = encodeURIComponent(currentRoute[0].address);
+    const destination = encodeURIComponent(currentRoute[currentRoute.length - 1].address);
+    const waypoints = currentRoute.slice(1, -1)
+      .map(s => encodeURIComponent(s.address))
+      .join('|');
 
-      document.getElementById('mainNavBtn').style.display = "flex";
-    }
+    // This URL format helps trigger the "Send to Vehicle" option in Google Maps
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypoints}&travelmode=driving`;
 
-    function pushToPolestar() {
-      if (currentRoute.length === 0) return;
+    window.open(mapsUrl, '_blank');
 
-      const btn = document.getElementById('mainNavBtn');
-      btn.innerText = "OPENING MAPS...";
+    setTimeout(() => {
+      btn.innerHTML = "✅ SENT! CHECK POLESTAR RECENT TRIPS";
+      btn.style.background = "#34c759";
+      btn.style.color = "white";
+    }, 2000);
+  }
 
-      // Define Start and End
-      const origin = encodeURIComponent(currentRoute[0].address);
-      const destination = encodeURIComponent(currentRoute[currentRoute.length - 1].address);
-      
-      // Define Waypoints (The stops in between)
-      const waypoints = currentRoute.slice(1, -1)
-        .map(s => encodeURIComponent(s.address))
-        .join('|');
-
-      // Universal Maps Link for Cloud Sync
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypoints}&travelmode=driving`;
-
-      // Open in system maps
-      window.open(mapsUrl, '_blank');
-
-      setTimeout(() => {
-        btn.innerHTML = "✅ SENT! CHECK POLESTAR RECENT TRIPS";
-        btn.style.background = "#34c759";
-      }, 2000);
-    }
-
-    // Initial load on open
-    window.onload = fetchRoute;
-  </script>
+  // Run the safety init instead of window.onload
+  onInit();
+</script>
 </body>
 </html>
