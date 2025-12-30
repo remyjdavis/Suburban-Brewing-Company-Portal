@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Brewery Inventory | Suburban Brewing Company</title>
+    <title>Master Inventory | Suburban Brewing Co.</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         * {
@@ -28,12 +28,14 @@
         .sidebar h2 {
             margin: 0 20px 20px;
             font-size: 18px;
+            letter-spacing: 0.5px;
         }
         .nav-link {
             display: block;
-            padding: 10px 20px;
+            padding: 12px 20px;
             color: #d1d5db;
             text-decoration: none;
+            transition: all 0.2s;
         }
         .nav-link.active,
         .nav-link:hover {
@@ -111,27 +113,28 @@
 
 <div class="layout">
     <aside class="sidebar">
-        <h2>Suburban Brewing</h2>
-        <a class="nav-link" href="../sales/invoices.html">Invoices</a>
-        <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
-        <a class="nav-link" href="../sales/sampling.html">Sampling</a>
+        <h2>Suburban Brewing Co.</h2>
+        <a class="nav-link" href="invoices.html">Invoices</a>
+        <a class="nav-link" href="deliveries.html">Deliveries</a>
         <a class="nav-link active" href="brewery-inventory.html">Brewery Inventory</a>
-        <a class="nav-link" href="store-inventory.html">Store Inventory</a>
-        <a class="nav-link" href="../index.html">Dashboard</a>
+        <a class="nav-link" href="customer-tracking.html">Live Tracking</a>
+        <a class="nav-link" href="sampling.html">Sampling</a>
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
     </aside>
 
     <div class="main">
         <header class="topbar">
-            <h1>Brewery Inventory</h1>
+            <h1>Brewery Master Inventory</h1>
         </header>
 
         <section class="content">
-            <div style="margin-bottom: 20px;">
-                <button onclick="openProductModal()">+ Add Product</button>
+            <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <button onclick="openProductModal()">+ Create New Product</button>
+                <span style="font-size: 13px; color: #6b7280;">Deductions occur automatically upon Invoice submission.</span>
             </div>
 
             <div class="section">
-                <h3>Core Products</h3>
+                <h3>Core Year-Round</h3>
                 <table>
                     <thead>
                         <tr>
@@ -150,7 +153,7 @@
             </div>
 
             <div class="section">
-                <h3>Seasonal Products</h3>
+                <h3>Seasonal Releases</h3>
                 <table>
                     <thead>
                         <tr>
@@ -169,7 +172,7 @@
             </div>
 
             <div class="section">
-                <h3>Rotating Products</h3>
+                <h3>Rotating / Limited</h3>
                 <table>
                     <thead>
                         <tr>
@@ -202,7 +205,7 @@
             <option value="Seasonal">Seasonal</option>
             <option value="Rotating">Rotating</option>
         </select>
-        <h4 style="margin: 15px 0 10px 0;">Package Quantities & Prices</h4>
+        <h4 style="margin: 15px 0 10px 0;">Initial Stock & Default Pricing</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div>
                 <label style="font-size: 12px;">1/2 Keg Qty</label>
@@ -261,57 +264,55 @@
     }
 
     function renderLifecycleTable(lifecycle, tbodyId) {
-    const tbody = document.getElementById(tbodyId);
-    if (!tbody) return;
-    tbody.innerHTML = "";
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        tbody.innerHTML = "";
 
-    // Filter grouped products by lifecycle
-    const products = inventory.filter(item => 
-        String(item.lifecycle).trim().toLowerCase() === lifecycle.toLowerCase()
-    );
+        const products = inventory.filter(item => 
+            String(item.lifecycle).trim().toLowerCase() === lifecycle.toLowerCase()
+        );
 
-    if (!products.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="color: #9ca3af; font-style: italic; text-align: center; padding: 20px;">No ${lifecycle} products found</td></tr>`;
-        return;
+        if (!products.length) {
+            tbody.innerHTML = `<tr><td colspan="6" style="color: #9ca3af; font-style: italic; text-align: center; padding: 20px;">No ${lifecycle} products currently in stock</td></tr>`;
+            return;
+        }
+
+        products.forEach(item => {
+            let packageHtml = "";
+            let qtyHtml = "";
+            let unitHtml = "";
+            let statusHtml = "";
+            let actionHtml = "";
+
+            item.packages.forEach(pkg => {
+                const isLow = Number(pkg.qty) <= 0;
+                const statusClass = isLow ? "low" : "ok";
+                const statusText = isLow ? "Low" : "OK";
+
+                packageHtml += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.type}</div>`;
+                qtyHtml     += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.qty}</div>`;
+                unitHtml    += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.unit}</div>`;
+                statusHtml  += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;" class="${statusClass}">${statusText}</div>`;
+                actionHtml  += `<div style="padding: 2px 0; border-bottom: 1px solid #f3f4f6;">
+                                  <button class="small secondary" onclick="adjustQty('${item.product}', '${pkg.type}', ${pkg.qty})">Manual Adjust</button>
+                                </div>`;
+            });
+
+            tbody.insertAdjacentHTML("beforeend", `
+                <tr>
+                    <td style="vertical-align: top;"><strong>${item.product}</strong></td>
+                    <td style="padding: 0;">${packageHtml}</td>
+                    <td style="padding: 0;">${qtyHtml}</td>
+                    <td style="padding: 0;">${unitHtml}</td>
+                    <td style="padding: 0;">${statusHtml}</td>
+                    <td style="padding: 0;">${actionHtml}</td>
+                </tr>
+            `);
+        });
     }
 
-    products.forEach(item => {
-        // Create sub-rows for each package within the product row
-        let packageHtml = "";
-        let qtyHtml = "";
-        let unitHtml = "";
-        let statusHtml = "";
-        let actionHtml = "";
-
-        item.packages.forEach(pkg => {
-            const isLow = Number(pkg.qty) <= 0;
-            const statusClass = isLow ? "low" : "ok";
-            const statusText = isLow ? "Low" : "OK";
-
-            packageHtml += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.type}</div>`;
-            qtyHtml     += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.qty}</div>`;
-            unitHtml    += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">${pkg.unit}</div>`;
-            statusHtml  += `<div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;" class="${statusClass}">${statusText}</div>`;
-            actionHtml  += `<div style="padding: 2px 0; border-bottom: 1px solid #f3f4f6;">
-                              <button class="small secondary" onclick="adjustQty('${item.product}', '${pkg.type}', ${pkg.qty})">Adjust</button>
-                            </div>`;
-        });
-
-        tbody.insertAdjacentHTML("beforeend", `
-            <tr>
-                <td style="vertical-align: top;"><strong>${item.product}</strong></td>
-                <td style="padding: 0;">${packageHtml}</td>
-                <td style="padding: 0;">${qtyHtml}</td>
-                <td style="padding: 0;">${unitHtml}</td>
-                <td style="padding: 0;">${statusHtml}</td>
-                <td style="padding: 0;">${actionHtml}</td>
-            </tr>
-        `);
-    });
-}
-
     async function adjustQty(product, type, currentQty) {
-        const newQty = prompt(`Update inventory for ${product} (${type}):`, currentQty);
+        const newQty = prompt(`Manually update inventory for ${product} (${type}):`, currentQty);
         if (newQty === null || newQty === "" || isNaN(newQty)) return;
 
         const payload = {
@@ -321,15 +322,10 @@
             newQty: Number(newQty)
         };
 
-        const formBody = Object.keys(payload)
-            .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(payload[k]))
-            .join("&");
-
         try {
             const res = await fetch(API_URL, {
                 method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: formBody
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
             if (data.success) {
