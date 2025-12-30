@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #1a1a1a; --card: #2d2d2d; --text: #eeeeee;
+      --delivery: #10b981; --sales: #2563eb; --scout: #8b5cf6;
+    }
+    body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    
+    .stop-card {
+      background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px;
+      display: flex; align-items: center; border-left: 6px solid #555;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .stop-info { flex-grow: 1; }
+    .stop-num { font-weight: bold; font-size: 20px; margin-right: 15px; opacity: 0.5; }
+    .stop-name { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+    .stop-addr { font-size: 13px; color: #aaa; }
+    .badge { 
+      font-size: 10px; text-transform: uppercase; padding: 3px 8px; 
+      border-radius: 4px; font-weight: bold; margin-bottom: 5px; display: inline-block;
+    }
+    
+    .nav-btn {
+      position: fixed; bottom: 20px; left: 15px; right: 15px;
+      background: #f59e0b; color: #000; border: none; padding: 18px;
+      border-radius: 12px; font-weight: bold; font-size: 16px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; text-decoration: none;
+    }
+    #loading { text-align: center; margin-top: 50px; color: #aaa; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2 style="margin:0;">Daily Route</h2>
+    <input type="date" id="routeDate" onchange="fetchRoute()" style="background:#444; color:#fff; border:none; padding:8px; border-radius:5px;">
+  </div>
+
+  <div id="loading">Gathering your 15 stops...</div>
+  <div id="routeContainer"></div>
+
+  <a href="#" id="googleMapsLink" class="nav-btn" style="display:none;">🚀 START NAVIGATION (FULL ROUTE)</a>
+
+  <script>
+    // Set default date to today
+    document.getElementById('routeDate').valueAsDate = new Date();
+
+    function fetchRoute() {
+      const date = document.getElementById('routeDate').value;
+      document.getElementById('routeContainer').innerHTML = "";
+      document.getElementById('loading').style.display = "block";
+      document.getElementById('googleMapsLink').style.display = "none";
+
+      google.script.run
+        .withSuccessHandler(renderStops)
+        .getOptimizedDailyRoute(date);
+    }
+
+    function renderStops(stops) {
+      document.getElementById('loading').style.display = "none";
+      const container = document.getElementById('routeContainer');
+      
+      if (!stops || stops.length === 0) {
+        container.innerHTML = "<p>No stops found for this date.</p>";
+        return;
+      }
+
+      let addrList = [];
+
+      stops.forEach((stop, index) => {
+        addrList.push(encodeURIComponent(stop.address));
+        
+        const card = document.createElement('div');
+        card.className = 'stop-card';
+        card.style.borderLeftColor = stop.color;
+        
+        card.innerHTML = `
+          <div class="stop-num">${index + 1}</div>
+          <div class="stop-info">
+            <span class="badge" style="background:${stop.color}">${stop.type}</span>
+            <div class="stop-name">${stop.name}</div>
+            <div class="stop-addr">${stop.address}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // Create Multi-Stop Google Maps Link
+      // Format: https://www.google.com/maps/dir/Stop1/Stop2/Stop3...
+      if (addrList.length > 0) {
+        const baseUrl = "https://www.google.com/maps/dir/";
+        const fullUrl = baseUrl + addrList.join('/');
+        const navBtn = document.getElementById('googleMapsLink');
+        navBtn.href = fullUrl;
+        navBtn.style.display = "block";
+        navBtn.target = "_blank";
+      }
+    }
+
+    // Initial load
+    window.onload = fetchRoute;
+  </script>
+</body>
+</html>
