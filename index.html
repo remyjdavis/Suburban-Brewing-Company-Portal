@@ -127,34 +127,68 @@
       day: "numeric",
       year: "numeric"
     });
-  // This function will eventually fetch data from your Apps Script
-function updateSamplingPreview(events) {
+  <script>
+  // 1. Set the Date
+  document.getElementById("today").textContent =
+    new Date().toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+
+  // 2. Fetch Real Data from Apps Script
+  const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+
+  async function loadDashboardData() {
+    try {
+      // Fetch upcoming samplings
+      const response = await fetch(`${API_URL}?action=getSamplingEvents`, { redirect: "follow" });
+      const events = await response.json();
+      
+      // Filter for future events only (optional)
+      const now = new Date();
+      now.setHours(0,0,0,0);
+      const upcoming = events.filter(ev => new Date(ev.date) >= now);
+
+      updateSamplingPreview(upcoming);
+    } catch (err) {
+      console.error("Dashboard Load Error:", err);
+      document.getElementById('samplingPreview').innerHTML = 
+        '<div style="font-size: 11px; color: #ef4444;">Failed to sync with Google Sheets.</div>';
+    }
+  }
+
+  function updateSamplingPreview(events) {
     const container = document.getElementById('samplingPreview');
     const countBadge = document.getElementById('samplingCount');
     
     if (!events || events.length === 0) {
-        container.innerHTML = '<div style="font-size: 13px; color: #9ca3af;">Clear for the week!</div>';
+        container.innerHTML = '<div style="font-size: 13px; color: #9ca3af;">No samplings scheduled.</div>';
         countBadge.innerText = '0';
         return;
     }
 
     countBadge.innerText = events.length;
-    container.innerHTML = events.slice(0, 3).map(ev => `
+    
+    // Show the next 3 events
+    container.innerHTML = events.slice(0, 3).map(ev => {
+        // Format the date to look like "Dec 31"
+        const d = new Date(ev.date);
+        const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        
+        return `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-left: 2px solid #3b82f6; padding-left: 8px;">
-            <span style="font-size: 13px; font-weight: 600; color: #1f2937;">${ev.account}</span>
-            <span style="font-size: 11px; color: #6b7280;">${ev.date}</span>
+            <span style="font-size: 13px; font-weight: 600; color: #1f2937;">${ev.name}</span>
+            <span style="font-size: 11px; color: #6b7280;">${dateStr}</span>
         </div>
-    `).join('');
-}
+        `;
+    }).join('');
+  }
 
-// Example Mock Data (We will replace this with your actual Sheet data)
-const mockEvents = [
-    { account: "Rusty Anchor Pub", date: "Dec 31" },
-    { account: "The Green Growler", date: "Jan 02" }
-];
-
-// Run on load
-updateSamplingPreview(mockEvents);
+  // Run the fetch when the page loads
+  loadDashboardData();
+</script>
 </script>
 </body>
 </html>
