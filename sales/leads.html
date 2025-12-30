@@ -3,141 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Activity Log | Suburban Brewing Co.</title>
+    <title>Sales Activity | Suburban Brewing Co.</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f4f6f8; padding: 20px; color: #1f2937; }
-        .card { background: #fff; padding: 25px; border-radius: 12px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        h2 { margin-top: 0; font-size: 20px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; }
+        :root { --sidebar-width: 240px; --primary-dark: #111827; --accent: #374151; }
+        body { font-family: -apple-system, sans-serif; background: #f3f4f6; margin: 0; display: flex; color: #1f2937; }
+
+        /* Sidebar Styling */
+        .sidebar { width: var(--sidebar-width); background: var(--primary-dark); height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid #1f2937; letter-spacing: 1px; }
+        .nav-links { flex-grow: 1; padding: 20px 0; }
+        .nav-item { padding: 12px 25px; display: block; color: #9ca3af; text-decoration: none; transition: 0.2s; font-size: 0.9rem; }
+        .nav-item:hover, .nav-item.active { background: #1f2937; color: white; }
+
+        /* Main Content */
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; min-height: 100vh; }
+        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
+        .container { padding: 30px; max-width: 800px; margin: 0 auto; }
+
+        /* Form Card */
+        .form-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; font-size: 1.5rem; color: #111827; }
         label { display: block; font-weight: 700; margin: 15px 0 5px; font-size: 11px; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
         
-        /* Visit Type Toggle */
+        /* Toggle Buttons for Visit Type */
         .toggle-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        .toggle-btn { flex: 1; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; text-align: center; }
-        .toggle-btn.active { background: #1f2937; color: white; border-color: #1f2937; }
+        .toggle-btn { flex: 1; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; text-align: center; font-size: 14px; }
+        .toggle-btn.active { background: var(--primary-dark); color: white; border-color: var(--primary-dark); }
 
-        .btn { width: 100%; padding: 15px; background: #1f2937; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 25px; font-size: 16px; }
-        .btn:disabled { background: #9ca3af; }
-        .row { display: flex; gap: 10px; }
+        .btn-submit { width: 100%; padding: 15px; background: #111827; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 25px; font-size: 16px; transition: background 0.2s; }
+        .btn-submit:hover { background: #000; }
+        .btn-submit:disabled { background: #9ca3af; }
+
+        .row { display: flex; gap: 15px; }
         .col { flex: 1; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Sales Activity Log</h2>
-    <form id="salesForm">
-        <label>Visit Type</label>
-        <div class="toggle-group">
-            <div id="btnInitial" class="toggle-btn active" onclick="setVisitType('Initial')">Initial Visit</div>
-            <div id="btnFollow" class="toggle-btn" onclick="setVisitType('Follow-up')">Follow-up</div>
+    <div class="sidebar">
+        <div class="sidebar-header">SUBURBAN</div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="leads.html" class="nav-item active">Sales Activity</a>
+            <a href="new invoices.html" class="nav-item">New Invoice</a>
+            <a href="inventory.html" class="nav-item">Wholesale Inv</a>
+            <a href="restaurant.html" class="nav-item">Restaurant Inv</a>
         </div>
-        <input type="hidden" id="visitType" value="Initial">
-        <input type="hidden" id="accountType" value="Restaurant">
+    </div>
 
-        <label>Account Name</label>
-        <input list="customers" id="name" placeholder="Start typing account name..." onblur="checkExisting()" required>
-        <datalist id="customers"></datalist>
+    <div class="main-content">
+        <div class="header">
+            <span style="font-weight: 600; color: #6b7280;">Sales Portal</span>
+            <div id="dateDisplay" style="font-size: 0.9rem; color: #9ca3af;"></div>
+        </div>
 
-        <label>Manager Name</label>
-        <input type="text" id="manager" placeholder="Who did you speak with?">
+        <div class="container">
+            <div class="form-card">
+                <h2>Log Activity</h2>
+                <form id="salesForm">
+                    <label>Visit Type</label>
+                    <div class="toggle-group">
+                        <div id="btnInitial" class="toggle-btn active" onclick="setVisitType('Initial')">Initial Visit</div>
+                        <div id="btnFollow" class="toggle-btn" onclick="setVisitType('Follow-up')">Follow-up Visit</div>
+                    </div>
+                    <input type="hidden" id="visitType" value="Initial">
+                    <input type="hidden" id="accountType" value="Restaurant">
 
-        <div id="contactInfo">
-            <label>Street Address</label>
-            <input type="text" id="address">
-            <div class="row">
-                <div class="col">
-                    <label>Phone</label>
-                    <input type="tel" id="phone">
-                </div>
-                <div class="col">
-                    <label>Email</label>
-                    <input type="email" id="email">
-                </div>
+                    <label>Account Name</label>
+                    <input list="customers" id="name" placeholder="Search accounts..." onblur="checkExisting()" required>
+                    <datalist id="customers"></datalist>
+
+                    <label>Manager / Contact Name</label>
+                    <input type="text" id="manager" placeholder="TBD">
+
+                    <div class="row">
+                        <div class="col">
+                            <label>Street Address</label>
+                            <input type="text" id="address">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <label>Phone</label>
+                            <input type="tel" id="phone">
+                        </div>
+                        <div class="col">
+                            <label>Email</label>
+                            <input type="email" id="email">
+                        </div>
+                    </div>
+
+                    <label>Outcome</label>
+                    <select id="outcome" required>
+                        <option value="">-- Select Result --</option>
+                        <option value="Sale">Sale (Write Invoice)</option>
+                        <option value="Warm">Warm (Interested / Follow-up)</option>
+                        <option value="Cold">Cold (Long-term Prospect)</option>
+                        <option value="Not Interested">Not Interested</option>
+                    </select>
+
+                    <label>Notes (AI Analysis)</label>
+                    <textarea id="notes" rows="4" placeholder="Manager back on Tuesday..."></textarea>
+
+                    <button type="submit" id="submitBtn" class="btn-submit">Save Activity & Analyze</button>
+                </form>
             </div>
         </div>
+    </div>
 
-        <label>Result / Outcome</label>
-        <select id="outcome" required>
-            <option value="">-- Select Result --</option>
-            <option value="Sale">Sale (Write Invoice)</option>
-            <option value="Warm">Warm (Interested / Follow-up)</option>
-            <option value="Cold">Cold (Long-term Prospect)</option>
-            <option value="Not Interested">Not Interested</option>
-        </select>
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+        
+        document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-        <label>Notes (For AI Analysis)</label>
-        <textarea id="notes" rows="3" placeholder="Example: Manager was busy, come back Tuesday..."></textarea>
+        function setVisitType(type) {
+            document.getElementById('visitType').value = type;
+            document.getElementById('btnInitial').classList.toggle('active', type === 'Initial');
+            document.getElementById('btnFollow').classList.toggle('active', type === 'Follow-up');
+        }
 
-        <button type="submit" id="submitBtn" class="btn">Submit & Save Activity</button>
-    </form>
-</div>
-
-<script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-    
-    function setVisitType(type) {
-        document.getElementById('visitType').value = type;
-        document.getElementById('btnInitial').classList.toggle('active', type === 'Initial');
-        document.getElementById('btnFollow').classList.toggle('active', type === 'Follow-up');
-    }
-
-    // Load unique customers for the search list
-    window.onload = async () => {
-        try {
-            const resp = await fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" });
-            const data = await resp.json();
-            const dl = document.getElementById('customers');
-            const uniqueNames = [...new Set(data.map(item => item.name))];
-            uniqueNames.forEach(n => { 
-                let o = document.createElement('option'); o.value = n; dl.appendChild(o); 
-            });
-        } catch (e) { console.error(e); }
-    };
-
-    document.getElementById('salesForm').onsubmit = async function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.innerText = "Consulting Gemini AI...";
-
-        const payload = {
-            visitType: document.getElementById('visitType').value,
-            name: document.getElementById('name').value,
-            type: document.getElementById('accountType').value,
-            manager: document.getElementById('manager').value,
-            address: document.getElementById('address').value,
-            phone: document.getElementById('phone').value,
-            email: document.getElementById('email').value,
-            outcome: document.getElementById('outcome').value,
-            notes: document.getElementById('notes').value
+        window.onload = async () => {
+            try {
+                // Pulling from the nested inventory action we built earlier
+                const resp = await fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" });
+                const data = await resp.json();
+                const dl = document.getElementById('customers');
+                const uniqueNames = [...new Set(data.map(item => item.name))];
+                uniqueNames.forEach(n => { 
+                    let o = document.createElement('option'); o.value = n; dl.appendChild(o); 
+                });
+            } catch (e) { console.error("Customer Load Error:", e); }
         };
 
-        try {
-            const params = new URLSearchParams({ action: "submitSalesActivity", data: JSON.stringify(payload) });
-            const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
-            const res = await response.json();
+        document.getElementById('salesForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = "Processing with Gemini AI...";
 
-            if (res.success) {
-                await Swal.fire({
-                    title: 'Activity Logged',
-                    text: `Visit Type: ${payload.visitType}. Next Follow-up: ${res.nextDate}`,
-                    icon: 'success',
-                    confirmButtonColor: '#1f2937'
-                });
+            const payload = {
+                visitType: document.getElementById('visitType').value,
+                name: document.getElementById('name').value,
+                type: document.getElementById('accountType').value,
+                manager: document.getElementById('manager').value,
+                address: document.getElementById('address').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                outcome: document.getElementById('outcome').value,
+                notes: document.getElementById('notes').value
+            };
 
-                if (res.redirect) {
-                    window.location.href = "new invoices.html?customer=" + encodeURIComponent(payload.name);
-                } else {
-                    location.reload();
+            try {
+                const params = new URLSearchParams({ action: "submitSalesActivity", data: JSON.stringify(payload) });
+                const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
+                const res = await response.json();
+
+                if (res.success) {
+                    await Swal.fire({
+                        title: 'Activity Saved',
+                        text: `AI Scheduled Follow-up: ${res.nextDate}`,
+                        icon: 'success',
+                        confirmButtonColor: '#111827'
+                    });
+
+                    if (res.redirect) {
+                        window.location.href = "new invoices.html?customer=" + encodeURIComponent(payload.name);
+                    } else {
+                        location.reload();
+                    }
                 }
+            } catch (err) {
+                Swal.fire('Sync Error', err.toString(), 'error');
+                btn.disabled = false;
+                btn.innerText = "Save Activity & Analyze";
             }
-        } catch (err) {
-            Swal.fire('Error', 'Sync failed: ' + err, 'error');
-            btn.disabled = false;
-        }
-    };
-</script>
+        };
+    </script>
 </body>
 </html>
