@@ -186,19 +186,23 @@
       card.className = 'stop-card';
       card.style.borderLeftColor = stop.color;
       
-      card.innerHTML = `
-        <div class="stop-num">${index + 1}</div>
-        <div class="stop-info">
-          <span class="badge" style="background:${stop.color}33; color:${stop.color}; border: 1px solid ${stop.color}">${stop.type}</span>
-          <div class="stop-name">${stop.name}</div>
-          <div class="stop-addr">${stop.address}</div>
-        </div>
-        <div class="check-in-dot" id="dot-${index}"></div>
-      `;
+      // Added a small map pin icon for individual navigation
+      card.innerHTML = 
+        '<div class="stop-num">' + (index + 1) + '</div>' +
+        '<div class="stop-info">' +
+          '<span class="badge" style="background:' + stop.color + '33; color:' + stop.color + '; border: 1px solid ' + stop.color + '">' + stop.type + '</span>' +
+          '<div class="stop-name">' + stop.name + '</div>' +
+          '<div class="stop-addr">' + stop.address + '</div>' +
+        '</div>' +
+        '<div style="margin-left: 10px; font-size: 20px; cursor: pointer;" onclick="window.open(\'https://www.google.com/maps/search/?api=1&query=\' + encodeURIComponent(\'' + stop.address + '\'), \'_blank\')">📍</div>' +
+        '<div class="check-in-dot" id="dot-' + index + '"></div>';
       list.appendChild(card);
     });
 
-    document.getElementById('mainNavBtn').style.display = "flex";
+    // Make the button count dynamic
+    const btn = document.getElementById('mainNavBtn');
+    btn.innerHTML = '<span>🚗</span> PUSH ' + stops.length + ' STOPS TO POLESTAR';
+    btn.style.display = "flex";
   }
 
   function pushToPolestar() {
@@ -210,16 +214,20 @@
     const origin = encodeURIComponent(currentRoute[0].address);
     const destination = encodeURIComponent(currentRoute[currentRoute.length - 1].address);
     const waypoints = currentRoute.slice(1, -1)
-      .map(s => encodeURIComponent(s.address))
+      .map(function(s) { return encodeURIComponent(s.address); })
       .join('|');
 
-    // This URL format helps trigger the "Send to Vehicle" option in Google Maps
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypoints}&travelmode=driving`;
+    // Official Google Maps Direction API format
+    var mapsUrl = 'https://www.google.com/maps/dir/?api=1' +
+                  '&origin=' + origin + 
+                  '&destination=' + destination + 
+                  '&waypoints=' + waypoints + 
+                  '&travelmode=driving';
 
     window.open(mapsUrl, '_blank');
 
-    setTimeout(() => {
-      btn.innerHTML = "✅ SENT! CHECK POLESTAR RECENT TRIPS";
+    setTimeout(function() {
+      btn.innerHTML = "✅ SENT! CHECK POLESTAR";
       btn.style.background = "#34c759";
       btn.style.color = "white";
     }, 2000);
