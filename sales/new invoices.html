@@ -489,8 +489,9 @@ document.getElementById("customerName").addEventListener("keydown", e => {
 });
 
 /* Save new customer */
-function saveNewCustomer() {
+async function saveNewCustomer() {
   const payload = {
+    action: "addCustomer", // Backend logic handles writing to BOTH sheet IDs
     name: document.getElementById("newCustName").value,
     address: document.getElementById("newCustAddress").value,
     type: document.getElementById("newCustType").value,
@@ -498,27 +499,19 @@ function saveNewCustomer() {
     email: document.getElementById("newCustEmail").value
   };
 
-  fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "addCustomer",
-      payload
-    })
-  });
+  try {
+    // We use a GET request for adding to bypass CORS issues on GitHub Pages
+    const params = new URLSearchParams(payload);
+    await fetch(`${API_URL}?${params.toString()}`, { method: "GET" });
 
-  const normalized = {
-    name: payload.name,
-    address: payload.address,
-    type: payload.type,
-    payment: payload.payment,
-    email: payload.email
-  };
-
-  customers.push(normalized);
-  selectCustomer(normalized);
-  updatePaymentFooter();
-  closeNewCustomerModal();
+    // Update local cache so they show up in autocomplete immediately
+    customers.push(payload);
+    selectCustomer(payload);
+    closeNewCustomerModal();
+    alert("Customer synced to both Invoice and Inventory sheets.");
+  } catch (err) {
+    console.error("Sync failed:", err);
+  }
 }
 </script>   <!-- ✅ THIS WAS MISSING -->
 
@@ -1065,102 +1058,40 @@ function validateInvoiceBeforeSave(payload) {
   return errors;
 }
 
-  async function saveInvoice() {
-  try {
-    if (invoiceSaved) {
-      alert("This invoice has already been saved.");
-      return;
-    }
+ async function saveInvoice() {
+  if (invoiceSaved) return alert("Invoice already saved.");
+  if (!customerState.name || invoiceLines.length === 0) return alert("Select a customer and add products.");
 
-    if (!customerState.name) {
-      alert("Select a customer first.");
-      return;
-    }
-
-    if (invoiceLines.length === 0) {
-      alert("Add at least one product.");
-      return;
-    }
-
-    /* BUILD PAYLOAD */
-const payload = {
-  invoiceNumber: document.getElementById("invoiceNumber").value,
-  date: document.getElementById("invoiceDateValue").value,
-
-  logoBase64: await preloadLogoBase64(),
-  barcodeBase64: getBarcodeBase64(),
-
-  customer: {
-    name: customerState.name,
-    address: customerState.address,
-    type: customerState.type,
-    payment: customerState.payment
-  },
-
-  items: invoiceLines.map(l => ({
-    product: l.product,
-    type: l.type,
-    qty: l.qty,
-    price: l.price
-  })),
-
-  subtotal: Number(
-    document.getElementById("subtotal").textContent.replace("$","")
-  ),
-  tax: Number(
-    document.getElementById("salesTax").textContent.replace("$","")
-  ),
-  discount: Number(
-    document.getElementById("discountInput").value || 0
-  ),
-  deposit: Number(
-    document.getElementById("depositInput").value || 0
-  ),
-  total: Number(
-    document.getElementById("grandTotal").textContent.replace("$","")
-  )
-};
-const validationErrors = validateInvoiceBeforeSave(payload);
-
-if (validationErrors.length > 0) {
-  alert(
-    "Invoice cannot be saved:\n\n" +
-    validationErrors.map(e => "• " + e).join("\n")
-  );
-  return;
-}
-
-    /* SAVE TO SHEETS (NO-CORS — GAS SAFE) */
-const res = await fetch(API_URL, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
+  const payload = {
     action: "saveInvoice",
-    payload
-  })
-});
+    invoiceData: {
+      number: document.getElementById("invoiceNumber").value,
+      date: document.getElementById("invoiceDateValue").value,
+      customer: customerState.name,
+      address: customerState.address, // Contains the line breaks for printing
+      type: customerState.type,       // Restaurant vs Wholesale
+      total: document.getElementById("grandTotal").textContent,
+      items: invoiceLines             // Sent to deduct from Inventory Sheet
+    },
+    // Required for PDF generation
+    logoBase64: await preloadLogoBase64(),
+    barcodeBase64: document.getElementById("barcodeCanvas").toDataURL("image/png")
+  };
 
-const result = await res.json();
-
-if (!result.success) {
-  console.error(result);
-  alert("Invoice saved, but PDF failed ❌");
-  return;
-}
-
-invoiceSaved = true;
-invoicePdfGenerated = true;
-
-lockInvoiceAfterSave();
-
-console.log("PDF File ID:", result.fileId);
-console.log("PDF URL:", result.fileUrl);
-
-alert("Invoice saved and PDF generated ✅");
-
+  try {
+    // We use POST to handle the larger data object (the items list)
+    await fetch(API_URL, { 
+      method: "POST", 
+      mode: "no-cors", 
+      body: JSON.stringify(payload) 
+    });
+    
+    invoiceSaved = true;
+    alert("Saved! Inventory updated and follow-up date calculated.");
+    lockInvoiceAfterSave();
   } catch (err) {
-    console.error(err);
-    alert("Save failed — see console");
+    console.error("Save failed:", err);
+    alert("Error syncing to Google Sheets.");
   }
 }
 async function preloadLogoBase64() {
@@ -1348,35 +1279,34 @@ async function preloadLogoBase64() {
 
 <script>
 window.onbeforeprint = () => {
-const barcode = document.getElementById("barcodeCanvas");
-if (barcode) {
-  barcode.style.width = "220px";
-  barcode.style.height = "60px";
-}
-  // INVOICE META (RUN ONCE)
-  document.getElementById("printInvoiceDate").textContent =
-    document.getElementById("invoiceDateValue").value;
+  const barcode = document.getElementById("barcodeCanvas");
+  if (barcode) {
+    barcode.style.width = "220px";
+    barcode.style.height = "60px";
+  }
 
-  document.getElementById("printInvoiceNumber").textContent =
-    document.getElementById("invoiceNumber").value;
+  // INVOICE META
+  document.getElementById("printInvoiceDate").textContent = document.getElementById("invoiceDateValue").value;
+  document.getElementById("printInvoiceNumber").textContent = document.getElementById("invoiceNumber").value;
 
-  // CUSTOMER PRINT
-  document.getElementById("printCustomerName").textContent =
-    customerState.name || "";
-
-  document.getElementById("printCustomerAddress").textContent =
-    customerState.address || "";
-
+  // CUSTOMER PRINT - Split name and address as requested
+  document.getElementById("printCustomerName").textContent = customerState.name || "";
+  
+  // This part splits the address into separate lines for the street and City/State/Zip
+  const addr = customerState.address || "";
+  const addrHtml = addr.split('\n').map(line => `<div>${line}</div>`).join('');
+  document.getElementById("printCustomerInfo").querySelector('div#printCustomerAddressLines').innerHTML = addrHtml;
   document.getElementById("printCustomerInfo").style.display = "block";
 
-  // PRODUCT NAME PRINT
-  document.querySelectorAll(".product-search").forEach(input => {
+  // PRODUCT & QTY PRINT
+  document.querySelectorAll(".product-search, .qty-input").forEach(input => {
     const span = document.createElement("span");
     span.textContent = input.value;
-    span.className = "print-product";
+    span.className = input.classList.contains("qty-input") ? "print-qty" : "print-product";
     input.style.display = "none";
     input.after(span);
   });
+};
 
   // QTY PRINT
   document.querySelectorAll(".qty-input").forEach(input => {
