@@ -88,39 +88,93 @@
   </main>
 
   <script>
-    // Mock Data to show functionality
-    const mockDb = {
-      "rusty_anchor": {
-        manager: "John Smith",
-        phone: "555-0123",
-        address: "123 Harbor Ln",
-        inventory: ["Suburban IPA (6th Keg)", "Townie Lager (Case)"]
-      }
-    };
+   const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+let allCustomers = [];
 
-    function fetchCustomerDetails() {
-      const id = document.getElementById('customerSelect').value;
-      const data = mockDb[id];
-      
-      if(data) {
-        document.getElementById('mgrName').innerText = data.manager;
-        document.getElementById('mgrPhone').innerText = data.phone;
-        document.getElementById('mgrAddress').innerText = data.address;
-        
-        // Update product list based on their specific inventory sheet
-        const prodContainer = document.getElementById('productCheckboxes');
-        prodContainer.innerHTML = data.inventory.map(prod => `
-          <label style="font-weight: normal; display: flex; align-items: center; gap: 8px;">
-            <input type="checkbox" style="width: auto; margin: 0;"> ${prod}
-          </label>
-        `).join('');
-      }
-    }
+// 1. Load all customers from both Wholesaler and Restaurant sheets on startup
+window.onload = async () => {
+  try {
+    const [whResp, resResp] = await Promise.all([
+      fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" }),
+      fetch(`${API_URL}?action=getRestaurantInventory`, { redirect: "follow" })
+    ]);
+    
+    const whData = await whResp.json();
+    const resData = await resResp.json();
+    allCustomers = [...whData, ...resData];
 
-    function submitSchedule() {
-      alert("Sampling Scheduled! Reminders set for 2 days, 1 day, and day-of via Apps Script.");
-      // Here we would call google.script.run.saveToSamplingSheet(...)
+    const select = document.getElementById('customerSelect');
+    allCustomers.forEach(cust => {
+      let opt = document.createElement('option');
+      opt.value = cust.name;
+      opt.textContent = cust.name;
+      select.appendChild(opt);
+    });
+  } catch (e) {
+    console.error("Failed to load customers", e);
+  }
+};
+
+// 2. Fetch specific details and inventory when customer is selected
+function fetchCustomerDetails() {
+  const selectedName = document.getElementById('customerSelect').value;
+  const cust = allCustomers.find(c => c.name === selectedName);
+  
+  if (cust) {
+    // Note: To get Manager/Phone/Address, you'd need a separate "getContactInfo" 
+    // but for now, we'll populate the inventory they have on site
+    document.getElementById('mgrName').innerText = "On File";
+    
+    const prodContainer = document.getElementById('productCheckboxes');
+    prodContainer.innerHTML = cust.products.map(p => {
+      return p.packages.map(pkg => `
+        <label style="font-weight: normal; display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" name="samples" value="${p.name} (${pkg.type})" style="width: auto; margin: 0;"> 
+          ${p.name} - ${pkg.type} (Stock: ${pkg.qty})
+        </label>
+      `).join('');
+    }).join('');
+  }
+}
+
+// 3. Send the data to the backend to trigger Calendar sync and SMS Alerts
+async function submitSchedule() {
+  const btn = document.querySelector('button');
+  const selectedItems = Array.from(document.querySelectorAll('input[name="samples"]:checked')).map(cb => cb.value);
+  
+  const payload = {
+    customer: document.getElementById('customerSelect').value,
+    date: document.getElementById('sampleDate').value,
+    time: document.getElementById('sampleTime').value,
+    items: selectedItems.join(', '),
+    notes: document.getElementById('alertNotes').value
+  };
+
+  if (!payload.customer || !payload.date || !payload.time) {
+    alert("Please fill in Customer, Date, and Time.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "Scheduling...";
+
+  try {
+    const params = new URLSearchParams({ action: "saveSamplingEvent", data: JSON.stringify(payload) });
+    const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
+    const result = await response.json();
+
+    if (result.success) {
+      alert("Success! Event added to Google Calendar and SMS alerts scheduled.");
+      window.location.href = "sampling-calendar.html";
+    } else {
+      alert("Error: " + result.error);
     }
+  } catch (err) {
+    alert("Connection Error: " + err);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Schedule & Set Reminders";
+  }
   </script>
 </body>
 </html>
