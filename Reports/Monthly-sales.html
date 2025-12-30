@@ -1,76 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Monthly Sales & Commission | Suburban</title>
+  <meta charset="UTF-8" />
+  <title>Monthly Sales & Commission | Suburban Brewing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    /* Standardized sidebar styles omitted for brevity, use same as index.html */
-    .report-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 20px; }
-    .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .commission-box { background: #1f2937; color: white; padding: 30px; border-radius: 12px; text-align: center; }
-    .progress-container { background: #374151; height: 12px; border-radius: 6px; margin: 20px 0; overflow: hidden; }
-    .progress-bar { background: #10b981; height: 100%; transition: width 1s ease; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th { text-align: left; font-size: 12px; color: #6b7280; text-transform: uppercase; padding: 10px; }
-    td { padding: 12px 10px; border-bottom: 1px solid #f3f4f6; }
+    :root {
+      --bg: #f4f6f8;
+      --sidebar: #1f2937;
+      --accent: #2563eb;
+      --success: #10b981;
+      --text: #1f2937;
+    }
+
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+    /* --- SIDEBAR --- */
+    .sidebar { width: 240px; background: var(--sidebar); color: #fff; padding: 20px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; }
+    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; color: #fff; letter-spacing: 1px; }
+    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 0.5px; }
+    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
+    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
+    .nav-link.active { border-left: 4px solid var(--accent); }
+
+    /* --- MAIN --- */
+    .main { flex: 1; margin-left: 240px; padding: 30px; }
+    .commission-header { background: #1f2937; color: white; padding: 40px; border-radius: 16px; margin-bottom: 30px; text-align: center; }
+    .sales-val { font-size: 48px; font-weight: 800; margin: 10px 0; }
+    
+    /* --- PROGRESS BAR --- */
+    .tier-container { max-width: 600px; margin: 20px auto; }
+    .progress-track { background: #374151; height: 14px; border-radius: 7px; overflow: hidden; margin-bottom: 10px; }
+    .progress-fill { background: var(--success); height: 100%; width: 0%; transition: width 1s ease; }
+    .tier-labels { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.7; }
+
+    /* --- GRID --- */
+    .report-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; }
+    .card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th { text-align: left; font-size: 12px; color: #6b7280; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #f3f4f6; }
+    td { padding: 12px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
   </style>
 </head>
 <body>
-  <main class="main">
-    <h1>Monthly Performance</h1>
+
+  <aside class="sidebar">
+    <h2>SUBURBAN</h2>
+    <div class="nav-section-title">Operations</div>
+    <a href="../index.html" class="nav-link">Command Center</a>
+    <a href="../Samplings/Schedule-Sampling.html" class="nav-link">Schedule Sampling</a>
+    <a href="../Samplings/sampling-calendar.html" class="nav-link">Sampling Calendar</a>
     
-    <div class="commission-box">
-      <div style="font-size: 14px; opacity: 0.8;">Estimated Commission (MTD)</div>
-      <div id="commissionVal" style="font-size: 48px; font-weight: 800; margin: 10px 0;">$0.00</div>
-      <div id="currentRate" style="font-size: 18px; color: #10b981; font-weight: 700;">Rate: 9%</div>
+    <div class="nav-section-title">Sales & Outreach</div>
+    <a href="../sales/leads.html" class="nav-link">AI Sales Leads</a>
+    <a href="../sales/invoices.html" class="nav-link">Invoices & Master Inv</a>
+    <a href="../sales/deliveries.html" class="nav-link">Delivery Tracking</a>
+
+    <div class="nav-section-title">Production & Cellar</div>
+    <a href="../inventory/brewery.html" class="nav-link">Brewery Master Inventory</a>
+    <a href="../inventory/cellar.html" class="nav-link">Cellar Management</a>
+    
+    <div class="nav-section-title">Reporting & Analytics</div>
+    <a href="monthly-sales.html" class="nav-link active">Monthly Sales Report</a>
+    <a href="sales-route.html" class="nav-link">Sales Route Optimization</a>
+  </aside>
+
+  <main class="main">
+    <div class="commission-header">
+      <div style="text-transform: uppercase; font-size: 12px; letter-spacing: 2px; opacity: 0.8;">Estimated Commission (MTD)</div>
+      <div id="commissionValue" class="sales-val">$0.00</div>
+      <div id="currentRate" style="font-size: 18px; font-weight: 700; color: var(--success);">Current Rate: 9%</div>
       
-      <div class="progress-container">
-        <div id="tierProgress" class="progress-bar" style="width: 0%"></div>
+      <div class="tier-container">
+        <div class="progress-track">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <div class="tier-labels">
+          <span>Current Tier</span>
+          <span id="nextTierLabel">Goal: $100k (10%)</span>
+        </div>
       </div>
-      <div id="tierNote" style="font-size: 12px; opacity: 0.7;">$0.00 more until 10% rate</div>
     </div>
 
     <div class="report-grid">
-      <div class="stat-card">
-        <h3>Inventory Volume (Sold)</h3>
-        <table id="inventoryTable">
+      <div class="card">
+        <h3>Invoice Breakdown (Delivered)</h3>
+        <table>
           <thead>
-            <tr><th>Product SKU</th><th>Units Delivered</th></tr>
+            <tr><th>Invoice #</th><th>Customer</th><th>Total Sales</th><th>Date</th></tr>
           </thead>
-          <tbody>
+          <tbody id="invoiceList">
             </tbody>
         </table>
       </div>
 
-      <div class="stat-card">
-        <h3>Sales Summary</h3>
-        <div style="margin-bottom: 15px;">
-          <small>Total Gross Sales</small>
-          <div id="grossSales" style="font-size: 24px; font-weight: 700;">$0.00</div>
+      <div class="card">
+        <h3>Summary Metrics</h3>
+        <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+          <small style="color: #6b7280;">Total Gross Revenue</small>
+          <div id="grossSales" style="font-size: 28px; font-weight: 700;">$0.00</div>
         </div>
-        <button onclick="window.print()" style="width:100%; padding:10px; cursor:pointer;">Export PDF Report</button>
+        <div style="margin-bottom: 20px;">
+          <small style="color: #6b7280;">Invoices Count</small>
+          <div id="invoiceCount" style="font-size: 20px; font-weight: 600;">0</div>
+        </div>
+        <button onclick="window.print()" style="width: 100%; background: #eee; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">Download Report</button>
       </div>
     </div>
   </main>
 
   <script>
-    async function loadReport() {
-      // Logic to fetch from getMonthlySalesReport action
-      // For now, mock calculation display:
-      const sales = 125000; 
-      const rate = 0.10; 
-      const comm = sales * rate;
-      const nextTier = 200000;
-      
-      document.getElementById('commissionVal').innerText = `$${comm.toLocaleString()}`;
-      document.getElementById('currentRate').innerText = `Current Rate: ${(rate*100)}%`;
-      document.getElementById('grossSales').innerText = `$${sales.toLocaleString()}`;
-      
-      const percent = ((sales % 100000) / 100000) * 100;
-      document.getElementById('tierProgress').style.width = percent + '%';
-      document.getElementById('tierNote').innerText = `$${(nextTier - sales).toLocaleString()} more until next % bump`;
+    const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+
+    async function loadMonthlyReport() {
+      try {
+        const response = await fetch(`${API_URL}?action=getMonthlySalesData`, { redirect: "follow" });
+        const data = await response.json();
+
+        // 1. Set Gross and Commission
+        document.getElementById('grossSales').innerText = `$${data.totalSales.toLocaleString()}`;
+        document.getElementById('commissionValue').innerText = `$${data.commission.toLocaleString()}`;
+        document.getElementById('currentRate').innerText = `Current Rate: ${data.rate}`;
+        document.getElementById('invoiceCount').innerText = data.count;
+
+        // 2. Update Progress Bar
+        const currentSales = data.totalSales;
+        const tierAmount = Math.floor(currentSales / 100000) * 100000;
+        const progressPercent = ((currentSales - tierAmount) / 100000) * 100;
+        document.getElementById('progressFill').style.width = progressPercent + '%';
+        document.getElementById('nextTierLabel').innerText = `Goal: $${(tierAmount + 100000).toLocaleString()} (${parseInt(data.rate) + 1}%)`;
+
+        // 3. Populate Table
+        const tableBody = document.getElementById('invoiceList');
+        tableBody.innerHTML = data.invoices.map(inv => `
+          <tr>
+            <td>#${inv.number}</td>
+            <td><strong>${inv.customer}</strong></td>
+            <td>$${inv.amount.toLocaleString()}</td>
+            <td style="color:#6b7280;">${inv.date}</td>
+          </tr>
+        `).join('');
+
+      } catch (err) {
+        console.error("Error loading sales data", err);
+      }
     }
-    window.onload = loadReport;
+
+    window.onload = loadMonthlyReport;
   </script>
 </body>
 </html>
