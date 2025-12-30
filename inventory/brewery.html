@@ -49,9 +49,9 @@
         <h2>Suburban Brewing</h2>
         <a class="nav-link" href="../index.html">Dashboard</a>
 
-        <div class="nav-group-label">Accounts (Invoices)</div>
-        <a class="nav-link" href="../sales/wholesalers.html">Wholesalers (Check)</a>
-        <a class="nav-link" href="../sales/restaurants.html">Restaurants (Fintech)</a>
+        <div class="nav-group-label">Sales & Deliveries</div>
+        <a class="nav-link" href="../sales/wholesalers.html">Wholesaler Inventory</a>
+        <a class="nav-link" href="../sales/restaurants.html">Restaurant Inventory</a>
         <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
 
         <div class="nav-group-label">Sampling Outreach</div>
@@ -110,8 +110,8 @@
 
 <div id="productModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:999;">
     <div style="background:#fff; padding:24px; border-radius:8px; width:480px; max-height: 90vh; overflow-y: auto;">
-        <h3>Add Brewery Product</h3>
-        <label>Product Name</label><input id="prodName" />
+        <h3 style="border:none;">Add Brewery Product</h3>
+        <label>Product Name</label><input id="prodName" placeholder="e.g. Suburban IPA" />
         <label>Lifecycle</label>
         <select id="prodLifecycle">
             <option value="Core">Core</option>
@@ -144,7 +144,7 @@
             const res = await fetch(`${API_URL}?action=getBreweryInventory`);
             inventory = await res.json();
             renderInventoryTables();
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error("Failed to load inventory", err); }
     }
 
     function renderInventoryTables() {
@@ -153,27 +153,41 @@
             if (!tbody) return;
             tbody.innerHTML = "";
             const products = inventory.filter(i => String(i.lifecycle).toLowerCase() === lc.toLowerCase());
+            
             products.forEach(item => {
-                let pkgH="", qtyH="", unitH="", statH="", actH="";
+                let pkgH = "", qtyH = "", unitH = "", statH = "", actH = "";
                 item.packages.forEach(pkg => {
-                    const low = Number(pkg.qty) <= 0;
-                    pkgH+=`<div>${pkg.type}</div>`; qtyH+=`<div>${pkg.qty}</div>`; unitH+=`<div>${pkg.unit}</div>`;
-                    statH+=`<div class="${low?'low':'ok'}">${low?'Low':'OK'}</div>`;
-                    actH+=`<div><button class="small secondary" onclick="adjustQty('${item.product}','${pkg.type}',${pkg.qty})">Adj</button></div>`;
+                    const isLow = Number(pkg.qty) <= 0;
+                    pkgH  += `<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;">${pkg.type}</div>`;
+                    qtyH  += `<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;">${pkg.qty}</div>`;
+                    unitH += `<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;">${pkg.unit}</div>`;
+                    statH += `<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;" class="${isLow?'low':'ok'}">${isLow?'Low':'OK'}</div>`;
+                    actH  += `<div style="padding:2px 0; border-bottom:1px solid #f3f4f6;"><button class="small secondary" onclick="adjustQty('${item.product}','${pkg.type}',${pkg.qty})">Adj</button></div>`;
                 });
-                tbody.insertAdjacentHTML("beforeend", `<tr><td>${item.product}</td><td>${pkgH}</td><td>${qtyH}</td><td>${unitH}</td><td>${statH}</td><td>${actH}</td></tr>`);
+                tbody.insertAdjacentHTML("beforeend", `
+                    <tr>
+                        <td style="vertical-align:top;"><strong>${item.product}</strong></td>
+                        <td style="padding:0;">${pkgH}</td><td style="padding:0;">${qtyH}</td>
+                        <td style="padding:0;">${unitH}</td><td style="padding:0;">${statH}</td>
+                        <td style="padding:0;">${actH}</td>
+                    </tr>
+                `);
             });
         });
     }
 
-    function openProductModal() { document.getElementById("productModal").style.display="flex"; }
-    function closeProductModal() { document.getElementById("productModal").style.display="none"; }
+    function openProductModal() { document.getElementById("productModal").style.display = "flex"; }
+    function closeProductModal() { document.getElementById("productModal").style.display = "none"; }
 
     async function adjustQty(product, type, currentQty) {
-        const newQty = prompt(`Update ${product} ${type}:`, currentQty);
-        if (newQty === null) return;
-        await fetch(API_URL, { method:"POST", body: new URLSearchParams({action:"updateInventoryQty", product, type, newQty}) });
-        loadInventory();
+        const newQty = prompt(`Update ${product} (${type}):`, currentQty);
+        if (newQty === null || isNaN(newQty)) return;
+        const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ action: "updateInventoryQty", product, type, newQty })
+        });
+        if ((await res.json()).success) loadInventory();
     }
 
     async function saveProduct() {
@@ -188,8 +202,12 @@
             caseQty: document.getElementById("caseQty").value,
             casePrice: document.getElementById("casePrice").value
         };
-        await fetch(API_URL, { method:"POST", body: new URLSearchParams(payload) });
-        closeProductModal(); loadInventory();
+        const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams(payload)
+        });
+        if ((await res.json()).success) { closeProductModal(); loadInventory(); }
     }
 </script>
 </body>
