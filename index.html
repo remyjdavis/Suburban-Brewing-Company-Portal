@@ -2,193 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Suburban Brewing Company | Dashboard</title>
+  <title>Suburban Brewing Co. | Command Center</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <style>
-    /* ... (Styles remain exactly as you have them) ... */
+    :root {
+      --bg: #f4f6f8;
+      --sidebar: #1f2937;
+      --accent: #2563eb;
+      --text: #1f2937;
+      --card-bg: #ffffff;
+      /* Tank Colors */
+      --fermenting: #fbbf24;
+      --crashing: #3b82f6;
+      --ready: #10b981;
+      --carbonating: #f97316;
+    }
+
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; background: #f4f6f8; color: #1f2937; }
-    .layout { display: flex; min-height: 100vh; }
-    .sidebar { width: 240px; background: #1f2937; color: #ffffff; padding: 20px 0; flex-shrink: 0; }
-    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 600; }
-    .nav-section { margin-bottom: 24px; }
-    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.6; margin: 0 20px 8px; letter-spacing: 1px; font-weight: 700; }
-    .nav-link { position: relative; display: block; padding: 10px 20px 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: background 0.15s ease, color 0.15s ease; }
-    .nav-link:hover { background: #374151; color: #ffffff; }
-    .nav-link.active { background: #374151; color: #ffffff; font-weight: 500; }
-    .nav-link.active::before { content: ""; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: #3b82f6; }
-    .main { flex: 1; display: flex; flex-direction: column; }
-    .topbar { background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-    .topbar h1 { font-size: 20px; margin: 0; font-weight: 600; }
-    .breadcrumb { font-size: 13px; color: #6b7280; margin-top: 4px; }
-    .date { font-size: 14px; color: #6b7280; }
-    .content { padding: 24px; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-    .card { background: #ffffff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: transform 0.15s ease, box-shadow 0.15s ease; }
-    .card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.08); }
-    .card h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
-    .card .value { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
-    .card p { margin: 0; font-size: 13px; color: #6b7280; }
+    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+    /* --- SIDEBAR --- */
+    .sidebar { width: 240px; background: var(--sidebar); color: #fff; padding: 20px 0; flex-shrink: 0; position: fixed; height: 100vh; }
+    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; color: #fff; letter-spacing: 1px; }
+    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 0.5px; }
+    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
+    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
+    .nav-link.active { border-left: 4px solid var(--accent); }
+
+    /* --- MAIN CONTENT --- */
+    .main { flex: 1; margin-left: 240px; padding: 30px; }
+    .section-heading { font-size: 18px; font-weight: 700; margin: 30px 0 15px; color: #374151; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+    .section-heading:first-child { margin-top: 0; }
+
+    /* --- TIER 1: LOGISTICS CARDS --- */
+    .tier-1 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .card h3 { margin: 0; font-size: 13px; color: #6b7280; text-transform: uppercase; }
+    .card .val { font-size: 28px; font-weight: 800; margin: 10px 0 5px; color: var(--accent); }
+    .card p { margin: 0; font-size: 12px; color: #9ca3af; }
+
+    /* --- TIER 2: TANK VISUALS --- */
+    .tier-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+    .tank-card { background: #fff; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .tank-vessel { 
+      width: 60px; height: 100px; background: #e5e7eb; margin: 10px auto; 
+      border-radius: 5px 5px 20px 20px; position: relative; overflow: hidden; border: 2px solid #d1d5db;
+    }
+    .tank-fill { position: absolute; bottom: 0; width: 100%; transition: height 0.5s ease; }
+    .status-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+
+    /* --- TIER 3: FOH CARDS --- */
+    .tier-3 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .foh-card { background: #fff; padding: 20px; border-radius: 12px; border-left: 5px solid #10b981; }
+
   </style>
 </head>
-
 <body>
-<div class="layout">
 
   <aside class="sidebar">
-    <h2>Suburban Brewing</h2>
-
-    <div class="nav-section">
-      <div class="nav-section-title">Dashboard</div>
-      <a class="nav-link active" href="index.html">Overview</a>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-section-title">Sales & Deliveries</div>
-      <a class="nav-link" href="sales/invoices.html">Invoices</a>
-      <a class="nav-link" href="sales/leads.html">Sales Leads</a>
-      <a class="nav-link" href="sales/deliveries.html">Deliveries</a>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-section-title">Sampling Outreach</div>
-      <a class="nav-link" href="Samplings/Schedule-Sampling.html">Schedule New</a>
-      <a class="nav-link" href="Samplings/sampling-report.html">Log Report</a>
-      <a class="nav-link" href="Samplings/sampling-calendar.html">Calendar View</a>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-section-title">Inventory Management</div>
-      <a class="nav-link" href="inventory/brewery.html">Brewery Master</a>
-      <a class="nav-link" href="inventory/wholesaler-inventory.html">Wholesaler Inventory</a>
-      <a class="nav-link" href="inventory/restaurant-inventory.html">Restaurant Inventory</a>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-section-title">Reports</div>
-      <a class="nav-link" href="reports/monthly-sales.html">Monthly Sales</a>
-      <a class="nav-link" href="reports/sales-route.html">Sales Route</a>
-      <a class="nav-link" href="reports/client-inventory.html">Client Inventory</a>
-    </div>
+    <h2>SUBURBAN</h2>
+    
+    <div class="nav-section-title">Operations</div>
+    <a href="index.html" class="nav-link active">Command Center</a>
+    <a href="Samplings/Schedule-Sampling.html" class="nav-link">Schedule Sampling</a>
+    <a href="Samplings/sampling-calendar.html" class="nav-link">Sampling Calendar</a>
+    
+    <div class="nav-section-title">Sales & Leads</div>
+    <a href="sales/leads.html" class="nav-link">AI Sales Leads</a>
+    <a href="sales/invoices.html" class="nav-link">Invoices & Master Inv</a>
+    
+    <div class="nav-section-title">Production</div>
+    <a href="inventory/brewery.html" class="nav-link">Cellar Management</a>
+    <a href="inventory/wholesaler-inventory.html" class="nav-link">Wholesaler Stock</a>
   </aside>
 
-  <div class="main">
-    <header class="topbar">
-      <div>
-        <h1>Dashboard Overview</h1>
-        <div class="breadcrumb">Home / Dashboard</div>
-      </div>
-      <div class="date" id="today"></div>
-    </header>
-
-    <section class="content">
-      <div class="cards">
-        <div class="card">
-          <h3>Today’s Sales</h3>
-          <div class="value">$0.00</div>
-          <p>Invoices created today</p>
-        </div>
-
-        <div class="card">
-          <h3>Open Invoices</h3>
-          <div class="value">0</div>
-          <p>Pending or unpaid</p>
-        </div>
-
-        <div class="card">
-          <h3>Active Deliveries</h3>
-          <div class="value">0</div>
-          <p>Scheduled for today</p>
-        </div>
-
-        <div class="card" onclick="location.href='Samplings/sampling-calendar.html'" style="cursor: pointer; border-bottom: 4px solid #3b82f6; min-height: 160px;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <h3>Upcoming Sampling</h3>
-            <span id="samplingCount" style="background: #eff6ff; color: #2563eb; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700;">0</span>
-          </div>
-          
-          <div id="samplingPreview" style="margin-top: 12px;">
-            <div style="font-size: 13px; color: #9ca3af; font-style: italic;">No events scheduled...</div>
-          </div>
-
-          <p style="margin-top: 15px; font-size: 11px; color: #3b82f6; font-weight: 600;">VIEW FULL CALENDAR →</p>
+  <main class="main">
+    
+    <div class="section-heading">Operational Overview</div>
+    <div class="tier-1">
+      <div class="card">
+        <h3>Upcoming Samplings</h3>
+        <div id="samplingPreview" style="margin-top:10px; font-size: 13px;">
+          <div style="font-weight:700;">Rusty Anchor Pub</div>
+          <div style="color:#6b7280;">Today @ 4:00 PM</div>
         </div>
       </div>
-    </section>
-  </div>
-</div>
+      <div class="card">
+        <h3>Daily Logistics</h3>
+        <div class="val">2 | 5</div>
+        <p>Samplings | Deliveries</p>
+      </div>
+      <div class="card">
+        <h3>Sales Outreach</h3>
+        <div class="val" style="color: #f97316;">8</div>
+        <p>AI Follow-ups Due Today</p>
+      </div>
+      <div class="card">
+        <h3>Inventory Alerts</h3>
+        <div class="val" style="color: #ef4444;">3</div>
+        <p>SKUs Below Safety Stock</p>
+      </div>
+    </div>
 
-<script>
-  document.getElementById("today").textContent =
-    new Date().toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    });
+    <div class="section-heading">Cellar & Tank Management</div>
+    <div class="tier-2">
+      <div class="tank-card">
+        <span class="status-badge" style="background:#fef3c7; color:#92400e;">Fermenting</span>
+        <div class="tank-vessel">
+          <div class="tank-fill" style="height: 85%; background: var(--fermenting);"></div>
+        </div>
+        <div style="font-weight:700; font-size: 14px;">FV 1</div>
+        <div style="font-size: 11px; color: #6b7280;">Townie Lager</div>
+      </div>
+      <div class="tank-card">
+        <span class="status-badge" style="background:#dbeafe; color:#1e40af;">Crashing</span>
+        <div class="tank-vessel">
+          <div class="tank-fill" style="height: 90%; background: var(--crashing);"></div>
+        </div>
+        <div style="font-weight:700; font-size: 14px;">FV 2</div>
+        <div style="font-size: 11px; color: #6b7280;">Suburban IPA</div>
+      </div>
+      <div class="tank-card">
+        <span class="status-badge" style="background:#d1fae5; color:#065f46;">Ready</span>
+        <div class="tank-vessel">
+          <div class="tank-fill" style="height: 40%; background: var(--ready);"></div>
+        </div>
+        <div style="font-weight:700; font-size: 14px;">BT 1</div>
+        <div style="font-size: 11px; color: #6b7280;">Pilsner</div>
+      </div>
+    </div>
+
+    <div class="section-heading">Front of House</div>
+    <div class="tier-3">
+      <div class="foh-card">
+        <h3>Draft List Health</h3>
+        <ul style="font-size: 13px; padding-left: 20px; line-height: 1.6;">
+          <li>Tap 4 (IPA): <span style="color:#ef4444; font-weight:700;">LOW (15%)</span></li>
+          <li>Tap 2 (Lager): Healthy (80%)</li>
+          <li>Tap 8 (Stout): Healthy (60%)</li>
+        </ul>
+      </div>
+      <div class="foh-card" style="border-left-color: #f59e0b;">
+        <h3>Manager's Notes</h3>
+        <p style="font-size: 13px; color: #4b5563; font-style: italic;">
+          "Staff Meeting at 3pm regarding the weekend event. Check CO2 levels in the cellar before shift starts."
+        </p>
+      </div>
+    </div>
+
+  </main>
+
   <script>
-  // 1. Set the Date
-  document.getElementById("today").textContent =
-    new Date().toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    });
-
-  // 2. Fetch Real Data from Apps Script
-  const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-
-  async function loadDashboardData() {
-    try {
-      // Fetch upcoming samplings
-      const response = await fetch(`${API_URL}?action=getSamplingEvents`, { redirect: "follow" });
-      const events = await response.json();
-      
-      // Filter for future events only (optional)
-      const now = new Date();
-      now.setHours(0,0,0,0);
-      const upcoming = events.filter(ev => new Date(ev.date) >= now);
-
-      updateSamplingPreview(upcoming);
-    } catch (err) {
-      console.error("Dashboard Load Error:", err);
-      document.getElementById('samplingPreview').innerHTML = 
-        '<div style="font-size: 11px; color: #ef4444;">Failed to sync with Google Sheets.</div>';
-    }
-  }
-
-  function updateSamplingPreview(events) {
-    const container = document.getElementById('samplingPreview');
-    const countBadge = document.getElementById('samplingCount');
-    
-    if (!events || events.length === 0) {
-        container.innerHTML = '<div style="font-size: 13px; color: #9ca3af;">No samplings scheduled.</div>';
-        countBadge.innerText = '0';
-        return;
-    }
-
-    countBadge.innerText = events.length;
-    
-    // Show the next 3 events
-    container.innerHTML = events.slice(0, 3).map(ev => {
-        // Format the date to look like "Dec 31"
-        const d = new Date(ev.date);
-        const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        
-        return `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-left: 2px solid #3b82f6; padding-left: 8px;">
-            <span style="font-size: 13px; font-weight: 600; color: #1f2937;">${ev.name}</span>
-            <span style="font-size: 11px; color: #6b7280;">${dateStr}</span>
-        </div>
-        `;
-    }).join('');
-  }
-
-  // Run the fetch when the page loads
-  loadDashboardData();
-</script>
-</script>
+    // Logic to update these values will go here once we link the getDashboardSummary function
+  </script>
 </body>
 </html>
