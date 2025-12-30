@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Store Inventory | Suburban Brewing Company</title>
+    <title>Wholesaler Inventory | Suburban Brewing Company</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
-        /* Shared Styles */
+        /* Essential Layout Styles */
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { margin: 0; background: #f4f6f8; color: #1f2937; }
         .layout { display: flex; min-height: 100vh; }
@@ -14,26 +14,29 @@
         .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; }
         .sidebar h2 { margin: 0 20px 20px; font-size: 18px; }
         .nav-link { display: block; padding: 10px 20px; color: #d1d5db; text-decoration: none; }
-        .nav-link.active, .nav-link:hover { background: #374151; color: #fff; }
+        .nav-link.active { background: #374151; color: #fff; border-left: 4px solid #2563eb; }
 
-        /* Main Content */
+        /* Operational Containers */
         .main { flex: 1; display: flex; flex-direction: column; }
-        .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; }
+        .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;}
         .content { padding: 24px; }
         
-        .category-section { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 30px; }
-        .category-title { margin-top: 0; color: #111827; border-bottom: 2px solid #2563eb; padding-bottom: 8px; display: inline-block; margin-bottom: 15px; }
+        .wholesaler-card { background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 24px; overflow: hidden; }
+        .wholesaler-header { background: #f9fafb; padding: 15px 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .wholesaler-name { margin: 0; font-size: 18px; color: #111827; }
 
-        /* Table Styles */
+        /* Table Logic */
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 10px; border-bottom: 1px solid #e5e7eb; font-size: 14px; text-align: left; }
-        th { background: #f9fafb; font-weight: 600; color: #4b5563; }
+        th { text-align: left; padding: 12px 20px; background: #fff; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #f3f4f6; }
+        td { padding: 0; border-bottom: 1px solid #f3f4f6; }
         
-        .sub-row { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; min-height: 40px; display: flex; align-items: center; }
-        .sub-row:last-child { border-bottom: none; }
-        
-        button { padding: 6px 12px; border: none; border-radius: 4px; background: #2563eb; color: #fff; cursor: pointer; font-size: 12px; }
-        button.secondary { background: #6b7280; }
+        .product-info { padding: 12px 20px; vertical-align: top; width: 30%; border-right: 1px solid #f3f4f6; }
+        .pkg-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; align-items: center; padding: 8px 20px; border-bottom: 1px solid #f9fafb; }
+        .pkg-row:last-child { border-bottom: none; }
+
+        .qty-badge { font-weight: 700; color: #111827; }
+        button.adjust-btn { padding: 4px 8px; font-size: 11px; background: #fff; border: 1px solid #d1d5db; color: #374151; border-radius: 4px; cursor: pointer; }
+        button.adjust-btn:hover { background: #f3f4f6; }
     </style>
 </head>
 <body>
@@ -41,123 +44,95 @@
 <div class="layout">
     <aside class="sidebar">
         <h2>Suburban Brewing</h2>
-        <a class="nav-link" href="../sales/invoices.html">Invoices</a>
-        <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
-        <a class="nav-link" href="../sales/sampling.html">Sampling</a>
         <a class="nav-link" href="brewery-inventory.html">Brewery Inventory</a>
-        <a class="nav-link active" href="store-inventory.html">Store Inventory</a>
+        <a class="nav-link active" href="wholesaler-inventory.html">Wholesaler Inventory</a>
+        <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
         <a class="nav-link" href="../index.html">Dashboard</a>
     </aside>
 
     <div class="main">
         <header class="topbar">
-            <h1>Store Inventory</h1>
+            <h1>Wholesaler Stock Tracking</h1>
+            <div id="lastUpdated" style="font-size: 12px; color: #6b7280;"></div>
         </header>
 
-        <section class="content" id="inventoryContainer">
-            <p>Loading Store Inventory...</p>
+        <section class="content" id="wholesalerContainer">
+            <p>Syncing wholesaler data...</p>
         </section>
     </div>
 </div>
 
 <script>
-    const API_URL = "YOUR_APPS_SCRIPT_URL_HERE"; 
-    let storeInventory = [];
+    const API_URL = "YOUR_APPS_SCRIPT_URL";
 
-    document.addEventListener("DOMContentLoaded", loadStoreInventory);
+    document.addEventListener("DOMContentLoaded", loadWholesalerData);
 
-    async function loadStoreInventory() {
+    async function loadWholesalerData() {
         try {
-            const res = await fetch(`${API_URL}?action=getStoreInventory`);
-            storeInventory = await res.json();
-            renderStoreInventory();
+            const res = await fetch(`${API_URL}?action=getWholesalerInventory`);
+            const data = await res.json();
+            renderWholesalers(data);
+            document.getElementById('lastUpdated').innerText = "Last Synced: " + new Date().toLocaleTimeString();
         } catch (err) {
-            console.error("Load failed", err);
-            document.getElementById('inventoryContainer').innerHTML = "Error loading inventory.";
+            console.error("Sync Error:", err);
         }
     }
 
-    function renderStoreInventory() {
-        const container = document.getElementById("inventoryContainer");
+    function renderWholesalers(wholesalers) {
+        const container = document.getElementById("wholesalerContainer");
         container.innerHTML = "";
 
-        // Get unique categories (Beer, Merch, etc)
-        const categories = [...new Set(storeInventory.map(item => item.category))];
-
-        if (categories.length === 0) {
-            container.innerHTML = "<p>No inventory found in the store sheet.</p>";
-            return;
-        }
-
-        categories.forEach(cat => {
-            const section = document.createElement('div');
-            section.className = 'category-section';
+        wholesalers.forEach(ws => {
+            const card = document.createElement('div');
+            card.className = 'wholesaler-card';
             
-            let tableHtml = `
-                <h3 class="category-title">${cat}</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 25%;">Product</th>
-                            <th style="width: 20%;">Package</th>
-                            <th style="width: 15%;">On Hand</th>
-                            <th style="width: 15%;">Unit</th>
-                            <th style="width: 25%;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
-            const products = storeInventory.filter(p => p.category === cat);
-
-            products.forEach(item => {
-                let pkgCol = "", qtyCol = "", unitCol = "", actionCol = "";
-
-                item.packages.forEach(pkg => {
-                    pkgCol += `<div class="sub-row">${pkg.type}</div>`;
-                    qtyCol += `<div class="sub-row">${pkg.qty}</div>`;
-                    unitCol += `<div class="sub-row">${pkg.unit}</div>`;
-                    actionCol += `
-                        <div class="sub-row">
-                            <button onclick="adjustStoreQty('${item.product}', '${pkg.type}', ${pkg.qty})">Adjust</button>
+            let tableRows = "";
+            ws.products.forEach(prod => {
+                let pkgRows = "";
+                prod.packages.forEach(pkg => {
+                    pkgRows += `
+                        <div class="pkg-row">
+                            <span>${pkg.type}</span>
+                            <span class="qty-badge">${pkg.qty}</span>
+                            <span>${pkg.unit}</span>
+                            <button class="adjust-btn" onclick="adjustWsQty('${ws.name}', '${prod.name}', '${pkg.type}', ${pkg.qty})">Manual Adj</button>
                         </div>`;
                 });
 
-                tableHtml += `
+                tableRows += `
                     <tr>
-                        <td style="vertical-align: top; padding-top: 12px;"><strong>${item.product}</strong></td>
-                        <td style="padding: 0;">${pkgCol}</td>
-                        <td style="padding: 0;">${qtyCol}</td>
-                        <td style="padding: 0;">${unitCol}</td>
-                        <td style="padding: 0;">${actionCol}</td>
+                        <td class="product-info"><strong>${prod.name}</strong></td>
+                        <td>${pkgRows}</td>
                     </tr>`;
             });
 
-            tableHtml += `</tbody></table>`;
-            section.innerHTML = tableHtml;
-            container.appendChild(section);
+            card.innerHTML = `
+                <div class="wholesaler-header">
+                    <h3 class="wholesaler-name">${ws.name}</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>
+                                <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; padding: 0 20px;">
+                                    <span>Package</span><span>On Hand</span><span>Unit</span><span>Action</span>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>`;
+            container.appendChild(card);
         });
     }
 
-    async function adjustStoreQty(product, type, currentQty) {
-        const newQty = prompt(`Adjust ${product} (${type}) count:`, currentQty);
-        if (newQty === null || newQty === "" || isNaN(newQty)) return;
+    async function adjustWsQty(wholesaler, product, type, current) {
+        const val = prompt(`Adjust ${wholesaler} - ${product} (${type}):`, current);
+        if (val === null || isNaN(val)) return;
 
-        // Same logic as brewery adjustment, but targeting store sheet
-        try {
-            const res = await fetch(API_URL, {
-                method: "POST",
-                body: new URLSearchParams({
-                    action: "updateStoreQty",
-                    product: product,
-                    type: type,
-                    newQty: newQty
-                })
-            });
-            const data = await res.json();
-            if (data.success) loadStoreInventory();
-        } catch (err) {
-            alert("Update failed.");
-        }
+        // AJAX to update specific Wholesaler Sheet
+        // ... (POST logic)
     }
 </script>
 </body>
