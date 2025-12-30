@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Post-Sampling Report | Suburban Brewing Co.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: #f4f6f8; display: flex; min-height: 100vh; }
+    
+    /* Sidebar */
+    .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; flex-shrink: 0; }
+    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; }
+    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.6; margin: 15px 20px 8px; font-weight: 700; }
+    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; }
+    .nav-link:hover { background: #374151; color: #fff; }
+    .nav-link.active { background: #2563eb; color: #fff; font-weight: 600; }
+
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .content { padding: 40px; max-width: 800px; margin: 0 auto; width: 100%; }
+    
+    .card { background: #fff; padding: 32px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    h1 { margin-top: 0; font-size: 24px; color: #111827; }
+    
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 15px; }
+    
+    button { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #1d4ed8; }
+    
+    .helper-text { font-size: 12px; color: #6b7280; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <h2>Suburban Brewing</h2>
+    <div class="nav-section-title">Dashboard</div>
+    <a class="nav-link" href="../index.html">Overview</a>
+
+    <div class="nav-section-title">Sales & Deliveries</div>
+    <a class="nav-link" href="../sales/invoices.html">Invoices</a>
+    <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
+
+    <div class="nav-section-title">Sampling Outreach</div>
+    <a class="nav-link" href="Schedule-Sampling.html">Schedule New</a>
+    <a class="nav-link active" href="sampling-report.html">Log Report</a>
+    <a class="nav-link" href="sampling-calendar.html">Calendar View</a>
+
+    <div class="nav-section-title">Inventory Management</div>
+    <a class="nav-link" href="../inventory/brewery-inventory.html">Brewery Master</a>
+    <a class="nav-link" href="../sales/wholesalers.html">Wholesaler Inventory</a>
+    <a class="nav-link" href="../sales/restaurants.html">Restaurant Inventory</a>
+
+    <div class="nav-section-title">Reports</div>
+    <a class="nav-link" href="../reports/monthly-sales.html">Monthly Sales</a>
+    <a class="nav-link" href="../reports/sales-route.html">Sales Route</a>
+    <a class="nav-link" href="../reports/client-inventory.html">Client Inventory</a>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+      <div class="card">
+        <h1>Log Sampling Results</h1>
+        <p style="color: #6b7280; margin-bottom: 30px;">Update the lead status and brewery inventory based on the event outcome.</p>
+        
+        <form id="reportForm">
+          <div class="form-group">
+            <label>Select Scheduled Event</label>
+            <select id="eventSelect" required>
+              <option value="">-- Choose Account --</option>
+              </select>
+          </div>
+
+          <div class="form-group">
+            <label>Outcome</label>
+            <select id="outcome" onchange="toggleFollowUp()" required>
+              <option value="No Sale - Follow Up Needed">No Sale - Follow Up Needed</option>
+              <option value="Immediate Sale">Immediate Sale (Closed)</option>
+              <option value="Not Interested">Not Interested (Drop Lead)</option>
+            </select>
+          </div>
+
+          <div id="followUpGroup" class="form-group">
+            <label>Suggested Follow-Up Date</label>
+            <input type="date" id="followUpDate">
+            <div class="helper-text">AI will automatically check if this account was a sale or requires a specific date.</div>
+          </div>
+
+          <div class="form-group">
+            <label>Inventory Used (for Samples)</label>
+            <textarea placeholder="e.g., 1/6 Keg IPA, 3x Staff Cans" rows="2"></textarea>
+            <div class="helper-text">This will be deducted from Brewery Master Inventory.</div>
+          </div>
+
+          <div class="form-group">
+            <label>Customer Feedback / Notes</label>
+            <textarea rows="4" placeholder="What did they like? Any issues?"></textarea>
+          </div>
+
+          <button type="submit">Submit & Update Leads</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function toggleFollowUp() {
+      const outcome = document.getElementById('outcome').value;
+      const group = document.getElementById('followUpGroup');
+      // Only show date picker if a follow-up is actually needed
+      group.style.display = (outcome === "No Sale - Follow Up Needed") ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>
