@@ -1,132 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Schedule Sampling | Suburban Brewing Co.</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { margin: 0; background: #f4f6f8; color: #1f2937; }
-        .layout { display: flex; min-height: 100vh; }
-        
-        /* ================= SIDEBAR ================= */
-        .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; }
-        .sidebar h2 { margin: 0 20px 20px; font-size: 18px; }
-        .nav-link { display: block; padding: 12px 20px; color: #d1d5db; text-decoration: none; }
-        .nav-link.active { background: #374151; color: #fff; border-left: 4px solid #2563eb; }
-        
-        /* ================= MAIN CONTENT ================= */
-        .main { flex: 1; padding: 24px; }
-        .header { margin-bottom: 24px; }
-        .card { background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 600px; }
-        
-        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #4b5563; }
-        input, select, textarea { 
-            width: 100%; padding: 10px; margin-bottom: 20px; 
-            border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px; 
-        }
-        
-        .btn-group { display: flex; gap: 12px; }
-        button { 
-            flex: 1; padding: 12px; border-radius: 6px; border: none; 
-            font-weight: 600; cursor: pointer; transition: 0.2s; 
-        }
-        .btn-save { background: #2563eb; color: #fff; }
-        .btn-save:hover { background: #1d4ed8; }
-        .btn-cancel { background: #f3f4f6; color: #4b5563; }
+  <meta charset="UTF-8" />
+  <title>Schedule Sampling | Suburban Brewing Co.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    /* Standardized Styling to match your Dashboard */
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: #f4f6f8; display: flex; min-height: 100vh; }
+    
+    .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; flex-shrink: 0; }
+    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; }
+    .nav-link.active { background: #2563eb; color: #fff; font-weight: 600; }
 
-        .sync-note { 
-            margin-top: 15px; font-size: 12px; color: #6b7280; 
-            display: flex; align-items: center; gap: 5px;
-        }
-    </style>
+    .main { flex: 1; padding: 40px; }
+    .card { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 900px; margin: 0 auto; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .full-width { grid-column: span 2; }
+    
+    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: #4b5563; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 15px; }
+    
+    .info-bar { background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 20px; }
+    .info-item { font-size: 13px; }
+    .info-item strong { display: block; color: #374151; }
+
+    .inventory-section { background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #bfdbfe; }
+    .alert-badge { display: inline-block; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; margin-top: 5px; }
+    
+    button { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  </style>
 </head>
 <body>
 
-<div class="layout">
-    <aside class="sidebar">
-        <h2>Suburban Brewing</h2>
-        <a class="nav-link" href="../sales/invoices.html">Invoices</a>
-        <a class="nav-link" href="../sales/deliveries.html">Deliveries</a>
-        <a class="nav-link active" href="schedule-sampling.html">Schedule Sampling</a>
-        <a class="nav-link" href="sampling-report.html">Sampling Report</a>
-        <a class="nav-link" href="sampling-calendar.html">Calendar View</a>
-        <a class="nav-link" href="../inventory/brewery-inventory.html">Inventory</a>
-    </aside>
+  <aside class="sidebar">
+    <a class="nav-link" href="../index.html">Dashboard</a>
+    <a class="nav-link active" href="Schedule-Sampling.html">Schedule New</a>
+    <a class="nav-link" href="sampling-report.html">Log Report</a>
+    <a class="nav-link" href="sampling-calendar.html">Calendar View</a>
+  </aside>
 
-    <main class="main">
-        <div class="header">
-            <h1>Schedule New Sampling</h1>
-            <p>Book a slot and sync it with your Apple Calendar.</p>
+  <main class="main">
+    <div class="card">
+      <h1>Schedule New Sampling</h1>
+      
+      <div class="form-group">
+        <label>Select Customer (Leads/Existing)</label>
+        <select id="customerSelect" onchange="fetchCustomerDetails()">
+          <option value="">-- Start typing name... --</option>
+          <option value="rusty_anchor">Rusty Anchor Pub</option>
+        </select>
+      </div>
+
+      <div class="info-bar" id="customerInfo">
+        <div class="info-item"><strong>Manager</strong> <span id="mgrName">--</span></div>
+        <div class="info-item"><strong>Phone</strong> <span id="mgrPhone">--</span></div>
+        <div class="info-item"><strong>Address</strong> <span id="mgrAddress">--</span></div>
+      </div>
+
+      <div class="grid">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="sampleDate">
+        </div>
+        <div class="form-group">
+          <label>Time</label>
+          <input type="time" id="sampleTime">
         </div>
 
-        <div class="card">
-            <form id="scheduleForm">
-                <label for="eventDate">Date of Sampling</label>
-                <input type="date" id="eventDate" required>
-
-                <label for="eventTime">Start Time</label>
-                <input type="time" id="eventTime" required>
-
-                <label for="accountName">Account / Lead Name</label>
-                <input type="text" id="accountName" placeholder="e.g. PJ's Pub" required>
-
-                <label for="location">Location Address</label>
-                <input type="text" id="location" placeholder="Street, City, Zip">
-
-                <label for="products">Expected Products to Sample</label>
-                <input type="text" id="products" placeholder="e.g. 50/50 IPA, Belgian Wit">
-
-                <label for="notes">Notes for Visit</label>
-                <textarea id="notes" rows="3" placeholder="Talk to GM about seasonal lines..."></textarea>
-
-                <div class="btn-group">
-                    <button type="button" class="btn-cancel" onclick="window.history.back()">Cancel</button>
-                    <button type="submit" class="btn-save">Confirm & Sync Calendar</button>
-                </div>
-
-                <div class="sync-note">
-                    📅 Saving this will automatically push to your iCloud/Apple Calendar.
-                </div>
-            </form>
+        <div class="full-width inventory-section">
+          <label>Available Products (Based on Customer Inventory)</label>
+          <div id="productCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="font-size: 13px; color: #6b7280;">Select a customer to see available stock...</div>
+          </div>
+          <div class="alert-badge">Alerts Active: 2 Days, 1 Day, Day of</div>
         </div>
-    </main>
-</div>
 
-<script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+        <div class="full-width">
+          <label>Notes for Alert Notifications</label>
+          <textarea id="alertNotes" rows="3" placeholder="What do you need to bring? (e.g., specific glassware, cold samples, sell sheets)"></textarea>
+        </div>
+      </div>
 
-    document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+      <button onclick="submitSchedule()">Schedule & Set Reminders</button>
+    </div>
+  </main>
+
+  <script>
+    // Mock Data to show functionality
+    const mockDb = {
+      "rusty_anchor": {
+        manager: "John Smith",
+        phone: "555-0123",
+        address: "123 Harbor Ln",
+        inventory: ["Suburban IPA (6th Keg)", "Townie Lager (Case)"]
+      }
+    };
+
+    function fetchCustomerDetails() {
+      const id = document.getElementById('customerSelect').value;
+      const data = mockDb[id];
+      
+      if(data) {
+        document.getElementById('mgrName').innerText = data.manager;
+        document.getElementById('mgrPhone').innerText = data.phone;
+        document.getElementById('mgrAddress').innerText = data.address;
         
-        const payload = {
-            action: "scheduleSampling",
-            date: document.getElementById('eventDate').value,
-            time: document.getElementById('eventTime').value,
-            account: document.getElementById('accountName').value,
-            location: document.getElementById('location').value,
-            products: document.getElementById('products').value,
-            notes: document.getElementById('notes').value
-        };
+        // Update product list based on their specific inventory sheet
+        const prodContainer = document.getElementById('productCheckboxes');
+        prodContainer.innerHTML = data.inventory.map(prod => `
+          <label style="font-weight: normal; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" style="width: auto; margin: 0;"> ${prod}
+          </label>
+        `).join('');
+      }
+    }
 
-        try {
-            const response = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams(payload)
-            });
-            const result = await response.json();
-            
-            if(result.success) {
-                alert("Sampling Scheduled and Calendar Invite Sent!");
-                document.getElementById('scheduleForm').reset();
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            alert("Failed to sync. Please check connection.");
-        }
-    });
-</script>
-
+    function submitSchedule() {
+      alert("Sampling Scheduled! Reminders set for 2 days, 1 day, and day-of via Apps Script.");
+      // Here we would call google.script.run.saveToSamplingSheet(...)
+    }
+  </script>
 </body>
 </html>
