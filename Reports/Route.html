@@ -186,30 +186,40 @@
   const scriptURL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
 
   async function fetchRoute() {
-    const date = document.getElementById('routeDate').value;
-    const loader = document.getElementById('loading');
-    const list = document.getElementById('routeList');
+  const date = document.getElementById('routeDate').value;
+  const loader = document.getElementById('loading');
+  const list = document.getElementById('routeList');
+  
+  loader.style.display = "block";
+  list.innerHTML = "";
+
+  // Switch to a secondary proxy if the first one is down
+  const proxyUrl = "https://api.allorigins.win/get?url=";
+  const targetUrl = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}`;
+
+  try {
+    const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
     
-    loader.style.display = "block";
-    list.innerHTML = "";
-    document.getElementById('mainNavBtn').style.display = "none";
-
-    // AllOrigins hides the Google Redirect and CORS headers from your browser
-    const proxyUrl = "https://api.allorigins.win/get?url=";
-    const targetUrl = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}`;
-
-    try {
-      const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
-      const data = await response.json();
-      
-      // The actual route array is inside data.contents as a string
-      const stops = JSON.parse(data.contents); 
-      renderStops(stops);
-    } catch (err) {
-      console.error("Fetch Error:", err);
-      loader.innerText = "Error loading route. Check Google Deployment settings.";
+    if (response.status === 502) {
+      loader.innerText = "Google is busy. Retrying in 3 seconds...";
+      setTimeout(fetchRoute, 3000);
+      return;
     }
+
+    const data = await response.json();
+    const result = JSON.parse(data.contents); 
+
+    if (result.error) {
+      loader.innerText = "Error: " + result.error;
+      return;
+    }
+
+    renderStops(result);
+  } catch (err) {
+    loader.innerText = "Connection lost. Please refresh.";
+    console.error(err);
   }
+}
 
   function renderStops(stops) {
     document.getElementById('loading').style.display = "none";
