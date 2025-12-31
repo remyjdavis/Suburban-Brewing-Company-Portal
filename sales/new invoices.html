@@ -1308,6 +1308,41 @@ document
   .getElementById("print-invoice-btn")
   .addEventListener("click", printInvoice);
 
+  /* ===== PRINT INVOICE FUNCTION ===== */
+  function emailInvoice() {
+  if (!window.currentInvoiceFileId || !window.currentInvoiceNumber) {
+    alert("Invoice must be saved before emailing");
+    return;
+  }
+
+  fetch(API_URL + "?action=emailInvoice", {
+    method: "POST",
+    contentType: "application/json",
+    body: JSON.stringify({
+      fileId: window.currentInvoiceFileId,
+      invoiceNumber: window.currentInvoiceNumber
+    })
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (!res.success) {
+        console.error(res);
+        alert("Email failed");
+        return;
+      }
+
+      alert("Invoice emailed successfully");
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Network error emailing invoice");
+    });
+}
+
+document
+  .getElementById("email-invoice-btn")
+  .addEventListener("click", emailInvoice);
+
 </script>
 <!-- ===== NEW CUSTOMER MODAL ===== -->
 <div id="new-customer-modal"
