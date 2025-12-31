@@ -1279,6 +1279,34 @@ function saveInvoice() {
   });
 }
 document.getElementById("save-invoice-btn").addEventListener("click", saveInvoice);
+  /* ===== PRINT INVOICE FUNCTION ===== */
+function printInvoice() {
+  if (!window.currentInvoiceFileId) {
+    alert("Invoice must be saved before printing");
+    return;
+  }
+
+  const pdfUrl =
+    "https://drive.google.com/file/d/" +
+    window.currentInvoiceFileId +
+    "/preview";
+
+  const printWindow = window.open(pdfUrl, "_blank");
+
+  if (!printWindow) {
+    alert("Popup blocked — allow popups to print");
+    return;
+  }
+
+  // Give Drive preview time to load before print
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 1500);
+}
+document
+  .getElementById("print-invoice-btn")
+  .addEventListener("click", printInvoice);
 
 </script>
 <!-- ===== NEW CUSTOMER MODAL ===== -->
