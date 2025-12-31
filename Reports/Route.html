@@ -183,92 +183,78 @@
   let currentRoute = [];
   document.getElementById('routeDate').valueAsDate = new Date();
 
-  // 1. CHANGE THIS URL to your actual 'Deploy' URL from Google Apps Script
   const scriptURL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
 
-  function onInit() {
-    // We no longer wait for 'google.script', we just fetch immediately
-    fetchRoute();
+  function fetchRoute() {
+    const date = document.getElementById('routeDate').value;
+    const loader = document.getElementById('loading');
+    const list = document.getElementById('routeList');
+    
+    loader.style.display = "block";
+    list.innerHTML = "";
+    document.getElementById('mainNavBtn').style.display = "none";
+
+    // 1. Create a Global Callback for JSONP
+    window.handleRoute = function(stops) {
+      renderStops(stops);
+      // Clean up the script tag
+      const oldScript = document.getElementById('jsonp-script');
+      if (oldScript) oldScript.remove();
+    };
+
+    // 2. Inject a Script Tag (Bypasses CORS entirely)
+    const script = document.createElement('script');
+    script.id = 'jsonp-script';
+    script.src = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}&callback=handleRoute&t=${Date.now()}`;
+    
+    script.onerror = function() {
+      loader.innerText = "Connection Failed. Ensure Google Script is set to 'Anyone'.";
+    };
+
+    document.body.appendChild(script);
   }
 
- function fetchRoute() {
-  const date = document.getElementById('routeDate').value;
-  const loader = document.getElementById('loading');
-  const list = document.getElementById('routeList');
-  
-  loader.style.display = "block";
-  list.innerHTML = "";
-  document.getElementById('mainNavBtn').style.display = "none";
-
-  const proxyUrl = "https://corsproxy.io/?";
-  const targetUrl = scriptURL + "?action=getOptimizedDailyRoute&date=" + date;
-
-  fetch(proxyUrl + encodeURIComponent(targetUrl))
-    .then(response => response.text()) // Get as text first to inspect it
-    .then(text => {
-      try {
-        const stops = JSON.parse(text);
-        renderStops(stops);
-      } catch (e) {
-        console.error("Data received was not JSON:", text);
-        if (text.includes("Service using too much computer power") || text.includes("Google Drive")) {
-           loader.innerText = "Google is busy. Refreshing in 3 seconds...";
-           setTimeout(fetchRoute, 3000);
-        } else {
-           loader.innerText = "Error: Please re-deploy Google Script as 'Anyone'.";
-        }
-      }
-    })
-    .catch(err => {
-      console.error("Fetch Error:", err);
-      loader.innerText = "Connection Failed. Check Internet.";
-    });
-}
   function renderStops(stops) {
     document.getElementById('loading').style.display = "none";
     const list = document.getElementById('routeList');
     currentRoute = stops;
 
     if (!stops || stops.length === 0) {
-      list.innerHTML = "<div style='text-align:center; color:#94a3b8; margin-top:20px;'>No stops found for this date.</div>";
+      list.innerHTML = "<div style='text-align:center; color:#666;'>No stops for this date.</div>";
       return;
     }
 
-    stops.forEach((stop, index) => {
+    stops.forEach((stop, i) => {
       const card = document.createElement('div');
       card.className = 'stop-card';
       card.style.borderLeftColor = stop.color;
+      let bat = stop.batteryMsg ? `<div style="color:#34c759; font-size:12px; font-weight:bold;">${stop.batteryMsg}</div>` : "";
       
       card.innerHTML = `
-        <div class="stop-num">${index + 1}</div>
+        <div class="stop-num">${i + 1}</div>
         <div class="stop-info">
-          <span class="badge" style="background:${stop.color}22; color:${stop.color}">${stop.type}</span>
+          <span class="badge" style="border: 1px solid ${stop.color}; color:${stop.color}">${stop.type}</span>
           <div class="stop-name">${stop.name}</div>
           <div class="stop-addr">${stop.address}</div>
+          ${bat}
         </div>
-        <div class="nav-icon" onclick="window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent('${stop.address}'), '_blank')">📍</div>
       `;
       list.appendChild(card);
     });
 
-    const btn = document.getElementById('mainNavBtn');
-    btn.style.display = "flex";
-    btn.innerHTML = `<span>🚗</span> PUSH ${stops.length} STOPS TO POLESTAR`;
+    document.getElementById('mainNavBtn').style.display = "flex";
   }
 
   function pushToPolestar() {
-    if (currentRoute.length === 0) return;
     const origin = encodeURIComponent(currentRoute[0].address);
-    const destination = encodeURIComponent(currentRoute[currentRoute.length - 1].address);
+    const dest = encodeURIComponent(currentRoute[currentRoute.length - 1].address);
     const waypoints = currentRoute.slice(1, -1).map(s => encodeURIComponent(s.address)).join('|');
-    
-    const url = 'https://www.google.com/maps/dir/?api=1&origin=' + origin + 
-                '&destination=' + destination + '&waypoints=' + waypoints + '&travelmode=driving';
-    
+    const url = 'https://www.google.com/maps/dir/?api=1&origin=' + origin + '&destination=' + dest + '&waypoints=' + waypoints + '&travelmode=driving';
     window.open(url, '_blank');
   }
 
-  onInit();
+  // Initial load
+  fetchRoute();
 </script>
 </body>
 </html>
