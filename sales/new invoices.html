@@ -1130,16 +1130,13 @@ if (duplicate) {
 
       if (qty <= 0) return;
 
-      const price = groupedProducts[productName][type];
-      const lineTotal = qty * price;
-
-     items.push({
-  product: productName,
-  type: type,
-  qty: qty,
-  price: groupedProducts[productName][type].price,
-  sku: groupedProducts[productName][type].sku
-});
+      items.push({
+        product: productName,
+        type: type,
+        qty: qty,
+        price: groupedProducts[productName][type].price,
+        sku: groupedProducts[productName][type].sku || ""
+      });
     });
   });
 
@@ -1152,30 +1149,50 @@ if (duplicate) {
     document.getElementById("invoice-subtotal").textContent.replace("$", "")
   );
 
-  const discount = document.getElementById("discount-row").style.display !== "none"
-    ? Number(document.getElementById("invoice-discount").textContent.replace(/[^0-9.-]/g, ""))
-    : 0;
+  const discount =
+    document.getElementById("discount-row").style.display !== "none"
+      ? Number(
+          document
+            .getElementById("invoice-discount")
+            .textContent.replace(/[^0-9.-]/g, "")
+        )
+      : 0;
 
-  const deposit = document.getElementById("deposit-row").style.display !== "none"
-    ? Number(document.getElementById("invoice-deposit").textContent.replace("$", ""))
-    : 0;
+  const deposit =
+    document.getElementById("deposit-row").style.display !== "none"
+      ? Number(
+          document
+            .getElementById("invoice-deposit")
+            .textContent.replace("$", "")
+        )
+      : 0;
 
-  const tax = document.getElementById("tax-row").style.display !== "none"
-    ? Number(document.getElementById("invoice-tax").textContent.replace("$", ""))
-    : 0;
+  const tax =
+    document.getElementById("tax-row").style.display !== "none"
+      ? Number(
+          document
+            .getElementById("invoice-tax")
+            .textContent.replace("$", "")
+        )
+      : 0;
 
   const total = Number(
     document.getElementById("invoice-total").textContent.replace("$", "")
   );
 
   return {
-  invoiceNumber: document.getElementById("invoice-number").value || "",
-  customer: selectedCustomer.name,
-  address: selectedCustomer.address,
-  total: total,
-  }))
-};
-  }
+    invoiceNumber: document.getElementById("invoice-number").value || "",
+    customer: selectedCustomer.name,
+    address: selectedCustomer.address,
+    subtotal,
+    discount,
+    tax,
+    deposit,
+    total,
+    items
+  };
+}
+
 /* ===== SAVE INVOICE FUNCTION ===== */
 function saveInvoice() {
   const payload = buildInvoicePayload();
