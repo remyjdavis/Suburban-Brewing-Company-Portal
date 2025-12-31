@@ -347,6 +347,7 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 // ===== GLOBAL =====
+let addProductButtonRow = null;
 let customers = [];
 let selectedCustomer = null;
 let products = [];
@@ -355,6 +356,21 @@ const KEG_DEPOSITS = {
   "1/2 Keg": 30,
   "1/6 Keg": 30
 };
+  /* ===== PRODUCT IS ALREADY SELECTED FUNCTION ===== */
+function isProductAlreadySelected(productName, currentRow) {
+  let found = false;
+
+  document.querySelectorAll("#product-body tr").forEach(row => {
+    if (row === currentRow) return;
+
+    const input = row.querySelector(".product-input");
+    if (input && input.value === productName) {
+      found = true;
+    }
+  });
+
+  return found;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toLocaleDateString();
@@ -468,6 +484,7 @@ function loadProducts() {
 function addProductRow() {
   const tbody = document.getElementById("product-body");
 
+  /* ----- CREATE PRODUCT ROW ----- */
   const tr = document.createElement("tr");
   tr.innerHTML = `
     <td>
@@ -480,14 +497,33 @@ function addProductRow() {
     <td class="barcode-cell"></td>
     <td class="line-total">$0.00</td>
   `;
+
+  /* ----- REMOVE BUTTON ROW TEMPORARILY ----- */
+  if (addProductButtonRow) {
+    addProductButtonRow.remove();
+  }
+
+  /* ----- APPEND PRODUCT ROW ----- */
   tbody.appendChild(tr);
 
-  const btnRow = document.createElement("tr");
-  btnRow.innerHTML = `<td colspan="6"><button class="add-product-btn" onclick="addProductRow()">+ Add another product</button></td>`;
-  tbody.appendChild(btnRow);
+  /* ----- RECREATE / MOVE BUTTON ROW ----- */
+  addProductButtonRow = document.createElement("tr");
+  addProductButtonRow.innerHTML = `
+    <td colspan="6" style="text-align:left;">
+      <button class="add-product-btn">+ Add another product</button>
+    </td>
+  `;
 
+  addProductButtonRow
+    .querySelector("button")
+    .onclick = addProductRow;
+
+  tbody.appendChild(addProductButtonRow);
+
+  /* ----- WIRE LOGIC ----- */
   wireProductRow(tr);
 }
+
 /* ===== WIRE PRODUCT ROW FUNCTION ===== */
 function wireProductRow(row) {
   const input = row.querySelector(".product-input");
@@ -510,6 +546,14 @@ function wireProductRow(row) {
 }
 /* ===== SELECT PRODUCT FUNCTION ===== */
 function selectProduct(row, product) {
+  // ❌ PREVENT DUPLICATES
+  if (isProductAlreadySelected(product, row)) {
+    alert(`"${product}" is already on this invoice.\nPlease adjust quantities in the existing row.`);
+    row.querySelector(".product-input").value = "";
+    row.querySelector(".product-suggestions").innerHTML = "";
+    return;
+  }
+
   row.querySelector(".product-input").value = product;
   row.querySelector(".product-suggestions").innerHTML = "";
 
@@ -521,11 +565,13 @@ function selectProduct(row, product) {
   qtyCell.innerHTML = "";
   barcodeCell.innerHTML = "";
 
-  ["Case", "1/2 Keg", "1/6 Keg"].forEach(t => {
-    if (groupedProducts[product][t] !== undefined) {
+  ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
+    if (groupedProducts[product][type] !== undefined) {
       const label = document.createElement("label");
-      label.innerHTML = `<input type="checkbox" value="${t}"> ${t}`;
-      label.querySelector("input").onchange = () => updateQuantities(row, product);
+      label.innerHTML = `<input type="checkbox" value="${type}"> ${type}`;
+      label.querySelector("input").onchange = () =>
+        updateQuantities(row, product);
+
       typesCell.appendChild(label);
     }
   });
