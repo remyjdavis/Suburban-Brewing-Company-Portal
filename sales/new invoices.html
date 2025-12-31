@@ -483,42 +483,51 @@ function updateQuantities(row, product) {
   const qtyCell = row.querySelector(".qty-group");
   const barcodeCell = row.querySelector(".barcode-cell");
 
-  // Hard reset every time
-  qtyCell.innerHTML = "";
-  barcodeCell.innerHTML = "";
+  const checkboxes = row.querySelectorAll(".type-checkboxes input");
 
-  const checkedTypes = row.querySelectorAll(".type-checkboxes input:checked");
-
-  checkedTypes.forEach(cb => {
+  checkboxes.forEach(cb => {
     const type = cb.value;
-    const price = groupedProducts[product][type];
+    const existing = qtyCell.querySelector(`[data-type="${type}"]`);
 
-    const wrapper = document.createElement("div");
-    wrapper.style.display = "flex";
-    wrapper.style.justifyContent = "space-between";
-    wrapper.style.gap = "6px";
+    // ADD quantity row when checked
+    if (cb.checked && !existing) {
+      const wrapper = document.createElement("div");
+      wrapper.dataset.type = type;
+      wrapper.style.display = "flex";
+      wrapper.style.justifyContent = "space-between";
+      wrapper.style.gap = "6px";
 
-    const label = document.createElement("span");
-    label.textContent = type + ":";
+      const label = document.createElement("span");
+      label.textContent = type + ":";
 
-    const qty = document.createElement("input");
-    qty.type = "number";
-    qty.min = 0;
-    qty.value = 0;
-    qty.style.width = "50px";
+      const qty = document.createElement("input");
+      qty.type = "number";
+      qty.min = 0;
+      qty.value = 0;
+      qty.style.width = "50px";
+      qty.oninput = () => recalcLine(row, product);
 
-    qty.oninput = () => recalcLine(row, product);
+      wrapper.appendChild(label);
+      wrapper.appendChild(qty);
+      qtyCell.appendChild(wrapper);
 
-    wrapper.appendChild(label);
-    wrapper.appendChild(qty);
-    qtyCell.appendChild(wrapper);
+      // CASE BARCODE ONLY
+      if (type === "Case") {
+        barcodeCell.innerHTML = "";
+        JsBarcode(barcodeCell, product + "-CASE", {
+          height: 28,
+          displayValue: false
+        });
+      }
+    }
 
-    // CASE BARCODE ONLY
-    if (type === "Case") {
-      JsBarcode(barcodeCell, product + "-CASE", {
-        height: 28,
-        displayValue: false
-      });
+    // REMOVE quantity row when unchecked
+    if (!cb.checked && existing) {
+      existing.remove();
+
+      if (type === "Case") {
+        barcodeCell.innerHTML = "";
+      }
     }
   });
 
