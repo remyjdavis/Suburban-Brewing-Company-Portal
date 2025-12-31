@@ -321,9 +321,14 @@
   <strong>Subtotal:</strong>
   <span id="invoice-subtotal">$0.00</span>
 </div>
+    
 <div id="tax-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
   <strong>Sales Tax (6%):</strong>
   <span id="invoice-tax">$0.00</span>
+</div>
+<div id="deposit-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
+  <strong>Keg Deposit:</strong>
+  <span id="invoice-deposit">$0.00</span>
 </div>
 
 <div style="margin-top:6px; text-align:right; font-size:14px;">
@@ -340,6 +345,10 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXl
 let selectedCustomer = null;
 let products = [];
 let groupedProducts = {};
+const KEG_DEPOSITS = {
+  "1/2 Keg": 30,
+  "1/6 Keg": 30
+};
 
 document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toLocaleDateString();
@@ -601,12 +610,14 @@ function recalcInvoiceTotals() {
     subtotal += Number(cell.dataset.value || 0);
   });
 
+  const deposit = recalcKegDeposit(); // ← ADD THIS
+
   const isRestaurant =
     selectedCustomer && selectedCustomer.type === "Restaurant";
 
   const taxRate = 0.06;
   const tax = isRestaurant ? subtotal * taxRate : 0;
-  const total = subtotal + tax;
+  const total = subtotal + tax + deposit; // ← UPDATE THIS
 
   document.getElementById("invoice-subtotal").textContent =
     "$" + subtotal.toFixed(2);
@@ -616,6 +627,36 @@ function recalcInvoiceTotals() {
 
   document.getElementById("invoice-total").textContent =
     "$" + total.toFixed(2);
+}
+
+  /* ===== RECALC KEG DEPOSIT FUNCTION ===== */
+function recalcKegDeposit() {
+  let depositTotal = 0;
+
+  document.querySelectorAll("#product-body tr").forEach(row => {
+    if (!row.querySelector(".qty-group")) return;
+
+    row.querySelectorAll(".qty-group div").forEach(div => {
+      const type = div.dataset.type;
+      const qty = Number(div.querySelector("input").value || 0);
+
+      if (KEG_DEPOSITS[type]) {
+        depositTotal += qty * KEG_DEPOSITS[type];
+      }
+    });
+  });
+
+  const depositRow = document.getElementById("deposit-row");
+
+  if (depositTotal > 0) {
+    depositRow.style.display = "flex";
+    document.getElementById("invoice-deposit").textContent =
+      "$" + depositTotal.toFixed(2);
+  } else {
+    depositRow.style.display = "none";
+  }
+
+  return depositTotal;
 }
 
 </script>
