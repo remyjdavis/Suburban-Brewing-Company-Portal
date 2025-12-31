@@ -803,15 +803,25 @@ function updateQuantities(row, product) {
       priceCell.appendChild(priceWrap);
 
       /* ---------- BARCODE (CASE ONLY) ---------- */
-      if (type === "Case") {
-  barcodeCell.innerHTML = `<svg class="item-barcode"></svg>`;
-  JsBarcode(
-    barcodeCell.querySelector("svg"),
-    product + "-CASE",
-    { height: 28, displayValue: false }
-  );
-}
+     if (type === "Case") {
+  barcodeCell.innerHTML = "";
 
+  const sku = groupedProducts[product][type].sku;
+
+  if (!sku) {
+    barcodeCell.innerHTML =
+      `<em style="font-size:10px;color:#6b7280;">SKU missing</em>`;
+    return;
+  }
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  barcodeCell.appendChild(svg);
+
+  JsBarcode(svg, sku, {
+    height: 28,
+    displayValue: false
+  });
+}
     }
 
     // REMOVE TYPE
