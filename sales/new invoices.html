@@ -578,17 +578,18 @@ function wireProductRow(row) {
 }
 /* ===== SELECT PRODUCT FUNCTION ===== */
 function selectProduct(row, product) {
- function createLowBadge(stock) {
-  const badge = document.createElement("span");
-  badge.textContent = `LOW (${stock})`;
-  badge.style.background = "#fde68a";
-  badge.style.color = "#92400e";
-  badge.style.fontSize = "10px";
-  badge.style.padding = "1px 4px";
-  badge.style.marginLeft = "6px";
-  badge.style.borderRadius = "4px";
-  return badge;
-}
+
+  function createLowBadge(stock) {
+    const badge = document.createElement("span");
+    badge.textContent = `LOW (${stock})`;
+    badge.style.background = "#fde68a";
+    badge.style.color = "#92400e";
+    badge.style.fontSize = "10px";
+    badge.style.padding = "1px 4px";
+    badge.style.marginLeft = "6px";
+    badge.style.borderRadius = "4px";
+    return badge;
+  }
 
   // ❌ PREVENT DUPLICATES
   if (isProductAlreadySelected(product, row)) {
@@ -611,14 +612,7 @@ function selectProduct(row, product) {
 
   ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
     if (groupedProducts[product][type] === undefined) return;
-const lifecycleNote = getLifecycleWarning(product, type);
-if (lifecycleNote) {
-  const note = document.createElement("div");
-  note.style.fontSize = "10px";
-  note.style.color = "#6b7280";
-  note.textContent = lifecycleNote;
-  label.appendChild(note);
-}
+
     const stock =
       inventoryMap[product] &&
       inventoryMap[product][type] !== undefined
@@ -642,10 +636,10 @@ if (lifecycleNote) {
 
     // ⚠️ LOW STOCK
     else if (stock !== null && stock < 10) {
-  label.appendChild(checkbox);
-  label.append(` ${type} `);
-  label.appendChild(createLowBadge(stock));
-}
+      label.appendChild(checkbox);
+      label.append(` ${type} `);
+      label.appendChild(createLowBadge(stock));
+    }
 
     // ✅ NORMAL
     else {
@@ -653,11 +647,21 @@ if (lifecycleNote) {
       label.append(` ${type}`);
     }
 
+    // 🔹 LIFECYCLE NOTE (FIXED — label exists, scope correct)
+    const lifecycleNote = getLifecycleWarning(product, type);
+    if (lifecycleNote) {
+      const note = document.createElement("div");
+      note.style.fontSize = "10px";
+      note.style.color = "#6b7280";
+      note.textContent = lifecycleNote;
+      label.appendChild(note);
+    }
+
     checkbox.onchange = () => updateQuantities(row, product);
     typesCell.appendChild(label);
   });
-
 }
+
   /* ===== LIFECYLCE WARNING FUNCTION ===== */
 function getLifecycleWarning(product, type) {
   const lifecycle = products.find(
