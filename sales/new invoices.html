@@ -359,13 +359,25 @@ document.getElementById("customer-search").addEventListener("input", function ()
 });
 
 function selectCustomer(c) {
+  // Clear first (prevents duplication)
+  document.getElementById("customer-name").textContent = "";
+  document.getElementById("customer-address").innerHTML = "";
+
   document.getElementById("customer-search").style.display = "none";
   document.getElementById("customer-display").hidden = false;
+
   document.getElementById("customer-name").textContent = c.name;
 
-  const parts = (c.address || "").split(",").map(p => p.trim());
+  const parts = (c.address || "")
+    .split(",")
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  const line1 = parts.shift() || "";
+  const rest = parts.join(", ");
+
   document.getElementById("customer-address").innerHTML =
-    `${parts[0]}<br>${parts.slice(1).join(", ")}`;
+    `${line1}${rest ? "<br>" + rest : ""}`;
 }
 
 /* ===== INVOICE BARCODE ===== */
