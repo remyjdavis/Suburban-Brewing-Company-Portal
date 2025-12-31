@@ -1070,30 +1070,20 @@ if (duplicate) {
   );
 
   return {
-    invoiceNumber: document.getElementById("invoice-number").value || "",
-    date: document.getElementById("invoice-date").textContent,
+  invoiceNumber: document.getElementById("invoice-number").value || "",
+  customer: selectedCustomer.name,
+  address: selectedCustomer.address,
+  total: total,
 
-    customer: {
-      name: selectedCustomer.name || selectedCustomer.Name,
-      address: selectedCustomer.address || selectedCustomer.Address,
-      type: selectedCustomer.type || selectedCustomer.Type,
-      paymentMethod:
-        selectedCustomer.paymentMethod ||
-        selectedCustomer.Payment ||
-        ""
-    },
+  items: items.map(i => ({
+    product: i.product,
+    type: i.package,
+    qty: i.quantity,
+    price: i.price,
+    sku: i.sku || ""
+  }))
+};
 
-    totals: {
-      subtotal,
-      discount,
-      tax,
-      deposit,
-      total
-    },
-
-    items
-  };
-}
 /* ===== SAVE INVOICE FUNCTION ===== */
 function saveInvoice() {
   const payload = buildInvoicePayload();
