@@ -247,7 +247,41 @@
 .footer-message {
   text-transform: uppercase;
 }
+/* ===== PRINT LAYOUT FIX ===== */
+@media print {
+  body {
+    margin: 0;
+    background: #fff;
+  }
 
+  .sidebar,
+  .header-bar,
+  #save-invoice-btn {
+    display: none !important;
+  }
+
+  .main {
+    margin: 0;
+    padding: 0;
+  }
+
+  .invoice-page {
+    width: 7.75in; /* safe printable width */
+    padding: 0.5in;
+    box-shadow: none;
+  }
+
+  table.invoice-table {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  table.invoice-table th,
+  table.invoice-table td {
+    font-size: 11px;
+    padding: 5px;
+  }
+}
   </style>
 </head>
 
