@@ -191,7 +191,7 @@
     fetchRoute();
   }
 
-  function fetchRoute() {
+ function fetchRoute() {
   const date = document.getElementById('routeDate').value;
   const list = document.getElementById('routeList');
   const loader = document.getElementById('loading');
@@ -200,21 +200,24 @@
   list.innerHTML = "";
   document.getElementById('mainNavBtn').style.display = "none";
 
-  // Using a simple URL construction to avoid header conflicts
-  const finalUrl = scriptURL + "?action=getOptimizedDailyRoute&date=" + date;
+  // We add a timestamp to the end to prevent the browser from caching the 'Error'
+  const finalUrl = scriptURL + "?action=getOptimizedDailyRoute&date=" + date + "&t=" + new Date().getTime();
 
-  fetch(finalUrl)
-    .then(response => {
-      if (!response.ok) throw new Error('Network response was not ok');
-      return response.json();
-    })
-    .then(stops => {
-      renderStops(stops);
-    })
-    .catch(err => {
-      loader.innerText = "Connection Error. Ensure Deployment is set to 'Anyone'.";
-      console.error("Fetch Error:", err);
-    });
+  fetch(finalUrl, {
+    method: 'GET',
+    // Removing 'mode: cors' often helps with Google Apps Script redirects
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('Network response was not ok');
+    return response.json();
+  })
+  .then(stops => {
+    renderStops(stops);
+  })
+  .catch(err => {
+    loader.innerText = "Connection Blocked: Ensure Deployment is set to 'Anyone' and URL is correct.";
+    console.error("Detailed Fetch Error:", err);
+  });
 }
 
   function renderStops(stops) {
