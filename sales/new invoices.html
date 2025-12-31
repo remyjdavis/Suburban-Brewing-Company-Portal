@@ -134,7 +134,7 @@
     .invoice-meta-row {
       display: flex;
       align-items: flex-start;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .customer-block {
@@ -177,18 +177,12 @@
       margin-top: 6px;
     }
 
-    /* =====================================================
-       ===== ADD: PRODUCT TABLE STYLES =====================
-       ===================================================== */
-
-    .products-section {
-      margin-top: 4px;
-    }
-
+    /* ===== PRODUCT TABLE ===== */
     table.invoice-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 12px;
+      margin-top: 8px;
     }
 
     table.invoice-table th,
@@ -201,7 +195,6 @@
     table.invoice-table th {
       background: #f3f4f6;
       font-weight: 700;
-      text-align: left;
     }
 
     .type-checkboxes label {
@@ -220,6 +213,17 @@
       font-size: 11px;
       padding: 4px 8px;
       margin-top: 6px;
+    }
+
+    .product-suggestions div {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 4px;
+      cursor: pointer;
+    }
+
+    .product-suggestions div:hover {
+      background: #f3f4f6;
     }
   </style>
 </head>
@@ -254,7 +258,6 @@
   <a href="../Reports/client-inventory.html" class="nav-link">Client Inventory Levels</a>
 </aside>
 
-<!-- ===== MAIN ===== -->
 <main class="main">
 
   <div class="header-bar">
@@ -265,8 +268,6 @@
   <div class="section-heading">Invoice Details</div>
 
   <section class="invoice-page">
-
-    <!-- EXISTING HEADER / META — UNTOUCHED -->
 
     <header class="invoice-header">
       <img src="../background.jpg">
@@ -303,41 +304,27 @@
       </div>
     </section>
 
-    <!-- ===================================================
-         ===== ADD: PRODUCTS SECTION =======================
-         =================================================== -->
-
-    <section class="products-section">
-      <table class="invoice-table">
-        <thead>
-          <tr>
-            <th style="width:20%">Product</th>
-            <th style="width:15%">Type</th>
-            <th style="width:15%">Quantity</th>
-            <th style="width:10%">Price</th>
-            <th style="width:20%">Barcode</th>
-            <th style="width:20%">Line Total</th>
-          </tr>
-        </thead>
-        <tbody id="product-body"></tbody>
-      </table>
-    </section>
+    <table class="invoice-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Type</th>
+          <th>Quantity</th>
+          <th>Price</th>
+          <th>Barcode</th>
+          <th>Line Total</th>
+        </tr>
+      </thead>
+      <tbody id="product-body"></tbody>
+    </table>
 
   </section>
 </main>
 
 <script>
-/* =====================================================
-   ===== EXISTING CUSTOMER / DATE / BARCODE LOGIC ======
-   ===================================================== */
-
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 
 let customers = [];
-let selectedCustomer = null;
-  /******************************************************
- * PRODUCT STATE (FRONTEND ONLY)
- ******************************************************/
 let products = [];
 let groupedProducts = {};
 
@@ -347,45 +334,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("invoice-date").textContent = today;
   loadCustomers();
   loadProducts();
-addProductRow();
-
+  addProductRow();
 });
 
+/* ===== CUSTOMERS ===== */
 function loadCustomers() {
   fetch(`${API_URL}?action=getCustomers`)
     .then(r => r.json())
     .then(d => customers = d || []);
-}
-/* ===== ADD: LOAD PRODUCTS ===== */
-
-let products = [];
-
-function loadProducts() {
-  fetch(`${API_URL}?action=getProducts`)
-    .then(r => r.json())
-    .then(data => {
-      products = data || [];
-      groupedProducts = groupProductsByName(products);
-    });
-}
-function groupProductsByName(productList) {
-  const grouped = {};
-
-  productList.forEach(p => {
-    if (!grouped[p.name]) {
-      grouped[p.name] = {
-        name: p.name,
-        lifecycle: p.lifecycle,
-        packages: {}
-      };
-    }
-
-    grouped[p.name].packages[p.package] = {
-      price: p.price
-    };
-  });
-
-  return grouped;
 }
 
 document.getElementById("customer-search").addEventListener("input", function () {
@@ -401,172 +357,138 @@ document.getElementById("customer-search").addEventListener("input", function ()
     this.parentNode.appendChild(div);
   });
 });
-function selectProduct(row, productName) {
-  row.querySelector(".product-input").value = productName;
-  row.querySelector(".product-suggestions").innerHTML = "";
-
-  const product = groupedProducts[productName];
-  const typeCell = row.querySelector(".type-cell");
-  const qtyCell = row.querySelector(".qty-cell");
-  const priceCell = row.querySelector(".price-cell");
-  const barcodeCell = row.querySelector(".barcode-cell");
-
-  typeCell.innerHTML = "";
-  qtyCell.innerHTML = "";
-  barcodeCell.innerHTML = "";
-  priceCell.textContent = "$0.00";
-
-  Object.keys(product.packages).forEach(pkg => {
-    const label = document.createElement("label");
-    label.style.display = "block";
-
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.value = pkg;
-    cb.onchange = () => updateQuantities(row, productName);
-
-    label.appendChild(cb);
-    label.append(" " + pkg);
-    typeCell.appendChild(label);
-  });
-}
 
 function selectCustomer(c) {
-  selectedCustomer = c;
-  document.querySelectorAll(".suggestion").forEach(e => e.remove());
   document.getElementById("customer-search").style.display = "none";
   document.getElementById("customer-display").hidden = false;
   document.getElementById("customer-name").textContent = c.name;
 
-  const parts = (c.address || "").split(",").map(p => p.trim()).filter(Boolean);
+  const parts = (c.address || "").split(",").map(p => p.trim());
   document.getElementById("customer-address").innerHTML =
-    `${parts[0] || ""}<br>${parts.slice(1).join(", ")}`;
+    `${parts[0]}<br>${parts.slice(1).join(", ")}`;
 }
 
+/* ===== INVOICE BARCODE ===== */
 document.getElementById("invoice-number").addEventListener("change", e => {
   const val = e.target.value.trim();
   if (!val) return;
-
   document.getElementById("invoice-number-row").innerHTML =
     `<strong>Invoice #:</strong> <span>${val}</span>`;
-
   JsBarcode("#barcode", val, { height: 30, displayValue: false });
 });
 
-/* =====================================================
-   ===== ADD: PRODUCT TABLE LOGIC ======================
-   ===================================================== */
-
-/* =========================
-   ADD PRODUCT ROW
-========================= */
-let productRowIndex = 0;
+/* ===== PRODUCTS ===== */
+function loadProducts() {
+  fetch(`${API_URL}?action=getProducts`)
+    .then(r => r.json())
+    .then(data => {
+      products = data || [];
+      groupedProducts = {};
+      products.forEach(p => {
+        if (!groupedProducts[p.name]) groupedProducts[p.name] = {};
+        groupedProducts[p.name][p.package] = p.price;
+      });
+    });
+}
 
 function addProductRow() {
   const tbody = document.getElementById("product-body");
 
   const tr = document.createElement("tr");
-  tr.className = "product-row";
-
   tr.innerHTML = `
     <td>
-      <input class="product-input" placeholder="Start typing product..." autocomplete="off">
+      <input class="product-input" placeholder="Product..." autocomplete="off">
       <div class="product-suggestions"></div>
     </td>
-    <td class="type-cell"></td>
-    <td class="qty-cell"></td>
+    <td class="type-checkboxes"></td>
+    <td class="qty-group"></td>
     <td class="price-cell">$0.00</td>
     <td class="barcode-cell"></td>
     <td class="line-total">$0.00</td>
   `;
-
   tbody.appendChild(tr);
 
   const btnRow = document.createElement("tr");
-  btnRow.innerHTML = `
-    <td colspan="6">
-      <button type="button" onclick="addProductRow()">+ Add another product</button>
-    </td>
-  `;
+  btnRow.innerHTML = `<td colspan="6"><button class="add-product-btn" onclick="addProductRow()">+ Add another product</button></td>`;
   tbody.appendChild(btnRow);
 
-  wireProductAutocomplete(tr);
+  wireProductRow(tr);
 }
-function wireProductAutocomplete(row) {
+
+function wireProductRow(row) {
   const input = row.querySelector(".product-input");
-  const suggestionBox = row.querySelector(".product-suggestions");
+  const suggestions = row.querySelector(".product-suggestions");
 
   input.addEventListener("input", () => {
+    suggestions.innerHTML = "";
     const val = input.value.toLowerCase();
-    suggestionBox.innerHTML = "";
     if (!val) return;
 
     Object.keys(groupedProducts)
-      .filter(name => name.toLowerCase().includes(val))
-      .forEach(name => {
-        const div = document.createElement("div");
-        div.textContent = name;
-        div.onclick = () => selectProduct(row, name);
-        suggestionBox.appendChild(div);
+      .filter(p => p.toLowerCase().includes(val))
+      .forEach(p => {
+        const d = document.createElement("div");
+        d.textContent = p;
+        d.onclick = () => selectProduct(row, p);
+        suggestions.appendChild(d);
       });
   });
 }
 
-/* =========================
-   UPDATE QUANTITIES BY TYPE
-========================= */
-function updateQty(rowId) {
-  const row = document.querySelector(`tr[data-row="${rowId}"]`);
-  const qtyDiv = document.getElementById(`qty-${rowId}`);
-  qtyDiv.innerHTML = "";
+function selectProduct(row, product) {
+  row.querySelector(".product-input").value = product;
+  row.querySelector(".product-suggestions").innerHTML = "";
 
-  const productInput = row.querySelector('input[oninput]');
-  const prices = JSON.parse(productInput.dataset.prices || "{}");
+  const typesCell = row.querySelector(".type-checkboxes");
+  const qtyCell = row.querySelector(".qty-group");
+  const barcodeCell = row.querySelector(".barcode-cell");
 
-  row.querySelectorAll("input[type=checkbox]:checked").forEach(cb => {
-    const type = cb.parentNode.textContent.trim();
-    const unitPrice = prices[type] || 0;
+  typesCell.innerHTML = "";
+  qtyCell.innerHTML = "";
+  barcodeCell.innerHTML = "";
 
-    const div = document.createElement("div");
-    div.innerHTML = `
-      ${type}:
-      <input type="number"
-             min="0"
-             value="0"
-             style="width:50px"
-             data-price="${unitPrice}"
-             oninput="calcLine(${rowId})">
-    `;
-
-    qtyDiv.appendChild(div);
-
-    /* CASE ONLY BARCODE */
-    if (type === "Case" && productInput.dataset.sku) {
-      JsBarcode(`#barcode-${rowId}`, productInput.dataset.sku, {
-        height: 28,
-        displayValue: false
-      });
+  ["Case", "1/2 Keg", "1/6 Keg"].forEach(t => {
+    if (groupedProducts[product][t] !== undefined) {
+      const label = document.createElement("label");
+      label.innerHTML = `<input type="checkbox" value="${t}"> ${t}`;
+      label.querySelector("input").onchange = () => updateQuantities(row, product);
+      typesCell.appendChild(label);
     }
   });
 }
 
-/* =========================
-   CALCULATE LINE TOTAL
-========================= */
-function calcLine(rowId) {
-  const row = document.querySelector(`tr[data-row="${rowId}"]`);
-  let total = 0;
+function updateQuantities(row, product) {
+  const qtyCell = row.querySelector(".qty-group");
+  const barcodeCell = row.querySelector(".barcode-cell");
+  qtyCell.innerHTML = "";
+  barcodeCell.innerHTML = "";
 
-  row.querySelectorAll(`#qty-${rowId} input`).forEach(input => {
-    const qty = parseInt(input.value || 0);
-    const price = parseFloat(input.dataset.price || 0);
-    total += qty * price;
+  row.querySelectorAll(".type-checkboxes input:checked").forEach(cb => {
+    const type = cb.value;
+    const price = groupedProducts[product][type];
+
+    const div = document.createElement("div");
+    div.innerHTML = `${type}: <input type="number" min="0" value="0" style="width:50px">`;
+    div.querySelector("input").oninput = () => recalcLine(row, product);
+    qtyCell.appendChild(div);
+
+    if (type === "Case") {
+      JsBarcode(barcodeCell, product + "-CASE", { height: 28, displayValue: false });
+    }
   });
 
-  document.getElementById(`total-${rowId}`).textContent =
-    "$" + total.toFixed(2);
+  recalcLine(row, product);
 }
 
+function recalcLine(row, product) {
+  let total = 0;
+  row.querySelectorAll(".qty-group div").forEach(div => {
+    const type = div.textContent.split(":")[0];
+    const qty = Number(div.querySelector("input").value);
+    total += qty * groupedProducts[product][type];
+  });
+  row.querySelector(".line-total").textContent = "$" + total.toFixed(2);
+}
 </script>
 
 </body>
