@@ -198,25 +198,30 @@
   
   loader.style.display = "block";
   list.innerHTML = "";
-  
-  // 1. Define the Global Callback that Google will call
-  window.handleRouteData = function(stops) {
+
+  const url = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}`;
+
+  // We use the 'no-cors' mode to get past the initial block, 
+  // then we use a hidden iframe or a redirect-aware fetch.
+  fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "text/plain"
+    }
+  })
+  .then(response => response.text())
+  .then(text => {
+    // Because Google returns the data inside a script-like block, 
+    // we manually clean the text to get the JSON.
+    const jsonStr = text.substring(text.indexOf("(") + 1, text.lastIndexOf(")"));
+    const stops = JSON.parse(jsonStr);
     renderStops(stops);
-    // Cleanup the script tag we're about to create
-    const oldScript = document.getElementById('jsonp-script');
-    if (oldScript) oldScript.remove();
-  };
-
-  // 2. Create a "Script Tag" instead of a Fetch call
-  const script = document.createElement('script');
-  script.id = 'jsonp-script';
-  // We pass 'callback=handleRouteData' to the URL
-  script.src = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}&callback=handleRouteData&t=${Date.now()}`;
-  
-  // 3. Inject it into the page to trigger the "Download"
-  document.body.appendChild(script);
+  })
+  .catch(err => {
+    console.error("Fetch error:", err);
+    loader.innerText = "Check Google Deployment: Must be set to 'Anyone'";
+  });
 }
-
   function renderStops(stops) {
     document.getElementById('loading').style.display = "none";
     const list = document.getElementById('routeList');
