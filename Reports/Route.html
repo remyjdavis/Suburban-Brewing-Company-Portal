@@ -199,22 +199,30 @@
   loader.style.display = "block";
   list.innerHTML = "";
 
-  // This is the Proxy that kills the 'Access-Control-Allow-Origin' error
-  const proxyUrl = "https://corsproxy.io/?";
-  const targetUrl = scriptURL + "?action=getOptimizedDailyRoute&date=" + date;
+  // 1. Listen for the "Package" to arrive from Google
+  const messageHandler = function(event) {
+    // Only accept data if it's an array (our route)
+    if (Array.isArray(event.data)) {
+      renderStops(event.data);
+      window.removeEventListener("message", messageHandler);
+      document.getElementById('temp-frame').remove();
+    }
+  };
+  window.addEventListener("message", messageHandler);
 
-  fetch(proxyUrl + encodeURIComponent(targetUrl))
-    .then(response => {
-      if (!response.ok) throw new Error('Network response was not ok');
-      return response.json();
-    })
-    .then(stops => {
-      renderStops(stops);
-    })
-    .catch(err => {
-      console.error("Fetch error:", err);
-      loader.innerText = "Connection Error. Try refreshing or check deployment.";
-    });
+  // 2. Create a hidden iframe to go fetch the data
+  const ifrm = document.createElement("iframe");
+  ifrm.id = "temp-frame";
+  ifrm.style.display = "none";
+  ifrm.src = scriptURL + "?action=getOptimizedDailyRoute&date=" + date;
+  document.body.appendChild(ifrm);
+  
+  // Timeout safety
+  setTimeout(() => {
+    if (loader.style.display !== "none") {
+      loader.innerText = "Connection timed out. Please re-deploy as 'Anyone'.";
+    }
+  }, 10000);
 }
   function renderStops(stops) {
     document.getElementById('loading').style.display = "none";
