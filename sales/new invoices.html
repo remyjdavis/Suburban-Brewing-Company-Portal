@@ -596,6 +596,14 @@ function updateQuantities(row, product) {
 
   recalcLine(row, product);
 }
+  /* ===== FOCUS FIRST PRODUCT ROW FUNCTION ===== */
+  function focusFirstProductRow() {
+  const firstProductInput = document.querySelector(".product-input");
+  if (firstProductInput) {
+    firstProductInput.focus();
+  }
+}
+
 /* ===== RECALCLINE FUNCTION ===== */
 function recalcLine(row, product) {
   const totalCell = row.querySelector(".line-total");
@@ -717,6 +725,14 @@ function getTotalCaseQty() {
 }
    /* ===== OPEN NEW CUSTOMER MODAL FUNCTION ===== */
 function openNewCustomerModal(prefillName = "") {
+  const exists = customers.some(c =>
+  c.name.toLowerCase() === prefillName.toLowerCase()
+);
+
+if (exists) {
+  alert("Customer already exists");
+  return;
+}
   document.getElementById("new-customer-modal").style.display = "block";
 
   document.getElementById("new-cust-name").value = prefillName;
@@ -753,6 +769,15 @@ function saveNewCustomer() {
   const addressParts = [street, city, state, zip].filter(Boolean);
   const address = addressParts.join(", ");
 
+  const duplicate = customers.some(c =>
+  c.name.toLowerCase() === name.toLowerCase()
+);
+
+if (duplicate) {
+  alert("This customer already exists.");
+  return;
+}
+
   const newCustomer = {
     name,
     address,
@@ -760,15 +785,31 @@ function saveNewCustomer() {
     paymentMethod
   };
 
-  // Frontend-only add (backend later)
+  fetch(`${API_URL}?action=addCustomer`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(newCustomer)
+})
+.then(r => r.json())
+.then(res => {
+  if (res.success) {
+    customers.push(newCustomer); // keep local list updated
+    closeNewCustomerModal();
+    selectCustomer(newCustomer);
+    focusFirstProductRow();
+  } else {
+    alert("Failed to save customer");
+  }
+})
+.catch(() => {
+  // Fallback (offline-safe)
   customers.push(newCustomer);
-
   closeNewCustomerModal();
-
-  // Auto-select customer
   selectCustomer(newCustomer);
+  focusFirstProductRow();
+});
 }
-
+  
 </script>
 <!-- ===== NEW CUSTOMER MODAL ===== -->
 <div id="new-customer-modal"
