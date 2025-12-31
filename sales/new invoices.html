@@ -435,57 +435,33 @@ let productRowIndex = 0;
 
 function addProductRow() {
   const tbody = document.getElementById("product-body");
-  const rowId = productRowIndex++;
 
   const tr = document.createElement("tr");
   tr.className = "product-row";
-  tr.dataset.row = rowId;
 
   tr.innerHTML = `
     <td>
-      <input
-        placeholder="Product name"
-        style="width:100%"
-        oninput="productAutocomplete(this)">
+      <input class="product-input" placeholder="Start typing product..." autocomplete="off">
+      <div class="product-suggestions"></div>
     </td>
-
-    <td class="type-checkboxes">
-      <label>
-        <input type="checkbox" onchange="updateQty(${rowId})">
-        Case
-      </label>
-      <label>
-        <input type="checkbox" onchange="updateQty(${rowId})">
-        1/2 Keg
-      </label>
-      <label>
-        <input type="checkbox" onchange="updateQty(${rowId})">
-        1/6 Keg
-      </label>
-    </td>
-
-    <td>
-      <div class="qty-group" id="qty-${rowId}"></div>
-    </td>
-
-    <td align="right">
-      <input
-        type="number"
-        step="0.01"
-        value="0"
-        style="width:70px">
-    </td>
-
-    <td align="center">
-      <svg id="barcode-${rowId}"></svg>
-    </td>
-
-    <td align="right" id="total-${rowId}">
-      $0.00
-    </td>
+    <td class="type-cell"></td>
+    <td class="qty-cell"></td>
+    <td class="price-cell">$0.00</td>
+    <td class="barcode-cell"></td>
+    <td class="line-total">$0.00</td>
   `;
 
   tbody.appendChild(tr);
+
+  const btnRow = document.createElement("tr");
+  btnRow.innerHTML = `
+    <td colspan="6">
+      <button type="button" onclick="addProductRow()">+ Add another product</button>
+    </td>
+  `;
+  tbody.appendChild(btnRow);
+
+  wireProductAutocomplete(tr);
 }
 
 /* =========================
