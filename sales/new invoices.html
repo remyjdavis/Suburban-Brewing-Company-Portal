@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
   <style>
+    
     :root {
       --bg: #f4f6f8;
       --sidebar: #1f2937;
@@ -225,6 +226,14 @@
     .product-suggestions div:hover {
       background: #f3f4f6;
     }
+    .type-checkboxes em {
+  color: #9ca3af;
+  font-style: normal;
+}
+
+.type-checkboxes span {
+  font-weight: 600;
+}
   </style>
 </head>
 
@@ -379,6 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadCustomers();
   loadProducts();
   addProductRow();
+  loadInventory();
 });
 
 /* ===== LOAD CUSTOMERS FUNCTION ===== */
@@ -480,6 +490,20 @@ function loadProducts() {
       });
     });
 }
+/* ===== LOAD INVENTORY FUNCTION ===== */
+  function loadInventory() {
+  fetch(`${API_URL}?action=getInventory`)
+    .then(r => r.json())
+    .then(data => {
+      inventoryMap = {};
+
+      data.forEach(item => {
+        if (!inventoryMap[item.name]) inventoryMap[item.name] = {};
+        inventoryMap[item.name][item.package] = item.stock;
+      });
+    });
+}
+
 /* ===== ADD PRODUCT ROW FUNCTION ===== */
 function addProductRow() {
   const tbody = document.getElementById("product-body");
@@ -565,16 +589,50 @@ function selectProduct(row, product) {
   qtyCell.innerHTML = "";
   barcodeCell.innerHTML = "";
 
-  ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
-    if (groupedProducts[product][type] !== undefined) {
-      const label = document.createElement("label");
-      label.innerHTML = `<input type="checkbox" value="${type}"> ${type}`;
-      label.querySelector("input").onchange = () =>
-        updateQuantities(row, product);
+ ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
+  if (groupedProducts[product][type] !== undefined) {
 
-      typesCell.appendChild(label);
+    const stock =
+      inventoryMap[product] &&
+      inventoryMap[product][type] !== undefined
+        ? inventoryMap[product][type]
+        : null;
+
+    const label = document.createElement("label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = type;
+
+    // ❌ OUT OF STOCK
+    if (stock === 0) {
+      checkbox.disabled = true;
+      label.style.opacity = "0.5";
+      label.innerHTML = `${type} — <em>Out of Stock</em>`;
     }
-  });
+
+    // ⚠️ LOW STOCK
+    else if (stock !== null && stock < 10) {
+      label.innerHTML = `
+        <input type="checkbox" value="${type}">
+        ${type} — <span style="color:#b45309;">Low Stock (${stock})</span>
+      `;
+    }
+
+    // ✅ NORMAL
+    else {
+      label.appendChild(checkbox);
+      label.append(" " + type);
+    }
+
+    checkbox.onchange = () => updateQuantities(row, product);
+
+    // Fix for low-stock HTML case
+    const cb = label.querySelector("input") || checkbox;
+    cb.onchange = () => updateQuantities(row, product);
+
+    typesCell.appendChild(label);
+  }
+});
 }
 /* ===== UPDATE QUANTITIES FUNCTION ===== */
 function updateQuantities(row, product) {
