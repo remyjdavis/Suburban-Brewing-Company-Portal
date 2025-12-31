@@ -185,20 +185,7 @@
 
   const scriptURL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
 
-  // 1. SET UP THE LISTENER
-  window.addEventListener("message", function(event) {
-    // Safety: Ensure the data looks like our route array
-    if (Array.isArray(event.data)) {
-      console.log("Data Received from Google!");
-      renderStops(event.data);
-      
-      // Remove the temporary iframe to keep the laptop/phone fast
-      const ifrm = document.getElementById('data-bridge');
-      if (ifrm) ifrm.remove();
-    }
-  });
-
-  function fetchRoute() {
+  async function fetchRoute() {
     const date = document.getElementById('routeDate').value;
     const loader = document.getElementById('loading');
     const list = document.getElementById('routeList');
@@ -207,13 +194,21 @@
     list.innerHTML = "";
     document.getElementById('mainNavBtn').style.display = "none";
 
-    // 2. CREATE THE BRIDGE (Hidden Iframe)
-    // This bypasses 'nosniff' and CORS entirely
-    const ifrm = document.createElement("iframe");
-    ifrm.id = "data-bridge";
-    ifrm.style.display = "none";
-    ifrm.src = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}`;
-    document.body.appendChild(ifrm);
+    // AllOrigins hides the Google Redirect and CORS headers from your browser
+    const proxyUrl = "https://api.allorigins.win/get?url=";
+    const targetUrl = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}`;
+
+    try {
+      const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
+      const data = await response.json();
+      
+      // The actual route array is inside data.contents as a string
+      const stops = JSON.parse(data.contents); 
+      renderStops(stops);
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      loader.innerText = "Error loading route. Check Google Deployment settings.";
+    }
   }
 
   function renderStops(stops) {
@@ -222,7 +217,7 @@
     currentRoute = stops;
 
     if (!stops || stops.length === 0) {
-      list.innerHTML = "<div style='text-align:center; color:#666;'>No stops found.</div>";
+      list.innerHTML = "<div style='text-align:center; color:#666;'>No stops for this date.</div>";
       return;
     }
 
