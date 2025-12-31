@@ -368,6 +368,25 @@ function loadProducts() {
       groupedProducts = groupProductsByName(products);
     });
 }
+function groupProductsByName(productList) {
+  const grouped = {};
+
+  productList.forEach(p => {
+    if (!grouped[p.name]) {
+      grouped[p.name] = {
+        name: p.name,
+        lifecycle: p.lifecycle,
+        packages: {}
+      };
+    }
+
+    grouped[p.name].packages[p.package] = {
+      price: p.price
+    };
+  });
+
+  return grouped;
+}
 
 document.getElementById("customer-search").addEventListener("input", function () {
   document.querySelectorAll(".suggestion").forEach(e => e.remove());
