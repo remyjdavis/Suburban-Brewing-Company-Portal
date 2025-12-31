@@ -1,179 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Suburban Brewing Co. | New Invoice</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- BARCODE LIB (REQUIRED) -->
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-
-  <style>
-    :root {
-      --bg: #f4f6f8;
-      --sidebar: #1f2937;
-      --accent: #2563eb;
-      --text: #1f2937;
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      min-height: 100vh;
-    }
-
-    .sidebar {
-      width: 240px;
-      background: var(--sidebar);
-      color: #fff;
-      padding: 20px 0;
-      position: fixed;
-      height: 100vh;
-    }
-
-    .sidebar h2 {
-      margin: 0 20px 20px;
-      font-size: 18px;
-    }
-
-    .nav-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      opacity: 0.5;
-      margin: 20px 20px 8px;
-      font-weight: 700;
-    }
-
-    .nav-link {
-      display: block;
-      padding: 10px 24px;
-      color: #d1d5db;
-      text-decoration: none;
-      font-size: 14px;
-    }
-
-    .nav-link.active {
-      background: #374151;
-      color: #fff;
-      border-left: 4px solid var(--accent);
-    }
-
-    .main {
-      margin-left: 240px;
-      padding: 30px;
-      flex: 1;
-    }
-
-    .invoice-page {
-      background: #fff;
-      width: 8.5in;
-      min-height: 11in;
-      margin: 0 auto 40px;
-      padding: 0.75in;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    }
-
-    .invoice-header {
-      display: flex;
-      gap: 24px;
-      align-items: center;
-    }
-
-    .invoice-header img {
-      width: 120px;
-    }
-
-    .invoice-company-info {
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .invoice-divider {
-      height: 1px;
-      background: #9ca3af;
-      margin: 10px 0 18px;
-    }
-
-    .invoice-meta-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 24px;
-    }
-
-    .customer-search {
-      width: 100%;
-      font-size: 12px;
-      padding: 4px 6px;
-    }
-
-    .invoice-meta {
-      text-align: right;
-      font-size: 12px;
-    }
-
-    #barcode {
-      height: 32px;
-      margin-top: 6px;
-    }
-  </style>
-</head>
-
-<body>
-
-<aside class="sidebar">
-  <h2>SUBURBAN</h2>
-  <div class="nav-section-title">Sales</div>
-  <a class="nav-link active">New Invoice</a>
-</aside>
-
-<main class="main">
-  <h1>New Invoice</h1>
-
-  <section class="invoice-page">
-
-    <header class="invoice-header">
-      <img src="../background.jpg">
-      <div class="invoice-company-info">
-        <strong>Suburban Brewing Company</strong><br>
-        3041 Horseshoe Pike Suite 120 &amp; 130<br>
-        Honey Brook, PA 19344<br>
-        Sales Rep: Remy Davis · 908-642-1019 · Remyjdavis90@gmail.com
-      </div>
-    </header>
-
-    <div class="invoice-divider"></div>
-
-    <section class="invoice-meta-row">
-
-      <div>
-        <input id="customer-search" class="customer-search" placeholder="Search customer...">
-      </div>
-
-      <div class="invoice-meta">
-        <div>
-          <strong>Date:</strong>
-          <span id="invoice-date"></span>
-        </div>
-
-        <div>
-          <strong>Invoice #:</strong>
-          <input id="invoice-number" style="width:90px;font-size:12px;">
-        </div>
-
-        <svg id="barcode"></svg>
-      </div>
-
-    </section>
-
-  </section>
-</main>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
 <script>
 /******************************************************
@@ -183,23 +8,103 @@ const API_URL =
   "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 
 /******************************************************
+ * STATE
+ ******************************************************/
+let customers = [];
+let selectedCustomer = null;
+
+/******************************************************
  * INIT
  ******************************************************/
 document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toLocaleDateString();
+  document.getElementById("current-date").textContent = today;
   document.getElementById("invoice-date").textContent = today;
+
+  loadCustomers();
   setupBarcode();
 });
 
 /******************************************************
- * BARCODE GENERATION (THIS WAS MISSING)
+ * LOAD CUSTOMERS (BACKEND SYNC)
+ ******************************************************/
+function loadCustomers() {
+  fetch(`${API_URL}?action=getCustomers`)
+    .then(res => res.json())
+    .then(data => {
+      customers = data || [];
+      setupCustomerAutocomplete();
+    })
+    .catch(err => console.error("Customer sync error:", err));
+}
+
+/******************************************************
+ * AUTOCOMPLETE
+ ******************************************************/
+function setupCustomerAutocomplete() {
+  const input = document.getElementById("customer-search");
+
+  input.addEventListener("input", () => {
+    const value = input.value.toLowerCase();
+    clearSuggestions();
+    if (!value) return;
+
+    const matches = customers.filter(c =>
+      c.name.toLowerCase().includes(value)
+    );
+
+    if (!matches.length) return;
+
+    const list = document.createElement("div");
+    list.id = "customer-suggestions";
+    list.style.position = "absolute";
+    list.style.background = "#fff";
+    list.style.border = "1px solid #ccc";
+    list.style.zIndex = 1000;
+    list.style.width = input.offsetWidth + "px";
+
+    matches.forEach(c => {
+      const item = document.createElement("div");
+      item.textContent = c.name;
+      item.style.padding = "6px";
+      item.style.cursor = "pointer";
+      item.onclick = () => selectCustomer(c);
+      list.appendChild(item);
+    });
+
+    input.parentNode.appendChild(list);
+  });
+}
+
+function clearSuggestions() {
+  const el = document.getElementById("customer-suggestions");
+  if (el) el.remove();
+}
+
+/******************************************************
+ * SELECT CUSTOMER
+ ******************************************************/
+function selectCustomer(customer) {
+  selectedCustomer = customer;
+
+  document.getElementById("customer-search").style.display = "none";
+  clearSuggestions();
+
+  document.getElementById("customer-display").hidden = false;
+  document.getElementById("customer-name").textContent = customer.name;
+
+  const lines = customer.address.split(",").slice(0, 2);
+  document.getElementById("customer-address").innerHTML = lines.join("<br>");
+}
+
+/******************************************************
+ * BARCODE
  ******************************************************/
 function setupBarcode() {
   const input = document.getElementById("invoice-number");
 
   input.addEventListener("input", () => {
     const val = input.value.trim();
-
     if (!val) {
       document.getElementById("barcode").innerHTML = "";
       return;
@@ -214,7 +119,15 @@ function setupBarcode() {
     });
   });
 }
-</script>
 
-</body>
-</html>
+/******************************************************
+ * EXPORT (SAVE LATER)
+ ******************************************************/
+function getInvoiceHeaderData() {
+  return {
+    customer: selectedCustomer,
+    invoiceNumber: document.getElementById("invoice-number").value,
+    date: document.getElementById("invoice-date").textContent
+  };
+}
+</script>
