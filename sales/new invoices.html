@@ -234,6 +234,18 @@
 .type-checkboxes span {
   font-weight: 600;
 }
+    .invoice-footer {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #000;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.footer-message {
+  text-transform: uppercase;
+}
   </style>
 </head>
 
@@ -349,6 +361,7 @@
   <strong>Total:</strong>
   <span id="invoice-total">$0.00</span>
 </div>
+<div id="invoice-footer" class="invoice-footer"></div>
 
   </section>
 </main>
@@ -427,7 +440,8 @@ document.getElementById("customer-search").addEventListener("input", function ()
 });
 /* ===== SELECT CUSTOMERS FUNCTION ===== */
 function selectCustomer(c) {
-  selectedCustomer = c;
+  selectedCustomer = customer;
+updateInvoiceFooter();
 
   document.querySelectorAll(".suggestion").forEach(e => e.remove());
   document.getElementById("customer-search").style.display = "none";
@@ -466,6 +480,32 @@ if (c.type === "Restaurant") {
 }
 
   recalcInvoiceTotals();
+}
+  /* ===== FOOTER SELECTION FUNCTION ===== */
+function updateInvoiceFooter() {
+  const footer = document.getElementById("invoice-footer");
+  if (!footer) return;
+
+  let message = "";
+
+  if (!selectedCustomer || !selectedCustomer.paymentMethod) {
+    footer.textContent = "";
+    return;
+  }
+
+  if (selectedCustomer.paymentMethod === "Check") {
+    message = "Make checks payable to Suburban Brewing Company";
+  }
+
+  if (selectedCustomer.paymentMethod === "Fintech") {
+    message = "Paid through Fintech";
+  }
+
+  footer.innerHTML = `
+    <div class="footer-message">
+      ${message}
+    </div>
+  `;
 }
 
 /* ===== INVOICE BARCODE ===== */
