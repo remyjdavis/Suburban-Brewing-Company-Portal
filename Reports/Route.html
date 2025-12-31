@@ -162,16 +162,16 @@
   loader.style.display = "block";
   document.getElementById('mainNavBtn').style.display = "none";
 
-  // REPLACE THIS URL with your actual Google Web App Exec URL
-  const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+  // CHANGE THIS URL to your actual 'Deploy' URL
+  const scriptURL = "https://script.google.com/macros/s/AKfycbz...YOUR_ID.../exec";
   
-  fetch(`${scriptURL}?action=getOptimizedDailyRoute&date=${date}`)
+  fetch(scriptURL + "?action=getOptimizedDailyRoute&date=" + date)
     .then(response => response.json())
-    .then(data => {
-      renderStops(data);
+    .then(stops => {
+      renderStops(stops); // This makes the list appear
     })
     .catch(err => {
-      loader.innerText = "Connection Error: Check if Web App is set to 'Anyone'";
+      loader.innerText = "Error: Deploy as 'Anyone'";
       console.error(err);
     });
 }
