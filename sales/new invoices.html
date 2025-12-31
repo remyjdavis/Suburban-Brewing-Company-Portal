@@ -784,10 +784,10 @@ function recalcInvoiceTotals() {
 
   // ----- PRODUCT SUBTOTAL -----
   document.querySelectorAll(".line-total").forEach(cell => {
-    cell.querySelectorAll("div").forEach(line => {
-      subtotal += Number(line.textContent.replace("$", "")) || 0;
-    });
-  });
+  if (cell.dataset.value !== undefined) {
+    subtotal += Number(cell.dataset.value);
+  }
+});
 
   // ----- CASE DISCOUNT (10%) -----
   const totalCases = getTotalCaseQty();
