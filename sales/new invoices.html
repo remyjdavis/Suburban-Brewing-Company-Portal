@@ -5,417 +5,1453 @@
   <title>New Invoice | Suburban Brewing Company</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- Global libs -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-
-  <style>
-    /* ==========================================================================
-       COMMAND CENTER LAYOUT & SIDEBAR (RESTORED)
-       ========================================================================== */
-    :root {
-      --sidebar-width: 240px;
-      --sidebar-bg: #1f2937;
-      --app-bg: #f4f6f8;
-    }
-
-    body { 
-      margin: 0; 
-      display: flex; 
-      min-height: 100vh; 
-      background-color: var(--app-bg); 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-    }
-
-    .sidebar {
-      width: var(--sidebar-width);
-      background: var(--sidebar-bg);
-      color: #fff;
-      height: 100vh;
-      position: fixed;
-      z-index: 1000;
-    }
-
-    .sidebar h2 { margin: 20px; font-size: 18px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; }
-    .nav-link { display: block; padding: 12px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; }
-    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
-
-    .main-wrapper { flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column; }
-
-    /* SOLID BLACK TOP HEADER */
-    .app-header {
-      background: #000;
-      color: #fff;
-      padding: 15px 30px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 900;
-    }
-    .app-header img { height: 50px; }
-
-    /* THE INVOICE SHEET CONTAINER */
-    #invoice-paper {
-      background: #fff;
-      margin: 30px auto;
-      padding: 50px;
-      width: 95%;
-      max-width: 950px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    }
-  </style>
 </head>
 
 <body>
 
-  <aside class="sidebar">
-    <h2>SUBURBAN</h2>
-    <div class="nav-section-title">Operations</div>
-    <a href="../index.html" class="nav-link">!Main Screen</a>
-    <div class="nav-section-title">Sales & Inventory</div>
-    <a href="invoices.html" class="nav-link active">Invoices</a>
-    <a href="inventory.html" class="nav-link">Live Tracking</a>
-    <a href="customers.html" class="nav-link">Customer List</a>
-  </aside>
+<script>
+/* ===== GLOBAL STATE ===== */
+let invoiceSaved = false;
+let invoicePdfGenerated = false;
+let lastGeneratedPdfId = null;
+let cachedLogoBase64 = null;
 
-  <div class="main-wrapper">
-    <header class="app-header">
-      <img src="background.jpg" alt="SBC Logo">
-      <div style="text-align: right;">
-        <div style="font-weight: 900; font-size: 18px;">INVOICE GENERATOR</div>
-        <div style="font-size: 12px; opacity: 0.8;">v4.2 Internal System</div>
-      </div>
-    </header>
+</script>
 
-    <main id="invoice-paper">
-      <script>
-        /* ===== GLOBAL STATE ===== */
-        let invoiceSaved = false;
-        let invoicePdfGenerated = false;
-        let lastGeneratedPdfId = null;
-        let cachedLogoBase64 = null;
-      </script>
+<!-- ================= HEADER SECTION ================= -->
+<style>
+.invoice-header {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 30px;
+  align-items: start;
+  padding-bottom: 28px;
+}
+/* ⬇⬇ ADD THIS RIGHT HERE ⬇⬇ */
+.print-only {
+  display: none;
+}
 
-      <style>
-        .invoice-header {
-          position: relative;
-          display: grid;
-          grid-template-columns: auto 1fr;
-          column-gap: 30px;
-          align-items: start;
-          padding-bottom: 28px;
-        }
-        .print-only { display: none; }
-        .company-block { display: flex; gap: 15px; }
-        .company-block img { width: 90px; height: 90px; object-fit: contain; display: block; }
-        .company-info { font-size: 11.5px; line-height: 1.6; }
-        .invoice-meta { display: flex; flex-direction: column; align-items: flex-start; text-align: left; font-size: 14px; min-width: 260px; grid-column: 2; }
-        .meta-row { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-top: 6px; }
-        .meta-row label { font-weight: bold; white-space: nowrap; }
-        .meta-row input { padding: 6px; width: 160px; }
-        #barcodeCanvas { display: block; margin-top: 10px; max-width: 260px; }
-        .header-divider { margin-top: 4px; border-top: 2px solid #222; }
-        .invoice-title { margin-top: 14px; margin-bottom: 14px; letter-spacing: 2px; text-align: center; font-weight: bold; font-size: 24px; }
-      </style>
+.company-block {
+  display: flex;
+  gap: 15px;
+}
 
-      <header class="invoice-header">
-        <div class="company-block">
-          <img id="logoImg" src="background.jpg" alt="Logo">
-          <div class="company-info">
-            <strong>Suburban Brewing Company</strong><br>
-            3041 Horseshoe Pike Suite 120 & 130, Honey Brook, PA 19344<br>
-            Sales Rep: Remy Davis · 908-642-1019 · Remyjdavis90@gmail.com
-          </div>
-        </div>
+.company-block img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
 
-        <div class="invoice-meta">
-          <div class="meta-row">
-            <label>Date:</label>
-            <span id="printInvoiceDate"></span>
-            <input type="date" id="invoiceDateValue" style="border:1px solid #ccc;">
-          </div>
-          <div class="meta-row">
-            <label>Invoice #:</label>
-            <input id="invoiceNumber" type="text">
-            <span id="printInvoiceNumber" class="print-only"></span>
-          </div>
-          <canvas id="barcodeCanvas" width="260" height="60"></canvas>
-        </div>
-      </header>
-      
-      <div class="invoice-title">INVOICE</div>
-      <div class="header-divider"></div>
+.company-info {
+  font-size: 11.5px;
+  line-height: 1.6;
+}
 
-      <section class="customer-section" style="margin-top:20px; position:relative;">
-        <div id="printCustomerInfo" style="display:none">
-          <strong id="printCustomerName"></strong><br>
-          <div id="printCustomerAddressLines"></div>
-        </div>
+.invoice-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  font-size: 14px;
+  min-width: 260px;
+  grid-column: 2;
+}
 
-        <div class="customer-row" style="display:flex; align-items:center; gap:10px;">
-          <label style="font-weight:bold; min-width:130px;">Customer Name:</label>
-          <input id="customerName" type="text" placeholder="Start typing..." autocomplete="off" style="flex:1; padding:6px;">
-        </div>
-        <div id="customerAutocomplete" class="autocomplete-list" hidden 
-             style="position:absolute; top:35px; left:140px; width:360px; background:#fff; border:1px solid #ccc; z-index:1000;"></div>
+.meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 6px;
+}
 
-        <input type="hidden" id="customerAddress">
-        <input type="hidden" id="customerType">
-        <input type="hidden" id="paymentMethod">
-      </section>
+.meta-row label {
+  font-weight: bold;
+  white-space: nowrap;
+}
 
-      <div class="section-divider" style="margin:24px 0; border-top:2px solid #222;"></div>
+.meta-row input {
+  padding: 6px;
+  width: 160px;
+}
 
-      <table class="product-table" style="width:100%; border-collapse:collapse;">
-        <thead>
-          <tr style="background:#f3f4f6;">
-            <th style="border:1px solid #ddd; padding:8px;">Product</th>
-            <th style="border:1px solid #ddd; padding:8px;">Type</th>
-            <th style="border:1px solid #ddd; padding:8px;">Qty</th>
-            <th style="border:1px solid #ddd; padding:8px;">Price</th>
-            <th style="border:1px solid #ddd; padding:8px;">Total</th>
-            <th style="border:1px solid #ddd; padding:8px;"></th>
-          </tr>
-        </thead>
-        <tbody id="productBlocks"></tbody>
-      </table>
-      <button onclick="addProductBlock()" style="margin-top:12px;">➕ Add Another Product</button>
+.meta-row input[disabled] {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
 
-      <section class="totals-section" style="margin-top:25px; display:flex; justify-content:flex-end;">
-        <table class="totals-table" style="width:320px;">
-          <tr><td>Subtotal:</td><td id="subtotal" style="text-align:right;">$0.00</td></tr>
-          <tr id="taxRow"><td>Sales Tax (6%):</td><td id="salesTax" style="text-align:right;">$0.00</td></tr>
-          <tr id="discountRow" style="display:none; color:red;"><td>Discount (10%):</td><td style="text-align:right;"><input id="discountInput" type="text" disabled style="border:none; background:none; text-align:right;"></td></tr>
-          <tr id="depositRow" style="display:none; color:blue;"><td>Keg Deposit:</td><td style="text-align:right;"><input id="depositInput" type="text" disabled style="border:none; background:none; text-align:right;"></td></tr>
-          <tr class="grand-total" style="font-size:18px; font-weight:bold; border-top:2px solid #000;">
-            <td>Total:</td><td id="grandTotal" style="text-align:right;">$0.00</td>
-          </tr>
-        </table>
-      </section>
+#barcodeCanvas {
+  display: block;
+  margin-top: 10px;
+  max-width: 260px;
+}
 
-      <div id="paymentFooter" class="payment-footer" style="margin-top:20px; font-weight:bold; border-left:4px solid #000; padding-left:10px;"></div>
+.header-divider {
+  margin-top: 4px;
+  border-top: 2px solid #222;
+}
+ .invoice-title {
+  margin-top: 14px;
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+}
 
-      <div style="margin-top:40px; text-align:right;">
-        <button onclick="saveInvoice()" style="padding:10px 20px; background:#000; color:#fff; border:none; cursor:pointer;">💾 Save Invoice</button>
-        <button onclick="window.print()" style="padding:10px 20px; cursor:pointer;">Print</button>
-        <button onclick="goBackToInvoices()" style="padding:10px 20px; cursor:pointer;">⬅ Back</button>
-      </div>
+</style>
 
-    </main>
+<header class="invoice-header">
+  <div class="company-block">
+   <img
+  id="logoImg"
+  src="background.jpg"
+  alt="Suburban Brewing Company Logo"
+>
+    <div class="company-info">
+  <strong>Suburban Brewing Company</strong><br>
+  3041 Horseshoe Pike Suite 120 & 130, Honey Brook, PA 19344<br>
+  Sales Rep: Remy Davis · 908-642-1019 · Remyjdavis90@gmail.com
+</div>
+
   </div>
 
-  <div id="newCustomerBackdrop" class="modal-backdrop" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:2000;">
-    <div class="modal" style="background:#fff; padding:25px; border-radius:8px; width:400px;">
-      <h3 style="margin-top:0;">New Customer Setup</h3>
-      <div style="margin-bottom:10px;"><label>Name</label><input id="newCustName" disabled style="width:100%; padding:6px; background:#eee;"></div>
-      <div style="margin-bottom:10px;"><label>Address</label><textarea id="newCustAddress" style="width:100%; padding:6px;"></textarea></div>
-      <div style="margin-bottom:10px;">
-        <label>Type</label>
-        <select id="newCustType" style="width:100%; padding:6px;"><option value="Restaurant">Restaurant</option><option value="Wholesale">Wholesale</option></select>
-      </div>
-      <div style="margin-bottom:10px;">
-        <label>Payment</label>
-        <select id="newCustPayment" style="width:100%; padding:6px;"><option value="Check">Check</option><option value="Fintech">Fintech</option></select>
-      </div>
-      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-        <button onclick="closeNewCustomerModal()">Cancel</button>
-        <button onclick="saveNewCustomer()" style="background:#000; color:#fff; border:none; padding:8px 15px;">Save</button>
-      </div>
+<!-- RIGHT SIDE META BLOCK -->
+<div class="invoice-meta">
+
+  <!-- DATE -->
+  <div class="meta-row">
+    <label>Date:</label>
+    <span id="printInvoiceDate"></span>
+    <input type="hidden" id="invoiceDateValue">
+  </div>
+
+  <!-- INVOICE NUMBER (EDITABLE IN BROWSER) -->
+  <div class="meta-row">
+    <label>Invoice #:</label>
+    <input
+      id="invoiceNumber"
+      type="text"
+      style="width:160px; padding:6px;"
+    >
+    <span id="printInvoiceNumber" class="print-only"></span>
+  </div>
+
+  <!-- BARCODE -->
+  <canvas id="barcodeCanvas" width="260" height="60"></canvas>
+
+</div>
+
+  <!-- MUST be here -->
+  <div class="invoice-title">INVOICE</div>
+</header>
+<div class="header-divider"></div>
+
+<script>
+/* ===== HEADER LOGIC ONLY (FINAL) ===== */
+(function(){
+  const invoiceNumber = document.getElementById("invoiceNumber");
+  const invoiceDateValue = document.getElementById("invoiceDateValue");
+
+  invoiceNumber.value = "INV-" + Date.now();
+
+  const today = new Date().toISOString().split("T")[0];
+  invoiceDateValue.value = today;
+
+  document.getElementById("printInvoiceDate").textContent = today;
+  document.getElementById("printInvoiceNumber").textContent = invoiceNumber.value;
+
+  function refreshBarcode(){
+    if (!window.JsBarcode) return;
+    try {
+      JsBarcode("#barcodeCanvas", invoiceNumber.value || "", {
+        displayValue: false,
+        height: 50
+      });
+    } catch (e) {}
+  }
+
+  invoiceNumber.addEventListener("input", refreshBarcode);
+  refreshBarcode();
+})();
+</script>
+<!-- =============== END HEADER SECTION =============== -->
+<style>
+.customer-section {
+  margin-top: 20px;
+  font-size: 14px;
+  position: relative;
+}
+
+.section-divider {
+  margin: 24px 0;
+  border-top: 2px solid #222;
+}
+
+.customer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 500px;
+}
+
+.customer-row label {
+  min-width: 130px;
+  font-weight: bold;
+}
+
+.customer-row input {
+  flex: 1;
+  padding: 6px;
+  font-size: 14px;
+}
+
+/* AUTOCOMPLETE */
+.autocomplete-list {
+  position: absolute;
+  top: 36px;
+  left: 140px;
+  width: 360px;
+  background: #fff;
+  border: 1px solid #ccc;
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.autocomplete-item {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.autocomplete-item:hover {
+  background: #f3f4f6;
+}
+
+.autocomplete-empty {
+  padding: 6px 10px;
+  font-style: italic;
+  color: #666;
+}
+</style>
+
+<section class="customer-section">
+<!-- PRINT-ONLY CUSTOMER INFO -->
+<div id="printCustomerInfo" style="display:none">
+  <strong id="printCustomerName"></strong><br>
+  <span id="printCustomerAddress"></span>
+</div>
+
+  <div class="customer-row">
+    <label for="customerName">Customer Name:</label>
+    <input
+      id="customerName"
+      type="text"
+      placeholder="Start typing customer name"
+      autocomplete="off"
+    >
+  </div>
+
+  <div id="customerAutocomplete" class="autocomplete-list" hidden></div>
+
+ <!-- Hidden fields for logic -->
+  <input type="hidden" id="customerAddress">
+  <input type="hidden" id="customerType">
+  <input type="hidden" id="paymentMethod">
+
+</section>
+
+<div class="section-divider"></div>
+  
+ <script>
+/******************************************************
+ * CUSTOMER SECTION LOGIC (FRONTEND)
+ ******************************************************/
+
+/* ===== BACKEND CONFIG ===== */
+const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+
+/* ===== CUSTOMER CACHE ===== */
+let customers = [];
+
+/* ===== CUSTOMER STATE ===== */
+const customerState = {
+  name: "",
+  address: "",
+  type: "",
+  payment: "",
+  isNew: false
+};
+
+/* ===== DOM REFERENCES ===== */
+const nameInput = document.getElementById("customerName");
+const autocompleteBox = document.getElementById("customerAutocomplete");
+
+/* ===== LOAD CUSTOMERS FROM BACKEND ===== */
+fetch(`${API_URL}?action=getCustomers`)
+  .then(res => res.json())
+  .then(data => {
+    if (Array.isArray(data)) {
+      customers = data;
+    } else if (Array.isArray(data.data)) {
+      customers = data.data;
+    } else {
+      console.error("Unexpected customers payload:", data);
+      customers = [];
+    }
+  })
+  .catch(err => {
+    console.error("Customer load failed", err);
+  });
+
+
+/* ===== HELPERS ===== */
+function clearAutocomplete() {
+  autocompleteBox.innerHTML = "";
+  autocompleteBox.hidden = true;
+}
+
+function selectCustomer(cust) {
+  nameInput.value = cust.name;
+
+  customerState.name = cust.name;
+  customerState.address = cust.address;
+  customerState.type = cust.type;
+  customerState.payment = cust.payment;
+  customerState.isNew = false;
+
+  document.getElementById("customerAddress").value = cust.address;
+  document.getElementById("customerType").value = cust.type;
+  document.getElementById("paymentMethod").value = cust.payment;
+
+  clearAutocomplete();
+  calculateTotals();
+  updatePaymentFooter(); // ✅ ADD THIS
+}
+
+/* ===== AUTOCOMPLETE ===== */
+nameInput.addEventListener("input", () => {
+  const query = nameInput.value.trim().toLowerCase();
+  clearAutocomplete();
+
+  if (!query) return;
+
+  const matches = customers.filter(c =>
+    c.name.toLowerCase().includes(query)
+  );
+
+  if (matches.length === 0) {
+    customerState.isNew = true;
+    autocompleteBox.innerHTML =
+      `<div class="autocomplete-empty">New customer — press Enter to add</div>`;
+    autocompleteBox.hidden = false;
+    return;
+  }
+
+  matches.forEach(cust => {
+    const div = document.createElement("div");
+    div.className = "autocomplete-item";
+    div.textContent = cust.name;
+    div.onclick = () => selectCustomer(cust);
+    autocompleteBox.appendChild(div);
+  });
+
+  autocompleteBox.hidden = false;
+});
+
+/* ===== CLICK AWAY ===== */
+document.addEventListener("click", e => {
+  if (!e.target.closest(".customer-section")) {
+    clearAutocomplete();
+  }
+});
+</script>
+  <div class="section-divider"></div>
+
+<!-- =============== END CUSTOMER SECTION =============== -->
+<!-- ================= NEW CUSTOMER MODAL ================= -->
+<style>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal {
+  background: #fff;
+  padding: 20px;
+  width: 420px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.modal h3 {
+  margin-top: 0;
+}
+
+.modal-row {
+  margin-bottom: 10px;
+}
+
+.modal-row label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.modal-row input,
+.modal-row select {
+  width: 100%;
+  padding: 6px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.modal-actions button {
+  padding: 6px 14px;
+}
+</style>
+
+<div id="newCustomerBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <h3>New Customer</h3>
+
+    <div class="modal-row">
+      <label>Name</label>
+      <input id="newCustName" disabled>
+    </div>
+
+    <div class="modal-row">
+      <label>Address</label>
+      <input id="newCustAddress">
+    </div>
+
+    <div class="modal-row">
+      <label>Customer Type</label>
+      <select id="newCustType">
+        <option value="Restaurant">Restaurant</option>
+        <option value="Wholesale">Wholesale</option>
+      </select>
+    </div>
+
+    <div class="modal-row">
+      <label>Payment Method</label>
+      <select id="newCustPayment">
+        <option value="Check">Check</option>
+        <option value="Fintech">Fintech</option>
+      </select>
+    </div>
+
+    <div class="modal-row">
+      <label>Email</label>
+      <input id="newCustEmail" type="email">
+    </div>
+
+    <div class="modal-actions">
+      <button onclick="closeNewCustomerModal()">Cancel</button>
+      <button onclick="saveNewCustomer()">Save Customer</button>
     </div>
   </div>
+</div>
 
-  <script>
-    /* ===== RESTORED LOGIC FROM YOUR 1,003 LINE VERSION ===== */
-    const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
-    let customers = [];
-    let rawProducts = [];
-    let productsByName = {};
-    let invoiceLines = [];
-    let productBlockId = 0;
+<script>
+/******************************************************
+ * NEW CUSTOMER MODAL LOGIC
+ ******************************************************/
+const modalBackdrop = document.getElementById("newCustomerBackdrop");
 
-    // Initialize Header
-    (function(){
-      const invNum = document.getElementById("invoiceNumber");
-      invNum.value = "INV-" + Date.now();
-      document.getElementById("invoiceDateValue").value = new Date().toISOString().split("T")[0];
-      const refresh = () => JsBarcode("#barcodeCanvas", invNum.value, { displayValue: false, height: 50 });
-      invNum.addEventListener("input", refresh);
-      refresh();
-    })();
+function openNewCustomerModal(name) {
+  document.getElementById("newCustName").value = name;
+  modalBackdrop.style.display = "flex";
+}
 
-    // Load Data
-    fetch(`${API_URL}?action=getCustomers`).then(r => r.json()).then(d => customers = d.data || d);
-    fetch(`${API_URL}?action=getProducts`).then(r => r.json()).then(d => {
-      rawProducts = d || [];
-      rawProducts.forEach(p => {
-        if(!productsByName[p.name]) productsByName[p.name] = [];
-        productsByName[p.name].push({ type: p.type, price: p.price });
-      });
-    });
+function closeNewCustomerModal() {
+  modalBackdrop.style.display = "none";
+}
 
-    // Customer Autocomplete (Restored)
-    const nameIn = document.getElementById("customerName");
-    const autoBox = document.getElementById("customerAutocomplete");
-    nameIn.addEventListener("input", () => {
-      const q = nameIn.value.trim().toLowerCase();
-      autoBox.innerHTML = "";
-      if(!q) { autoBox.hidden = true; return; }
-      const matches = customers.filter(c => c.name.toLowerCase().includes(q));
-      if(matches.length === 0) {
-        autoBox.innerHTML = `<div onclick="openNewCustomerModal('${nameIn.value}')" style="padding:10px; color:blue; cursor:pointer;">+ Add New: ${nameIn.value}</div>`;
-      } else {
-        matches.forEach(c => {
-          const div = document.createElement("div");
-          div.style.padding = "8px"; div.style.cursor = "pointer"; div.textContent = c.name;
-          div.onclick = () => {
-            nameIn.value = c.name;
-            document.getElementById("customerType").value = c.type;
-            document.getElementById("paymentMethod").value = c.payment;
-            document.getElementById("customerAddress").value = c.address;
-            autoBox.hidden = true;
-            updatePaymentFooter();
-            calculateTotals();
-          };
-          autoBox.appendChild(div);
-        });
+/* Trigger modal when pressing Enter on new customer */
+document.getElementById("customerName").addEventListener("keydown", e => {
+  if (e.key === "Enter" && customerState.isNew) {
+    openNewCustomerModal(e.target.value);
+  }
+});
+
+/* Save new customer */
+async function saveNewCustomer() {
+  const payload = {
+    action: "addCustomer", // Backend logic handles writing to BOTH sheet IDs
+    name: document.getElementById("newCustName").value,
+    address: document.getElementById("newCustAddress").value,
+    type: document.getElementById("newCustType").value,
+    payment: document.getElementById("newCustPayment").value,
+    email: document.getElementById("newCustEmail").value
+  };
+
+  try {
+    // We use a GET request for adding to bypass CORS issues on GitHub Pages
+    const params = new URLSearchParams(payload);
+    await fetch(`${API_URL}?${params.toString()}`, { method: "GET" });
+
+    // Update local cache so they show up in autocomplete immediately
+    customers.push(payload);
+    selectCustomer(payload);
+    closeNewCustomerModal();
+    alert("Customer synced to both Invoice and Inventory sheets.");
+  } catch (err) {
+    console.error("Sync failed:", err);
+  }
+}
+</script>   <!-- ✅ THIS WAS MISSING -->
+
+<script>
+function getLogoBase64() {
+  const img = document.getElementById("logoImg");
+  if (!img) {
+    console.error("Logo img not found");
+    return null;
+  }
+
+  if (!img.complete || img.naturalWidth === 0) {
+    console.error("Logo not loaded yet");
+    return null;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  return canvas.toDataURL("image/png");
+}
+</script>
+
+<!-- =============== END NEW CUSTOMER MODAL =============== -->
+<!-- ================= PRODUCT SECTION ================= -->
+<style>
+.product-section {
+  margin-top: 25px;
+  font-size: 14px;
+}
+
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.product-table th,
+.product-table td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  vertical-align: top;
+}
+
+.product-table th {
+  background: #f3f4f6;
+}
+
+.product-search {
+  width: 100%;
+  padding: 6px;
+}
+
+.autocomplete-box {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.autocomplete-item {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.autocomplete-item:hover {
+  background: #f3f4f6;
+}
+
+.type-list label {
+  display: block;
+  font-size: 13px;
+}
+
+.qty-input {
+  width: 60px;
+}
+  .stock-badge {
+  display: inline-block; 
+  font-size: 10px;
+  font-weight: bold;
+  margin-top: 2px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  min-width: 60px; /* Matches width of qty-input */
+  text-align: center;
+}
+
+/* Matches 'Low' status in Column H */
+.stock-low {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Matches 'OK' status in Column H */
+.stock-ok {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+</style>
+
+<section class="product-section">
+
+  <table class="product-table">
+  <thead>
+  <tr>
+    <th>Product</th>
+    <th>Type</th>
+    <th>Qty</th>
+    <th>Price</th>
+    <th>Total</th>
+    <th></th>
+  </tr>
+</thead>
+  <tbody id="productBlocks"></tbody>
+</table>
+
+<div style="margin-top:12px">
+  <button onclick="addProductBlock()">➕ Add Another Product</button>
+</div>
+
+</section>
+
+<script>
+/******************************************************
+ * PRODUCT SECTION — MULTI PRODUCT BLOCKS (STABLE)
+ ******************************************************/
+
+let rawProducts = [];
+let productsByName = {};
+let invoiceLines = [];
+let productBlockId = 0;
+
+const blocks = document.getElementById("productBlocks");
+
+/* LOAD PRODUCTS */
+fetch(`${API_URL}?action=getProducts`)
+  .then(r => r.json())
+  .then(data => {
+    rawProducts = data || [];
+
+    // GROUP BY PRODUCT NAME
+    productsByName = {};
+    rawProducts.forEach(p => {
+      if (!productsByName[p.name]) {
+        productsByName[p.name] = [];
       }
-      autoBox.hidden = false;
+      productsByName[p.name].push({
+        type: p.type,
+        price: p.price
+      });
     });
+  });
 
-    // Product Block Logic
-    function addProductBlock() {
-      const id = productBlockId++;
-      const tr = document.createElement("tr");
-      tr.setAttribute("data-block-id", id);
-      tr.innerHTML = `
-        <td style="position:relative; border:1px solid #ddd; padding:8px;">
-          <input class="product-search" data-id="${id}" style="width:100%; padding:6px;" autocomplete="off">
-          <div class="autocomplete-box" data-box="${id}" hidden style="position:absolute; background:#fff; border:1px solid #ccc; width:100%; z-index:100;"></div>
-        </td>
-        <td data-types="${id}" style="border:1px solid #ddd; padding:8px;"></td>
-        <td data-qty="${id}" style="border:1px solid #ddd; padding:8px;"></td>
-        <td data-price="${id}" style="border:1px solid #ddd; padding:8px; text-align:right;"></td>
-        <td data-total="${id}" style="border:1px solid #ddd; padding:8px; text-align:right;"></td>
-        <td style="border:1px solid #ddd; padding:8px; text-align:center;"><button onclick="this.closest('tr').remove()">🗑</button></td>
-      `;
-      document.getElementById("productBlocks").appendChild(tr);
-      setupProdAuto(id);
-    }
+/* ADD PRODUCT BLOCK */
+/* ADD PRODUCT BLOCK */
+function addProductBlock() {
+  const id = productBlockId++;
+  const row = document.createElement("tr");
+  row.setAttribute("data-block-id", id);
 
-    function setupProdAuto(id) {
-      const inp = document.querySelector(`[data-id="${id}"]`);
-      const box = document.querySelector(`[data-box="${id}"]`);
-      inp.addEventListener("input", () => {
-        const q = inp.value.toLowerCase();
-        box.innerHTML = "";
-        if(!q) { box.hidden = true; return; }
-        Object.keys(productsByName).filter(n => n.toLowerCase().includes(q)).forEach(n => {
-          const d = document.createElement("div");
-          d.style.padding = "5px"; d.style.cursor = "pointer"; d.textContent = n;
-          d.onclick = () => {
-            inp.value = n; box.hidden = true;
-            const typeCell = document.querySelector(`[data-types="${id}"]`);
-            typeCell.innerHTML = "";
-            productsByName[n].forEach(t => {
-              typeCell.innerHTML += `<label style="display:block;"><input type="checkbox" onchange="toggleLine(${id},'${n}','${t.type}',${t.price},this.checked)"> ${t.type}</label>`;
-            });
-          };
-          box.appendChild(d);
-        });
-        box.hidden = false;
+  row.innerHTML = `
+    <td style="position:relative">
+      <input class="product-search" data-id="${id}" autocomplete="off">
+      <div class="autocomplete-box" data-box="${id}" hidden></div>
+    </td>
+    <td data-types="${id}"></td>
+    <td data-qty="${id}">
+       <div class="stock-badge" id="stock-${id}" style="display:none;"></div>
+    </td>
+    <td data-price="${id}"></td>
+    <td data-total="${id}"></td>
+    <td style="text-align:center">
+      <button onclick="removeProductBlock(${id})">🗑</button>
+    </td>
+  `;
+  blocks.appendChild(row);
+  setupAutocomplete(id);
+}
+function closeAllProductAutocompletes() {
+  document.querySelectorAll(".autocomplete-box").forEach(b => {
+    b.hidden = true;
+    b.innerHTML = "";
+  });
+}
+
+/* AUTOCOMPLETE */
+function setupAutocomplete(id) {
+  const input = document.querySelector(`[data-id="${id}"]`);
+  const box = document.querySelector(`[data-box="${id}"]`);
+
+  input.addEventListener("input", () => {
+    closeAllProductAutocompletes();
+
+    const q = input.value.toLowerCase();
+    box.innerHTML = "";
+    box.hidden = true;
+    if (!q) return;
+
+    if (!Object.keys(productsByName).length) return;
+
+    Object.keys(productsByName)
+      .filter(name => name.toLowerCase().includes(q))
+      .forEach(name => {
+        const div = document.createElement("div");
+        div.className = "autocomplete-item";
+        div.textContent = name;
+        div.onclick = () => selectProduct(id, name);
+        box.appendChild(div);
       });
-    }
 
-    function toggleLine(blockId, prod, type, price, checked) {
-      if(checked) invoiceLines.push({ id: crypto.randomUUID(), blockId, product: prod, type, qty: 1, price, isKeg: type.toLowerCase().includes("keg") });
-      else invoiceLines = invoiceLines.filter(l => !(l.blockId === blockId && l.type === type));
-      renderBlock(blockId);
-    }
+    box.hidden = false;
+  });
+}
 
-    function renderBlock(blockId) {
-      const qCell = document.querySelector(`[data-qty="${blockId}"]`);
-      const pCell = document.querySelector(`[data-price="${blockId}"]`);
-      const tCell = document.querySelector(`[data-total="${blockId}"]`);
-      qCell.innerHTML = ""; pCell.innerHTML = ""; tCell.innerHTML = "";
-      invoiceLines.filter(l => l.blockId === blockId).forEach(l => {
-        qCell.innerHTML += `<div style="margin-bottom:8px;"><input type="number" value="${l.qty}" onchange="updateQty('${l.id}',this.value)" style="width:50px; padding:4px;"></div>`;
-        pCell.innerHTML += `<div style="height:35px;">$${l.price.toFixed(2)}</div>`;
-        tCell.innerHTML += `<div style="height:35px;">$${(l.qty * l.price).toFixed(2)}</div>`;
-      });
-      calculateTotals();
-    }
+document.addEventListener("click", e => {
+  if (!e.target.closest(".product-section")) {
+    closeAllProductAutocompletes();
+  }
+});
 
-    function updateQty(id, val) {
-      const line = invoiceLines.find(l => l.id === id);
-      if(line) { line.qty = Number(val) || 1; renderBlock(line.blockId); }
-    }
+/* SELECT PRODUCT */
+function selectProduct(blockId, productName) {
+ document.querySelector(`[data-id="${blockId}"]`).value = productName;
+document.querySelector(`[data-box="${blockId}"]`).hidden = true;
 
-    function calculateTotals() {
-      let sub = 0, cases = 0, kegs = 0;
-      invoiceLines.forEach(l => {
-        sub += l.qty * l.price;
-        if(l.type.toLowerCase().includes("case")) cases += l.qty;
-        if(l.isKeg) kegs += l.qty;
-      });
-      const taxable = document.getElementById("customerType").value === "Restaurant";
-      const tax = taxable ? sub * 0.06 : 0;
-      const disc = cases >= 10 ? sub * 0.10 : 0;
-      const dep = kegs * 30;
+  const typeCell = document.querySelector(`[data-types="${blockId}"]`);
+  typeCell.innerHTML = "";
 
-      document.getElementById("subtotal").textContent = `$${sub.toFixed(2)}`;
-      document.getElementById("salesTax").textContent = `$${tax.toFixed(2)}`;
+  productsByName[productName].forEach(t => {
+    typeCell.innerHTML += `
+  <label>
+    <input type="checkbox"
+      onchange="toggleLine(${blockId}, '${productName}', '${t.type}', ${t.price}, this.checked)">
+    <span class="type-text">${t.type}</span>
+  </label><br>
+`;
+
+  });
+}
+function removeProductBlock(blockId) {
+  // Remove all invoice lines tied to this block
+  invoiceLines = invoiceLines.filter(l => l.blockId !== blockId);
+
+  // Remove the table row
+  const row = document.querySelector(`tr[data-block-id="${blockId}"]`);
+  if (row) row.remove();
+
+  calculateTotals();
+}
+
+/* TOGGLE LINE */
+function toggleLine(blockId, product, type, price, checked) {
+  if (checked) {
+   invoiceLines.push({
+  id: crypto.randomUUID(),
+  blockId,
+  product,
+  type,
+  qty: 1,
+  price,
+  isKeg: type.toLowerCase().includes("keg")
+});
+  } else {
+    invoiceLines = invoiceLines.filter(
+      l => !(l.blockId === blockId && l.product === product && l.type === type)
+    );
+  }
+  renderBlock(blockId);
+}
+
+/* RENDER BLOCK */
+function renderBlock(blockId) {
+  const qtyCell = document.querySelector(`[data-qty="${blockId}"]`);
+  const priceCell = document.querySelector(`[data-price="${blockId}"]`);
+  const totalCell = document.querySelector(`[data-total="${blockId}"]`);
+
+  qtyCell.innerHTML = "";
+  priceCell.innerHTML = "";
+  totalCell.innerHTML = "";
+
+  invoiceLines
+    .filter(l => l.blockId === blockId)
+    .forEach(l => {
+      // 1. Create a unique ID for the badge so we can update it after the server responds
+      const badgeId = `badge-${l.id}`;
       
-      const dr = document.getElementById("discountRow");
-      dr.style.display = disc > 0 ? "table-row" : "none";
-      document.getElementById("discountInput").value = `-$${disc.toFixed(2)}`;
+      // 2. Add the input and a placeholder badge to the HTML
+      qtyCell.innerHTML += `
+        <div style="margin-bottom: 8px;">
+          <input type="number" min="1" value="${l.qty}"
+            onchange="updateQty('${l.id}', this.value)"
+            class="qty-input">
+          <div id="${badgeId}" class="stock-badge">Checking...</div>
+        </div>
+      `;
+      
+      priceCell.innerHTML += `<div style="height: 42px;">$${l.price.toFixed(2)}</div>`;
+      totalCell.innerHTML += `<div style="height: 42px;">$${(l.qty * l.price).toFixed(2)}</div>`;
 
-      const depR = document.getElementById("depositRow");
-      depR.style.display = dep > 0 ? "table-row" : "none";
-      document.getElementById("depositInput").value = `$${dep.toFixed(2)}`;
+      // 3. Call the Google Script to get the "On Hand" value from Column E
+      google.script.run.withSuccessHandler((qty) => {
+        const badge = document.getElementById(badgeId);
+        if (!badge) return;
 
-      document.getElementById("grandTotal").textContent = `$${(sub + tax + dep - disc).toFixed(2)}`;
-    }
-
-    function updatePaymentFooter() {
-      const p = document.getElementById("paymentMethod").value;
-      document.getElementById("paymentFooter").textContent = p === "Check" ? "Payable to: Suburban Brewing Company" : (p === "Fintech" ? "Paid via Fintech" : "");
-    }
-
-    function openNewCustomerModal(name) { document.getElementById("newCustName").value = name; document.getElementById("newCustomerBackdrop").style.display = "flex"; }
-    function closeNewCustomerModal() { document.getElementById("newCustomerBackdrop").style.display = "none"; }
-
-    async function saveInvoice() {
-      if(invoiceSaved) return alert("Saved.");
-      const payload = {
-        action: "saveInvoice",
-        invoiceData: {
-          number: document.getElementById("invoiceNumber").value,
-          date: document.getElementById("invoiceDateValue").value,
-          customer: document.getElementById("customerName").value,
-          total: document.getElementById("grandTotal").textContent,
-          items: invoiceLines
+        badge.textContent = `Stock: ${qty}`;
+        
+        // Apply Red/Green styling based on quantity
+        if (qty <= 0) {
+          badge.className = "stock-badge stock-low";
+          badge.textContent = "OUT OF STOCK";
+        } else if (qty < 5) {
+          badge.className = "stock-badge stock-low";
+        } else {
+          badge.className = "stock-badge stock-ok";
         }
-      };
-      await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
-      invoiceSaved = true;
-      alert("Inventory Updated and Invoice Saved!");
+      }).getStockLevel(l.product, l.type); 
+    });
+    
+  calculateTotals();
+}
+
+function updateQty(id, val) {
+  const line = invoiceLines.find(l => l.id === id);
+  if (!line) return;
+  
+  line.qty = Number(val) || 1;
+  
+  // Re-render the block to update totals and refresh the stock badge
+  renderBlock(line.blockId);
+  
+  // Update the badge to show it is checking the latest inventory
+  const badge = document.getElementById(`badge-${id}`);
+  if (badge) {
+    badge.textContent = "Syncing...";
+    badge.className = "stock-badge";
+  }
+}
+
+/* INITIAL ROW */
+addProductBlock();
+</script>
+
+<!-- =============== END PRODUCT SECTION =============== -->
+<!-- ================= TOTALS SECTION ================= -->
+<style>
+.totals-section {
+  margin-top: 25px;
+  display: flex;
+  justify-content: flex-end;
+  font-size: 14px;
+}
+
+.totals-table {
+  width: 320px;
+  border-collapse: collapse;
+}
+
+.totals-table td {
+  padding: 6px;
+}
+
+.totals-table tr td:first-child {
+  text-align: right;
+  font-weight: bold;
+}
+
+.totals-table tr td:last-child {
+  text-align: right;
+}
+
+.totals-table input {
+  width: 100px;
+  padding: 4px;
+  text-align: right;
+}
+
+.grand-total {
+  font-size: 16px;
+  font-weight: 800;
+  border-top: 2px solid #222;
+}
+</style>
+
+<section class="totals-section">
+  <table class="totals-table">
+    <tr>
+      <td>Subtotal:</td>
+      <td id="subtotal">$0.00</td>
+    </tr>
+    <tr>
+      <td>Sales Tax:</td>
+      <td id="salesTax">$0.00</td>
+    </tr>
+    <tr>
+      <td>Discount:</td>
+      <td>
+       <input id="discountInput" type="number" disabled>
+      </td>
+    </tr>
+    <tr>
+      <td>Keg Deposit:</td>
+      <td>
+       <input id="depositInput" type="number" disabled>
+      </td>
+    </tr>
+    <tr class="grand-total">
+      <td>Total:</td>
+      <td id="grandTotal">$0.00</td>
+    </tr>
+  </table>
+</section>
+<!-- =============== END TOTALS SECTION =============== -->
+<script>
+/******************************************************
+ * TOTALS LOGIC
+ ******************************************************/
+const TAX_RATE = 0.06; // PA sales tax
+/******************************************************
+ * AUTOMATIC PRICING RULES
+ ******************************************************/
+const CASE_DISCOUNT_RATE = 0.10; // 10% discount
+const KEG_DEPOSIT_AMOUNT = 30;   // $30 per keg (adjust if needed)
+document
+  .getElementById("discountInput")
+  .closest("tr")
+  .style.display = "none";
+
+document
+  .getElementById("depositInput")
+  .closest("tr")
+  .style.display = "none";
+
+function calculateTotals() {
+  let subtotal = 0;
+  let totalCases = 0;
+  let kegCount = 0;
+
+  invoiceLines.forEach(l => {
+    subtotal += l.qty * l.price;
+
+    // CASE LOGIC
+    if (l.type.toLowerCase().includes("case")) {
+      totalCases += l.qty;
     }
 
-    addProductBlock();
-  </script>
+    // KEG LOGIC
+   if (l.isKeg) {
+  kegCount += l.qty;
+}
+
+  });
+
+  /* CUSTOMER TAX LOGIC */
+  const customerType =
+    document.getElementById("customerType").value;
+  const taxable = customerType === "Restaurant";
+  const salesTax = taxable ? subtotal * TAX_RATE : 0;
+
+  /* AUTOMATIC DISCOUNT */
+  let discount = 0;
+  if (totalCases >= 10) {
+    discount = subtotal * CASE_DISCOUNT_RATE;
+  }
+
+  /* AUTOMATIC KEG DEPOSIT */
+  let deposit = kegCount * KEG_DEPOSIT_AMOUNT;
+  // SHOW / HIDE DISCOUNT ROW
+document
+  .getElementById("discountInput")
+  .closest("tr")
+  .style.display = discount > 0 ? "" : "none";
+
+// SHOW / HIDE DEPOSIT ROW
+document
+  .getElementById("depositInput")
+  .closest("tr")
+  .style.display = deposit > 0 ? "" : "none";
+
+/* UX EXPLANATIONS (NON-VISUAL) */
+const discountInputEl = document.getElementById("discountInput");
+const depositInputEl = document.getElementById("depositInput");
+
+if (totalCases >= 10) {
+  discountInputEl.title = `10+ case discount applied (${totalCases} cases)`;
+} else {
+  discountInputEl.title = "";
+}
+
+if (kegCount > 0) {
+  depositInputEl.title = `${kegCount} keg deposit(s) applied`;
+} else {
+  depositInputEl.title = "";
+}
+
+  const total = Math.max(
+    0,
+    subtotal + salesTax + deposit - discount
+  );
+
+  /* UI UPDATES */
+  document.getElementById("subtotal").textContent =
+    `$${subtotal.toFixed(2)}`;
+
+  document.getElementById("salesTax").textContent =
+    `$${salesTax.toFixed(2)}`;
+
+  document.getElementById("discountInput").value =
+    discount.toFixed(2);
+
+  document.getElementById("depositInput").value =
+    deposit.toFixed(2);
+
+  document.getElementById("grandTotal").textContent =
+    `$${total.toFixed(2)}`;
+}
+
+</script>
+  <!-- ================= PAYMENT FOOTER ================= -->
+<style>
+.payment-footer {
+  margin-top: 18px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+</style>
+
+<div id="paymentFooter" class="payment-footer"></div>
+<!-- =============== END PAYMENT FOOTER =============== -->
+<script>
+/******************************************************
+ * PAYMENT FOOTER LOGIC
+ ******************************************************/
+function updatePaymentFooter() {
+  const payment = document.getElementById("paymentMethod").value;
+  const footer = document.getElementById("paymentFooter");
+
+  if (payment === "Check") {
+    footer.textContent = "Make checks payable to Suburban Brewing Company";
+  } else if (payment === "Fintech") {
+    footer.textContent = "Paid through Fintech";
+  } else {
+    footer.textContent = "";
+  }
+}
+</script>
+
+<div style="margin-top:20px; text-align:right">
+  <button onclick="saveInvoice()">💾 Save Invoice</button>
+ <button class="print-btn" onclick="printInvoice()">Print</button>
+  <button onclick="goBackToInvoices()">⬅ Back to Invoices</button>
+ <button disabled>📧 Sent Automatically</button>
+
+</div>
+<script>
+function lockInvoiceAfterSave() {
+  document.querySelectorAll("input, select").forEach(el => {
+    if (el.type !== "hidden" && !el.classList.contains("qty-input"))
+  el.disabled = true;
+  });
+}
+
+function printInvoice() {
+  window.print();
+}
+
+/******************************************************
+ * SAVE INVOICE — FINAL (SHEETS + DRIVE PDF)
+ ******************************************************/
+function isValidBase64Image(str) {
+  return (
+    typeof str === "string" &&
+    str.startsWith("data:image/") &&
+    str.length > 100
+  );
+}
+
+function validateInvoiceBeforeSave(payload) {
+  const errors = [];
+
+  if (!payload.invoiceNumber) errors.push("Invoice number missing");
+  if (!payload.date) errors.push("Invoice date missing");
+
+  if (!payload.customer?.name) errors.push("Customer not selected");
+  if (!payload.customer?.address) errors.push("Customer address missing");
+
+  if (!payload.items || payload.items.length === 0)
+    errors.push("No invoice items added");
+
+  if (!isValidBase64Image(payload.logoBase64))
+    errors.push("Logo not loaded");
+
+  if (!isValidBase64Image(payload.barcodeBase64))
+    errors.push("Barcode not generated");
+
+  return errors;
+}
+
+ async function saveInvoice() {
+  if (invoiceSaved) return alert("Invoice already saved.");
+  if (!customerState.name || invoiceLines.length === 0) return alert("Select a customer and add products.");
+
+  const payload = {
+    action: "saveInvoice",
+    invoiceData: {
+      number: document.getElementById("invoiceNumber").value,
+      date: document.getElementById("invoiceDateValue").value,
+      customer: customerState.name,
+      address: customerState.address, // Contains the line breaks for printing
+      type: customerState.type,       // Restaurant vs Wholesale
+      total: document.getElementById("grandTotal").textContent,
+      items: invoiceLines             // Sent to deduct from Inventory Sheet
+    },
+    // Required for PDF generation
+    logoBase64: await preloadLogoBase64(),
+    barcodeBase64: document.getElementById("barcodeCanvas").toDataURL("image/png")
+  };
+
+  try {
+    // We use POST to handle the larger data object (the items list)
+    await fetch(API_URL, { 
+      method: "POST", 
+      mode: "no-cors", 
+      body: JSON.stringify(payload) 
+    });
+    
+    invoiceSaved = true;
+    alert("Saved! Inventory updated and follow-up date calculated.");
+    lockInvoiceAfterSave();
+  } catch (err) {
+    console.error("Save failed:", err);
+    alert("Error syncing to Google Sheets.");
+  }
+}
+async function preloadLogoBase64() {
+  if (cachedLogoBase64) return cachedLogoBase64;
+
+  const img = document.getElementById("logoImg");
+
+  if (!img) throw new Error("Logo element missing");
+
+  if (!img.complete || img.naturalWidth === 0) {
+    await new Promise(resolve => {
+      img.onload = resolve;
+      img.onerror = resolve;
+    });
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  cachedLogoBase64 = canvas.toDataURL("image/png");
+  return cachedLogoBase64;
+}
+
+</script>
 
   <style>
-    /* PRINT OVERRIDES (RESTORED) */
-    @media print {
-      .sidebar, .app-header, button, .autocomplete-list, .autocomplete-box { display: none !important; }
-      .main-wrapper { margin-left: 0 !important; }
-      #invoice-paper { box-shadow: none; margin: 0; padding: 20px; width: 100%; }
-      input { border: none !important; }
-      #printCustomerInfo { display: block !important; }
-      .customer-row { display: none !important; }
+/* ================= PRINT STYLES ================= */
+/* ================= PRINT STYLES ================= */
+/* ================= PRINT STYLES ================= */
+@media print {
+
+  body {
+    margin: 0.5in;
+  }
+
+  /* ===== HEADER CONTAINER ===== */
+  .invoice-header {
+    display: grid !important;
+    grid-template-columns: auto 1fr;
+    column-gap: 20px;
+    align-items: start;
+    padding-bottom: 60px !important;
+    position: relative;
+  }
+
+  /* ===== COMPANY BLOCK ===== */
+  .company-block {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .company-block img {
+    width: 75px !important;
+    height: 75px !important;
+  }
+  .stock-badge { display: none !important; }
+}
+ /* FORCE COMPANY INFO TO 3 LINES */
+.company-info {
+  font-size: 11px;
+  line-height: 1.35;
+  color: transparent;        /* hides original text */
+  position: relative;
+}
+
+/* CLEAN 3-LINE PRINT VERSION */
+.company-info::after {
+  content:
+    "Suburban Brewing Company\A"
+    "3041 Horseshoe Pike Suite 120 & 130\A"
+    "Honey Brook, PA 19344\A"
+    "Sales Rep: Remy Davis · 908-642-1019\A" 
+    "· Remyjdavis90@gmail.com";
+  white-space: pre;
+  display: block;
+  color: #000;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+  /* ===== RIGHT META BLOCK ===== */
+ .invoice-meta {
+  grid-column: 2;
+  justify-self: start;
+  text-align: left;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+  .invoice-meta .meta-row {
+    margin-top: 2px;
+  }
+
+  #printInvoiceDate,
+  #printInvoiceNumber {
+    display: inline !important;
+    font-weight: 600;
+  }
+
+  /* ===== INVOICE TITLE ===== */
+  .invoice-title {
+  grid-column: 1 / -1;
+  text-align: center;
+  margin: 6px 0 2px 0;
+  font-size: 24px;
+  letter-spacing: 3px;
+}
+
+  /* ===== BARCODE ===== */
+  #barcodeCanvas {
+  grid-column: 2;
+  display: block !important;
+  margin: 6px 0 0 0;
+  width: 220px !important;
+  height: 60px !important;
+}
+
+  /* ===== DIVIDER ===== */
+  .header-divider {
+    margin-top: 8px;
+    border-top: 2px solid #222;
+  }
+
+  /* ===== TABLE ===== */
+  .product-table th,
+  .product-table td {
+    padding: 6px;
+    font-size: 12px;
+  }
+
+  .product-table th:last-child,
+  .product-table td:last-child {
+    display: none;
+  }
+
+  /* ===== TOTAL ===== */
+  .grand-total {
+    font-size: 18px;
+  }
+
+  /* ===== PAYMENT FOOTER ===== */
+  #paymentFooter {
+    display: block;
+    margin-top: 20px;
+    font-size: 14px;
+  }
+
+  /* ===== CUSTOMER PRINT ===== */
+  #printCustomerInfo {
+    display: block !important;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+
+  /* ===== HIDE INTERACTIVE UI ===== */
+  button:not(.print-btn),
+  .autocomplete-box,
+  .autocomplete-list,
+  input:not([type="hidden"]):not(.qty-input):not(.product-search),
+  select {
+    display: none !important;
+  }
+
+  /* ===== PRINT HELPERS ===== */
+  .print-product {
+    display: inline-block;
+    font-size: 12px;
+  }
+
+  .print-qty {
+    display: inline-block;
+    min-width: 24px;
+    text-align: right;
+  }
+}
+
+</style>
+
+<script>
+window.onbeforeprint = () => {
+  const barcode = document.getElementById("barcodeCanvas");
+  if (barcode) {
+    barcode.style.width = "220px";
+    barcode.style.height = "60px";
+  }
+
+  // INVOICE META
+  document.getElementById("printInvoiceDate").textContent = document.getElementById("invoiceDateValue").value;
+  document.getElementById("printInvoiceNumber").textContent = document.getElementById("invoiceNumber").value;
+
+  // CUSTOMER PRINT - Split name and address as requested
+  document.getElementById("printCustomerName").textContent = customerState.name || "";
+  
+  // This part splits the address into separate lines for the street and City/State/Zip
+  const addr = customerState.address || "";
+  const addrHtml = addr.split('\n').map(line => `<div>${line}</div>`).join('');
+  document.getElementById("printCustomerInfo").querySelector('div#printCustomerAddressLines').innerHTML = addrHtml;
+  document.getElementById("printCustomerInfo").style.display = "block";
+
+  // PRODUCT & QTY PRINT
+  document.querySelectorAll(".product-search, .qty-input").forEach(input => {
+    const span = document.createElement("span");
+    span.textContent = input.value;
+    span.className = input.classList.contains("qty-input") ? "print-qty" : "print-product";
+    input.style.display = "none";
+    input.after(span);
+  });
+};
+
+  // QTY PRINT
+  document.querySelectorAll(".qty-input").forEach(input => {
+    const span = document.createElement("span");
+    span.textContent = input.value;
+    span.className = "print-qty";
+    input.style.display = "none";
+    input.after(span);
+  });
+};
+
+window.onafterprint = () => {
+
+  // RESTORE QTY INPUTS
+  document.querySelectorAll(".print-qty").forEach(span => {
+    const input = span.previousElementSibling;
+    if (input && input.classList.contains("qty-input")) {
+      input.style.display = "";
     }
-  </style>
+    span.remove();
+  });
+
+  // RESTORE PRODUCT INPUTS
+  document.querySelectorAll(".print-product").forEach(span => {
+    const input = span.previousElementSibling;
+    if (input && input.classList.contains("product-search")) {
+      input.style.display = "";
+    }
+    span.remove();
+  });
+
+  // HIDE CUSTOMER PRINT BLOCK
+  document.getElementById("printCustomerInfo").style.display = "none";
+};
+function getBarcodeBase64() {
+  const canvas = document.getElementById("barcodeCanvas");
+  if (!canvas) return null;
+  return canvas.toDataURL("image/png");
+}
+
+/******************************************************
+ * NAVIGATION
+ ******************************************************/
+function goBackToInvoices() {
+  if (confirm("Leave this invoice? Unsaved changes will be lost.")) {
+    window.location.href = "invoices.html";
+  }
+}
+// Function to update the stock display when a product is picked
+async function updateStockDisplay(rowElement) {
+  const product = rowElement.querySelector(".product-search").value;
+  const type = rowElement.querySelector(".type-select").value;
+  const displayArea = rowElement.querySelector(".stock-status-display");
+
+  if (!product || !type) return;
+
+  // Call the Google Script function
+  google.script.run.withSuccessHandler((qty) => {
+    displayArea.textContent = `Stock: ${qty}`;
+    displayArea.className = "stock-badge " + (qty < 5 ? "stock-low" : "stock-ok");
+    
+    // Optional: Set a max attribute on the quantity input
+    rowElement.querySelector(".qty-input").max = qty;
+  }).getStockLevel(product, type);
+}
+/******************************************************
+ * GLOBAL CHANGE DETECTOR — PDF INVALIDATION
+ ******************************************************/
+document.addEventListener("input", e => {
+  if (
+    e.target.type === "hidden" ||
+    e.target.classList.contains("qty-input")
+  ) return;
+
+  if (["invoiceNumber", "customerName"].includes(e.target.id)) {
+  invoiceSaved = false;
+  invoicePdfGenerated = false;
+}
+
+  const emailBtn =
+    document.querySelector('button[onclick="emailInvoice()"]');
+  if (emailBtn) emailBtn.disabled = true;
+});
+
+</script>
+
 
 </body>
 </html>
