@@ -321,6 +321,11 @@
   <strong>Subtotal:</strong>
   <span id="invoice-subtotal">$0.00</span>
 </div>
+    <div id="discount-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
+  <strong>Discount (10%):</strong>
+  <span id="invoice-discount">$0.00</span>
+</div>
+
     <div id="deposit-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
   <strong>Keg Deposit:</strong>
   <span id="invoice-deposit">$0.00</span>
@@ -606,19 +611,43 @@ function recalcLine(row, product) {
 function recalcInvoiceTotals() {
   let subtotal = 0;
 
+  // ----- PRODUCT SUBTOTAL -----
   document.querySelectorAll(".line-total").forEach(cell => {
-    subtotal += Number(cell.dataset.value || 0);
+    cell.querySelectorAll("div").forEach(line => {
+      subtotal += Number(line.textContent.replace("$", "")) || 0;
+    });
   });
 
-  const deposit = recalcKegDeposit(); // ← ADD THIS
+  // ----- CASE DISCOUNT (10%) -----
+  const totalCases = getTotalCaseQty();
+  let discount = 0;
 
+  if (totalCases >= 10) {
+    discount = subtotal * 0.10;
+    document.getElementById("discount-row").style.display = "flex";
+  } else {
+    document.getElementById("discount-row").style.display = "none";
+  }
+
+  document.getElementById("invoice-discount").textContent =
+    "-$" + discount.toFixed(2);
+
+  const discountedSubtotal = subtotal - discount;
+
+  // ----- KEG DEPOSIT -----
+  const deposit = recalcKegDeposit();
+
+  // ----- SALES TAX -----
   const isRestaurant =
     selectedCustomer && selectedCustomer.type === "Restaurant";
 
   const taxRate = 0.06;
-  const tax = isRestaurant ? subtotal * taxRate : 0;
-  const total = subtotal + tax + deposit; // ← UPDATE THIS
+  const tax = isRestaurant ? discountedSubtotal * taxRate : 0;
 
+  // ----- FINAL TOTAL -----
+  const total = discountedSubtotal + tax + deposit;
+
+  // ----- UPDATE UI -----
   document.getElementById("invoice-subtotal").textContent =
     "$" + subtotal.toFixed(2);
 
@@ -659,7 +688,18 @@ function recalcKegDeposit() {
 
   return depositTotal;
 }
+  /* ===== TOTAL CASE QUANTITY FUNCTION ===== */
+function getTotalCaseQty() {
+  let total = 0;
 
+  document.querySelectorAll(".qty-group div").forEach(div => {
+    if (div.dataset.type === "Case") {
+      total += Number(div.querySelector("input").value || 0);
+    }
+  });
+
+  return total;
+}
 
 </script>
 
