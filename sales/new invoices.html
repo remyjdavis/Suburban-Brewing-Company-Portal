@@ -591,6 +591,37 @@ function recalcInvoiceSubtotal() {
   document.getElementById("invoice-subtotal").textContent =
     "$" + subtotal.toFixed(2);
 }
+  /* ===== RECALC INVOICE TOTAL FUNCTION ===== */
+function recalcInvoiceTotals() {
+  let subtotal = 0;
+
+  document.querySelectorAll(".qty-group div").forEach(div => {
+    const row = div.closest("tr");
+    const product = row.querySelector(".product-input").value;
+    const type = div.dataset.type;
+    const qty = Number(div.querySelector("input").value || 0);
+    const price = groupedProducts[product]?.[type] || 0;
+
+    subtotal += qty * price;
+  });
+
+  const isRestaurant =
+    selectedCustomer &&
+    selectedCustomer.type &&
+    selectedCustomer.type.toLowerCase() === "restaurant";
+
+  const tax = isRestaurant ? subtotal * 0.06 : 0;
+  const total = subtotal + tax;
+
+  document.getElementById("invoice-subtotal").textContent =
+    "$" + subtotal.toFixed(2);
+
+  document.getElementById("invoice-tax").textContent =
+    "$" + tax.toFixed(2);
+
+  document.getElementById("invoice-total").textContent =
+    "$" + total.toFixed(2);
+}
 
 </script>
 
