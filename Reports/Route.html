@@ -200,21 +200,28 @@
   list.innerHTML = "";
   document.getElementById('mainNavBtn').style.display = "none";
 
-  // This proxy handles the redirect and the 'Origin' block for both mobile and laptop
   const proxyUrl = "https://corsproxy.io/?";
   const targetUrl = scriptURL + "?action=getOptimizedDailyRoute&date=" + date;
 
   fetch(proxyUrl + encodeURIComponent(targetUrl))
-    .then(response => {
-      if (!response.ok) throw new Error('Network response was not ok');
-      return response.json();
-    })
-    .then(stops => {
-      renderStops(stops);
+    .then(response => response.text()) // Get as text first to inspect it
+    .then(text => {
+      try {
+        const stops = JSON.parse(text);
+        renderStops(stops);
+      } catch (e) {
+        console.error("Data received was not JSON:", text);
+        if (text.includes("Service using too much computer power") || text.includes("Google Drive")) {
+           loader.innerText = "Google is busy. Refreshing in 3 seconds...";
+           setTimeout(fetchRoute, 3000);
+        } else {
+           loader.innerText = "Error: Please re-deploy Google Script as 'Anyone'.";
+        }
+      }
     })
     .catch(err => {
       console.error("Fetch Error:", err);
-      loader.innerText = "Error: Check that your Google Script is deployed to 'Anyone'.";
+      loader.innerText = "Connection Failed. Check Internet.";
     });
 }
   function renderStops(stops) {
