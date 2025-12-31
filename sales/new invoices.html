@@ -5,6 +5,7 @@
   <title>New Invoice | Suburban Brewing Company</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- Global libs -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 
@@ -19,6 +20,7 @@ let cachedLogoBase64 = null;
 
 </script>
 
+<!-- ================= HEADER SECTION ================= -->
 <style>
 .invoice-header {
   position: relative;
@@ -28,7 +30,7 @@ let cachedLogoBase64 = null;
   align-items: start;
   padding-bottom: 28px;
 }
-/* ⬇⬇ ADDED FOR PRINT VISIBILITY ⬇⬇ */
+/* ⬇⬇ ADD THIS RIGHT HERE ⬇⬇ */
 .print-only {
   display: none;
 }
@@ -117,14 +119,17 @@ let cachedLogoBase64 = null;
 
   </div>
 
+<!-- RIGHT SIDE META BLOCK -->
 <div class="invoice-meta">
 
+  <!-- DATE -->
   <div class="meta-row">
     <label>Date:</label>
     <span id="printInvoiceDate"></span>
     <input type="hidden" id="invoiceDateValue">
   </div>
 
+  <!-- INVOICE NUMBER (EDITABLE IN BROWSER) -->
   <div class="meta-row">
     <label>Invoice #:</label>
     <input
@@ -135,10 +140,12 @@ let cachedLogoBase64 = null;
     <span id="printInvoiceNumber" class="print-only"></span>
   </div>
 
+  <!-- BARCODE -->
   <canvas id="barcodeCanvas" width="260" height="60"></canvas>
 
 </div>
 
+  <!-- MUST be here -->
   <div class="invoice-title">INVOICE</div>
 </header>
 <div class="header-divider"></div>
@@ -171,6 +178,7 @@ let cachedLogoBase64 = null;
   refreshBarcode();
 })();
 </script>
+<!-- =============== END HEADER SECTION =============== -->
 <style>
 .customer-section {
   margin-top: 20px;
@@ -231,6 +239,7 @@ let cachedLogoBase64 = null;
 </style>
 
 <section class="customer-section">
+<!-- PRINT-ONLY CUSTOMER INFO -->
 <div id="printCustomerInfo" style="display:none">
   <strong id="printCustomerName"></strong><br>
   <span id="printCustomerAddress"></span>
@@ -248,7 +257,8 @@ let cachedLogoBase64 = null;
 
   <div id="customerAutocomplete" class="autocomplete-list" hidden></div>
 
- <input type="hidden" id="customerAddress">
+ <!-- Hidden fields for logic -->
+  <input type="hidden" id="customerAddress">
   <input type="hidden" id="customerType">
   <input type="hidden" id="paymentMethod">
 
@@ -317,15 +327,9 @@ function selectCustomer(cust) {
   document.getElementById("customerType").value = cust.type;
   document.getElementById("paymentMethod").value = cust.payment;
 
-  // FIX: Format Address for Print Review (Name -> Street -> City/State/Zip)
-  document.getElementById("printCustomerName").textContent = cust.name;
-  const addrLines = (cust.address || "").split('\n').map(l => `<div>${l.trim()}</div>`).join('');
-  document.getElementById("printCustomerAddress").innerHTML = addrLines;
-  document.getElementById("printCustomerInfo").style.display = "block";
-
   clearAutocomplete();
-  if (typeof calculateTotals === "function") calculateTotals();
-  if (typeof updatePaymentFooter === "function") updatePaymentFooter();
+  calculateTotals();
+  updatePaymentFooter(); // ✅ ADD THIS
 }
 
 /* ===== AUTOCOMPLETE ===== */
@@ -367,6 +371,8 @@ document.addEventListener("click", e => {
 </script>
   <div class="section-divider"></div>
 
+<!-- =============== END CUSTOMER SECTION =============== -->
+<!-- ================= NEW CUSTOMER MODAL ================= -->
 <style>
 .modal-backdrop {
   position: fixed;
@@ -485,7 +491,7 @@ document.getElementById("customerName").addEventListener("keydown", e => {
 /* Save new customer */
 async function saveNewCustomer() {
   const payload = {
-    action: "addCustomer", 
+    action: "addCustomer", // Backend logic handles writing to BOTH sheet IDs
     name: document.getElementById("newCustName").value,
     address: document.getElementById("newCustAddress").value,
     type: document.getElementById("newCustType").value,
@@ -494,9 +500,11 @@ async function saveNewCustomer() {
   };
 
   try {
+    // We use a GET request for adding to bypass CORS issues on GitHub Pages
     const params = new URLSearchParams(payload);
     await fetch(`${API_URL}?${params.toString()}`, { method: "GET" });
 
+    // Update local cache so they show up in autocomplete immediately
     customers.push(payload);
     selectCustomer(payload);
     closeNewCustomerModal();
@@ -505,7 +513,7 @@ async function saveNewCustomer() {
     console.error("Sync failed:", err);
   }
 }
-</script>
+</script>   <!-- ✅ THIS WAS MISSING -->
 
 <script>
 function getLogoBase64() {
@@ -531,6 +539,8 @@ function getLogoBase64() {
 }
 </script>
 
+<!-- =============== END NEW CUSTOMER MODAL =============== -->
+<!-- ================= PRODUCT SECTION ================= -->
 <style>
 .product-section {
   margin-top: 25px;
@@ -591,15 +601,17 @@ function getLogoBase64() {
   margin-top: 2px;
   padding: 1px 4px;
   border-radius: 3px;
-  min-width: 60px; 
+  min-width: 60px; /* Matches width of qty-input */
   text-align: center;
 }
 
+/* Matches 'Low' status in Column H */
 .stock-low {
   background-color: #fee2e2;
   color: #b91c1c;
 }
 
+/* Matches 'OK' status in Column H */
 .stock-ok {
   background-color: #dcfce7;
   color: #15803d;
@@ -646,6 +658,7 @@ fetch(`${API_URL}?action=getProducts`)
   .then(data => {
     rawProducts = data || [];
 
+    // GROUP BY PRODUCT NAME
     productsByName = {};
     rawProducts.forEach(p => {
       if (!productsByName[p.name]) {
@@ -659,6 +672,7 @@ fetch(`${API_URL}?action=getProducts`)
   });
 
 /* ADD PRODUCT BLOCK */
+/* ADD PRODUCT BLOCK */
 function addProductBlock() {
   const id = productBlockId++;
   const row = document.createElement("tr");
@@ -671,7 +685,7 @@ function addProductBlock() {
     </td>
     <td data-types="${id}"></td>
     <td data-qty="${id}">
-        <div class="stock-badge" id="stock-${id}" style="display:none;"></div>
+       <div class="stock-badge" id="stock-${id}" style="display:none;"></div>
     </td>
     <td data-price="${id}"></td>
     <td data-total="${id}"></td>
@@ -682,10 +696,9 @@ function addProductBlock() {
   blocks.appendChild(row);
   setupAutocomplete(id);
 }
-
 function closeAllProductAutocompletes() {
   document.querySelectorAll(".autocomplete-box").forEach(b => {
-Next Step: I am ready for Part 2. Once you send it, I will provide the full, un-streamlined second half with the inventory and calculation fixes.
+    b.hidden = true;
     b.innerHTML = "";
   });
 }
