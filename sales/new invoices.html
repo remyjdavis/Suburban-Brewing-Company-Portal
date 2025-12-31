@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- =====================================================
+       DOCUMENT META
+  ====================================================== -->
   <meta charset="UTF-8" />
   <title>Suburban Brewing Co. | New Invoice</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- BARCODE LIB -->
+  <!-- =====================================================
+       EXTERNAL LIBRARIES
+  ====================================================== -->
+  <!-- BARCODE -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
+  <!-- =====================================================
+       GLOBAL STYLES
+  ====================================================== -->
   <style>
     :root {
       --bg: #f4f6f8;
@@ -28,7 +37,9 @@
       min-height: 100vh;
     }
 
-    /* ===== SIDEBAR ===== */
+    /* =====================================================
+       SIDEBAR NAVIGATION
+    ====================================================== */
     .sidebar {
       width: 240px;
       background: var(--sidebar);
@@ -70,7 +81,9 @@
       border-left: 4px solid var(--accent);
     }
 
-    /* ===== MAIN ===== */
+    /* =====================================================
+       MAIN CONTENT WRAPPER
+    ====================================================== */
     .main {
       margin-left: 240px;
       padding: 30px;
@@ -91,7 +104,9 @@
       margin-bottom: 20px;
     }
 
-    /* ===== INVOICE PAGE ===== */
+    /* =====================================================
+       INVOICE PAGE LAYOUT
+    ====================================================== */
     .invoice-page {
       background: #fff;
       width: 8.5in;
@@ -130,7 +145,9 @@
       margin-bottom: 14px;
     }
 
-    /* ===== CUSTOMER + META ===== */
+    /* =====================================================
+       CUSTOMER + META DATA
+    ====================================================== */
     .invoice-meta-row {
       display: flex;
       align-items: flex-start;
@@ -157,7 +174,6 @@
       line-height: 1.3;
     }
 
-    /* 🔥 META — HARD RIGHT */
     .invoice-meta {
       margin-left: auto;
       text-align: right;
@@ -177,35 +193,40 @@
       margin-left: auto;
       margin-top: 6px;
     }
+
+    /* =====================================================
+       PRODUCT TABLE STYLES
+    ====================================================== */
     .product-row input,
-.product-row select {
-  font-size: 12px;
-  padding: 4px;
-}
+    .product-row select {
+      font-size: 12px;
+      padding: 4px;
+    }
 
-.type-checkboxes label {
-  display: block;
-  font-size: 11px;
-}
+    .type-checkboxes label {
+      display: block;
+      font-size: 11px;
+    }
 
-.qty-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+    .qty-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
-.add-product-btn {
-  font-size: 11px;
-  padding: 4px 6px;
-  margin-top: 4px;
-}
-
+    .add-product-btn {
+      font-size: 11px;
+      padding: 4px 6px;
+      margin-top: 4px;
+    }
   </style>
 </head>
 
 <body>
 
-<!-- ===== SIDEBAR ===== -->
+<!-- =====================================================
+     SIDEBAR
+====================================================== -->
 <aside class="sidebar">
   <h2>SUBURBAN</h2>
 
@@ -233,7 +254,9 @@
   <a href="../Reports/client-inventory.html" class="nav-link">Client Inventory Levels</a>
 </aside>
 
-<!-- ===== MAIN ===== -->
+<!-- =====================================================
+     MAIN CONTENT
+====================================================== -->
 <main class="main">
 
   <div class="header-bar">
@@ -245,6 +268,7 @@
 
   <section class="invoice-page">
 
+    <!-- COMPANY HEADER -->
     <header class="invoice-header">
       <img src="../background.jpg">
       <div class="invoice-company-info">
@@ -258,6 +282,7 @@
     <div class="invoice-title">INVOICE</div>
     <div class="invoice-divider"></div>
 
+    <!-- CUSTOMER + META -->
     <section class="invoice-meta-row">
 
       <div class="customer-block">
@@ -268,7 +293,6 @@
         </div>
       </div>
 
-      <!-- ✅ RIGHT ALIGNED META -->
       <div class="invoice-meta">
         <div class="meta-line">
           <strong>Date:</strong>
@@ -282,199 +306,180 @@
 
         <svg id="barcode"></svg>
       </div>
-<hr style="margin:20px 0;">
-
-<table id="product-table" width="100%" cellpadding="6">
-  <thead>
-    <tr style="border-bottom:2px solid #000;font-size:12px;">
-      <th align="left">Product</th>
-      <th align="left">Type</th>
-      <th align="left">Quantity</th>
-      <th align="right">Price</th>
-      <th align="center">Barcode</th>
-      <th align="right">Line Total</th>
-    </tr>
-  </thead>
-  <tbody id="product-body"></tbody>
-</table>
-
     </section>
+
+    <hr style="margin:20px 0;">
+
+    <!-- PRODUCT TABLE -->
+    <table id="product-table" width="100%" cellpadding="6">
+      <thead>
+        <tr style="border-bottom:2px solid #000;font-size:12px;">
+          <th align="left">Product</th>
+          <th align="left">Type</th>
+          <th align="left">Quantity</th>
+          <th align="right">Price</th>
+          <th align="center">Barcode</th>
+          <th align="right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody id="product-body"></tbody>
+    </table>
 
   </section>
 </main>
 
+<!-- =====================================================
+     JAVASCRIPT
+====================================================== -->
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 
-let customers = [];
-let selectedCustomer = null;
-
-document.addEventListener("DOMContentLoaded", () => {
-  const today = new Date().toLocaleDateString();
-  document.getElementById("current-date").textContent = today;
-  document.getElementById("invoice-date").textContent = today;
-  loadCustomers();
-});
-
-function loadCustomers() {
-  fetch(`${API_URL}?action=getCustomers`)
-    .then(r => r.json())
-    .then(d => customers = d || []);
-}
-
-document.getElementById("customer-search").addEventListener("input", function () {
-  document.querySelectorAll(".suggestion").forEach(e => e.remove());
-  const val = this.value.toLowerCase();
-  if (!val) return;
-
-  customers.filter(c => c.name.toLowerCase().includes(val)).forEach(c => {
-    const div = document.createElement("div");
-    div.textContent = c.name;
-    div.className = "suggestion";
-    div.onclick = () => selectCustomer(c);
-    this.parentNode.appendChild(div);
-  });
-});
-
-function selectCustomer(c) {
-  selectedCustomer = c;
-  document.querySelectorAll(".suggestion").forEach(e => e.remove());
-  document.getElementById("customer-search").style.display = "none";
-  document.getElementById("customer-display").hidden = false;
-  document.getElementById("customer-name").textContent = c.name;
-
-  const parts = (c.address || "").split(",").map(p => p.trim()).filter(Boolean);
-  document.getElementById("customer-address").innerHTML =
-    `${parts[0] || ""}<br>${parts.slice(1).join(", ")}`;
-}
-
-document.getElementById("invoice-number").addEventListener("change", e => {
-  const val = e.target.value.trim();
-  if (!val) return;
-
-  document.getElementById("invoice-number-row").innerHTML =
-    `<strong>Invoice #:</strong> <span>${val}</span>`;
-
-  JsBarcode("#barcode", val, { height: 30, displayValue: false });
-});
   /* =========================
-   PRODUCT TABLE LOGIC
-========================= */
+     CONFIG
+  ========================= */
+  const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 
-let productIndex = 0;
+  let customers = [];
+  let selectedCustomer = null;
 
-/* TEMP MOCK DATA — BACKEND WILL REPLACE */
-const products = [
-  { name: "IPA", price: 45, sku: "IPA-CASE" },
-  { name: "Lager", price: 40, sku: "LAG-CASE" },
-  { name: "Stout", price: 50, sku: "STO-CASE" }
-];
+  /* =========================
+     PAGE INIT
+  ========================= */
+  document.addEventListener("DOMContentLoaded", () => {
+    const today = new Date().toLocaleDateString();
+    document.getElementById("current-date").textContent = today;
+    document.getElementById("invoice-date").textContent = today;
+    loadCustomers();
+  });
 
-addProductRow();
+  /* =========================
+     CUSTOMER LOGIC
+  ========================= */
+  function loadCustomers() {
+    fetch(`${API_URL}?action=getCustomers`)
+      .then(r => r.json())
+      .then(d => customers = d || []);
+  }
 
-function addProductRow() {
-  const rowId = productIndex++;
-  const tr = document.createElement("tr");
-  tr.className = "product-row";
-  tr.dataset.row = rowId;
+  document.getElementById("customer-search").addEventListener("input", function () {
+    document.querySelectorAll(".suggestion").forEach(e => e.remove());
+    const val = this.value.toLowerCase();
+    if (!val) return;
 
-  tr.innerHTML = `
-    <td>
-      <input placeholder="Product name" oninput="productAutocomplete(this)">
-    </td>
+    customers
+      .filter(c => c.name.toLowerCase().includes(val))
+      .forEach(c => {
+        const div = document.createElement("div");
+        div.textContent = c.name;
+        div.className = "suggestion";
+        div.onclick = () => selectCustomer(c);
+        this.parentNode.appendChild(div);
+      });
+  });
 
-    <td class="type-checkboxes">
-      <label>
-        <input type="checkbox" value="Case" onchange="updateQuantities(${rowId})">
-        Case
-      </label>
-      <label>
-        <input type="checkbox" value="1/2 Keg" onchange="updateQuantities(${rowId})">
-        1/2 Keg
-      </label>
-      <label>
-        <input type="checkbox" value="1/6 Keg" onchange="updateQuantities(${rowId})">
-        1/6 Keg
-      </label>
-    </td>
+  function selectCustomer(c) {
+    selectedCustomer = c;
+    document.querySelectorAll(".suggestion").forEach(e => e.remove());
+    document.getElementById("customer-search").style.display = "none";
+    document.getElementById("customer-display").hidden = false;
+    document.getElementById("customer-name").textContent = c.name;
 
-    <td>
-      <div class="qty-group" id="qty-${rowId}"></div>
-    </td>
+    const parts = (c.address || "")
+      .split(",")
+      .map(p => p.trim())
+      .filter(Boolean);
 
-    <td align="right">
-      <input type="number" step="0.01" value="0" oninput="calculateLine(${rowId})">
-    </td>
+    document.getElementById("customer-address").innerHTML =
+      `${parts[0] || ""}<br>${parts.slice(1).join(", ")}`;
+  }
 
-    <td align="center">
-      <svg id="barcode-${rowId}"></svg>
-    </td>
+  /* =========================
+     INVOICE NUMBER + BARCODE
+  ========================= */
+  document.getElementById("invoice-number").addEventListener("change", e => {
+    const val = e.target.value.trim();
+    if (!val) return;
 
-    <td align="right" id="total-${rowId}">$0.00</td>
-  `;
+    document.getElementById("invoice-number-row").innerHTML =
+      `<strong>Invoice #:</strong> <span>${val}</span>`;
 
-  const btnRow = document.createElement("tr");
-  btnRow.innerHTML = `
-    <td colspan="6">
-      <button class="add-product-btn" onclick="addProductRow()">+ Add another product</button>
-    </td>
-  `;
+    JsBarcode("#barcode", val, { height: 30, displayValue: false });
+  });
 
-  document.getElementById("product-body").appendChild(tr);
-  document.getElementById("product-body").appendChild(btnRow);
-}
+  /* =========================
+     PRODUCT TABLE LOGIC
+  ========================= */
+  let productIndex = 0;
 
-function productAutocomplete(input) {
-  const val = input.value.toLowerCase();
-  if (!val) return;
+  const products = [
+    { name: "IPA", price: 45, sku: "IPA-CASE" },
+    { name: "Lager", price: 40, sku: "LAG-CASE" },
+    { name: "Stout", price: 50, sku: "STO-CASE" }
+  ];
 
-  const match = products.find(p => p.name.toLowerCase().includes(val));
-  if (!match) return;
+  addProductRow();
 
-  input.value = match.name;
-  input.dataset.sku = match.sku;
-  input.closest("tr").querySelector("input[type=number]").value = match.price;
-}
+  function addProductRow() {
+    const rowId = productIndex++;
+    const tr = document.createElement("tr");
+    tr.className = "product-row";
+    tr.dataset.row = rowId;
 
-function updateQuantities(rowId) {
-  const row = document.querySelector(`tr[data-row="${rowId}"]`);
-  const qtyDiv = document.getElementById(`qty-${rowId}`);
-  qtyDiv.innerHTML = "";
-
-  row.querySelectorAll("input[type=checkbox]:checked").forEach(cb => {
-    const div = document.createElement("div");
-    div.innerHTML = `
-      ${cb.value}:
-      <input type="number" min="0" value="0"
-        style="width:50px"
-        oninput="calculateLine(${rowId})">
+    tr.innerHTML = `
+      <td><input placeholder="Product name" oninput="productAutocomplete(this)"></td>
+      <td class="type-checkboxes">
+        <label><input type="checkbox" value="Case" onchange="updateQuantities(${rowId})"> Case</label>
+        <label><input type="checkbox" value="1/2 Keg" onchange="updateQuantities(${rowId})"> 1/2 Keg</label>
+        <label><input type="checkbox" value="1/6 Keg" onchange="updateQuantities(${rowId})"> 1/6 Keg</label>
+      </td>
+      <td><div class="qty-group" id="qty-${rowId}"></div></td>
+      <td align="right"><input type="number" step="0.01" value="0" oninput="calculateLine(${rowId})"></td>
+      <td align="center"><svg id="barcode-${rowId}"></svg></td>
+      <td align="right" id="total-${rowId}">$0.00</td>
     `;
-    qtyDiv.appendChild(div);
 
-    if (cb.value === "Case") {
-      const sku = row.querySelector("input[placeholder]").dataset.sku;
-      if (sku) {
-        JsBarcode(`#barcode-${rowId}`, sku, {
-          height: 28,
-          displayValue: false
-        });
+    const btnRow = document.createElement("tr");
+    btnRow.innerHTML = `
+      <td colspan="6">
+        <button class="add-product-btn" onclick="addProductRow()">+ Add another product</button>
+      </td>
+    `;
+
+    document.getElementById("product-body").appendChild(tr);
+    document.getElementById("product-body").appendChild(btnRow);
+  }
+
+  function productAutocomplete(input) {
+    const match = products.find(p => p.name.toLowerCase().includes(input.value.toLowerCase()));
+    if (!match) return;
+    input.value = match.name;
+    input.dataset.sku = match.sku;
+    input.closest("tr").querySelector("input[type=number]").value = match.price;
+  }
+
+  function updateQuantities(rowId) {
+    const row = document.querySelector(`tr[data-row="${rowId}"]`);
+    const qtyDiv = document.getElementById(`qty-${rowId}`);
+    qtyDiv.innerHTML = "";
+
+    row.querySelectorAll("input[type=checkbox]:checked").forEach(cb => {
+      qtyDiv.insertAdjacentHTML("beforeend", `
+        <div>${cb.value}: <input type="number" min="0" value="0" style="width:50px" oninput="calculateLine(${rowId})"></div>
+      `);
+
+      if (cb.value === "Case") {
+        const sku = row.querySelector("input[placeholder]").dataset.sku;
+        if (sku) JsBarcode(`#barcode-${rowId}`, sku, { height: 28, displayValue: false });
       }
-    }
-  });
-}
+    });
+  }
 
-function calculateLine(rowId) {
-  const row = document.querySelector(`tr[data-row="${rowId}"]`);
-  const price = parseFloat(row.querySelector("input[type=number]").value) || 0;
-
-  let qty = 0;
-  row.querySelectorAll(`#qty-${rowId} input`).forEach(i => {
-    qty += parseInt(i.value || 0);
-  });
-
-  document.getElementById(`total-${rowId}`).textContent =
-    "$" + (price * qty).toFixed(2);
-}
+  function calculateLine(rowId) {
+    const row = document.querySelector(`tr[data-row="${rowId}"]`);
+    const price = parseFloat(row.querySelector("input[type=number]").value) || 0;
+    let qty = 0;
+    row.querySelectorAll(`#qty-${rowId} input`).forEach(i => qty += parseInt(i.value || 0));
+    document.getElementById(`total-${rowId}`).textContent = "$" + (price * qty).toFixed(2);
+  }
 
 </script>
 
