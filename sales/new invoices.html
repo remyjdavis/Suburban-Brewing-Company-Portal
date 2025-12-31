@@ -5,7 +5,6 @@
   <title>New Invoice | Suburban Brewing Company</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Global libs -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 
@@ -14,38 +13,13 @@
 <script>
 /* ===== GLOBAL STATE ===== */
 let invoiceSaved = false;
-let rawProducts = [];
-let productsByName = {};
-let invoiceLines = [];
-let productBlockId = 0;
+let invoicePdfGenerated = false;
+let lastGeneratedPdfId = null;
+let cachedLogoBase64 = null;
 
 </script>
 
-<!-- ================= HEADER SECTION ================= -->
 <style>
-  /* ===== STOCK BADGE FIX ===== */
-.stock-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 4px;
-  text-align: center;
-  margin-top: 5px;
-  border: 1px solid transparent;
-}
-
-.stock-low {
-  background-color: #fee2e2; /* Light Red */
-  color: #b91c1c;            /* Dark Red */
-  border-color: #fca5a5;
-}
-
-.stock-ok {
-  background-color: #dcfce7; /* Light Green */
-  color: #15803d;            /* Dark Green */
-  border-color: #86efac;
-}
 .invoice-header {
   position: relative;
   display: grid;
@@ -54,7 +28,7 @@ let productBlockId = 0;
   align-items: start;
   padding-bottom: 28px;
 }
-/* ⬇⬇ ADD THIS RIGHT HERE ⬇⬇ */
+/* ⬇⬇ ADDED FOR PRINT VISIBILITY ⬇⬇ */
 .print-only {
   display: none;
 }
@@ -143,17 +117,14 @@ let productBlockId = 0;
 
   </div>
 
-<!-- RIGHT SIDE META BLOCK -->
 <div class="invoice-meta">
 
-  <!-- DATE -->
   <div class="meta-row">
     <label>Date:</label>
     <span id="printInvoiceDate"></span>
     <input type="hidden" id="invoiceDateValue">
   </div>
 
-  <!-- INVOICE NUMBER (EDITABLE IN BROWSER) -->
   <div class="meta-row">
     <label>Invoice #:</label>
     <input
@@ -164,12 +135,10 @@ let productBlockId = 0;
     <span id="printInvoiceNumber" class="print-only"></span>
   </div>
 
-  <!-- BARCODE -->
   <canvas id="barcodeCanvas" width="260" height="60"></canvas>
 
 </div>
 
-  <!-- MUST be here -->
   <div class="invoice-title">INVOICE</div>
 </header>
 <div class="header-divider"></div>
@@ -202,7 +171,6 @@ let productBlockId = 0;
   refreshBarcode();
 })();
 </script>
-<!-- =============== END HEADER SECTION =============== -->
 <style>
 .customer-section {
   margin-top: 20px;
@@ -263,7 +231,6 @@ let productBlockId = 0;
 </style>
 
 <section class="customer-section">
-<!-- PRINT-ONLY CUSTOMER INFO -->
 <div id="printCustomerInfo" style="display:none">
   <strong id="printCustomerName"></strong><br>
   <span id="printCustomerAddress"></span>
@@ -281,8 +248,7 @@ let productBlockId = 0;
 
   <div id="customerAutocomplete" class="autocomplete-list" hidden></div>
 
- <!-- Hidden fields for logic -->
-  <input type="hidden" id="customerAddress">
+ <input type="hidden" id="customerAddress">
   <input type="hidden" id="customerType">
   <input type="hidden" id="paymentMethod">
 
@@ -351,9 +317,15 @@ function selectCustomer(cust) {
   document.getElementById("customerType").value = cust.type;
   document.getElementById("paymentMethod").value = cust.payment;
 
+  // FIX: Format Address for Print Review (Name -> Street -> City/State/Zip)
+  document.getElementById("printCustomerName").textContent = cust.name;
+  const addrLines = (cust.address || "").split('\n').map(l => `<div>${l.trim()}</div>`).join('');
+  document.getElementById("printCustomerAddress").innerHTML = addrLines;
+  document.getElementById("printCustomerInfo").style.display = "block";
+
   clearAutocomplete();
-  calculateTotals();
-  updatePaymentFooter(); // ✅ ADD THIS
+  if (typeof calculateTotals === "function") calculateTotals();
+  if (typeof updatePaymentFooter === "function") updatePaymentFooter();
 }
 
 /* ===== AUTOCOMPLETE ===== */
@@ -363,7 +335,6 @@ nameInput.addEventListener("input", () => {
 
   if (!query) return;
 
-  // Filters the combined Fintech/Check master list
   const matches = customers.filter(c =>
     c.name.toLowerCase().includes(query)
   );
@@ -371,18 +342,15 @@ nameInput.addEventListener("input", () => {
   if (matches.length === 0) {
     customerState.isNew = true;
     autocompleteBox.innerHTML =
-      `<div class="autocomplete-empty" style="color: #b91c1c; font-weight: bold;">
-        New Customer Detected — Press Enter to Add
-      </div>`;
+      `<div class="autocomplete-empty">New customer — press Enter to add</div>`;
     autocompleteBox.hidden = false;
     return;
   }
 
-  // Populate results
   matches.forEach(cust => {
     const div = document.createElement("div");
     div.className = "autocomplete-item";
-    div.innerHTML = `<strong>${cust.name}</strong> <small>(${cust.payment})</small>`;
+    div.textContent = cust.name;
     div.onclick = () => selectCustomer(cust);
     autocompleteBox.appendChild(div);
   });
@@ -399,8 +367,6 @@ document.addEventListener("click", e => {
 </script>
   <div class="section-divider"></div>
 
-<!-- =============== END CUSTOMER SECTION =============== -->
-<!-- ================= NEW CUSTOMER MODAL ================= -->
 <style>
 .modal-backdrop {
   position: fixed;
@@ -519,7 +485,7 @@ document.getElementById("customerName").addEventListener("keydown", e => {
 /* Save new customer */
 async function saveNewCustomer() {
   const payload = {
-    action: "addCustomer", // Backend logic handles writing to BOTH sheet IDs
+    action: "addCustomer", 
     name: document.getElementById("newCustName").value,
     address: document.getElementById("newCustAddress").value,
     type: document.getElementById("newCustType").value,
@@ -528,11 +494,9 @@ async function saveNewCustomer() {
   };
 
   try {
-    // We use a GET request for adding to bypass CORS issues on GitHub Pages
     const params = new URLSearchParams(payload);
     await fetch(`${API_URL}?${params.toString()}`, { method: "GET" });
 
-    // Update local cache so they show up in autocomplete immediately
     customers.push(payload);
     selectCustomer(payload);
     closeNewCustomerModal();
@@ -541,7 +505,7 @@ async function saveNewCustomer() {
     console.error("Sync failed:", err);
   }
 }
-</script>   <!-- ✅ THIS WAS MISSING -->
+</script>
 
 <script>
 function getLogoBase64() {
@@ -567,8 +531,6 @@ function getLogoBase64() {
 }
 </script>
 
-<!-- =============== END NEW CUSTOMER MODAL =============== -->
-<!-- ================= PRODUCT SECTION ================= -->
 <style>
 .product-section {
   margin-top: 25px;
@@ -629,17 +591,15 @@ function getLogoBase64() {
   margin-top: 2px;
   padding: 1px 4px;
   border-radius: 3px;
-  min-width: 60px; /* Matches width of qty-input */
+  min-width: 60px; 
   text-align: center;
 }
 
-/* Matches 'Low' status in Column H */
 .stock-low {
   background-color: #fee2e2;
   color: #b91c1c;
 }
 
-/* Matches 'OK' status in Column H */
 .stock-ok {
   background-color: #dcfce7;
   color: #15803d;
@@ -686,7 +646,6 @@ fetch(`${API_URL}?action=getProducts`)
   .then(data => {
     rawProducts = data || [];
 
-    // GROUP BY PRODUCT NAME
     productsByName = {};
     rawProducts.forEach(p => {
       if (!productsByName[p.name]) {
@@ -700,7 +659,6 @@ fetch(`${API_URL}?action=getProducts`)
   });
 
 /* ADD PRODUCT BLOCK */
-/* ADD PRODUCT BLOCK */
 function addProductBlock() {
   const id = productBlockId++;
   const row = document.createElement("tr");
@@ -713,7 +671,7 @@ function addProductBlock() {
     </td>
     <td data-types="${id}"></td>
     <td data-qty="${id}">
-       <div class="stock-badge" id="stock-${id}" style="display:none;"></div>
+        <div class="stock-badge" id="stock-${id}" style="display:none;"></div>
     </td>
     <td data-price="${id}"></td>
     <td data-total="${id}"></td>
@@ -724,6 +682,7 @@ function addProductBlock() {
   blocks.appendChild(row);
   setupAutocomplete(id);
 }
+
 function closeAllProductAutocompletes() {
   document.querySelectorAll(".autocomplete-box").forEach(b => {
     b.hidden = true;
