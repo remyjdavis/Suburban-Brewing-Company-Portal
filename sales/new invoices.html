@@ -324,10 +324,10 @@
 
   </section>
 </main>
-
+<!-- ===== START OF SCRIPT ===== -->
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
-
+<!-- ===== GLOBAL ===== -->
 let customers = [];
 let products = [];
 let groupedProducts = {};
@@ -341,7 +341,7 @@ document.addEventListener("DOMContentLoaded", () => {
   addProductRow();
 });
 
-/* ===== CUSTOMERS ===== */
+/* ===== LOAD CUSTOMERS FUNCTION ===== */
 function loadCustomers() {
   fetch(`${API_URL}?action=getCustomers`)
     .then(r => r.json())
@@ -361,7 +361,7 @@ document.getElementById("customer-search").addEventListener("input", function ()
     this.parentNode.appendChild(div);
   });
 });
-
+/* ===== SELECT CUSTOMERS FUNCTION ===== */
 function selectCustomer(c) {
   selectedCustomer = c;
 
@@ -403,7 +403,7 @@ document.getElementById("invoice-number").addEventListener("change", e => {
   JsBarcode("#barcode", val, { height: 30, displayValue: false });
 });
 
-/* ===== PRODUCTS ===== */
+/* ===== LOAD PRODUCTS FUNCTION ===== */
 function loadProducts() {
   fetch(`${API_URL}?action=getProducts`)
     .then(r => r.json())
@@ -416,7 +416,7 @@ function loadProducts() {
       });
     });
 }
-
+/* ===== ADD PRODUCT ROW FUNCTION ===== */
 function addProductRow() {
   const tbody = document.getElementById("product-body");
 
@@ -440,7 +440,7 @@ function addProductRow() {
 
   wireProductRow(tr);
 }
-
+/* ===== WIRE PRODUCT ROW FUNCTION ===== */
 function wireProductRow(row) {
   const input = row.querySelector(".product-input");
   const suggestions = row.querySelector(".product-suggestions");
@@ -460,7 +460,7 @@ function wireProductRow(row) {
       });
   });
 }
-
+/* ===== SELECT PRODUCT FUNCTION ===== */
 function selectProduct(row, product) {
   row.querySelector(".product-input").value = product;
   row.querySelector(".product-suggestions").innerHTML = "";
@@ -482,7 +482,7 @@ function selectProduct(row, product) {
     }
   });
 }
-
+/* ===== UPDATE QUANTITIES FUNCTION ===== */
 function updateQuantities(row, product) {
   const qtyCell = row.querySelector(".qty-group");
   const priceCell = row.querySelector(".price-cell");
@@ -548,7 +548,7 @@ function updateQuantities(row, product) {
 
   recalcLine(row, product);
 }
-
+/* ===== RECALCLINE FUNCTION ===== */
 function recalcLine(row, product) {
   const totalCell = row.querySelector(".line-total");
   totalCell.innerHTML = "";
@@ -562,6 +562,23 @@ function recalcLine(row, product) {
     line.textContent = `$${(qty * price).toFixed(2)}`;
     totalCell.appendChild(line);
   });
+}
+  /* ===== RECALC INVOICE SUBTOTAL FUNCTION ===== */
+function recalcInvoiceSubtotal() {
+  let subtotal = 0;
+
+  document.querySelectorAll(".qty-group div").forEach(div => {
+    const row = div.closest("tr");
+    const product = row.querySelector(".product-input").value;
+    const type = div.dataset.type;
+    const qty = Number(div.querySelector("input").value || 0);
+    const price = groupedProducts[product]?.[type] || 0;
+
+    subtotal += qty * price;
+  });
+
+  document.getElementById("invoice-subtotal").textContent =
+    "$" + subtotal.toFixed(2);
 }
 
 </script>
