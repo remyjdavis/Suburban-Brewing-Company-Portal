@@ -313,14 +313,27 @@ document.getElementById("customer-search").addEventListener("input", e => {
     });
 });
 
-function selectCustomer(c) {
+function selectCustomer(customer) {
+  selectedCustomer = customer;
+
+  // Hide search input
   document.getElementById("customer-search").style.display = "none";
-  document.getElementById("customer-autocomplete").innerHTML = "";
+  clearSuggestions();
+
+  // Show display block
   document.getElementById("customer-display").hidden = false;
-  document.getElementById("customer-name").textContent = c.name;
+  document.getElementById("customer-name").textContent = customer.name;
+
+  // FORCE 3 LINES MAX
+  const parts = customer.address.split(",");
+
+  const line1 = parts[0] || "";
+  const line2 = parts.slice(1).join(",").trim();
+
   document.getElementById("customer-address").innerHTML =
-    `${c.address}<br>${c.city}, ${c.state} ${c.zip}`;
+    `${line1}<br>${line2}`;
 }
+
 
 /* BARCODE */
 document.getElementById("invoice-number").addEventListener("input", e => {
