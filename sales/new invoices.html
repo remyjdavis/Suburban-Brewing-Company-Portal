@@ -481,37 +481,47 @@ function selectProduct(row, product) {
 
 function updateQuantities(row, product) {
   const qtyCell = row.querySelector(".qty-group");
+  const priceCell = row.querySelector(".price-cell");
   const barcodeCell = row.querySelector(".barcode-cell");
 
   const checkboxes = row.querySelectorAll(".type-checkboxes input");
 
   checkboxes.forEach(cb => {
     const type = cb.value;
-    const existing = qtyCell.querySelector(`[data-type="${type}"]`);
 
-    // ADD quantity row when checked
-    if (cb.checked && !existing) {
-      const wrapper = document.createElement("div");
-      wrapper.dataset.type = type;
-      wrapper.style.display = "flex";
-      wrapper.style.justifyContent = "space-between";
-      wrapper.style.gap = "6px";
+    const existingQty = qtyCell.querySelector(`[data-type="${type}"]`);
+    const existingPrice = priceCell.querySelector(`[data-type="${type}"]`);
 
-      const label = document.createElement("span");
-      label.textContent = type + ":";
+    // ADD TYPE
+    if (cb.checked && !existingQty) {
+      /* ---------- QTY ---------- */
+      const qtyWrap = document.createElement("div");
+      qtyWrap.dataset.type = type;
+      qtyWrap.style.display = "flex";
+      qtyWrap.style.justifyContent = "space-between";
+      qtyWrap.style.gap = "6px";
 
-      const qty = document.createElement("input");
-      qty.type = "number";
-      qty.min = 0;
-      qty.value = 0;
-      qty.style.width = "50px";
-      qty.oninput = () => recalcLine(row, product);
+      const qtyLabel = document.createElement("span");
+      qtyLabel.textContent = type + ":";
 
-      wrapper.appendChild(label);
-      wrapper.appendChild(qty);
-      qtyCell.appendChild(wrapper);
+      const qtyInput = document.createElement("input");
+      qtyInput.type = "number";
+      qtyInput.min = 0;
+      qtyInput.value = 0;
+      qtyInput.style.width = "50px";
+      qtyInput.oninput = () => recalcLine(row, product);
 
-      // CASE BARCODE ONLY
+      qtyWrap.appendChild(qtyLabel);
+      qtyWrap.appendChild(qtyInput);
+      qtyCell.appendChild(qtyWrap);
+
+      /* ---------- PRICE ---------- */
+      const priceWrap = document.createElement("div");
+      priceWrap.dataset.type = type;
+      priceWrap.textContent = `$${groupedProducts[product][type].toFixed(2)}`;
+      priceCell.appendChild(priceWrap);
+
+      /* ---------- BARCODE (CASE ONLY) ---------- */
       if (type === "Case") {
         barcodeCell.innerHTML = "";
         JsBarcode(barcodeCell, product + "-CASE", {
@@ -521,9 +531,10 @@ function updateQuantities(row, product) {
       }
     }
 
-    // REMOVE quantity row when unchecked
-    if (!cb.checked && existing) {
-      existing.remove();
+    // REMOVE TYPE
+    if (!cb.checked && existingQty) {
+      existingQty.remove();
+      if (existingPrice) existingPrice.remove();
 
       if (type === "Case") {
         barcodeCell.innerHTML = "";
@@ -535,17 +546,20 @@ function updateQuantities(row, product) {
 }
 
 function recalcLine(row, product) {
-  let total = 0;
-  row.querySelectorAll(".qty-group div").forEach(div => {
-    const type = div.textContent.split(":")[0];
-    const qty = Number(div.querySelector("input").value);
-    total += qty * groupedProducts[product][type];
-  });
-  row.querySelector(".line-total").textContent = "$" + total.toFixed(2);
-  row.querySelector(".price-cell").textContent =
-  total > 0 ? "$" + total.toFixed(2) : "$0.00";
+  const totalCell = row.querySelector(".line-total");
+  totalCell.innerHTML = "";
 
+  row.querySelectorAll(".qty-group div").forEach(div => {
+    const type = div.dataset.type;
+    const qty = Number(div.querySelector("input").value);
+    const price = groupedProducts[product][type];
+
+    const line = document.createElement("div");
+    line.textContent = `$${(qty * price).toFixed(2)}`;
+    totalCell.appendChild(line);
+  });
 }
+
 </script>
 
 </body>
