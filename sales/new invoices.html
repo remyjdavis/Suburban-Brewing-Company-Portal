@@ -249,6 +249,125 @@
   const today = new Date().toLocaleDateString();
   document.getElementById("current-date").textContent = today;
   document.getElementById("invoice-date").textContent = today;
+  <script>
+/******************************************************
+ * CONFIG
+ ******************************************************/
+const API_URL =
+  "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+
+/******************************************************
+ * STATE
+ ******************************************************/
+let customers = [];
+let selectedCustomer = null;
+
+/******************************************************
+ * INIT
+ ******************************************************/
+document.addEventListener("DOMContentLoaded", () => {
+  loadCustomers();
+  setInvoiceDate();
+});
+
+/******************************************************
+ * LOAD CUSTOMERS
+ ******************************************************/
+function loadCustomers() {
+  fetch(`${API_URL}?action=getCustomers`)
+    .then(res => res.json())
+    .then(data => {
+      customers = data || [];
+      setupCustomerAutocomplete();
+    })
+    .catch(err => console.error("Customer load error:", err));
+}
+
+/******************************************************
+ * AUTOCOMPLETE
+ ******************************************************/
+function setupCustomerAutocomplete() {
+  const input = document.getElementById("customer-search");
+
+  input.addEventListener("input", () => {
+    const value = input.value.toLowerCase();
+    clearSuggestions();
+
+    if (!value) return;
+
+    const matches = customers.filter(c =>
+      c.name.toLowerCase().includes(value)
+    );
+
+    if (matches.length === 0) return;
+
+    const list = document.createElement("div");
+    list.id = "customer-suggestions";
+    list.style.border = "1px solid #ccc";
+    list.style.background = "#fff";
+    list.style.position = "absolute";
+    list.style.zIndex = 1000;
+
+    matches.forEach(c => {
+      const item = document.createElement("div");
+      item.textContent = c.name;
+      item.style.padding = "6px";
+      item.style.cursor = "pointer";
+
+      item.onclick = () => selectCustomer(c);
+
+      list.appendChild(item);
+    });
+
+    input.parentNode.appendChild(list);
+  });
+}
+
+function clearSuggestions() {
+  const existing = document.getElementById("customer-suggestions");
+  if (existing) existing.remove();
+}
+
+/******************************************************
+ * SELECT CUSTOMER
+ ******************************************************/
+function selectCustomer(customer) {
+  selectedCustomer = customer;
+
+  // Hide search
+  document.getElementById("customer-search").style.display = "none";
+  clearSuggestions();
+
+  // Show display block
+  document.getElementById("customer-display").hidden = false;
+  document.getElementById("customer-name").textContent = customer.name;
+
+  // Split address into two lines max
+  const addrLines = customer.address.split(",").slice(0, 2);
+  document.getElementById("customer-address").innerHTML =
+    addrLines.join("<br>");
+}
+
+/******************************************************
+ * DATE
+ ******************************************************/
+function setInvoiceDate() {
+  const today = new Date().toLocaleDateString();
+  document.getElementById("invoice-date").textContent = today;
+}
+
+/******************************************************
+ * EXPORT (FOR SAVE LATER)
+ ******************************************************/
+function getInvoiceHeaderData() {
+  return {
+    customer: selectedCustomer,
+    invoiceNumber: document.getElementById("invoice-number").value,
+    date: document.getElementById("invoice-date").textContent
+  };
+}
+</script>
+
 </script>
 
 </body>
