@@ -443,6 +443,7 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 // ===== GLOBAL =====
+let invoiceNumberValue = "";
 let addProductButtonRow = null;
 let customers = [];
 let selectedCustomer = null;
@@ -593,9 +594,17 @@ function updateInvoiceFooter() {
 document.getElementById("invoice-number").addEventListener("change", e => {
   const val = e.target.value.trim();
   if (!val) return;
+
+  invoiceNumberValue = val;
+
   document.getElementById("invoice-number-row").innerHTML =
     `<strong>Invoice #:</strong> <span>${val}</span>`;
-  JsBarcode("#barcode", val, { height: 30, displayValue: false });
+
+  JsBarcode("#barcode", val, {
+    format: "CODE128",
+    height: 30,
+    displayValue: false
+  });
 });
 
 /* ===== LOAD PRODUCTS FUNCTION ===== */
