@@ -141,6 +141,66 @@
   background-color: #9ca3af; /* darker so it shows */
   margin: 10px 0 18px;
 }
+/* ===== CUSTOMER + META ROW (3-LINE MAX) ===== */
+.invoice-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 24px;
+}
+
+/* LEFT: CUSTOMER */
+.customer-block {
+  flex: 1;
+  max-width: 60%;
+}
+
+.customer-search {
+  width: 100%;
+  font-size: 12px;
+  padding: 4px 6px;
+  margin-bottom: 4px;
+}
+
+.customer-name {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.customer-address {
+  font-size: 12px;
+  line-height: 1.3;
+  max-height: 2.6em; /* 2 lines max */
+  overflow: hidden;
+}
+
+/* RIGHT: META */
+.invoice-meta {
+  text-align: right;
+  font-size: 12px;
+  min-width: 200px;
+}
+
+.meta-row {
+  margin-bottom: 4px;
+}
+
+.meta-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.meta-value {
+  margin-left: 6px;
+}
+
+/* BARCODE */
+#barcode {
+  height: 32px;
+  margin-top: 4px;
+}
 
     @media (max-width: 1024px) {
       .sidebar {
@@ -212,9 +272,56 @@
     
   </header>
 <div class="invoice-divider"></div>
-  <!-- INVOICE BODY CONTENT STARTS NEXT PHASE -->
+  </section>
+  <!--===== Customer Section Formatting =====-->
+<section class="invoice-meta-row">
+
+  <!-- LEFT: CUSTOMER -->
+  <div class="customer-block">
+
+    <!-- Search (will auto-hide later) -->
+    <input
+      type="text"
+      id="customer-search"
+      class="customer-search"
+      placeholder="Search customer..."
+      autocomplete="off"
+    >
+
+    <!-- Display after selection -->
+    <div id="customer-display" hidden>
+      <div class="customer-name" id="customer-name">Customer Name</div>
+      <div class="customer-address" id="customer-address">
+        123 Main Street<br>
+        City, State ZIP
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: DATE / INVOICE / BARCODE -->
+  <div class="invoice-meta">
+
+    <div class="meta-row">
+      <span class="meta-label">Date:</span>
+      <span class="meta-value" id="invoice-date"></span>
+    </div>
+
+    <div class="meta-row">
+      <span class="meta-label">Invoice #:</span>
+      <input
+        type="text"
+        id="invoice-number"
+        style="width:80px; font-size:12px; padding:3px;"
+      >
+    </div>
+
+    <svg id="barcode"></svg>
+
+  </div>
 
 </section>
+
 
   </main>
 
