@@ -1207,22 +1207,25 @@ function saveInvoice() {
   const payload = buildInvoicePayload();
   if (!payload) return;
 
-  fetch(`${API_URL}?action=saveInvoice`, {
-    method: "POST",
-    body: JSON.stringify(payload) // 👈 NO headers
-  })
+  const url =
+    API_URL +
+    "?action=saveInvoice" +
+    "&data=" +
+    encodeURIComponent(JSON.stringify(payload));
+
+  fetch(url)
     .then(r => r.json())
     .then(res => {
       if (res.success) {
         alert("Invoice saved successfully");
       } else {
-        alert("Failed to save invoice");
         console.error(res);
+        alert("Save failed");
       }
     })
     .catch(err => {
-      alert("Network error while saving invoice");
       console.error(err);
+      alert("Network error");
     });
 }
 
