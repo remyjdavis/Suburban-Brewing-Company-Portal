@@ -796,12 +796,14 @@ function updateQuantities(row, product) {
 
       /* ---------- BARCODE (CASE ONLY) ---------- */
       if (type === "Case") {
-        barcodeCell.innerHTML = "";
-        JsBarcode(barcodeCell, product + "-CASE", {
-          height: 28,
-          displayValue: false
-        });
-      }
+  barcodeCell.innerHTML = `<svg class="item-barcode"></svg>`;
+  JsBarcode(
+    barcodeCell.querySelector("svg"),
+    product + "-CASE",
+    { height: 28, displayValue: false }
+  );
+}
+
     }
 
     // REMOVE TYPE
