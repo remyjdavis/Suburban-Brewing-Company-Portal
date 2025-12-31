@@ -292,8 +292,13 @@ function selectCustomer(c) {
 
   document.getElementById("customer-name").textContent = c.name;
 
-  document.getElementById("customer-address").innerHTML =
-    `${c.address1}<br>${c.address2}`;
+  const addressParts = c.address.split(",");
+
+const line1 = addressParts[0]?.trim() || "";
+const line2 = addressParts.slice(1).join(",").trim();
+
+document.getElementById("customer-address").innerHTML =
+  `${line1}<br>${line2}`;
 
   if (document.getElementById("invoice-number").value) {
     JsBarcode("#barcode", document.getElementById("invoice-number").value, {
