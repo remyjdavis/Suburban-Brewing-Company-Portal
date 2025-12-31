@@ -718,37 +718,54 @@ function getTotalCaseQty() {
    /* ===== OPEN NEW CUSTOMER MODAL FUNCTION ===== */
 function openNewCustomerModal(prefillName = "") {
   document.getElementById("new-customer-modal").style.display = "block";
+
   document.getElementById("new-cust-name").value = prefillName;
   document.getElementById("new-cust-address").value = "";
+  document.getElementById("new-cust-city").value = "";
+  document.getElementById("new-cust-state").value = "";
+  document.getElementById("new-cust-zip").value = "";
+
   document.getElementById("new-cust-type").value = "Restaurant";
+  document.getElementById("new-cust-payment").value = "Check";
 }
+  
  /* ===== CLOSE NEW CUSTROMER MODAL FUNCTION ===== */
 function closeNewCustomerModal() {
   document.getElementById("new-customer-modal").style.display = "none";
 }
+  
  /* ===== SAVE NEW CUSTOMER FUNCTION ===== */
 function saveNewCustomer() {
   const name = document.getElementById("new-cust-name").value.trim();
-  const address = document.getElementById("new-cust-address").value.trim();
+  const street = document.getElementById("new-cust-address").value.trim();
+  const city = document.getElementById("new-cust-city").value.trim();
+  const state = document.getElementById("new-cust-state").value.trim();
+  const zip = document.getElementById("new-cust-zip").value.trim();
   const type = document.getElementById("new-cust-type").value;
+  const paymentMethod = document.getElementById("new-cust-payment").value;
 
   if (!name) {
     alert("Customer name is required");
     return;
   }
 
+  // 🔧 Build address string (keeps rest of system intact)
+  const addressParts = [street, city, state, zip].filter(Boolean);
+  const address = addressParts.join(", ");
+
   const newCustomer = {
     name,
     address,
-    type
+    type,
+    paymentMethod
   };
 
-  // ✅ Add to local list (frontend only for now)
+  // Frontend-only add (backend later)
   customers.push(newCustomer);
 
   closeNewCustomerModal();
 
-  // ✅ Auto-select customer on invoice
+  // Auto-select customer
   selectCustomer(newCustomer);
 }
 
@@ -758,24 +775,35 @@ function saveNewCustomer() {
      style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
 
   <div style="background:#fff; width:420px; margin:10% auto; padding:20px; border-radius:6px;">
-    <h3 style="margin-top:0;">Add New Customer</h3>
+  <h3 style="margin-top:0;">Add New Customer</h3>
 
-    <label>Name</label>
-    <input id="new-cust-name" style="width:100%; margin-bottom:8px;">
+  <label>Name</label>
+  <input id="new-cust-name" style="width:100%; margin-bottom:8px;">
 
-    <label>Address</label>
-    <textarea id="new-cust-address" rows="3" style="width:100%; margin-bottom:8px;"></textarea>
+  <label>Address</label>
+  <input id="new-cust-address" placeholder="Street Address" style="width:100%; margin-bottom:6px;">
 
-    <label>Customer Type</label>
-    <select id="new-cust-type" style="width:100%; margin-bottom:12px;">
-      <option value="Restaurant">Restaurant</option>
-      <option value="Wholesaler">Wholesaler</option>
-    </select>
+  <div style="display:flex; gap:6px; margin-bottom:6px;">
+    <input id="new-cust-city" placeholder="City" style="flex:2;">
+    <input id="new-cust-state" placeholder="State" style="flex:1;">
+    <input id="new-cust-zip" placeholder="Zip" style="flex:1;">
+  </div>
 
-    <div style="text-align:right;">
-      <button onclick="closeNewCustomerModal()">Cancel</button>
-      <button onclick="saveNewCustomer()">Save Customer</button>
-    </div>
+  <label>Customer Type</label>
+  <select id="new-cust-type" style="width:100%; margin-bottom:8px;">
+    <option value="Restaurant">Restaurant</option>
+    <option value="Wholesaler">Wholesaler</option>
+  </select>
+
+  <label>Payment Method</label>
+  <select id="new-cust-payment" style="width:100%; margin-bottom:12px;">
+    <option value="Check">Check</option>
+    <option value="Fintech">Fintech</option>
+  </select>
+
+  <div style="text-align:right;">
+    <button onclick="closeNewCustomerModal()">Cancel</button>
+    <button onclick="saveNewCustomer()">Save Customer</button>
   </div>
 </div>
 
