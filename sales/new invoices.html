@@ -472,13 +472,9 @@ updateInvoiceFooter();
     cleanLines.join("<br>");
   // Toggle sales tax visibility
 const taxRow = document.getElementById("tax-row");
-
-if (c.type === "Restaurant") {
-  taxRow.style.display = "flex";
-} else {
-  taxRow.style.display = "none";
+if (taxRow) {
+  taxRow.style.display = c.type === "Restaurant" ? "flex" : "none";
 }
-
   recalcInvoiceTotals();
 }
   /* ===== FOOTER SELECTION FUNCTION ===== */
