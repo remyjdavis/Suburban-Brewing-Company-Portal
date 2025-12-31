@@ -198,31 +198,24 @@
   
   loader.style.display = "block";
   list.innerHTML = "";
+  document.getElementById('mainNavBtn').style.display = "none";
 
-  // 1. Listen for the "Package" to arrive from Google
-  const messageHandler = function(event) {
-    // Only accept data if it's an array (our route)
-    if (Array.isArray(event.data)) {
-      renderStops(event.data);
-      window.removeEventListener("message", messageHandler);
-      document.getElementById('temp-frame').remove();
-    }
-  };
-  window.addEventListener("message", messageHandler);
+  // This proxy handles the redirect and the 'Origin' block for both mobile and laptop
+  const proxyUrl = "https://corsproxy.io/?";
+  const targetUrl = scriptURL + "?action=getOptimizedDailyRoute&date=" + date;
 
-  // 2. Create a hidden iframe to go fetch the data
-  const ifrm = document.createElement("iframe");
-  ifrm.id = "temp-frame";
-  ifrm.style.display = "none";
-  ifrm.src = scriptURL + "?action=getOptimizedDailyRoute&date=" + date;
-  document.body.appendChild(ifrm);
-  
-  // Timeout safety
-  setTimeout(() => {
-    if (loader.style.display !== "none") {
-      loader.innerText = "Connection timed out. Please re-deploy as 'Anyone'.";
-    }
-  }, 10000);
+  fetch(proxyUrl + encodeURIComponent(targetUrl))
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.json();
+    })
+    .then(stops => {
+      renderStops(stops);
+    })
+    .catch(err => {
+      console.error("Fetch Error:", err);
+      loader.innerText = "Error: Check that your Google Script is deployed to 'Anyone'.";
+    });
 }
   function renderStops(stops) {
     document.getElementById('loading').style.display = "none";
