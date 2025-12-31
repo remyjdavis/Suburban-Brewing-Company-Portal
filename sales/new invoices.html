@@ -159,15 +159,20 @@
     }
 
     .invoice-meta {
-      text-align: right;
-      font-size: 12px;
-      min-width: 200px;
-    }
+  text-align: left;
+  font-size: 12px;
+  min-width: 200px;
+}
 
-    #barcode {
-      height: 30px;
-      margin-top: 4px;
-    }
+.invoice-meta > div {
+  margin-bottom: 6px;
+}
+
+#barcode {
+  display: block;
+  margin-top: 6px;
+}
+
   </style>
 </head>
 
@@ -240,10 +245,19 @@
 
       <!-- META -->
       <div class="invoice-meta">
-        <div><strong>Date:</strong> <span id="invoice-date"></span></div>
-        <div><strong>Invoice #:</strong> <input id="invoice-number" style="width:80px;"></div>
-        <svg id="barcode"></svg>
-      </div>
+  <div class="meta-line">
+    <strong>Date:</strong>
+    <span id="invoice-date"></span>
+  </div>
+
+  <div class="meta-line">
+    <strong>Invoice #:</strong>
+    <input id="invoice-number" style="width:80px;">
+  </div>
+
+  <svg id="barcode"></svg>
+</div>
+
 
     </section>
 
@@ -317,11 +331,21 @@ function selectCustomer(c) {
 
 
 
-document.getElementById("invoice-number").addEventListener("input", e => {
-  if (e.target.value) {
-    JsBarcode("#barcode", e.target.value, { height: 30, displayValue: false });
-  }
+document.getElementById("invoice-number").addEventListener("change", e => {
+  const value = e.target.value.trim();
+  if (!value) return;
+
+  // Replace input with static text
+  const wrapper = e.target.parentElement;
+  wrapper.innerHTML = `<strong>Invoice #:</strong> <span id="invoice-number-text">${value}</span>`;
+
+  // Generate barcode
+  JsBarcode("#barcode", value, {
+    height: 30,
+    displayValue: false
+  });
 });
+
 </script>
 
 </body>
