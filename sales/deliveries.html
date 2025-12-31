@@ -3,109 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <title>Deliveries | Suburban Brewing Company</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    :root { 
-      --sidebar-width: 240px; 
-      --primary-dark: #111827; 
-      --accent: #374151; 
+    :root {
+      --bg: #f4f6f8;
+      --sidebar: #1f2937;
+      --accent: #2563eb;
+      --text: #1f2937;
+      --card-bg: #ffffff;
     }
 
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background: #f5f7fa;
-      display: flex; /* Required for sidebar layout */
-    }
-
-    /* ===== SIDEBAR ===== */
-    .sidebar { 
-      width: var(--sidebar-width); 
-      background: var(--primary-dark); 
-      height: 100vh; 
-      color: white; 
-      position: fixed; 
-      left: 0;
-      top: 0;
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    body { 
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text); 
       display: flex; 
-      flex-direction: column; 
+      min-height: 100vh; 
+    }
+
+    /* --- SIDEBAR (Command Center Design) --- */
+    .sidebar { 
+      width: 240px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 20px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
       z-index: 1000;
     }
-    .sidebar-header { 
-      padding: 20px; 
-      font-weight: 800; 
-      font-size: 1.2rem; 
-      border-bottom: 1px solid var(--accent); 
-      letter-spacing: 1px; 
-    }
-    .nav-links { flex-grow: 1; padding: 20px 0; }
-    .nav-item { 
-      padding: 12px 25px; 
-      display: block; 
-      color: #9ca3af; 
-      text-decoration: none; 
-      transition: 0.2s; 
-      font-size: 0.9rem; 
-    }
-    .nav-item:hover, .nav-item.active { 
-      background: var(--accent); 
-      color: white; 
+    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; color: #fff; letter-spacing: 1px; }
+    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 0.5px; }
+    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
+    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
+    .nav-link.active { border-left: 4px solid var(--accent); }
+
+    /* --- MAIN CONTENT WRAPPER --- */
+    .main-wrapper { 
+      flex: 1; 
+      margin-left: 240px; 
+      display: flex; 
+      flex-direction: column; 
+      min-width: 0;
     }
 
-    /* ===== MAIN CONTENT WRAPPER ===== */
-    .main-wrapper {
-      flex-grow: 1;
-      margin-left: var(--sidebar-width);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ===== HEADER (BLACK) ===== */
+    /* --- HEADER (SOLID BLACK) --- */
     .app-header {
       display: flex;
       align-items: center;
       gap: 20px;
       padding: 16px 24px;
-      background: #000000; /* Header background changed to black */
+      background: #000000;
       color: white;
     }
 
     .logo { height: 60px; }
     .company-name { font-size: 20px; font-weight: 700; }
-    .company-address { font-size: 13px; }
+    .company-address { font-size: 13px; opacity: 0.9; }
+
     .header-right {
       margin-left: auto;
       text-align: right;
       font-size: 13px;
     }
 
-    /* ===== LAYOUT ===== */
+    /* --- LAYOUT & CARDS --- */
     main {
+      padding: 30px;
       max-width: 1100px;
-      margin: 24px auto;
-      padding: 0 16px;
       width: 100%;
-      box-sizing: border-box;
+      margin: 0 auto;
     }
 
     .section {
       background: white;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       margin-bottom: 24px;
     }
 
     h2 {
       margin: 0 0 16px;
       font-size: 18px;
-      border-bottom: 1px solid #e5e7eb;
+      color: #374151;
+      border-bottom: 2px solid #e5e7eb;
       padding-bottom: 8px;
     }
 
-    /* ===== ACTION BAR ===== */
+    /* --- ACTION BAR --- */
     .action-bar {
       display: flex;
       flex-wrap: wrap;
@@ -115,13 +105,15 @@
     }
 
     input {
-      padding: 8px;
-      border-radius: 6px;
+      padding: 10px;
+      border-radius: 8px;
       border: 1px solid #d1d5db;
       font-size: 14px;
+      flex: 1;
+      min-width: 200px;
     }
 
-    /* ===== TABLE ===== */
+    /* --- TABLE --- */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -134,23 +126,24 @@
       text-align: left;
     }
 
-    th { background: #f1f5f9; }
+    th { background: #f9fafb; color: #6b7280; font-weight: 600; }
 
     tr.selected {
-      background: #ecfeff;
-      border-left: 4px solid #0f766e;
+      background: #eff6ff;
+      border-left: 4px solid var(--accent);
     }
 
     .status { font-weight: 600; color: #b45309; }
 
-    /* ===== BUTTONS ===== */
+    /* --- BUTTONS --- */
     .btn {
-      padding: 8px 14px;
-      border-radius: 6px;
+      padding: 10px 18px;
+      border-radius: 8px;
       border: none;
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
+      transition: 0.2s;
     }
 
     .btn-primary {
@@ -162,6 +155,7 @@
 
     .btn-secondary {
       background: #e5e7eb;
+      color: #374151;
     }
 
     .btn-secondary:hover { background: #d1d5db; }
@@ -174,35 +168,51 @@
 
     #scanner { 
       max-width: 420px; 
-      margin-top: 10px;
-      border-radius: 8px;
+      margin-top: 15px;
+      border-radius: 12px;
       overflow: hidden;
+      border: 1px solid #ddd;
     }
 
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .main-wrapper { margin-left: 0; }
+    /* Responsive adjustment for small screens */
+    @media (max-width: 1024px) {
+      .sidebar { width: 70px; }
+      .sidebar h2, .sidebar .nav-section-title, .sidebar .nav-link span { display: none; }
+      .main-wrapper { margin-left: 70px; }
     }
   </style>
 </head>
 
 <body>
 
-<div class="sidebar">
-    <div class="sidebar-header">SUBURBAN BREWING</div>
-    <nav class="nav-links">
-        <a href="index.html" class="nav-item">🏠 !Main Dashboard</a>
-        <a href="route.html" class="nav-item">🚚 Daily Route</a>
-        <a href="leads.html" class="nav-item">📋 Sales Activity</a>
-        <a href="invoices.html" class="nav-item">📑 Invoice History</a>
-        <a href="new invoices.html" class="nav-item">➕ New Invoice</a>
-        <a href="deliveries.html" class="nav-item active">📦 Delivery Log</a>
-        <a href="inventory.html" class="nav-item">🍺 Inventory Control</a>
-    </nav>
-</div>
+  <aside class="sidebar">
+    <h2>SUBURBAN</h2>
+    
+    <div class="nav-section-title">Operations</div>
+    <a href="index.html" class="nav-link"><span>Command Center</span></a>
+    <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+    <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+    <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    
+    <div class="nav-section-title">Sales & Outreach</div>
+    <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+    <a href="sales/invoices.html" class="nav-link"><span>Invoice Search</span></a>
+    <a href="sales/deliveries.html" class="nav-link active"><span>Delivery Tracking</span></a>
+    <a href="sales/customer-list.html" class="nav-link"><span>Customer Database</span></a>
 
-<div class="main-wrapper">
+    <div class="nav-section-title">Production & Cellar</div>
+    <a href="inventory/brewery.html" class="nav-link"><span>Brewery Master Inventory</span></a>
+    <a href="inventory/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+    <a href="inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Stock</span></a>
+    <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Stock</span></a>
+    
+    <div class="nav-section-title">Reporting & Analytics</div>
+    <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+    <a href="Reports/sales-route.html" class="nav-link"><span>Sales Route Optimization</span></a>
+    <a href="Reports/client-inventory.html" class="nav-link"><span>Client Inventory Levels</span></a>
+  </aside>
+
+  <div class="main-wrapper">
     <header class="app-header">
       <img src="background.jpg" class="logo" />
 
@@ -260,111 +270,131 @@
         </table>
       </div>
     </main>
-</div>
+  </div>
 
 <script src="https://unpkg.com/@ericblade/quagga2/dist/quagga.min.js"></script>
 
 <script>
+/* ===== CONFIG ===== */
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 
 let deliveries = [];
 let selectedInvoice = null;
 
+/* ===== INITIALIZE ===== */
 document.addEventListener("DOMContentLoaded", loadOpenDeliveries);
 
-/* ===== LOAD DELIVERIES ===== */
+/* ===== DATA LOADING ===== */
 async function loadOpenDeliveries() {
-  const res = await fetch(`${API_URL}?action=getOpenDeliveries`);
-  deliveries = await res.json();
+  try {
+    const res = await fetch(`${API_URL}?action=getOpenDeliveries`);
+    deliveries = await res.json();
 
-  document.getElementById("loading").style.display = "none";
+    document.getElementById("loading").style.display = "none";
 
-  if (!deliveries.length) {
-    document.getElementById("empty").style.display = "block";
-    return;
-  }
+    if (!deliveries.length) {
+      document.getElementById("empty").style.display = "block";
+      return;
+    }
 
-  const tbody = document.getElementById("deliveryBody");
-  document.getElementById("deliveryTable").style.display = "table";
-  tbody.innerHTML = "";
+    const tbody = document.getElementById("deliveryBody");
+    document.getElementById("deliveryTable").style.display = "table";
+    tbody.innerHTML = "";
 
-  deliveries.forEach(inv => {
-    const tr = document.createElement("tr");
-    tr.dataset.invoice = inv.invoiceNumber;
+    deliveries.forEach(inv => {
+      const tr = document.createElement("tr");
+      tr.dataset.invoice = inv.invoiceNumber;
 
-    tr.innerHTML = `
-      <td>${inv.invoiceNumber}</td>
-      <td>${inv.date}</td>
-      <td>${inv.customer}</td>
-      <td>$${Number(inv.total).toFixed(2)}</td>
-      <td class="status">${inv.status}</td>
-    `;
+      tr.innerHTML = `
+        <td>${inv.invoiceNumber}</td>
+        <td>${inv.date}</td>
+        <td>${inv.customer}</td>
+        <td>$${Number(inv.total).toFixed(2)}</td>
+        <td class="status">${inv.status}</td>
+      `;
 
-    tr.onclick = () => selectRow(tr, inv.invoiceNumber);
-    tbody.appendChild(tr);
-  });
+      tr.onclick = () => selectRow(tr, inv.invoiceNumber);
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Failed to load deliveries", err);
+    document.getElementById("loading").textContent = "Error loading data.";
+  }
 }
 
+/* ===== UI LOGIC ===== */
 function selectRow(row, invoiceNumber) {
-  document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
-  row.classList.add("selected");
-  selectedInvoice = invoiceNumber;
+  document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+  row.classList.add("selected");
+  selectedInvoice = invoiceNumber;
 }
 
-/* ===== MARK DELIVERED ===== */
+/* ===== UPDATE ACTION ===== */
 async function markSelectedDelivered() {
-  const driver = document.getElementById("driverName").value.trim();
-  if (!driver) return alert("Driver name required");
-  if (!selectedInvoice) return alert("Select or scan an invoice");
+  const driver = document.getElementById("driverName").value.trim();
+  if (!driver) return alert("Driver name required");
+  if (!selectedInvoice) return alert("Select or scan an invoice first");
 
-  const deliveredAt = new Date().toISOString();
+  const deliveredAt = new Date().toISOString();
 
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "markDelivered",
-  0 invoiceNumber: selectedInvoice,
-      driver,
-      deliveredAt
-    })
-  });
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "markDelivered",
+        invoiceNumber: selectedInvoice,
+        driver,
+        deliveredAt
+      })
+    });
 
-  alert(`Invoice ${selectedInvoice} delivered`);
-  location.reload();
+    alert(`Invoice ${selectedInvoice} marked as delivered`);
+    location.reload();
+  } catch (err) {
+    alert("Error updating status. Please try again.");
+    console.error(err);
+  }
 }
 
-/* ===== BARCODE SCAN ===== */
+/* ===== QUAGGA BARCODE SCANNER ===== */
 function startScanner() {
-  const target = document.getElementById("scanner");
-  target.innerHTML = "";
+  const target = document.getElementById("scanner");
+  target.innerHTML = "";
 
-  Quagga.init({
-    inputStream: {
-      type: "LiveStream",
-      target,
-      constraints: { facingMode: "environment" }
-    },
-    decoder: { readers: ["code_128_reader"] }
-  }, err => {
-    if (err) return alert("Camera error");
-    Quagga.start();
-  });
+  Quagga.init({
+    inputStream: {
+      type: "LiveStream",
+      target,
+      constraints: { facingMode: "environment" }
+    },
+    decoder: { readers: ["code_128_reader"] }
+  }, err => {
+    if (err) {
+      console.error(err);
+      return alert("Camera error: Ensure you are on HTTPS and have given permission.");
+    }
+    Quagga.start();
+  });
 
-  Quagga.onDetected(data => {
-    Quagga.stop();
-    const code = data.codeResult.code;
-    selectedInvoice = code;
+  Quagga.onDetected(data => {
+    Quagga.stop();
+    const code = data.codeResult.code;
+    selectedInvoice = code;
 
-    const row = document.querySelector(`tr[data-invoice="${code}"]`);
-    if (row) selectRow(row, code);
-
-    alert(`Scanned invoice ${code}`);
-  });
+    // Highlight row in table if it exists
+    const row = document.querySelector(`tr[data-invoice="${code}"]`);
+    if (row) {
+      selectRow(row, code);
+      alert(`Invoice ${code} scanned and selected!`);
+    } else {
+      alert(`Scanned invoice ${code}, but it's not in the 'Open' list.`);
+    }
+  });
 }
 
-/* ===== NAV ===== */
+/* ===== NAVIGATION ===== */
 function goBack() {
-  window.location.href = "invoices.html";
+  window.location.href = "invoices.html";
 }
 </script>
 
