@@ -1209,8 +1209,7 @@ function saveInvoice() {
 
   fetch(`${API_URL}?action=saveInvoice`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload) // 👈 NO headers
   })
     .then(r => r.json())
     .then(res => {
@@ -1226,6 +1225,7 @@ function saveInvoice() {
       console.error(err);
     });
 }
+
 document.getElementById("save-invoice-btn").addEventListener("click", saveInvoice);
 
 </script>
