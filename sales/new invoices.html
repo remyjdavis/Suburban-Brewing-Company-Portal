@@ -321,7 +321,7 @@
   <strong>Subtotal:</strong>
   <span id="invoice-subtotal">$0.00</span>
 </div>
-<div style="margin-top:6px; text-align:right; font-size:13px;">
+<div id="tax-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
   <strong>Sales Tax (6%):</strong>
   <span id="invoice-tax">$0.00</span>
 </div>
@@ -401,6 +401,15 @@ function selectCustomer(c) {
 
   document.getElementById("customer-address").innerHTML =
     cleanLines.join("<br>");
+  // Toggle sales tax visibility
+const taxRow = document.getElementById("tax-row");
+
+if (c.type === "Restaurant") {
+  taxRow.style.display = "flex";
+} else {
+  taxRow.style.display = "none";
+}
+
   recalcInvoiceTotals();
 }
 
@@ -578,22 +587,15 @@ function recalcLine(row, product) {
 function recalcInvoiceTotals() {
   let subtotal = 0;
 
-  document.querySelectorAll(".qty-group div").forEach(div => {
-    const row = div.closest("tr");
-    const product = row.querySelector(".product-input").value;
-    const type = div.dataset.type;
-    const qty = Number(div.querySelector("input").value || 0);
-    const price = groupedProducts[product]?.[type] || 0;
-
-    subtotal += qty * price;
+  document.querySelectorAll(".line-total").forEach(cell => {
+    subtotal += Number(cell.dataset.value || 0);
   });
 
   const isRestaurant =
-    selectedCustomer &&
-    selectedCustomer.type &&
-    selectedCustomer.type.toLowerCase() === "restaurant";
+    selectedCustomer && selectedCustomer.type === "Restaurant";
 
-  const tax = isRestaurant ? subtotal * 0.06 : 0;
+  const taxRate = 0.06;
+  const tax = isRestaurant ? subtotal * taxRate : 0;
   const total = subtotal + tax;
 
   document.getElementById("invoice-subtotal").textContent =
