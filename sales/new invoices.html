@@ -424,7 +424,7 @@ function addProductRow() {
     </td>
     <td class="type-checkboxes"></td>
     <td class="qty-group"></td>
-    <td class="price-cell">$0.00</td>
+    <td class="price-cell"></td>
     <td class="barcode-cell"></td>
     <td class="line-total">$0.00</td>
   `;
@@ -551,7 +551,7 @@ function recalcLine(row, product) {
 
   row.querySelectorAll(".qty-group div").forEach(div => {
     const type = div.dataset.type;
-    const qty = Number(div.querySelector("input").value);
+    const qty = Number(div.querySelector("input").value || 0);
     const price = groupedProducts[product][type];
 
     const line = document.createElement("div");
