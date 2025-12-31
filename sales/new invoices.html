@@ -869,11 +869,9 @@ function updateQuantities(row, product) {
   }
 
   const barcodeSvg = row.querySelector("svg.line-barcode");
+if (!barcodeSvg) return;
 
-if (!barcodeSvg) {
-  console.warn("Barcode SVG not found for row", row);
-  return;
-}
+barcodeSvg.innerHTML = "";
 
 JsBarcode(barcodeSvg, sku, {
   format: "CODE128",
@@ -882,8 +880,6 @@ JsBarcode(barcodeSvg, sku, {
   margin: 0,
   displayValue: false
 });
-
-
 }
 
     }
