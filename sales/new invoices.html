@@ -574,23 +574,6 @@ function recalcLine(row, product) {
   });
   recalcInvoiceTotals();
 }
-  /* ===== RECALC INVOICE SUBTOTAL FUNCTION ===== */
-function recalcInvoiceSubtotal() {
-  let subtotal = 0;
-
-  document.querySelectorAll(".qty-group div").forEach(div => {
-    const row = div.closest("tr");
-    const product = row.querySelector(".product-input").value;
-    const type = div.dataset.type;
-    const qty = Number(div.querySelector("input").value || 0);
-    const price = groupedProducts[product]?.[type] || 0;
-
-    subtotal += qty * price;
-  });
-
-  document.getElementById("invoice-subtotal").textContent =
-    "$" + subtotal.toFixed(2);
-}
   /* ===== RECALC INVOICE TOTAL FUNCTION ===== */
 function recalcInvoiceTotals() {
   let subtotal = 0;
