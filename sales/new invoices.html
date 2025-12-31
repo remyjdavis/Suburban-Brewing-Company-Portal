@@ -363,7 +363,10 @@ let products = [];
 function loadProducts() {
   fetch(`${API_URL}?action=getProducts`)
     .then(r => r.json())
-    .then(d => products = d || []);
+    .then(data => {
+      products = data || [];
+      groupedProducts = groupProductsByName(products);
+    });
 }
 
 document.getElementById("customer-search").addEventListener("input", function () {
