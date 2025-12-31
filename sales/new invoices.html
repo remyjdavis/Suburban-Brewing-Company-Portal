@@ -553,12 +553,20 @@ function loadProducts() {
     .then(data => {
       products = data || [];
       groupedProducts = {};
+
       products.forEach(p => {
-        if (!groupedProducts[p.name]) groupedProducts[p.name] = {};
-        groupedProducts[p.name][p.package] = p.price;
+        if (!groupedProducts[p.name]) {
+          groupedProducts[p.name] = {};
+        }
+
+        groupedProducts[p.name][p.package] = {
+          price: p.price,
+          sku: p.sku || ""
+        };
       });
     });
 }
+  
 /* ===== LOAD INVENTORY FUNCTION ===== */
   let inventoryMap = {};
 function loadInventory() {
