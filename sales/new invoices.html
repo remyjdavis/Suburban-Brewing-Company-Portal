@@ -856,8 +856,8 @@ function updateQuantities(row, product) {
 
       priceCell.appendChild(priceWrap);
 
-      /* ---------- BARCODE (CASE ONLY) ---------- */
-    if (type === "Case") {
+  /* ---------- BARCODE (CASE ONLY) ---------- */
+if (type === "Case") {
   barcodeCell.innerHTML = "";
 
   const sku = groupedProducts[product][type].sku;
@@ -868,22 +868,21 @@ function updateQuantities(row, product) {
     return;
   }
 
-  const barcodeSvg = row.querySelector("svg.line-barcode");
-if (!barcodeSvg) return;
+  // ✅ CREATE SVG EXPLICITLY
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.classList.add("line-barcode");
+  barcodeCell.appendChild(svg);
 
-barcodeSvg.innerHTML = "";
-
-JsBarcode(barcodeSvg, sku, {
-  format: "CODE128",
-  width: 1.2,
-  height: 36,
-  margin: 0,
-  displayValue: false
-});
+  // ✅ SAFE JsBarcode CALL
+  JsBarcode(svg, sku, {
+    format: "CODE128",
+    width: 1.2,
+    height: 36,
+    margin: 0,
+    displayValue: false
+  });
 }
-
-    }
-
+ }
     // REMOVE TYPE
     if (!cb.checked && existingQty) {
       existingQty.remove();
