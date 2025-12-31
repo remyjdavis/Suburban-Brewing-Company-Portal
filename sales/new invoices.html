@@ -805,7 +805,7 @@ function updateQuantities(row, product) {
       priceCell.appendChild(priceWrap);
 
       /* ---------- BARCODE (CASE ONLY) ---------- */
-     if (type === "Case") {
+    if (type === "Case") {
   barcodeCell.innerHTML = "";
 
   const sku = groupedProducts[product][type].sku;
@@ -816,7 +816,11 @@ function updateQuantities(row, product) {
     return;
   }
 
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const svg = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "svg"
+  );
+
   barcodeCell.appendChild(svg);
 
   JsBarcode(svg, sku, {
@@ -824,6 +828,7 @@ function updateQuantities(row, product) {
     displayValue: false
   });
 }
+
     }
 
     // REMOVE TYPE
