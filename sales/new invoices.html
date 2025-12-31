@@ -640,7 +640,7 @@ function recalcKegDeposit() {
       const type = div.dataset.type;
       const qty = Number(div.querySelector("input").value || 0);
 
-      if (KEG_DEPOSITS[type]) {
+      if (KEG_DEPOSITS[type] && qty > 0) {
         depositTotal += qty * KEG_DEPOSITS[type];
       }
     });
@@ -654,10 +654,12 @@ function recalcKegDeposit() {
       "$" + depositTotal.toFixed(2);
   } else {
     depositRow.style.display = "none";
+    document.getElementById("invoice-deposit").textContent = "$0.00";
   }
 
   return depositTotal;
 }
+
 
 </script>
 
