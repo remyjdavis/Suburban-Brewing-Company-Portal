@@ -868,20 +868,21 @@ function updateQuantities(row, product) {
     return;
   }
 
-  const svg = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "svg"
-  );
+  const barcodeSvg = row.querySelector("svg.line-barcode");
 
-  barcodeCell.appendChild(svg);
+if (!barcodeSvg) {
+  console.warn("Barcode SVG not found for row", row);
+  return;
+}
 
-  JsBarcode(barcodeCell, sku, {
+JsBarcode(barcodeSvg, sku, {
   format: "CODE128",
-  width: 1.4,
-  height: 38,
-  displayValue: false,
-  margin: 0
+  width: 1.2,
+  height: 36,
+  margin: 0,
+  displayValue: false
 });
+
 
 }
 
