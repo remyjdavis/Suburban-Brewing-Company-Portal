@@ -401,6 +401,35 @@ document.getElementById("customer-search").addEventListener("input", function ()
     this.parentNode.appendChild(div);
   });
 });
+function selectProduct(row, productName) {
+  row.querySelector(".product-input").value = productName;
+  row.querySelector(".product-suggestions").innerHTML = "";
+
+  const product = groupedProducts[productName];
+  const typeCell = row.querySelector(".type-cell");
+  const qtyCell = row.querySelector(".qty-cell");
+  const priceCell = row.querySelector(".price-cell");
+  const barcodeCell = row.querySelector(".barcode-cell");
+
+  typeCell.innerHTML = "";
+  qtyCell.innerHTML = "";
+  barcodeCell.innerHTML = "";
+  priceCell.textContent = "$0.00";
+
+  Object.keys(product.packages).forEach(pkg => {
+    const label = document.createElement("label");
+    label.style.display = "block";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = pkg;
+    cb.onchange = () => updateQuantities(row, productName);
+
+    label.appendChild(cb);
+    label.append(" " + pkg);
+    typeCell.appendChild(label);
+  });
+}
 
 function selectCustomer(c) {
   selectedCustomer = c;
