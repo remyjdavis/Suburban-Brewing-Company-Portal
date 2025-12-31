@@ -154,22 +154,27 @@
   }
 
   function fetchRoute() {
-    const date = document.getElementById('routeDate').value;
-    const list = document.getElementById('routeList');
-    const loader = document.getElementById('loading');
-    
-    list.innerHTML = "";
-    loader.style.display = "block";
-    document.getElementById('mainNavBtn').style.display = "none";
+  const date = document.getElementById('routeDate').value;
+  const list = document.getElementById('routeList');
+  const loader = document.getElementById('loading');
+  
+  list.innerHTML = "";
+  loader.style.display = "block";
+  document.getElementById('mainNavBtn').style.display = "none";
 
-    // Calls the function in your Code.gs
-    google.script.run
-      .withSuccessHandler(renderStops)
-      .withFailureHandler(function(err) {
-        document.getElementById('loading').innerText = "Error: " + err;
-      })
-      .getOptimizedDailyRoute(date);
-  }
+  // REPLACE THIS URL with your actual Google Web App Exec URL
+  const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+  
+  fetch(`${scriptURL}?action=getOptimizedDailyRoute&date=${date}`)
+    .then(response => response.json())
+    .then(data => {
+      renderStops(data);
+    })
+    .catch(err => {
+      loader.innerText = "Connection Error: Check if Web App is set to 'Anyone'";
+      console.error(err);
+    });
+}
 
   function renderStops(stops) {
     document.getElementById('loading').style.display = "none";
