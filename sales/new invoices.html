@@ -286,14 +286,14 @@ document.getElementById("customer-search").addEventListener("input", function ()
 
 function selectCustomer(c) {
   selectedCustomer = c;
+
   document.getElementById("customer-search").style.display = "none";
   document.getElementById("customer-display").hidden = false;
 
   document.getElementById("customer-name").textContent = c.name;
 
-  const parts = c.address.split(",");
   document.getElementById("customer-address").innerHTML =
-    `${parts[0]}<br>${parts.slice(1).join(",")}`;
+    `${c.address1}<br>${c.address2}`;
 
   if (document.getElementById("invoice-number").value) {
     JsBarcode("#barcode", document.getElementById("invoice-number").value, {
@@ -302,6 +302,7 @@ function selectCustomer(c) {
     });
   }
 }
+
 
 document.getElementById("invoice-number").addEventListener("input", e => {
   if (e.target.value) {
