@@ -443,6 +443,7 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 // ===== GLOBAL =====
+let currentInvoiceNumber = "";
 let invoiceNumberValue = "";
 let addProductButtonRow = null;
 let customers = [];
@@ -595,16 +596,12 @@ document.getElementById("invoice-number").addEventListener("change", e => {
   const val = e.target.value.trim();
   if (!val) return;
 
-  invoiceNumberValue = val;
+  currentInvoiceNumber = val; // ✅ STORE IT
 
   document.getElementById("invoice-number-row").innerHTML =
-    `<strong>Invoice #:</strong> <span>${val}</span>`;
+    `<strong>Invoice #:</strong> <span id="invoice-number-text">${val}</span>`;
 
-  JsBarcode("#barcode", val, {
-    format: "CODE128",
-    height: 30,
-    displayValue: false
-  });
+  JsBarcode("#barcode", val, { height: 30, displayValue: false });
 });
 
 /* ===== LOAD PRODUCTS FUNCTION ===== */
@@ -1190,8 +1187,7 @@ if (duplicate) {
   );
 
   return {
-  invoiceNumber: document.getElementById("invoice-number")?.value || "",
-
+  invoiceNumber: currentInvoiceNumber,
   customer: selectedCustomer.name,
   address: selectedCustomer.address,
   customerType: selectedCustomer.type,
