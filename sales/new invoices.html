@@ -578,6 +578,18 @@ function wireProductRow(row) {
 }
 /* ===== SELECT PRODUCT FUNCTION ===== */
 function selectProduct(row, product) {
+ function createLowBadge(stock) {
+  const badge = document.createElement("span");
+  badge.textContent = `LOW (${stock})`;
+  badge.style.background = "#fde68a";
+  badge.style.color = "#92400e";
+  badge.style.fontSize = "10px";
+  badge.style.padding = "1px 4px";
+  badge.style.marginLeft = "6px";
+  badge.style.borderRadius = "4px";
+  return badge;
+}
+
   // ❌ PREVENT DUPLICATES
   if (isProductAlreadySelected(product, row)) {
     alert(`"${product}" is already on this invoice.\nPlease adjust quantities in the existing row.`);
@@ -599,7 +611,14 @@ function selectProduct(row, product) {
 
   ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
     if (groupedProducts[product][type] === undefined) return;
-
+const lifecycleNote = getLifecycleWarning(product, type);
+if (lifecycleNote) {
+  const note = document.createElement("div");
+  note.style.fontSize = "10px";
+  note.style.color = "#6b7280";
+  note.textContent = lifecycleNote;
+  label.appendChild(note);
+}
     const stock =
       inventoryMap[product] &&
       inventoryMap[product][type] !== undefined
@@ -623,17 +642,10 @@ function selectProduct(row, product) {
 
     // ⚠️ LOW STOCK
     else if (stock !== null && stock < 10) {
-      label.appendChild(checkbox);
-      label.append(
-        ` ${type} — `,
-        (() => {
-          const span = document.createElement("span");
-          span.style.color = "#b45309";
-          span.textContent = `Low Stock (${stock})`;
-          return span;
-        })()
-      );
-    }
+  label.appendChild(checkbox);
+  label.append(` ${type} `);
+  label.appendChild(createLowBadge(stock));
+}
 
     // ✅ NORMAL
     else {
@@ -644,6 +656,17 @@ function selectProduct(row, product) {
     checkbox.onchange = () => updateQuantities(row, product);
     typesCell.appendChild(label);
   });
+
+}
+  /* ===== LIFECYLCE WARNING FUNCTION ===== */
+function getLifecycleWarning(product, type) {
+  const lifecycle = products.find(
+    p => p.name === product && p.package === type
+  )?.lifecycle;
+
+  if (lifecycle === "Seasonal") return "⚠ Seasonal Item";
+  if (lifecycle === "Rotating") return "⏳ Rotating Item";
+  return null;
 }
 
 /* ===== UPDATE QUANTITIES FUNCTION ===== */
@@ -677,7 +700,16 @@ function updateQuantities(row, product) {
       qtyInput.min = 0;
       qtyInput.value = 0;
       qtyInput.style.width = "50px";
-      qtyInput.oninput = () => recalcLine(row, product);
+      qtyInput.oninput = () => {
+  const max = inventoryMap[product]?.[type];
+
+  if (max !== undefined && Number(qtyInput.value) > max) {
+    qtyInput.value = max;
+    alert(`Only ${max} units of ${product} (${type}) available`);
+  }
+
+  recalcLine(row, product);
+};
 
       qtyWrap.appendChild(qtyLabel);
       qtyWrap.appendChild(qtyInput);
