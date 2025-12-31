@@ -234,18 +234,20 @@
 .type-checkboxes span {
   font-weight: 600;
 }
-    .invoice-footer {
-  margin-top: 20px;
-  padding-top: 10px;
+   .invoice-footer {
+  margin-top: 24px;
+  padding-top: 12px;
   border-top: 1px solid #000;
   text-align: center;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
+  letter-spacing: 0.5px;
 }
 
 .footer-message {
   text-transform: uppercase;
 }
+
   </style>
 </head>
 
@@ -482,20 +484,27 @@ function updateInvoiceFooter() {
   const footer = document.getElementById("invoice-footer");
   if (!footer) return;
 
+  // Always reset
+  footer.innerHTML = "";
+
+  if (!selectedCustomer) return;
+
   let message = "";
 
-  if (!selectedCustomer || !selectedCustomer.paymentMethod) {
-    footer.textContent = "";
-    return;
+  switch (selectedCustomer.paymentMethod) {
+    case "Check":
+      message = "MAKE CHECKS PAYABLE TO SUBURBAN BREWING COMPANY";
+      break;
+
+    case "Fintech":
+      message = "PAID THROUGH FINTECH";
+      break;
+
+    default:
+      message = "";
   }
 
-  if (selectedCustomer.paymentMethod === "Check") {
-    message = "Make checks payable to Suburban Brewing Company";
-  }
-
-  if (selectedCustomer.paymentMethod === "Fintech") {
-    message = "Paid through Fintech";
-  }
+  if (!message) return;
 
   footer.innerHTML = `
     <div class="footer-message">
