@@ -1215,20 +1215,31 @@ function saveInvoice() {
     encodeURIComponent(JSON.stringify(payload));
 
   fetch(url)
-    .then(r => r.json())
-    .then(res => {
-      if (res.success) {
-        alert("Invoice saved successfully");
-      } else {
-        console.error(res);
-        alert("Save failed");
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Network error");
-    });
-}
+  .then(r => r.json())
+  .then(res => {
+    if (!res.success) {
+      console.error(res);
+      alert("Save failed");
+      return;
+    }
+
+    // ✅ store for later overwrite when delivered
+    window.currentInvoiceFileId = res.fileId;
+
+    // ✅ optional: store invoice number too
+    window.currentInvoiceNumber = res.invoiceNumber;
+
+    alert("Invoice saved successfully");
+
+    // ✅ open PDF immediately (or comment out if you prefer)
+    if (res.pdfUrl) {
+      window.open(res.pdfUrl, "_blank");
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Network error saving invoice");
+  });
 
 document.getElementById("save-invoice-btn").addEventListener("click", saveInvoice);
 
