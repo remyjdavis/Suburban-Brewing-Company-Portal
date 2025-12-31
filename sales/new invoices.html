@@ -247,26 +247,37 @@
 .footer-message {
   text-transform: uppercase;
 }
-<style>
-  .invoice-btn {
-    padding: 10px 18px;
-    font-size: 14px;
-    font-weight: 600;
-    background: #2563eb;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
+.invoice-action-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
 
-  .invoice-btn:hover:not(:disabled) {
-    background: #1d4ed8;
-  }
+/* Base button style (matches Save Invoice) */
+.invoice-btn {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  appearance: none;
+}
 
-  .invoice-btn:disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
-  }
+/* Hover */
+.invoice-btn:hover {
+  background: #1d4ed8;
+}
+
+/* Disabled state (still same shape, muted color) */
+.invoice-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
 /* ===== PRINT LAYOUT FIX ===== */
 @media print {
   body {
@@ -440,39 +451,18 @@
 </div>
 
   </section>
-  <div
-  <div
-  class="invoice-action-bar"
-  style="
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-  "
->
- <button
-    id="save-invoice-btn"
-    class="invoice-btn"
-  >
-    Save Invoice
-  </button>
-    
-  <button
-    id="print-invoice-btn"
-    class="invoice-btn"
-    disabled
-  >
+  <div class="invoice-action-bar">
+  <button id="print-invoice-btn" class="invoice-btn">
     Print
   </button>
 
-  <button
-    id="email-invoice-btn"
-    class="invoice-btn"
-    disabled
-  >
+  <button id="email-invoice-btn" class="invoice-btn">
     Email
   </button>
 
+  <button id="save-invoice-btn" class="invoice-btn primary">
+    Save Invoice
+  </button>
 </div>
 
 </main>
