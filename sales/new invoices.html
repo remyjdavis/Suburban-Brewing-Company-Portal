@@ -287,22 +287,25 @@ document.getElementById("customer-search").addEventListener("input", function ()
 function selectCustomer(c) {
   selectedCustomer = c;
 
+  // 🔥 REMOVE AUTOCOMPLETE DUPLICATES
+  document.querySelectorAll(".suggestion").forEach(e => e.remove());
+
   document.getElementById("customer-search").style.display = "none";
   document.getElementById("customer-display").hidden = false;
 
-  // Line 1 — name
   document.getElementById("customer-name").textContent = c.name;
 
-  // Split ONE address column into two clean lines
-  const parts = (c.address || "").split(",").map(p => p.trim()).filter(Boolean);
+  const parts = (c.address || "")
+    .split(",")
+    .map(p => p.trim())
+    .filter(Boolean);
 
   const line1 = parts[0] || "";
   const line2 = parts.slice(1).join(", ");
 
   document.getElementById("customer-address").innerHTML =
-    line2 ? `${line1}<br>${line2}` : line1;
+    `${line1}<br>${line2}`;
 
-  // Barcode
   if (document.getElementById("invoice-number").value) {
     JsBarcode("#barcode", document.getElementById("invoice-number").value, {
       height: 30,
@@ -310,6 +313,7 @@ function selectCustomer(c) {
     });
   }
 }
+
 
 
 
