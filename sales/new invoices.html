@@ -373,16 +373,31 @@ function loadCustomers() {
 
 document.getElementById("customer-search").addEventListener("input", function () {
   document.querySelectorAll(".suggestion").forEach(e => e.remove());
-  const val = this.value.toLowerCase();
+  const val = this.value.trim().toLowerCase();
   if (!val) return;
 
-  customers.filter(c => c.name.toLowerCase().includes(val)).forEach(c => {
+  const matches = customers.filter(c =>
+    c.name.toLowerCase().includes(val)
+  );
+
+  matches.forEach(c => {
     const div = document.createElement("div");
     div.textContent = c.name;
     div.className = "suggestion";
     div.onclick = () => selectCustomer(c);
     this.parentNode.appendChild(div);
   });
+
+  // 🔹 NO MATCH FOUND → OFFER ADD
+  if (matches.length === 0) {
+    const add = document.createElement("div");
+    add.textContent = `Add "${this.value}" as new customer`;
+    add.className = "suggestion";
+    add.style.fontWeight = "600";
+    add.onclick = () => openNewCustomerModal(this.value);
+    this.parentNode.appendChild(add);
+  }
+});
 });
 /* ===== SELECT CUSTOMERS FUNCTION ===== */
 function selectCustomer(c) {
@@ -700,8 +715,69 @@ function getTotalCaseQty() {
 
   return total;
 }
+   /* ===== OPEN NEW CUSTOMER MODAL FUNCTION ===== */
+function openNewCustomerModal(prefillName = "") {
+  document.getElementById("new-customer-modal").style.display = "block";
+  document.getElementById("new-cust-name").value = prefillName;
+  document.getElementById("new-cust-address").value = "";
+  document.getElementById("new-cust-type").value = "Restaurant";
+}
+ /* ===== CLOSE NEW CUSTROMER MODAL FUNCTION ===== */
+function closeNewCustomerModal() {
+  document.getElementById("new-customer-modal").style.display = "none";
+}
+ /* ===== SAVE NEW CUSTOMER FUNCTION ===== */
+function saveNewCustomer() {
+  const name = document.getElementById("new-cust-name").value.trim();
+  const address = document.getElementById("new-cust-address").value.trim();
+  const type = document.getElementById("new-cust-type").value;
+
+  if (!name) {
+    alert("Customer name is required");
+    return;
+  }
+
+  const newCustomer = {
+    name,
+    address,
+    type
+  };
+
+  // ✅ Add to local list (frontend only for now)
+  customers.push(newCustomer);
+
+  closeNewCustomerModal();
+
+  // ✅ Auto-select customer on invoice
+  selectCustomer(newCustomer);
+}
 
 </script>
+<!-- ===== NEW CUSTOMER MODAL ===== -->
+<div id="new-customer-modal"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
+
+  <div style="background:#fff; width:420px; margin:10% auto; padding:20px; border-radius:6px;">
+    <h3 style="margin-top:0;">Add New Customer</h3>
+
+    <label>Name</label>
+    <input id="new-cust-name" style="width:100%; margin-bottom:8px;">
+
+    <label>Address</label>
+    <textarea id="new-cust-address" rows="3" style="width:100%; margin-bottom:8px;"></textarea>
+
+    <label>Customer Type</label>
+    <select id="new-cust-type" style="width:100%; margin-bottom:12px;">
+      <option value="Restaurant">Restaurant</option>
+      <option value="Wholesaler">Wholesaler</option>
+    </select>
+
+    <div style="text-align:right;">
+      <button onclick="closeNewCustomerModal()">Cancel</button>
+      <button onclick="saveNewCustomer()">Save Customer</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
