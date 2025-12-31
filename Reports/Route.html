@@ -199,28 +199,22 @@
   loader.style.display = "block";
   list.innerHTML = "";
 
-  const url = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}`;
+  // This is the Proxy that kills the 'Access-Control-Allow-Origin' error
+  const proxyUrl = "https://corsproxy.io/?";
+  const targetUrl = scriptURL + "?action=getOptimizedDailyRoute&date=" + date;
 
-  // We use the 'no-cors' mode to get past the initial block, 
-  // then we use a hidden iframe or a redirect-aware fetch.
-  fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "text/plain"
-    }
-  })
-  .then(response => response.text())
-  .then(text => {
-    // Because Google returns the data inside a script-like block, 
-    // we manually clean the text to get the JSON.
-    const jsonStr = text.substring(text.indexOf("(") + 1, text.lastIndexOf(")"));
-    const stops = JSON.parse(jsonStr);
-    renderStops(stops);
-  })
-  .catch(err => {
-    console.error("Fetch error:", err);
-    loader.innerText = "Check Google Deployment: Must be set to 'Anyone'";
-  });
+  fetch(proxyUrl + encodeURIComponent(targetUrl))
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.json();
+    })
+    .then(stops => {
+      renderStops(stops);
+    })
+    .catch(err => {
+      console.error("Fetch error:", err);
+      loader.innerText = "Connection Error. Try refreshing or check deployment.";
+    });
 }
   function renderStops(stops) {
     document.getElementById('loading').style.display = "none";
