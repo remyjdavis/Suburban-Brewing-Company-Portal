@@ -491,16 +491,24 @@ function loadProducts() {
     });
 }
 /* ===== LOAD INVENTORY FUNCTION ===== */
-  function loadInventory() {
-  fetch(`${API_URL}?action=getInventory`)
+  let inventoryMap = {};
+function loadInventory() {
+  fetch(`${API_URL}?action=getBreweryInventory`)
     .then(r => r.json())
     .then(data => {
       inventoryMap = {};
 
-      data.forEach(item => {
-        if (!inventoryMap[item.name]) inventoryMap[item.name] = {};
-        inventoryMap[item.name][item.package] = item.stock;
+      data.forEach(product => {
+        const name = product.product;
+
+        if (!inventoryMap[name]) inventoryMap[name] = {};
+
+        product.packages.forEach(pkg => {
+          inventoryMap[name][pkg.type] = Number(pkg.qty) || 0;
+        });
       });
+
+      console.log("INVENTORY MAP READY:", inventoryMap);
     });
 }
 
@@ -589,16 +597,18 @@ function selectProduct(row, product) {
   qtyCell.innerHTML = "";
   barcodeCell.innerHTML = "";
 
- ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
-  if (groupedProducts[product][type] !== undefined) {
+  ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
+    if (groupedProducts[product][type] === undefined) return;
 
     const stock =
       inventoryMap[product] &&
       inventoryMap[product][type] !== undefined
-        ? inventoryMap[product][type]
+        ? Number(inventoryMap[product][type])
         : null;
 
     const label = document.createElement("label");
+    label.style.display = "block";
+
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.value = type;
@@ -607,33 +617,35 @@ function selectProduct(row, product) {
     if (stock === 0) {
       checkbox.disabled = true;
       label.style.opacity = "0.5";
-      label.innerHTML = `${type} — <em>Out of Stock</em>`;
+      label.appendChild(checkbox);
+      label.append(` ${type} — Out of Stock`);
     }
 
     // ⚠️ LOW STOCK
     else if (stock !== null && stock < 10) {
-      label.innerHTML = `
-        <input type="checkbox" value="${type}">
-        ${type} — <span style="color:#b45309;">Low Stock (${stock})</span>
-      `;
+      label.appendChild(checkbox);
+      label.append(
+        ` ${type} — `,
+        (() => {
+          const span = document.createElement("span");
+          span.style.color = "#b45309";
+          span.textContent = `Low Stock (${stock})`;
+          return span;
+        })()
+      );
     }
 
     // ✅ NORMAL
     else {
       label.appendChild(checkbox);
-      label.append(" " + type);
+      label.append(` ${type}`);
     }
 
     checkbox.onchange = () => updateQuantities(row, product);
-
-    // Fix for low-stock HTML case
-    const cb = label.querySelector("input") || checkbox;
-    cb.onchange = () => updateQuantities(row, product);
-
     typesCell.appendChild(label);
-  }
-});
+  });
 }
+
 /* ===== UPDATE QUANTITIES FUNCTION ===== */
 function updateQuantities(row, product) {
   const qtyCell = row.querySelector(".qty-group");
