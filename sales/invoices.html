@@ -1,123 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Invoices | Suburban Brewing Company</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8" />
+  <title>Invoices | Suburban Brewing Company</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --sidebar: #1f2937;
+      --accent: #2563eb;
+      --text: #1f2937;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
 
-<!-- ======================================================
-     GLOBAL STYLES
-====================================================== -->
-<style>
-:root {
-  --bg: #f4f6f8;
-  --sidebar: #1f2937;
-  --accent: #2563eb;
-  --text: #1f2937;
-}
+    /* --- SIDEBAR --- */
+    .sidebar { 
+      width: 240px; background: var(--sidebar); color: #fff; padding: 20px 0; 
+      flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
+    }
+    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; color: #fff; letter-spacing: 1px; }
+    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 0.5px; }
+    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
+    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
+    .nav-link.active { border-left: 4px solid var(--accent); }
 
-* { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+    /* --- MAIN WRAPPER --- */
+    .main-wrapper { flex: 1; margin-left: 240px; display: flex; flex-direction: column; min-width: 0; }
 
-/* --- SIDEBAR --- */
-.sidebar { 
-  width: 240px; background: var(--sidebar); color: #fff; padding: 20px 0; 
-  flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
-}
-.sidebar h2 { margin: 0 20px 20px; font-size: 18px; color: #fff; letter-spacing: 1px; }
-.nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 0.5px; }
-.nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
-.nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
-.nav-link.active { border-left: 4px solid var(--accent); }
+    /* --- BLACK HEADER --- */
+    .app-header {
+      display: flex; align-items: center; gap: 20px; padding: 16px 24px; 
+      background: #000000; color: white;
+    }
+    .logo { height: 60px; }
+    .company-name { font-size: 20px; font-weight: 700; }
+    .company-address { font-size: 13px; opacity: 0.9; }
+    .header-right { margin-left: auto; text-align: right; font-size: 13px; }
 
-/* --- MAIN CONTENT WRAPPER --- */
-.main-wrapper { flex: 1; margin-left: 240px; display: flex; flex-direction: column; min-width: 0; }
+    main { padding: 30px; max-width: 1100px; width: 100%; margin: 0 auto; }
+    .section { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 24px; }
+    h2 { margin: 0 0 16px; font-size: 18px; color: #374151; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
 
-/* --- BLACK HEADER --- */
-.app-header {
-  display: flex; align-items: center; gap: 20px; padding: 16px 24px; 
-  background: #000000; color: white;
-}
-.logo { height: 60px; }
-.company-name { font-size: 20px; font-weight: 700; }
-.company-address { font-size: 13px; opacity: 0.9; }
-.header-right { margin-left: auto; text-align: right; font-size: 13px; }
+    /* --- FORM & TABLES --- */
+    .form-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px; }
+    label { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: block; color: #6b7280; }
+    input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+    input:disabled { background: #f3f4f6; }
 
-main { padding: 30px; max-width: 1100px; width: 100%; margin: 0 auto; }
-.section { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 24px; }
-h2 { margin: 0 0 16px; font-size: 18px; color: #374151; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+    .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.2s; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
 
-/* --- FORM & TABLES --- */
-.form-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px; }
-label { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: block; color: #6b7280; }
-input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
-input:disabled { background: #f3f4f6; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; text-align: left; }
+    th { background: #f9fafb; color: #6b7280; font-weight: 600; }
+    tr.selected { background: #eff6ff; border-left: 4px solid var(--accent); }
+    .preview-box { background: #fafafa; padding: 16px; border-left: 4px solid var(--accent); border-radius: 8px; }
 
-.btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.2s; }
-.btn-primary { background: var(--accent); color: white; }
-.btn-secondary { background: #e5e7eb; color: #374151; }
-
-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; text-align: left; }
-th { background: #f9fafb; color: #6b7280; font-weight: 600; }
-tr.selected { background: #eff6ff; border-left: 4px solid var(--accent); }
-
-.preview-box { background: #fafafa; padding: 16px; border-left: 4px solid var(--accent); border-radius: 8px; }
-
-@media (max-width: 1024px) {
-  .sidebar { width: 70px; }
-  .sidebar h2, .sidebar .nav-section-title, .sidebar .nav-link span { display: none; }
-  .main-wrapper { margin-left: 70px; }
-}
-</style>
+    @media (max-width: 1024px) {
+      .sidebar { width: 70px; }
+      .sidebar h2, .sidebar .nav-section-title, .sidebar .nav-link span { display: none; }
+      .main-wrapper { margin-left: 70px; }
+    }
+  </style>
 </head>
 
 <body>
-<div class="layout">
-
-<!-- ======================================================
-     SIDEBAR
-====================================================== -->
-<aside class="sidebar">
+  <aside class="sidebar">
     <h2>SUBURBAN</h2>
-    
     <div class="nav-section-title">Operations</div>
     <a href="../index.html" class="nav-link"><span>Command Center</span></a>
     <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-    <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-    <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-    
     <div class="nav-section-title">Sales & Outreach</div>
     <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-    <a href="../sales/invoices.html" class="nav-link"><span>Invoice Search</span></a>
-    <a href="../sales/deliveries.html" class="nav-link active"><span>Deliveries</span></a>
-
-    <div class="nav-section-title">Production & Cellar</div>
-    <a href="../inventory/brewery.html" class="nav-link"><span>Brewery Master Inventory</span></a>
-    <a href="../inventory/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-    <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Stock</span></a>
-    <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Stock</span></a>
-    
-    <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-    <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Optimization</span></a>
-    <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory Levels</span></a>
+    <a href="../sales/invoices.html" class="nav-link active"><span>Invoice Search</span></a>
+    <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
   </aside>
 
-<!-- ======================================================
-     MAIN
-====================================================== -->
-<div class="main">
-<header class="topbar">
-  <h1>Invoices</h1>
-</header>
+  <div class="main-wrapper">
+    <header class="app-header">
+      <img src="../background.jpg" class="logo" />
+      <div>
+        <div class="company-name">Suburban Brewing Company</div>
+        <div class="company-address">3041 Horseshoe Pike, Honey Brook, PA 19344</div>
+      </div>
+      <div class="header-right">
+        <div>Sales Rep: Remy Davis</div>
+        <div>📞 908-642-1019</div>
+      </div>
+    </header>
 
-<section class="content">
-<div style="margin-bottom:16px;">
-  <button onclick="location.href='new invoices.html'">
-    Create New Invoice
-  </button>
-</div>
+    <main>
+      <div style="margin-bottom:16px;">
+        <button class="btn btn-primary" onclick="location.href='new invoices.html'">
+          Create New Invoice
+        </button>
+      </div>
 
 <!-- ======================================================
      SEARCH CUSTOMER
