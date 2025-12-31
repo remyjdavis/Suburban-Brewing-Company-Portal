@@ -339,6 +339,7 @@ nameInput.addEventListener("input", () => {
 
   if (!query) return;
 
+  // Filters the combined Fintech/Check master list
   const matches = customers.filter(c =>
     c.name.toLowerCase().includes(query)
   );
@@ -346,15 +347,18 @@ nameInput.addEventListener("input", () => {
   if (matches.length === 0) {
     customerState.isNew = true;
     autocompleteBox.innerHTML =
-      `<div class="autocomplete-empty">New customer — press Enter to add</div>`;
+      `<div class="autocomplete-empty" style="color: #b91c1c; font-weight: bold;">
+        New Customer Detected — Press Enter to Add
+      </div>`;
     autocompleteBox.hidden = false;
     return;
   }
 
+  // Populate results
   matches.forEach(cust => {
     const div = document.createElement("div");
     div.className = "autocomplete-item";
-    div.textContent = cust.name;
+    div.innerHTML = `<strong>${cust.name}</strong> <small>(${cust.payment})</small>`;
     div.onclick = () => selectCustomer(cust);
     autocompleteBox.appendChild(div);
   });
