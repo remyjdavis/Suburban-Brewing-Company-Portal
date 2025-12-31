@@ -5,8 +5,8 @@
   <title>Suburban Brewing Co. | New Invoice</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- BARCODE -->
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <!-- BARCODE LIB -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
   <style>
     :root {
@@ -43,7 +43,6 @@
     .sidebar h2 {
       margin: 0 20px 20px;
       font-size: 18px;
-      letter-spacing: 1px;
     }
 
     .nav-section-title {
@@ -170,7 +169,27 @@
 
     #barcode {
       height: 32px;
-      margin-top: 4px;
+      margin-top: 6px;
+    }
+
+    /* AUTOCOMPLETE */
+    #customer-suggestions {
+      position: absolute;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      width: 100%;
+      z-index: 999;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    #customer-suggestions div {
+      padding: 6px;
+      cursor: pointer;
+    }
+
+    #customer-suggestions div:hover {
+      background: #f3f4f6;
     }
   </style>
 </head>
@@ -191,7 +210,7 @@
   <a href="../sales/leads.html" class="nav-link">AI Sales Leads</a>
   <a href="../sales/invoice-search.html" class="nav-link">Invoice Search</a>
   <a href="../sales/deliveries.html" class="nav-link">Delivery Tracking</a>
-  <a href="../sales/new-invoice.html" class="nav-link active">New Invoice</a>
+  <a href="../sales/new invoices.html" class="nav-link active">New Invoice</a>
 
   <div class="nav-section-title">Production & Cellar</div>
   <a href="../inventory/brewery.html" class="nav-link">Brewery Master Inventory</a>
@@ -207,7 +226,6 @@
 
 <!-- ===== MAIN ===== -->
 <main class="main">
-
   <div class="header-bar">
     <h1>New Invoice</h1>
     <div id="current-date"></div>
@@ -217,7 +235,6 @@
 
   <section class="invoice-page">
 
-    <!-- HEADER -->
     <header class="invoice-header">
       <img src="../background.jpg" alt="Logo">
       <div class="invoice-company-info">
@@ -230,17 +247,11 @@
 
     <div class="invoice-divider"></div>
 
-    <!-- CUSTOMER + META -->
     <section class="invoice-meta-row">
 
       <!-- CUSTOMER -->
       <div class="customer-block">
-        <input
-          id="customer-search"
-          class="customer-search"
-          placeholder="Search customer..."
-          autocomplete="off"
-        >
+        <input id="customer-search" class="customer-search" placeholder="Search customer..." autocomplete="off">
 
         <div id="customer-display" hidden>
           <div class="customer-name" id="customer-name"></div>
@@ -257,7 +268,7 @@
 
         <div class="meta-row">
           <strong>Invoice #:</strong>
-          <input id="invoice-number" style="width:80px; font-size:12px;">
+          <input id="invoice-number" style="width:90px; font-size:12px;">
         </div>
 
         <svg id="barcode"></svg>
@@ -268,61 +279,64 @@
   </section>
 </main>
 
-<!-- ===== SCRIPT ===== -->
 <script>
+/******************************************************
+ * CONFIG
+ ******************************************************/
 const API_URL =
   "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 
+/******************************************************
+ * STATE
+ ******************************************************/
 let customers = [];
 let selectedCustomer = null;
 
+/******************************************************
+ * INIT
+ ******************************************************/
 document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toLocaleDateString();
   document.getElementById("current-date").textContent = today;
   document.getElementById("invoice-date").textContent = today;
-
   loadCustomers();
-  setupBarcode();
 });
 
+/******************************************************
+ * LOAD CUSTOMERS
+ ******************************************************/
 function loadCustomers() {
   fetch(`${API_URL}?action=getCustomers`)
     .then(r => r.json())
     .then(data => {
       customers = data || [];
-      setupAutocomplete();
+      setupCustomerAutocomplete();
     });
 }
 
-function setupAutocomplete() {
+/******************************************************
+ * AUTOCOMPLETE
+ ******************************************************/
+function setupCustomerAutocomplete() {
   const input = document.getElementById("customer-search");
 
   input.addEventListener("input", () => {
+    const value = input.value.toLowerCase();
     clearSuggestions();
-    const val = input.value.toLowerCase();
-    if (!val) return;
+    if (!value) return;
 
     const matches = customers.filter(c =>
-      c.name.toLowerCase().includes(val)
+      c.name.toLowerCase().includes(value)
     );
-
-    if (!matches.length) return;
 
     const list = document.createElement("div");
     list.id = "customer-suggestions";
-    list.style.position = "absolute";
-    list.style.background = "#fff";
-    list.style.border = "1px solid #ccc";
-    list.style.width = input.offsetWidth + "px";
-    list.style.zIndex = 1000;
 
     matches.forEach(c => {
-      const div = document.createElement("div");
-      div.textContent = c.name;
-      div.style.padding = "6px";
-      div.style.cursor = "pointer";
-      div.onclick = () => selectCustomer(c);
-      list.appendChild(div);
+      const item = document.createElement("div");
+      item.textContent = c.name;
+      item.onclick = () => selectCustomer(c);
+      list.appendChild(item);
     });
 
     input.parentNode.appendChild(list);
@@ -334,6 +348,19 @@ function clearSuggestions() {
   if (el) el.remove();
 }
 
+/******************************************************
+ * ADDRESS FORMAT
+ ******************************************************/
+function formatAddress(address) {
+  const parts = address.split(",");
+  const line1 = parts[0]?.trim() || "";
+  const line2 = parts.slice(1).join(",").trim();
+  return `${line1}<br>${line2}`;
+}
+
+/******************************************************
+ * SELECT CUSTOMER
+ ******************************************************/
 function selectCustomer(customer) {
   selectedCustomer = customer;
   document.getElementById("customer-search").style.display = "none";
@@ -341,30 +368,21 @@ function selectCustomer(customer) {
 
   document.getElementById("customer-display").hidden = false;
   document.getElementById("customer-name").textContent = customer.name;
-
-  const lines = customer.address.split(",").slice(0, 2);
-  document.getElementById("customer-address").innerHTML = lines.join("<br>");
+  document.getElementById("customer-address").innerHTML =
+    formatAddress(customer.address);
 }
 
-function setupBarcode() {
-  const input = document.getElementById("invoice-number");
-
-  input.addEventListener("input", () => {
-    const val = input.value.trim();
-    if (!val) {
-      document.getElementById("barcode").innerHTML = "";
-      return;
-    }
-
-    JsBarcode("#barcode", val, {
-      format: "CODE128",
-      width: 1.6,
-      height: 32,
-      displayValue: false,
-      margin: 0
-    });
+/******************************************************
+ * BARCODE
+ ******************************************************/
+document.getElementById("invoice-number").addEventListener("input", e => {
+  if (!e.target.value) return;
+  JsBarcode("#barcode", e.target.value, {
+    height: 32,
+    displayValue: false,
+    margin: 0
   });
-}
+});
 </script>
 
 </body>
