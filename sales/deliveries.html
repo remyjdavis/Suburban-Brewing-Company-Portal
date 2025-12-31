@@ -1,38 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- ======================================================
-       BASIC META
-  ======================================================= -->
   <meta charset="UTF-8" />
   <title>Deliveries | Suburban Brewing Company</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- ======================================================
-       STYLES
-  ======================================================= -->
   <style>
+    :root { 
+      --sidebar-width: 240px; 
+      --primary-dark: #111827; 
+      --accent: #374151; 
+    }
+
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       background: #f5f7fa;
+      display: flex; /* Required for sidebar layout */
     }
 
-    /* ===== HEADER ===== */
+    /* ===== SIDEBAR ===== */
+    .sidebar { 
+      width: var(--sidebar-width); 
+      background: var(--primary-dark); 
+      height: 100vh; 
+      color: white; 
+      position: fixed; 
+      left: 0;
+      top: 0;
+      display: flex; 
+      flex-direction: column; 
+      z-index: 1000;
+    }
+    .sidebar-header { 
+      padding: 20px; 
+      font-weight: 800; 
+      font-size: 1.2rem; 
+      border-bottom: 1px solid var(--accent); 
+      letter-spacing: 1px; 
+    }
+    .nav-links { flex-grow: 1; padding: 20px 0; }
+    .nav-item { 
+      padding: 12px 25px; 
+      display: block; 
+      color: #9ca3af; 
+      text-decoration: none; 
+      transition: 0.2s; 
+      font-size: 0.9rem; 
+    }
+    .nav-item:hover, .nav-item.active { 
+      background: var(--accent); 
+      color: white; 
+    }
+
+    /* ===== MAIN CONTENT WRAPPER ===== */
+    .main-wrapper {
+      flex-grow: 1;
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== HEADER (BLACK) ===== */
     .app-header {
       display: flex;
       align-items: center;
       gap: 20px;
       padding: 16px 24px;
-      background: #0f766e;
+      background: #000000; /* Header background changed to black */
       color: white;
     }
 
     .logo { height: 60px; }
-
     .company-name { font-size: 20px; font-weight: 700; }
     .company-address { font-size: 13px; }
-
     .header-right {
       margin-left: auto;
       text-align: right;
@@ -44,6 +86,8 @@
       max-width: 1100px;
       margin: 24px auto;
       padding: 0 16px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .section {
@@ -87,12 +131,14 @@
       padding: 12px;
       border-bottom: 1px solid #e5e7eb;
       font-size: 14px;
+      text-align: left;
     }
 
     th { background: #f1f5f9; }
 
     tr.selected {
       background: #ecfeff;
+      border-left: 4px solid #0f766e;
     }
 
     .status { font-weight: 600; color: #b45309; }
@@ -104,6 +150,7 @@
       border: none;
       cursor: pointer;
       font-size: 14px;
+      font-weight: 600;
     }
 
     .btn-primary {
@@ -125,80 +172,95 @@
       color: #6b7280;
     }
 
-    #scanner { max-width: 420px; }
+    #scanner { 
+      max-width: 420px; 
+      margin-top: 10px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-wrapper { margin-left: 0; }
+    }
   </style>
 </head>
 
 <body>
 
-<!-- ======================================================
-     HEADER
-======================================================= -->
-<header class="app-header">
-  <img src="background.jpg" class="logo" />
+<div class="sidebar">
+    <div class="sidebar-header">SUBURBAN BREWING</div>
+    <nav class="nav-links">
+        <a href="index.html" class="nav-item">🏠 !Main Dashboard</a>
+        <a href="route.html" class="nav-item">🚚 Daily Route</a>
+        <a href="leads.html" class="nav-item">📋 Sales Activity</a>
+        <a href="invoices.html" class="nav-item">📑 Invoice History</a>
+        <a href="new invoices.html" class="nav-item">➕ New Invoice</a>
+        <a href="deliveries.html" class="nav-item active">📦 Delivery Log</a>
+        <a href="inventory.html" class="nav-item">🍺 Inventory Control</a>
+    </nav>
+</div>
 
-  <div>
-    <div class="company-name">Suburban Brewing Company</div>
-    <div class="company-address">
-      3041 Horseshoe Pike Suite 120 & 130<br>
-      Honey Brook, PA 19344
-    </div>
-  </div>
+<div class="main-wrapper">
+    <header class="app-header">
+      <img src="background.jpg" class="logo" />
 
-  <div class="header-right">
-    <div>Sales Rep: Remy Davis</div>
-    <div>📞 908-642-1019</div>
-    <div>✉️ Remyjdavis90@gmail.com</div>
-  </div>
-</header>
+      <div>
+        <div class="company-name">Suburban Brewing Company</div>
+        <div class="company-address">
+          3041 Horseshoe Pike Suite 120 & 130<br>
+          Honey Brook, PA 19344
+        </div>
+      </div>
 
-<main>
+      <div class="header-right">
+        <div>Sales Rep: Remy Davis</div>
+        <div>📞 908-642-1019</div>
+        <div>✉️ Remyjdavis90@gmail.com</div>
+      </div>
+    </header>
 
-  <!-- ======================================================
-       SCAN + DRIVER INFO
-  ======================================================= -->
-  <div class="section">
-    <h2>Delivery Scan</h2>
+    <main>
+      <div class="section">
+        <h2>Delivery Scan</h2>
 
-    <div class="action-bar">
-      <input id="driverName" placeholder="Driver Name (required)" />
-      <button class="btn btn-primary" onclick="startScanner()">Scan Barcode</button>
-      <button class="btn btn-secondary" onclick="goBack()">← Back to Invoices</button>
-    </div>
+        <div class="action-bar">
+          <input id="driverName" placeholder="Driver Name (required)" />
+          <button class="btn btn-primary" onclick="startScanner()">Scan Barcode</button>
+          <button class="btn btn-secondary" onclick="goBack()">← Back to Invoices</button>
+        </div>
 
-    <div id="scanner"></div>
-  </div>
+        <div id="scanner"></div>
+      </div>
 
-  <!-- ======================================================
-       OPEN DELIVERIES
-  ======================================================= -->
-  <div class="section">
-    <h2>Open Deliveries</h2>
+      <div class="section">
+        <h2>Open Deliveries</h2>
 
-    <div class="action-bar">
-      <button class="btn btn-primary" onclick="markSelectedDelivered()">
-        Mark As Delivered
-      </button>
-    </div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="markSelectedDelivered()">
+            Mark As Delivered
+          </button>
+        </div>
 
-    <div id="loading" class="loading">Loading undelivered invoices…</div>
-    <div id="empty" class="empty" style="display:none;">No undelivered invoices 🎉</div>
+        <div id="loading" class="loading">Loading undelivered invoices…</div>
+        <div id="empty" class="empty" style="display:none;">No undelivered invoices 🎉</div>
 
-    <table id="deliveryTable" style="display:none;">
-      <thead>
-        <tr>
-          <th>Invoice #</th>
-          <th>Date</th>
-          <th>Customer</th>
-          <th>Total</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="deliveryBody"></tbody>
-    </table>
-  </div>
-
-</main>
+        <table id="deliveryTable" style="display:none;">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="deliveryBody"></tbody>
+        </table>
+      </div>
+    </main>
+</div>
 
 <script src="https://unpkg.com/@ericblade/quagga2/dist/quagga.min.js"></script>
 
@@ -212,97 +274,97 @@ document.addEventListener("DOMContentLoaded", loadOpenDeliveries);
 
 /* ===== LOAD DELIVERIES ===== */
 async function loadOpenDeliveries() {
-  const res = await fetch(`${API_URL}?action=getOpenDeliveries`);
-  deliveries = await res.json();
+  const res = await fetch(`${API_URL}?action=getOpenDeliveries`);
+  deliveries = await res.json();
 
-  document.getElementById("loading").style.display = "none";
+  document.getElementById("loading").style.display = "none";
 
-  if (!deliveries.length) {
-    document.getElementById("empty").style.display = "block";
-    return;
-  }
+  if (!deliveries.length) {
+    document.getElementById("empty").style.display = "block";
+    return;
+  }
 
-  const tbody = document.getElementById("deliveryBody");
-  document.getElementById("deliveryTable").style.display = "table";
-  tbody.innerHTML = "";
+  const tbody = document.getElementById("deliveryBody");
+  document.getElementById("deliveryTable").style.display = "table";
+  tbody.innerHTML = "";
 
-  deliveries.forEach(inv => {
-    const tr = document.createElement("tr");
-    tr.dataset.invoice = inv.invoiceNumber;
+  deliveries.forEach(inv => {
+    const tr = document.createElement("tr");
+    tr.dataset.invoice = inv.invoiceNumber;
 
-    tr.innerHTML = `
-      <td>${inv.invoiceNumber}</td>
-      <td>${inv.date}</td>
-      <td>${inv.customer}</td>
-      <td>$${Number(inv.total).toFixed(2)}</td>
-      <td class="status">${inv.status}</td>
-    `;
+    tr.innerHTML = `
+      <td>${inv.invoiceNumber}</td>
+      <td>${inv.date}</td>
+      <td>${inv.customer}</td>
+      <td>$${Number(inv.total).toFixed(2)}</td>
+      <td class="status">${inv.status}</td>
+    `;
 
-    tr.onclick = () => selectRow(tr, inv.invoiceNumber);
-    tbody.appendChild(tr);
-  });
+    tr.onclick = () => selectRow(tr, inv.invoiceNumber);
+    tbody.appendChild(tr);
+  });
 }
 
 function selectRow(row, invoiceNumber) {
-  document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
-  row.classList.add("selected");
-  selectedInvoice = invoiceNumber;
+  document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+  row.classList.add("selected");
+  selectedInvoice = invoiceNumber;
 }
 
 /* ===== MARK DELIVERED ===== */
 async function markSelectedDelivered() {
-  const driver = document.getElementById("driverName").value.trim();
-  if (!driver) return alert("Driver name required");
-  if (!selectedInvoice) return alert("Select or scan an invoice");
+  const driver = document.getElementById("driverName").value.trim();
+  if (!driver) return alert("Driver name required");
+  if (!selectedInvoice) return alert("Select or scan an invoice");
 
-  const deliveredAt = new Date().toISOString();
+  const deliveredAt = new Date().toISOString();
 
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "markDelivered",
-      invoiceNumber: selectedInvoice,
-      driver,
-      deliveredAt
-    })
-  });
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "markDelivered",
+  0 invoiceNumber: selectedInvoice,
+      driver,
+      deliveredAt
+    })
+  });
 
-  alert(`Invoice ${selectedInvoice} delivered`);
-  location.reload();
+  alert(`Invoice ${selectedInvoice} delivered`);
+  location.reload();
 }
 
 /* ===== BARCODE SCAN ===== */
 function startScanner() {
-  const target = document.getElementById("scanner");
-  target.innerHTML = "";
+  const target = document.getElementById("scanner");
+  target.innerHTML = "";
 
-  Quagga.init({
-    inputStream: {
-      type: "LiveStream",
-      target,
-      constraints: { facingMode: "environment" }
-    },
-    decoder: { readers: ["code_128_reader"] }
-  }, err => {
-    if (err) return alert("Camera error");
-    Quagga.start();
-  });
+  Quagga.init({
+    inputStream: {
+      type: "LiveStream",
+      target,
+      constraints: { facingMode: "environment" }
+    },
+    decoder: { readers: ["code_128_reader"] }
+  }, err => {
+    if (err) return alert("Camera error");
+    Quagga.start();
+  });
 
-  Quagga.onDetected(data => {
-    Quagga.stop();
-    const code = data.codeResult.code;
-    selectedInvoice = code;
+  Quagga.onDetected(data => {
+    Quagga.stop();
+    const code = data.codeResult.code;
+    selectedInvoice = code;
 
-    const row = document.querySelector(`tr[data-invoice="${code}"]`);
-    if (row) selectRow(row, code);
+    const row = document.querySelector(`tr[data-invoice="${code}"]`);
+    if (row) selectRow(row, code);
 
-    alert(`Scanned invoice ${code}`);
-  });
+    alert(`Scanned invoice ${code}`);
+  });
 }
 
 /* ===== NAV ===== */
 function goBack() {
-  window.location.href = "invoices.html";
+  window.location.href = "invoices.html";
 }
 </script>
 
