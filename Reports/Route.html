@@ -2,243 +2,247 @@
 <html>
 <head>
   <base target="_top">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #000000;
-      --card: #1c1c1e;
-      --text: #ffffff;
-      --delivery: #34c759; /* Green */
-      --sales: #007aff;    /* Blue */
-      --scout: #af52de;    /* Purple */
-      --accent: #f59e0b;
+      --primary: #2563eb;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --delivery: #10b981;
+      --sales: #3b82f6;
+      --scout: #8b5cf6;
+      --overdue: #ef4444;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: var(--bg);
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
       color: var(--text);
       margin: 0;
-      padding: 15px;
-      padding-bottom: 100px; /* Space for the fixed button */
+      display: flex;
     }
 
-    .header {
+    /* --- SIDEBAR NAVIGATION --- */
+    .sidebar {
+      width: 260px;
+      background: #1e293b;
+      height: 100vh;
+      position: fixed;
+      padding: 20px;
+      border-right: 1px solid #334155;
+    }
+
+    .nav-item {
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      color: var(--text-dim);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* --- MAIN CONTENT AREA --- */
+    .main-content {
+      margin-left: 260px;
+      padding: 40px;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .header-flex {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 25px;
-      padding-top: 10px;
+      margin-bottom: 30px;
     }
 
     .date-picker {
-      background: #2c2c2e;
+      background: var(--card-bg);
       color: white;
-      border: 1px solid #444;
-      padding: 10px;
+      border: 1px solid #334155;
+      padding: 10px 15px;
       border-radius: 8px;
-      font-size: 16px;
+      font-family: inherit;
     }
 
+    /* --- ROUTE CARDS --- */
     .stop-card {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 18px;
-      margin-bottom: 15px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
-      border-left: 6px solid #444;
-      transition: transform 0.1s;
+      border-left: 5px solid #444;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
-    .stop-card:active { transform: scale(0.98); }
-
     .stop-num {
-      font-size: 24px;
-      font-weight: 800;
-      margin-right: 20px;
-      min-width: 30px;
-      color: #666;
+      font-size: 20px;
+      font-weight: 700;
+      width: 40px;
+      color: var(--text-dim);
     }
 
     .stop-info { flex-grow: 1; }
-
+    
     .badge {
-      font-size: 11px;
+      font-size: 10px;
+      font-weight: 700;
       text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
       display: inline-block;
-      margin-bottom: 6px;
-      letter-spacing: 0.5px;
     }
 
-    .stop-name { font-size: 19px; font-weight: 600; margin-bottom: 4px; }
-    .stop-addr { font-size: 14px; color: #8e8e93; line-height: 1.4; }
+    .stop-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    .stop-addr { font-size: 14px; color: var(--text-dim); }
 
-    /* Polestar Push Button */
-    .nav-footer {
+    .nav-icon {
+      font-size: 24px;
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    .nav-icon:hover { background: rgba(255,255,255,0.1); }
+
+    /* --- POLESTAR FOOTER --- */
+    .footer-action {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 20px;
-      background: linear-gradient(transparent, rgba(0,0,0,0.9) 30%);
+      bottom: 30px;
+      right: 30px;
+      left: 290px;
     }
 
-    .nav-btn {
+    .push-btn {
       background: white;
       color: black;
-      border: none;
       width: 100%;
-      padding: 20px;
-      border-radius: 16px;
-      font-weight: bold;
-      font-size: 17px;
-      display: flex;
+      padding: 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: none;
       justify-content: center;
       align-items: center;
       gap: 10px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4);
     }
 
-    .nav-btn:active { background: #ccc; }
+    #loading { text-align: center; padding: 50px; color: var(--text-dim); }
 
-    #loading {
-      text-align: center;
-      margin-top: 100px;
-      font-size: 18px;
-      color: #666;
-    }
-
-    /* Status Dot for "Checked In" */
-    .check-in-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #444;
-      margin-left: 10px;
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 20px; }
+      .footer-action { left: 20px; right: 20px; }
     }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h1 style="margin:0; font-size: 24px;">Daily Route</h1>
-    <input type="date" id="routeDate" class="date-picker" onchange="fetchRoute()">
+  <div class="sidebar">
+    <h2 style="margin-bottom: 30px;">Brewery Portal</h2>
+    <a href="#" class="nav-item">📊 Dashboard</a>
+    <a href="#" class="nav-item">📦 Inventory</a>
+    <a href="#" class="nav-item active">🚗 Daily Route</a>
+    <a href="#" class="nav-item">👥 Sales Leads</a>
+    <a href="#" class="nav-item">📅 Sampling</a>
   </div>
 
-  <div id="loading">Optimizing stops...</div>
-  <div id="routeList"></div>
+  <div class="main-content">
+    <div class="header-flex">
+      <h1>Daily Route</h1>
+      <input type="date" id="routeDate" class="date-picker" onchange="fetchRoute()">
+    </div>
 
-  <div class="nav-footer">
-    <button onclick="pushToPolestar()" id="mainNavBtn" class="nav-btn" style="display:none;">
-      <span>🚗</span> PUSH 15 STOPS TO POLESTAR
-    </button>
+    <div id="loading">Optimizing stops...</div>
+    <div id="routeList"></div>
+
+    <div class="footer-action">
+      <button onclick="pushToPolestar()" id="mainNavBtn" class="push-btn">
+        <span>🚗</span> PUSH TO POLESTAR
+      </button>
+    </div>
   </div>
 
-    <script>
+<script>
   let currentRoute = [];
   document.getElementById('routeDate').valueAsDate = new Date();
 
-  // SAFETY FIX: Wait for the Google object to be ready
   function onInit() {
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      console.log("Google API Ready");
+    if (typeof google !== 'undefined' && google.script) {
       fetchRoute();
     } else {
-      console.log("Waiting for Google API...");
-      setTimeout(onInit, 100); // Retry every 100ms
+      setTimeout(onInit, 100);
     }
   }
 
   function fetchRoute() {
-  const date = document.getElementById('routeDate').value;
-  const list = document.getElementById('routeList');
-  const loader = document.getElementById('loading');
-  
-  list.innerHTML = "";
-  loader.style.display = "block";
-  document.getElementById('mainNavBtn').style.display = "none";
+    const date = document.getElementById('routeDate').value;
+    const loader = document.getElementById('loading');
+    const list = document.getElementById('routeList');
+    
+    loader.style.display = "block";
+    list.innerHTML = "";
+    document.getElementById('mainNavBtn').style.display = "none";
 
-  // CHANGE THIS URL to your actual 'Deploy' URL
-  const scriptURL = "https://script.google.com/macros/s/AKfycbz...YOUR_ID.../exec";
-  
-  fetch(scriptURL + "?action=getOptimizedDailyRoute&date=" + date)
-    .then(response => response.json())
-    .then(stops => {
-      renderStops(stops); // This makes the list appear
-    })
-    .catch(err => {
-      loader.innerText = "Error: Deploy as 'Anyone'";
-      console.error(err);
-    });
-}
+    google.script.run
+      .withSuccessHandler(renderStops)
+      .getOptimizedDailyRoute(date);
+  }
 
   function renderStops(stops) {
     document.getElementById('loading').style.display = "none";
     const list = document.getElementById('routeList');
     currentRoute = stops;
 
-    if (!stops || stops.length === 0) {
-      list.innerHTML = "<div style='text-align:center; color:#666; margin-top:20px;'>No stops found for this date.</div>";
-      return;
-    }
-
     stops.forEach((stop, index) => {
       const card = document.createElement('div');
       card.className = 'stop-card';
       card.style.borderLeftColor = stop.color;
       
-      // Added a small map pin icon for individual navigation
-      card.innerHTML = 
-        '<div class="stop-num">' + (index + 1) + '</div>' +
-        '<div class="stop-info">' +
-          '<span class="badge" style="background:' + stop.color + '33; color:' + stop.color + '; border: 1px solid ' + stop.color + '">' + stop.type + '</span>' +
-          '<div class="stop-name">' + stop.name + '</div>' +
-          '<div class="stop-addr">' + stop.address + '</div>' +
-        '</div>' +
-        '<div style="margin-left: 10px; font-size: 20px; cursor: pointer;" onclick="window.open(\'https://www.google.com/maps/search/?api=1&query=\' + encodeURIComponent(\'' + stop.address + '\'), \'_blank\')">📍</div>' +
-        '<div class="check-in-dot" id="dot-' + index + '"></div>';
+      card.innerHTML = `
+        <div class="stop-num">${index + 1}</div>
+        <div class="stop-info">
+          <span class="badge" style="background:${stop.color}22; color:${stop.color}">${stop.type}</span>
+          <div class="stop-name">${stop.name}</div>
+          <div class="stop-addr">${stop.address}</div>
+        </div>
+        <div class="nav-icon" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(stop.address)}', '_blank')">📍</div>
+      `;
       list.appendChild(card);
     });
 
-    // Make the button count dynamic
     const btn = document.getElementById('mainNavBtn');
-    btn.innerHTML = '<span>🚗</span> PUSH ' + stops.length + ' STOPS TO POLESTAR';
     btn.style.display = "flex";
+    btn.innerHTML = `<span>🚗</span> PUSH ${stops.length} STOPS TO POLESTAR`;
   }
 
   function pushToPolestar() {
-    if (currentRoute.length === 0) return;
-
-    const btn = document.getElementById('mainNavBtn');
-    btn.innerText = "OPENING MAPS...";
-
     const origin = encodeURIComponent(currentRoute[0].address);
     const destination = encodeURIComponent(currentRoute[currentRoute.length - 1].address);
-    const waypoints = currentRoute.slice(1, -1)
-      .map(function(s) { return encodeURIComponent(s.address); })
-      .join('|');
-
-    // Official Google Maps Direction API format
-    var mapsUrl = 'https://www.google.com/maps/dir/?api=1' +
-                  '&origin=' + origin + 
-                  '&destination=' + destination + 
-                  '&waypoints=' + waypoints + 
-                  '&travelmode=driving';
-
-    window.open(mapsUrl, '_blank');
-
-    setTimeout(function() {
-      btn.innerHTML = "✅ SENT! CHECK POLESTAR";
-      btn.style.background = "#34c759";
-      btn.style.color = "white";
-    }, 2000);
+    const waypoints = currentRoute.slice(1, -1).map(s => encodeURIComponent(s.address)).join('|');
+    
+    const url = 'https://www.google.com/maps/dir/?api=1&origin=' + origin + 
+                '&destination=' + destination + '&waypoints=' + waypoints + '&travelmode=driving';
+    
+    window.open(url, '_blank');
   }
 
-  // Run the safety init instead of window.onload
   onInit();
 </script>
 </body>
