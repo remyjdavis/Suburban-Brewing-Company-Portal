@@ -183,12 +183,12 @@
   let currentRoute = [];
   document.getElementById('routeDate').valueAsDate = new Date();
 
+  // 1. CHANGE THIS URL to your actual 'Deploy' URL from Google Apps Script
+  const scriptURL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+
   function onInit() {
-    if (typeof google !== 'undefined' && google.script) {
-      fetchRoute();
-    } else {
-      setTimeout(onInit, 100);
-    }
+    // We no longer wait for 'google.script', we just fetch immediately
+    fetchRoute();
   }
 
   function fetchRoute() {
@@ -197,18 +197,31 @@
     const list = document.getElementById('routeList');
     
     loader.style.display = "block";
+    loader.innerText = "Optimizing stops...";
     list.innerHTML = "";
     document.getElementById('mainNavBtn').style.display = "none";
 
-    google.script.run
-      .withSuccessHandler(renderStops)
-      .getOptimizedDailyRoute(date);
+    // This is the bridge from GitHub to Google
+    fetch(scriptURL + "?action=getOptimizedDailyRoute&date=" + date)
+      .then(response => response.json())
+      .then(stops => {
+        renderStops(stops);
+      })
+      .catch(err => {
+        loader.innerText = "Connection Error. Ensure Deployment is set to 'Anyone'.";
+        console.error(err);
+      });
   }
 
   function renderStops(stops) {
     document.getElementById('loading').style.display = "none";
     const list = document.getElementById('routeList');
     currentRoute = stops;
+
+    if (!stops || stops.length === 0) {
+      list.innerHTML = "<div style='text-align:center; color:#94a3b8; margin-top:20px;'>No stops found for this date.</div>";
+      return;
+    }
 
     stops.forEach((stop, index) => {
       const card = document.createElement('div');
@@ -222,7 +235,7 @@
           <div class="stop-name">${stop.name}</div>
           <div class="stop-addr">${stop.address}</div>
         </div>
-        <div class="nav-icon" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(stop.address)}', '_blank')">📍</div>
+        <div class="nav-icon" onclick="window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent('${stop.address}'), '_blank')">📍</div>
       `;
       list.appendChild(card);
     });
@@ -233,6 +246,7 @@
   }
 
   function pushToPolestar() {
+    if (currentRoute.length === 0) return;
     const origin = encodeURIComponent(currentRoute[0].address);
     const destination = encodeURIComponent(currentRoute[currentRoute.length - 1].address);
     const waypoints = currentRoute.slice(1, -1).map(s => encodeURIComponent(s.address)).join('|');
