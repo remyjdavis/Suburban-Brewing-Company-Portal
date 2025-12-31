@@ -1229,6 +1229,13 @@ if (duplicate) {
   items
 };
 }
+/* ===============================
+   BUTTON STATE CONTROL
+   =============================== */
+
+// Disable Print + Email on load
+document.getElementById("print-invoice-btn").disabled = true;
+document.getElementById("email-invoice-btn").disabled = true;
 
 /* ===== SAVE INVOICE FUNCTION ===== */
 function saveInvoice() {
@@ -1249,7 +1256,10 @@ function saveInvoice() {
       alert("Save failed");
       return;
     }
-
+// Enable buttons AFTER save
+      document.getElementById("print-invoice-btn").disabled = false;
+      document.getElementById("email-invoice-btn").disabled = false;
+    
     // ✅ store for later overwrite when delivered
     window.currentInvoiceFileId = res.fileId;
 
