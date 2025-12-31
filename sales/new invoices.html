@@ -463,6 +463,25 @@ function addProductRow() {
 
   wireProductAutocomplete(tr);
 }
+function wireProductAutocomplete(row) {
+  const input = row.querySelector(".product-input");
+  const suggestionBox = row.querySelector(".product-suggestions");
+
+  input.addEventListener("input", () => {
+    const val = input.value.toLowerCase();
+    suggestionBox.innerHTML = "";
+    if (!val) return;
+
+    Object.keys(groupedProducts)
+      .filter(name => name.toLowerCase().includes(val))
+      .forEach(name => {
+        const div = document.createElement("div");
+        div.textContent = name;
+        div.onclick = () => selectProduct(row, name);
+        suggestionBox.appendChild(div);
+      });
+  });
+}
 
 /* =========================
    UPDATE QUANTITIES BY TYPE
