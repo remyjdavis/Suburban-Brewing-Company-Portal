@@ -443,7 +443,11 @@ document.getElementById("customer-search").addEventListener("input", function ()
 /* ===== SELECT CUSTOMERS FUNCTION ===== */
 function selectCustomer(c) {
   selectedCustomer = c;
-updateInvoiceFooter();
+
+  selectedCustomer.paymentMethod =
+    c.Payment || c.payment || c.paymentMethod || "";
+
+  updateInvoiceFooter();
 
   document.querySelectorAll(".suggestion").forEach(e => e.remove());
   document.getElementById("customer-search").style.display = "none";
