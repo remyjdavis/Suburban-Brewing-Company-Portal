@@ -542,6 +542,69 @@
     row.querySelectorAll(`#qty-${rowId} input`).forEach(i => qty += parseInt(i.value || 0));
     document.getElementById(`total-${rowId}`).textContent = "$" + (price * qty).toFixed(2);
   }
+<script>
+/* ================== PRODUCT TABLE LOGIC ================== */
+
+const tableBody = document.getElementById("invoiceTableBody");
+const addProductBtn = document.getElementById("addProductBtn");
+
+function addProductRow() {
+  const row = document.createElement("tr");
+
+  row.innerHTML = `
+    <td>
+      <input type="text" class="product-name" placeholder="Product name" autocomplete="off">
+    </td>
+
+    <td>
+      <div class="type-checkboxes">
+        <label><input type="checkbox" value="Case" checked> Case</label>
+        <label><input type="checkbox" value="1/2 Keg"> 1/2 Keg</label>
+        <label><input type="checkbox" value="1/6 Keg"> 1/6 Keg</label>
+      </div>
+    </td>
+
+    <td>
+      <select class="quantity">
+        ${Array.from({ length: 51 }, (_, i) => `<option value="${i}">${i}</option>`).join("")}
+      </select>
+    </td>
+
+    <td>
+      <input type="number" class="price" step="0.01" value="0.00">
+    </td>
+
+    <td>
+      <svg class="barcode"></svg>
+    </td>
+
+    <td class="line-total">$0.00</td>
+  `;
+
+  attachRowListeners(row);
+  tableBody.appendChild(row);
+}
+
+function attachRowListeners(row) {
+  const qty = row.querySelector(".quantity");
+  const price = row.querySelector(".price");
+  const lineTotal = row.querySelector(".line-total");
+
+  function updateLineTotal() {
+    const total = (parseFloat(qty.value) || 0) * (parseFloat(price.value) || 0);
+    lineTotal.textContent = `$${total.toFixed(2)}`;
+  }
+
+  qty.addEventListener("change", updateLineTotal);
+  price.addEventListener("input", updateLineTotal);
+}
+
+/* Initial row */
+addProductRow();
+
+/* Add row button */
+addProductBtn.addEventListener("click", addProductRow);
+</script>
 
 </script>
 
