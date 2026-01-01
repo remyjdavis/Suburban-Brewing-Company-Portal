@@ -201,7 +201,7 @@
 <div id="main-container">
 
     <div id="main-screen">
-       ''BATCH SETUP
+       
         <div class="brew-stage">
     <div class="stage-header" onclick="toggleSection('setup-content', this)">
         <h3 class="stage-title">1. Batch Setup</h3>
@@ -244,219 +244,250 @@
         </div>
     </div>
 </div>
-'GRAIN BILL AND MASH IN'
+
         <div class="brew-stage">
-            <div class="stage-header" onclick="toggleSection('grain-content', this)">
-                <h3 class="stage-title">2. Grain Bill & Mash-In</h3>
-                <span class="toggle-indicator">+</span>
-            </div>
-            <div id="grain-content" class="stage-content collapsed">
-                
-                <h4 class="sub-section-title">Water & Strike Setup</h4>
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Mash In Time</label>
-                        <input type="time">
-                    </div>
-                    <div class="input-group">
-                        <label>Strike Water Amount</label>
-                        <input type="text" placeholder="e.g. 15 BBL">
-                    </div>
-                    <div class="input-group">
-                        <label>Mash In Water Temp</label>
-                        <input type="text" placeholder="e.g. 165°F">
-                    </div>
-                </div>
-
-                <div class="form-grid">
-                    <div class="input-group" style="grid-column: span 2;">
-                        <label>Mash Salts Used</label>
-                        <input type="text" placeholder="e.g. Gypsum, Calcium Chloride">
-                    </div>
-                    <div class="input-group">
-                        <label>Salt Amounts Added</label>
-                        <input type="text" placeholder="e.g. 200g, 150g">
-                    </div>
-                </div>
-
-                <h4 class="sub-section-title">Malt Inventory & Grist</h4>
-                <table id="grain-table">
-                    <thead>
-                        <tr>
-                            <th width="25%">Malt Type</th>
-                            <th width="15%">Supplier</th>
-                            <th width="15%">Lot #</th>
-                            <th width="15%">Weight (lb)</th>
-                            <th width="10%">% Grist</th>
-                            <th width="10%">Added?</th>
-                            <th width="10%">Time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><input type="text" readonly style="background:#f0f0f0;" value="2-Row Base"></td>
-                            <td><input type="text" placeholder="Supplier"></td>
-                            <td><input type="text" placeholder="Lot #" onchange="runBridgingLogic(this)"></td>
-                            <td>
-                                <input type="number" readonly style="background:#f0f0f0;" value="1000" onchange="runBridgingLogic(this)">
-                                <div class="inv-status" style="font-size: 10px; color: var(--accent-gray); margin-top:2px;"></div>
-                            </td>
-                            <td><input type="number" readonly style="background:#f0f0f0;" value="85"></td>
-                            <td style="text-align:center;"><input type="checkbox" style="width:20px; height:20px;"></td>
-                            <td><input type="time"></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <button class="btn-add-row" onclick="addRow('grain-table')">+ Add Specialty Grain</button>
-
-                <div class="input-group" style="margin-top:20px;">
-                    <label>Grain & Milling Notes</label>
-                    <textarea style="width:100%; height:80px; padding:10px;" placeholder="Milled gap settings, husk condition..."></textarea>
-                </div>
-            </div>
-        </div>
-'MASH SCHEDULE'
-        <div class="brew-stage">
-            <div class="stage-header" onclick="toggleSection('mash-content', this)">
-                <h3 class="stage-title">3. Mash Schedule</h3>
-                <span class="toggle-indicator">+</span>
-            </div>
-            <div id="mash-content" class="stage-content collapsed">
-                <table id="mash-table">
-                    <thead>
-                        <tr>
-                            <th width="25%">Step Name</th>
-                            <th width="15%">Target Temp</th>
-                            <th width="15%">Actual Temp</th>
-                            <th width="15%">Duration (Min)</th>
-                            <th width="15%">Start Time</th>
-                            <th width="15%">End Time</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mash-body">
-                        <tr>
-                            <td>
-                                <input type="text" value="Saccharification" readonly style="background:#f0f0f0; font-weight:bold;">
-                                <div style="margin-top:5px;">
-                                    <label style="font-size:10px; color:var(--active-green);">MASH pH (First Rest Only)</label>
-                                    <input type="number" step="0.01" placeholder="5.2">
-                                </div>
-                            </td>
-                            <td><input type="text" value="152°F" readonly style="background:#f0f0f0;"></td>
-                            <td><input type="number" placeholder="Actual"></td>
-                            <td><input type="text" value="60" readonly style="background:#f0f0f0;"></td>
-                            <td><input type="time"></td>
-                            <td><input type="time"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" value="Mash Out" readonly style="background:#f0f0f0; font-weight:bold;"></td>
-                            <td><input type="text" value="168°F" readonly style="background:#f0f0f0;"></td>
-                            <td><input type="number" placeholder="Actual"></td>
-                            <td><input type="text" value="10" readonly style="background:#f0f0f0;"></td>
-                            <td><input type="time"></td>
-                            <td><input type="time"></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p style="font-size: 12px; color: #7f8c8d; margin-top: 10px;">* Steps, Target Temps, and Durations are locked based on the selected Recipe.</p>
-            </div>
-        </div>
-'LAUTER LOG'
-        <div class="brew-stage">
-            <div class="stage-header" onclick="toggleSection('lauter-content', this)">
-                <h3 class="stage-title">4. Lauter & Sparge</h3>
-                <span class="toggle-indicator">+</span>
-            </div>
-            <div id="lauter-content" class="stage-content collapsed">
-                
-                <div id="lauter-phases">
-                    <h4 class="sub-section-title">A. First Runnings</h4>
-                    <div class="form-grid">
-                        <div class="input-group"><label>Start Time</label><input type="time"></div>
-                        <div class="input-group"><label>End Time</label><input type="time"></div>
-                        <div class="input-group"><label>Gravity</label><input type="number" step="0.001"></div>
-                    </div>
-                    <div class="deep-cut-wrapper">
-                        <label style="color:var(--active-green)">Deep Cuts</label>
-                        <div id="cuts-fr">
-                            <div style="display:flex; gap:10px; margin-top:5px;">
-                                <input type="text" placeholder="Reading" style="flex:2">
-                                <input type="time" style="flex:1">
-                            </div>
-                        </div>
-                        <button class="btn-small-add" onclick="addDeepCut('cuts-fr')">+ Add Reading</button>
-                    </div>
-
-                    <h4 class="sub-section-title">B. First Sparge</h4>
-                    <div class="form-grid">
-                        <div class="input-group"><label>Start Time</label><input type="time"></div>
-                        <div class="input-group"><label>End Time</label><input type="time"></div>
-                    </div>
-                    <div class="deep-cut-wrapper">
-                        <label style="color:var(--active-green)">Deep Cuts</label>
-                        <div id="cuts-sp1">
-                            <div style="display:flex; gap:10px; margin-top:5px;">
-                                <input type="text" placeholder="Reading" style="flex:2">
-                                <input type="time" style="flex:1">
-                            </div>
-                        </div>
-                        <button class="btn-small-add" onclick="addDeepCut('cuts-sp1')">+ Add Reading</button>
-                    </div>
-
-                    <h4 class="sub-section-title">C. Second Sparge</h4>
-                    <div class="form-grid">
-                        <div class="input-group"><label>Start Time</label><input type="time"></div>
-                        <div class="input-group"><label>End Time</label><input type="time"></div>
-                    </div>
-                    <div class="deep-cut-wrapper">
-                        <label style="color:var(--active-green)">Deep Cuts</label>
-                        <div id="cuts-sp2">
-                            <div style="display:flex; gap:10px; margin-top:5px;">
-                                <input type="text" placeholder="Reading" style="flex:2">
-                                <input type="time" style="flex:1">
-                            </div>
-                        </div>
-                        <button class="btn-small-add" onclick="addDeepCut('cuts-sp2')">+ Add Reading</button>
-                    </div>
-                </div>
-
-                <h4 class="sub-section-title">D. Final Totals</h4>
-                <div class="form-grid">
-                    <div class="input-group"><label>Pre-Boil Vol</label><input type="number" step="0.1"></div>
-                    <div class="input-group"><label>Pre-Boil Gravity</label><input type="number" step="0.001"></div>
-                    <div class="input-group"><label>Efficiency %</label><input type="number"></div>
-                </div>
-            </div>
-        </div>
-'BOIL'
-        <div class="brew-stage">
-            <div class="stage-header" onclick="toggleSection('boil-content', this)">
-                <h3 class="stage-title">5. Boil Additions</h3>
-                <span class="toggle-indicator">+</span>
-            </div>
-            <div id="boil-content" class="stage-content collapsed">
-                <table id="boil-table">
-                    <thead>
-                        <tr>
-                            <th>Min Left</th><th>Type</th><th>Ingredient</th><th>Amount</th><th>Added?</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><input type="number"></td>
-                            <td><select><option>Hops</option><option>Other</option></select></td>
-                            <td><input type="text"></td>
-                            <td><input type="text"></td>
-                            <td><input type="checkbox"></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <button class="btn-add-row" onclick="addRow('boil-table')">+ Add Addition</button>
-            </div>
-        </div>
-
+    <div class="stage-header" onclick="toggleSection('grain-content', this)">
+        <h3 class="stage-title">2. Grain Bill & Mash-In</h3>
+        <span class="toggle-indicator">+</span>
     </div>
-'KO AND YEAST'
+    <div id="grain-content" class="stage-content collapsed">
+        
+        <h4 class="sub-section-title">Water & Strike Setup</h4>
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Mash In Time</label>
+                <input type="time">
+            </div>
+            <div class="input-group">
+                <label>Strike Water Amount</label>
+                <input type="text" placeholder="e.g. 15 BBL">
+            </div>
+            <div class="input-group">
+                <label>Mash In Water Temp</label>
+                <input type="text" placeholder="e.g. 165°F">
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <div class="input-group" style="grid-column: span 2;">
+                <label>Mash Salts Used</label>
+                <input type="text" placeholder="e.g. Gypsum, Calcium Chloride">
+            </div>
+            <div class="input-group">
+                <label>Salt Amounts Added</label>
+                <input type="text" placeholder="e.g. 200g, 150g">
+            </div>
+        </div>
+
+        <h4 class="sub-section-title">Malt Inventory & Grist</h4>
+        <table id="grain-table">
+            <thead>
+                <tr>
+                    <th width="25%">Malt Type</th>
+                    <th width="15%">Supplier</th>
+                    <th width="15%">Lot #</th>
+                    <th width="15%">Weight (lb)</th>
+                    <th width="10%">% Grist</th>
+                    <th width="10%">Added?</th>
+                    <th width="10%">Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="text" readonly style="background:#f0f0f0;" value="2-Row Base"></td>
+                    <td><input type="text" placeholder="Supplier"></td>
+                    <td><input type="text" placeholder="Lot #" onchange="runBridgingLogic(this)"></td>
+                    <td>
+                        <input type="number" readonly style="background:#f0f0f0;" value="1000" onchange="runBridgingLogic(this)">
+                        <div class="inv-status" style="font-size: 10px; color: var(--accent-gray); margin-top:2px;"></div>
+                    </td>
+                    <td><input type="number" readonly style="background:#f0f0f0;" value="85"></td>
+                    <td style="text-align:center;"><input type="checkbox" style="width:20px; height:20px;"></td>
+                    <td><input type="time"></td>
+                </tr>
+            </tbody>
+        </table>
+        <button class="btn-add-row" onclick="addRow('grain-table')">+ Add Specialty Grain</button>
+
+        <div class="input-group" style="margin-top:20px;">
+            <label>Grain & Milling Notes</label>
+            <textarea style="width:100%; height:80px; padding:10px;" placeholder="Milled gap settings, husk condition..."></textarea>
+        </div>
+
+        <div class="section-footer" style="margin-top: 20px; text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
+            <button class="btn-save-section" onclick="saveAndAdvance('grain-content', 'mash-content')">
+                Save & Lock Grain Bill
+            </button>
+        </div>
+    </div>
+</div>
+
+        <div class="brew-stage">
+    <div class="stage-header" onclick="toggleSection('mash-content', this)">
+        <h3 class="stage-title">3. Mash Schedule</h3>
+        <span class="toggle-indicator">+</span>
+    </div>
+    <div id="mash-content" class="stage-content collapsed">
+        <table id="mash-table">
+            <thead>
+                <tr>
+                    <th width="25%">Step Name</th>
+                    <th width="15%">Target Temp</th>
+                    <th width="15%">Actual Temp</th>
+                    <th width="15%">Duration (Min)</th>
+                    <th width="15%">Start Time</th>
+                    <th width="15%">End Time</th>
+                </tr>
+            </thead>
+            <tbody id="mash-body">
+                <tr>
+                    <td>
+                        <input type="text" value="Saccharification" readonly style="background:#f0f0f0; font-weight:bold;">
+                        <div style="margin-top:5px;">
+                            <label style="font-size:10px; color:var(--active-green);">MASH pH (First Rest Only)</label>
+                            <input type="number" step="0.01" placeholder="5.2">
+                        </div>
+                    </td>
+                    <td><input type="text" value="152°F" readonly style="background:#f0f0f0;"></td>
+                    <td><input type="number" placeholder="Actual"></td>
+                    <td><input type="text" value="60" readonly style="background:#f0f0f0;"></td>
+                    <td><input type="time"></td>
+                    <td><input type="time"></td>
+                </tr>
+                <tr>
+                    <td><input type="text" value="Mash Out" readonly style="background:#f0f0f0; font-weight:bold;"></td>
+                    <td><input type="text" value="168°F" readonly style="background:#f0f0f0;"></td>
+                    <td><input type="number" placeholder="Actual"></td>
+                    <td><input type="text" value="10" readonly style="background:#f0f0f0;"></td>
+                    <td><input type="time"></td>
+                    <td><input type="time"></td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="font-size: 12px; color: #7f8c8d; margin-top: 10px;">* Steps, Target Temps, and Durations are locked based on the selected Recipe.</p>
+
+        <div class="section-footer" style="margin-top: 20px; text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
+            <button class="btn-save-section" onclick="saveAndAdvance('mash-content', 'lauter-content')">
+                Save & Lock Mash Schedule
+            </button>
+        </div>
+    </div>
+</div>
+
+        <div class="brew-stage">
+    <div class="stage-header" onclick="toggleSection('lauter-content', this)">
+        <h3 class="stage-title">4. Lauter & Sparge</h3>
+        <span class="toggle-indicator">+</span>
+    </div>
+    <div id="lauter-content" class="stage-content collapsed">
+        
+        <div id="lauter-phases">
+            <h4 class="sub-section-title">A. First Runnings</h4>
+            <div class="form-grid">
+                <div class="input-group"><label>Start Time</label><input type="time"></div>
+                <div class="input-group"><label>End Time</label><input type="time"></div>
+                <div class="input-group"><label>Gravity</label><input type="number" step="0.001"></div>
+            </div>
+            <div class="deep-cut-wrapper">
+                <label style="color:var(--active-green)">Deep Cuts</label>
+                <div id="cuts-fr">
+                    <div style="display:flex; gap:10px; margin-top:5px;">
+                        <input type="text" placeholder="Reading" style="flex:2">
+                        <input type="time" style="flex:1">
+                    </div>
+                </div>
+                <button class="btn-small-add" onclick="addDeepCut('cuts-fr')">+ Add Reading</button>
+            </div>
+
+            <h4 class="sub-section-title">B. First Sparge</h4>
+            <div class="form-grid">
+                <div class="input-group"><label>Start Time</label><input type="time"></div>
+                <div class="input-group"><label>End Time</label><input type="time"></div>
+            </div>
+            <div class="deep-cut-wrapper">
+                <label style="color:var(--active-green)">Deep Cuts</label>
+                <div id="cuts-sp1">
+                    <div style="display:flex; gap:10px; margin-top:5px;">
+                        <input type="text" placeholder="Reading" style="flex:2">
+                        <input type="time" style="flex:1">
+                    </div>
+                </div>
+                <button class="btn-small-add" onclick="addDeepCut('cuts-sp1')">+ Add Reading</button>
+            </div>
+
+            <h4 class="sub-section-title">C. Second Sparge</h4>
+            <div class="form-grid">
+                <div class="input-group"><label>Start Time</label><input type="time"></div>
+                <div class="input-group"><label>End Time</label><input type="time"></div>
+            </div>
+            <div class="deep-cut-wrapper">
+                <label style="color:var(--active-green)">Deep Cuts</label>
+                <div id="cuts-sp2">
+                    <div style="display:flex; gap:10px; margin-top:5px;">
+                        <input type="text" placeholder="Reading" style="flex:2">
+                        <input type="time" style="flex:1">
+                    </div>
+                </div>
+                <button class="btn-small-add" onclick="addDeepCut('cuts-sp2')">+ Add Reading</button>
+            </div>
+        </div>
+
+        <h4 class="sub-section-title">D. Final Totals</h4>
+        <div class="form-grid">
+            <div class="input-group"><label>Pre-Boil Vol</label><input type="number" step="0.1"></div>
+            <div class="input-group"><label>Pre-Boil Gravity</label><input type="number" step="0.001"></div>
+            <div class="input-group"><label>Efficiency %</label><input type="number"></div>
+        </div>
+
+        <div class="section-footer" style="margin-top: 20px; text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
+            <button class="btn-save-section" onclick="saveAndAdvance('lauter-content', 'boil-content')">
+                Save & Lock Lauter Log
+            </button>
+        </div>
+    </div>
+</div>
+
+        <div class="brew-stage">
+    <div class="stage-header" onclick="toggleSection('boil-content', this)">
+        <h3 class="stage-title">5. Boil Additions</h3>
+        <span class="toggle-indicator">+</span>
+    </div>
+    <div id="boil-content" class="stage-content collapsed">
+        <table id="boil-table">
+            <thead>
+                <tr>
+                    <th>Min Left</th>
+                    <th>Type</th>
+                    <th>Ingredient</th>
+                    <th>Amount</th>
+                    <th>Added?</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="number" placeholder="60"></td>
+                    <td>
+                        <select>
+                            <option>Hops</option>
+                            <option>Other</option>
+                        </select>
+                    </td>
+                    <td><input type="text" placeholder="e.g. CTZ"></td>
+                    <td><input type="text" placeholder="e.g. 11 lb"></td>
+                    <td style="text-align:center;"><input type="checkbox" style="width:20px; height:20px;"></td>
+                </tr>
+            </tbody>
+        </table>
+        <button class="btn-add-row" onclick="addRow('boil-table')">+ Add Addition</button>
+
+        <div class="section-footer" style="margin-top: 20px; text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
+            <button class="btn-save-section" onclick="saveAndAdvance('boil-content', 'ko-yeast-content')">
+                Save & Lock Boil Additions
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="brew-stage">
     <div class="stage-header" onclick="toggleSection('ko-yeast-content', this)">
         <h3 class="stage-title">6. Knockout & Yeast Pitch</h3>
@@ -468,7 +499,7 @@
         <div class="form-grid">
             <div class="input-group">
                 <label>Vessel Destination</label>
-                <select style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px; background: #fff9e6; font-weight: bold;">
+                <select id="vessel-select" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px; background: #fff9e6; font-weight: bold;">
                     <option value="">-- Select Tank --</option>
                     <option value="FV1">FV 1</option>
                     <option value="FV2">FV 2</option>
@@ -543,15 +574,20 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><input type="text" readonly style="background:#f0f0f0;" value="US-05 American Ale"></td>
+                    <td><input type="text" id="yeast-strain" readonly style="background:#f0f0f0;" value="US-05 American Ale"></td>
                     <td><input type="number" value="1"></td>
                     <td><input type="text" placeholder="e.g. 5.2 kg"></td>
                     <td><input type="time"></td>
                 </tr>
             </tbody>
         </table>
+
+        <div class="section-footer" style="margin-top: 20px; text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
+            <button class="btn-save-section" id="final-brew-save" onclick="completeBrewLog()">
+                Complete Brew & Sync to Master Log
+            </button>
+        </div>
     </div>
-</div>
 </div>
 
 <script>
