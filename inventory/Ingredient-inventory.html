@@ -133,7 +133,10 @@
                     <button type="submit" class="btn-save">Update Inventory Levels</button>
                 </div>
             </form>
-
+<div id="low-stock-alert-bar" style="display:none; background:#fff3cd; border:1px solid #ffeeba; padding:15px; border-radius:8px; margin-bottom:20px; color:#856404;">
+    <strong>Inventory Alerts:</strong> 
+    <span id="low-stock-list">Scanning inventory...</span>
+</div>
             <div class="inventory-grid">
                 <div class="section-card" onclick="setCategoryAndOpenModal('Malt')">
                     <div class="section-header">Malt / Grains</div>
@@ -222,7 +225,24 @@
             submitBtn.disabled = false;
         });
     });
+function updateDashboardAlerts() {
+    // This calls the special backend function we discussed
+    fetch(`${scriptURL}?getLowStock=true`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.length > 0) {
+                const bar = document.getElementById('low-stock-alert-bar');
+                const list = document.getElementById('low-stock-list');
+                bar.style.display = 'block';
+                
+                // Creates a list like: Malt (3), Hops (1)
+                list.innerHTML = data.map(group => `${group.category} (${group.items.length})`).join(', ');
+            }
+        });
+}
 
+// Run this on page load
+window.onload = updateDashboardAlerts;
     // --- FETCH DATA (GET) ---
     function fetchRealData(cat) {
         const tbody = document.getElementById('inventory-details-rows');
