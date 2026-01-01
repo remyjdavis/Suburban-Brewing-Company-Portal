@@ -235,9 +235,8 @@
     // --- FETCH DATA (GET) ---
     function fetchRealData(cat) {
         const tbody = document.getElementById('inventory-details-rows');
-        tbody.innerHTML = "<tr><td colspan='5'>Loading from Google Sheets...</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Loading from Google Sheets...</td></tr>";
 
-        // We append the category as a URL parameter so the Backend knows what to send
         fetch(`${scriptURL}?category=${cat}`)
             .then(response => response.json())
             .then(items => {
@@ -245,99 +244,54 @@
             })
             .catch(err => {
                 console.error("Fetch Error:", err);
-                tbody.innerHTML = "<tr><td colspan='5' style='color:red;'>Error connecting to Google. Make sure you deployed as 'Anyone'.</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='5' style='color:red; text-align:center;'>Error connecting to Google Sheets.</td></tr>";
             });
     }
 
-   function renderInventoryRows(items) {
-    const tbody = document.getElementById('inventory-details-rows');
-    if (!items || items.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='5'>No stock found.</td></tr>";
-        return;
+    function renderInventoryRows(items) {
+        const tbody = document.getElementById('inventory-details-rows');
+        if (!items || items.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No stock found.</td></tr>";
+            return;
+        }
+
+        tbody.innerHTML = items.map((item) => {
+            // Build spec tags
+            const specsHtml = Object.entries(item.specs || {})
+                .map(([key, val]) => `
+                    <span style="display:inline-block; background:#f1f5f9; border:1px solid #e2e8f0; 
+                                 padding:2px 6px; margin:2px; border-radius:4px; font-size:10px; font-weight:600;">
+                        <span style="color:var(--accent)">${key.toUpperCase()}:</span> ${val}
+                    </span>
+                `).join('');
+
+            const lowStockClass = item.isLow ? 'qty-low' : '';
+            const warningLabel = item.isLow ? '<br><small style="color:#ef4444; font-weight:800;">⚠️ REORDER</small>' : '';
+
+            return `
+                <tr>
+                    <td>
+                        <div style="font-weight:700; color:var(--text-main);">${item.name}</div>
+                        <div style="font-size:11px; color:var(--text-muted);">${item.source || ''}</div>
+                    </td>
+                    <td style="font-family:monospace; font-size:12px;">${item.lot}</td>
+                    <td class="${lowStockClass}" style="font-weight:700;">
+                        ${item.qty} ${warningLabel}
+                    </td>
+                    <td>
+                        <div style="display:flex; flex-wrap:wrap; max-width:300px;">
+                            ${specsHtml || '<span style="color:#cbd5e1; font-style:italic; font-size:12px;">No specs</span>'}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-scan" style="padding:6px 12px; font-size:11px;" onclick="useItemForEntry('${item.name}', '${item.lot}')">SELECT</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
-    tbody.innerHTML = items.map((item) => {
-        // Build "Tags" for each spec found in the spreadsheet
-        const specsHtml = Object.entries(item.specs)
-            .map(([key, val]) => `
-                <span style="display:inline-block; background:#ebf5fb; border:1px solid #d6eaf8; 
-                             padding:2px 6px; margin:2px; border-radius:4px; font-size:11px;">
-                    <strong style="color:#2980b9">${key}:</strong> ${val}
-                </span>
-            `).join('');
-
-        // NEW: Check if the item is low stock to apply the CSS class
-        const lowStockClass = item.isLow ? 'qty-low' : '';
-        const warningLabel = item.isLow ? '<br><small>⚠️ REORDER</small>' : '';
-
-        return `
-            <tr>
-                <td>
-                    <div style="font-weight:bold; color:#2c3e50;">${item.name}</div>
-                    <div style="font-size:11px; color:#7f8c8d;">${item.source || ''}</div>
-                </td>
-                <td style="font-family:monospace; font-size:12px;">${item.lot}</td>
-                <td class="qty ${lowStockClass}">
-                    ${item.qty} ${warningLabel}
-                </td>
-                <td>
-                    <div style="display:flex; flex-wrap:wrap; max-width:350px;">
-                        ${specsHtml || '<span style="color:#ccc; font-style:italic;">No extra specs</span>'}
-                    </div>
-                </td>
-                <td>
-                    <button class="btn-add-inline" onclick="useItemForEntry('${item.name}', '${item.lot}')">Select</button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-    tbody.innerHTML = items.map((item) => {
-        // Build "Tags" for each spec found in the spreadsheet
-        const specsHtml = Object.entries(item.specs)
-            .map(([key, val]) => `
-                <span style="display:inline-block; background:#ebf5fb; border:1px solid #d6eaf8; 
-                             padding:2px 6px; margin:2px; border-radius:4px; font-size:11px;">
-                    <strong style="color:#2980b9">${key}:</strong> ${val}
-                </span>
-            `).join('');
-
-        return `
-            <tr>
-                <td>
-                    <div style="font-weight:bold; color:#2c3e50;">${item.name}</div>
-                    <div style="font-size:11px; color:#7f8c8d;">${item.source || ''}</div>
-                </td>
-                <td style="font-family:monospace; font-size:12px;">${item.lot}</td>
-                <td class="qty">${item.qty}</td>
-                <td>
-                    <div style="display:flex; flex-wrap:wrap; max-width:350px;">
-                        ${specsHtml || '<span style="color:#ccc; font-style:italic;">No extra specs</span>'}
-                    </div>
-                </td>
-                <td>
-                    <button class="btn-add-inline" onclick="useItemForEntry('${item.name}', '${item.lot}')">Select</button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-        function getLowStockSummary() {
-  const categories = ["Malt", "Hops", "Yeast", "Salts", "Packaging"];
-  let lowItems = [];
-  
-  categories.forEach(cat => {
-    const items = getInventoryByCategory(cat);
-    const filtered = items.filter(i => i.isLow);
-    if(filtered.length > 0) {
-      lowItems.push({ category: cat, items: filtered });
-    }
-  });
-  
-  return lowItems; // This will populate your Dashboard "To Order" card
-}
-    // --- UTILITIES (QR & Modals) ---
+    // --- UTILITIES ---
     let html5QrCode;
 
     function toggleScanner() {
@@ -353,9 +307,8 @@
 
     function startScanner() {
         html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-        html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-            document.getElementById('inv-lot').value = decodedText;
+        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+            document.getElementById('inv-lot').value = txt;
             toggleScanner();
         });
     }
@@ -363,9 +316,8 @@
     function setCategoryAndOpenModal(cat) {
         document.getElementById('inv-cat').value = cat;
         renderDynamicFields();
-        const modal = document.getElementById('inventory-modal');
-        document.getElementById('modal-title').innerText = cat + " Stock Details";
-        modal.style.display = "block";
+        document.getElementById('modal-title').innerText = cat + " Stock";
+        document.getElementById('inventory-modal').style.display = "block";
         fetchRealData(cat); 
     }
 
@@ -373,7 +325,7 @@
         document.getElementById('inv-name').value = name;
         document.getElementById('inv-lot').value = lot;
         closeModal();
-        document.getElementById('entry-form').scrollIntoView({ behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function closeModal() { document.getElementById('inventory-modal').style.display = "none"; }
