@@ -2,270 +2,376 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root {
-            --slate-dark: #2c3e50;
-            --slate-light: #34495e;
-            --input-border: #ced4da;
-            --input-focus: #4a90e2;
-            --save-green: #27ae60;
-            --bg-gray: #f8f9fa;
+            --header-bg: #2c3e50;
+            --section-bg: #ecf0f1;
+            --active-border: #27ae60;
+            --text-dark: #333;
+            --white: #ffffff;
+            --input-bg: #fdfdfd;
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--bg-gray);
-            margin: 0; padding: 20px;
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0; padding: 0;
+            color: var(--text-dark);
+            padding-bottom: 50px; /* Space for scrolling */
         }
 
-        #main-container {
-            max-width: 1500px;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 30px;
-            border: 1px solid #ddd;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        /* --- HEADER & CONTROLS --- */
-        .review-header {
+        /* --- STICKY ACTION HEADER --- */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background: var(--header-bg);
+            color: white;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
-            border-bottom: 2px solid var(--slate-dark);
-            padding-bottom: 20px;
-            margin-bottom: 20px;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
 
-        .action-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            background: #eee;
-            padding: 15px;
-            border-radius: 4px;
-        }
-
-        /* --- BUTTONS (No Icons) --- */
+        .batch-summary { font-size: 1.1rem; font-weight: bold; }
+        
         .btn-save {
-            background-color: var(--save-green);
+            background-color: #27ae60;
             color: white;
             border: none;
-            padding: 10px 25px;
+            padding: 10px 30px;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
+            border-radius: 4px;
             text-transform: uppercase;
         }
 
-        .btn-add-row {
-            background-color: var(--slate-light);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
+        .btn-save:hover { background-color: #219150; }
+
+        /* --- MAIN CONTAINER --- */
+        #main-container {
+            max-width: 1000px; /* Readability width */
+            margin: 20px auto;
+            padding: 0 15px;
         }
 
-        /* --- FORM STYLING --- */
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        /* --- COLLAPSIBLE SECTIONS (ACCORDION) --- */
+        .brew-stage {
             background: white;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid #ddd;
         }
 
-        th {
-            background: var(--slate-light);
-            color: white;
-            padding: 10px;
-            font-size: 12px;
+        /* The clickable header */
+        .stage-header {
+            background-color: var(--section-bg);
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            transition: background 0.2s;
+        }
+
+        .stage-header:hover { background-color: #e2e6ea; }
+
+        .stage-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        /* Visual toggle (+ / -) using text, no icons */
+        .toggle-indicator {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #7f8c8d;
+            line-height: 1;
+        }
+
+        /* The content area */
+        .stage-content {
+            display: block; /* Default to open for dev, JS will handle toggle */
+            padding: 20px;
+        }
+
+        .stage-content.collapsed { display: none; }
+
+        /* --- FORMS & INPUTS --- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-group { display: flex; flex-direction: column; }
+        
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-bottom: 5px;
             text-transform: uppercase;
-            border: 1px solid #444;
-        }
-
-        td {
-            padding: 5px;
-            border: 1px solid #dee2e6;
         }
 
         input, select, textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid transparent;
-            box-sizing: border-box;
-            font-size: 14px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            background: var(--input-bg);
         }
 
-        input:focus, select:focus {
-            outline: none;
-            border: 1px solid var(--input-focus);
-            background-color: #fff;
-        }
+        input:focus { border-color: #3498db; outline: none; background: white; }
 
-        /* Clean Look: Inputs look like text until clicked */
-        input { background: #fdfdfd; border-radius: 2px; }
-        input:hover { border: 1px solid #ccc; }
+        /* --- TABLES INSIDE SECTIONS --- */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #34495e; color: white; padding: 10px; text-align: left; font-size: 0.9rem; }
+        td { border-bottom: 1px solid #eee; padding: 8px; }
+        
+        /* Table Inputs */
+        td input { width: 100%; box-sizing: border-box; border: 1px solid transparent; }
+        td input:hover { border: 1px solid #ddd; }
+        td input:focus { border: 1px solid #3498db; }
 
-        /* --- TAB LOGIC --- */
-        .tab-bar { display: flex; gap: 5px; }
-        .tab-btn {
-            padding: 12px 20px;
-            background: #ddd;
+        .btn-add-row {
+            margin-top: 10px;
+            background: #95a5a6;
+            color: white;
             border: none;
+            padding: 8px 15px;
             cursor: pointer;
             font-weight: bold;
+            border-radius: 3px;
         }
-        .tab-btn.active {
-            background: white;
-            border-top: 4px solid var(--slate-dark);
+
+        /* --- VISUAL FLOW CONNECTORS --- */
+        /* Adds a subtle line between stages to suggest flow */
+        .brew-stage::after {
+            content: '';
+            display: block;
+            height: 4px;
+            background: linear-gradient(to right, #2c3e50, #2c3e50);
+            width: 0%;
+            transition: width 0.3s;
         }
-        .tab-content { display: none; padding: 20px; border: 1px solid #ddd; border-top: none; }
-        .tab-content.active { display: block; }
+        .brew-stage:hover::after { width: 100%; }
+
+        /* --- HIDDEN ELEMENTS --- */
+        #follow-up-sheet { display: none !important; }
 
     </style>
 </head>
 <body>
 
+<div class="sticky-header">
+    <div class="batch-summary">
+        BATCH: <span id="header-batch-id">New Batch</span> | <span id="header-recipe">Select Recipe</span>
+    </div>
+    <button class="btn-save" onclick="saveBrewLog()">Save Log</button>
+</div>
+
 <div id="main-container">
 
-    <div id="main-screen">
-        
-        <header class="review-header">
-            <div>
-                <h1 style="margin:0;">BREWERY LOG PORTAL</h1>
-                <p style="margin:5px 0; color:#666;">Logged in as: [Brewer Name]</p>
-            </div>
-            <div style="text-align:right;">
-                <button class="btn-save" onclick="saveAllData()">Save All Changes</button>
-            </div>
-        </header>
-
-        <div class="tab-bar">
-            <button class="tab-btn active" onclick="showTab(event, 'tab-log')">Master Brew Log</button>
-            <button class="tab-btn" onclick="showTab(event, 'tab-grain')">Grain Bill</button>
-            <button class="tab-btn" onclick="showTab(event, 'tab-mash')">Mash Schedule</button>
-            <button class="tab-btn" onclick="showTab(event, 'tab-lauter')">Lauter Log</button>
-            <button class="tab-btn" onclick="showTab(event, 'tab-boil')">Boil Additions</button>
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('setup-content', this)">
+            <h3 class="stage-title">1. Batch Setup</h3>
+            <span class="toggle-indicator">-</span>
         </div>
-
-        <div id="tab-log" class="tab-content active">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Batch ID</th><th>Brew Date</th><th>Beer Name</th><th>Style</th><th>Recipe v.</th><th>Actual Vol</th><th>OG</th><th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><input type="text" placeholder="Batch ID"></td>
-                        <td><input type="date"></td>
-                        <td><input type="text" placeholder="Beer Name"></td>
-                        <td><input type="text" placeholder="Style"></td>
-                        <td><input type="text" placeholder="v1.0"></td>
-                        <td><input type="number" step="0.1"></td>
-                        <td><input type="number" step="0.001" placeholder="1.000"></td>
-                        <td>
-                            <select>
-                                <option>Planned</option>
-                                <option>Brewing</option>
-                                <option>Fermenting</option>
-                                <option>Packaged</option>
-                            </select>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <h4 style="margin-top:20px;">Notes</h4>
-            <textarea placeholder="General brew day notes..." style="height:100px;"></textarea>
+        <div id="setup-content" class="stage-content">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Batch ID</label>
+                    <input type="text" id="batchId" placeholder="e.g. B-2026-01">
+                </div>
+                <div class="input-group">
+                    <label>Brew Date</label>
+                    <input type="date" id="brewDate">
+                </div>
+                <div class="input-group">
+                    <label>Recipe / Beer Name</label>
+                    <input type="text" id="beerName" placeholder="Enter name">
+                </div>
+                <div class="input-group">
+                    <label>Brewer</label>
+                    <select id="brewerName">
+                        <option>Select Brewer...</option>
+                        <option>Head Brewer</option>
+                        <option>Assistant Brewer</option>
+                    </select>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div id="tab-grain" class="tab-content">
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('grain-content', this)">
+            <h3 class="stage-title">2. Grain Bill & Mill</h3>
+            <span class="toggle-indicator">-</span>
+        </div>
+        <div id="grain-content" class="stage-content">
             <table id="grain-table">
                 <thead>
                     <tr>
-                        <th>Malt Type</th><th>Supplier</th><th>Lot #</th><th>Weight (lb)</th><th>%</th><th>Notes</th>
+                        <th width="30%">Malt Type</th>
+                        <th width="20%">Lot #</th>
+                        <th width="15%">Weight (lb)</th>
+                        <th width="35%">Notes</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><input type="text"></td>
-                        <td><input type="text"></td>
-                        <td><input type="text"></td>
-                        <td><input type="number"></td>
-                        <td><input type="number"></td>
-                        <td><input type="text"></td>
+                        <td><input type="text" placeholder="Malt Name"></td>
+                        <td><input type="text" placeholder="Lot#"></td>
+                        <td><input type="number" placeholder="0"></td>
+                        <td><input type="text" placeholder="Milling notes..."></td>
                     </tr>
                 </tbody>
             </table>
-            <button class="btn-add-row" onclick="addRow('grain-table')">+ Add Ingredient</button>
+            <button class="btn-add-row" onclick="addRow('grain-table')">+ Add Malt</button>
         </div>
+    </div>
 
-        <div id="tab-mash" class="tab-content">
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('mash-content', this)">
+            <h3 class="stage-title">3. Mash Schedule</h3>
+            <span class="toggle-indicator">-</span>
+        </div>
+        <div id="mash-content" class="stage-content">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Mash pH</label>
+                    <input type="number" step="0.01" placeholder="5.2">
+                </div>
+                <div class="input-group">
+                    <label>Grist:Water Ratio</label>
+                    <input type="text" placeholder="1.25 qt/lb">
+                </div>
+            </div>
             <table id="mash-table">
                 <thead>
                     <tr>
-                        <th>Step Name</th><th>Target Temp</th><th>Actual Temp</th><th>Duration</th><th>pH</th><th>Complete</th>
+                        <th>Step</th>
+                        <th>Target Temp</th>
+                        <th>Actual Temp</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><input type="text" placeholder="e.g. Mash In"></td>
-                        <td><input type="number"></td>
-                        <td><input type="number"></td>
-                        <td><input type="number"></td>
-                        <td><input type="number" step="0.1"></td>
-                        <td><input type="checkbox" style="width:20px;"></td>
+                        <td><input type="text" value="Mash In"></td>
+                        <td><input type="number" placeholder="°F"></td>
+                        <td><input type="number" placeholder="°F"></td>
+                        <td><input type="time"></td>
+                        <td><input type="time"></td>
                     </tr>
                 </tbody>
             </table>
-            <button class="btn-add-row" onclick="addRow('mash-table')">+ Add Mash Step</button>
+            <button class="btn-add-row" onclick="addRow('mash-table')">+ Add Step</button>
         </div>
+    </div>
 
-        <div id="tab-lauter" class="tab-content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Start Time</th><th>End Time</th><th>1st Run Gravity</th><th>Pre-Boil Vol</th><th>Pre-Boil Gravity</th><th>Efficiency %</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><input type="time"></td>
-                        <td><input type="time"></td>
-                        <td><input type="number" step="0.001"></td>
-                        <td><input type="number"></td>
-                        <td><input type="number" step="0.001"></td>
-                        <td><input type="number"></td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('lauter-content', this)">
+            <h3 class="stage-title">4. Lauter & Sparge</h3>
+            <span class="toggle-indicator">+</span> </div>
+        <div id="lauter-content" class="stage-content collapsed"> <div class="form-grid">
+                <div class="input-group">
+                    <label>First Runnings Gravity</label>
+                    <input type="number" step="0.001">
+                </div>
+                <div class="input-group">
+                    <label>Sparge Temp (°F)</label>
+                    <input type="number">
+                </div>
+                <div class="input-group">
+                    <label>Pre-Boil Vol (BBL)</label>
+                    <input type="number" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Pre-Boil Gravity</label>
+                    <input type="number" step="0.001">
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div id="tab-boil" class="tab-content">
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('boil-content', this)">
+            <h3 class="stage-title">5. Boil Additions</h3>
+            <span class="toggle-indicator">+</span>
+        </div>
+        <div id="boil-content" class="stage-content collapsed">
             <table id="boil-table">
                 <thead>
                     <tr>
-                        <th>Time (min)</th><th>Type</th><th>Variety</th><th>Amount</th><th>Unit</th><th>IBU</th><th>Added</th>
+                        <th width="15%">Time (Min)</th>
+                        <th width="20%">Type</th>
+                        <th width="30%">Ingredient</th>
+                        <th width="15%">Amount</th>
+                        <th width="20%">Added?</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><input type="number"></td>
+                        <td><input type="number" placeholder="60"></td>
                         <td>
                             <select>
                                 <option>Hops</option>
-                                <option>Finings</option>
-                                <option>Other</option>
+                                <option>Nutrient</option>
+                                <option>Fining</option>
+                                <option>Sugar</option>
                             </select>
                         </td>
-                        <td><input type="text"></td>
-                        <td><input type="number"></td>
-                        <td><input type="text" value="lb"></td>
-                        <td><input type="number"></td>
-                        <td><input type="checkbox" style="width:20px;"></td>
+                        <td><input type="text" placeholder="Name"></td>
+                        <td><input type="text" placeholder="Qty"></td>
+                        <td style="text-align:center;"><input type="checkbox" style="width:20px; height:20px;"></td>
                     </tr>
                 </tbody>
             </table>
             <button class="btn-add-row" onclick="addRow('boil-table')">+ Add Addition</button>
         </div>
+    </div>
 
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('notes-content', this)">
+            <h3 class="stage-title">6. Knockout & Notes</h3>
+            <span class="toggle-indicator">+</span>
+        </div>
+        <div id="notes-content" class="stage-content collapsed">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Original Gravity (OG)</label>
+                    <input type="number" step="0.001">
+                </div>
+                <div class="input-group">
+                    <label>Knockout Volume (BBL)</label>
+                    <input type="number" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Assigned FV</label>
+                    <input type="text">
+                </div>
+                <div class="input-group">
+                    <label>Pitch Temp</label>
+                    <input type="number">
+                </div>
+            </div>
+            <div class="input-group" style="margin-top:15px;">
+                <label>Brew Day Notes</label>
+                <textarea style="width:100%; height:100px; padding:10px;" placeholder="Any issues with equipment, sensory notes, etc..."></textarea>
+            </div>
+        </div>
     </div>
 
     <div id="follow-up-sheet"></div>
@@ -273,27 +379,44 @@
 </div>
 
 <script>
-    function showTab(evt, tabId) {
-        let content = document.getElementsByClassName("tab-content");
-        for (let i = 0; i < content.length; i++) { content[i].classList.remove("active"); }
-        let buttons = document.getElementsByClassName("tab-btn");
-        for (let i = 0; i < buttons.length; i++) { buttons[i].classList.remove("active"); }
-        document.getElementById(tabId).classList.add("active");
-        evt.currentTarget.classList.add("active");
+    // Toggle Logic for Accordion
+    function toggleSection(contentId, headerElement) {
+        var content = document.getElementById(contentId);
+        var indicator = headerElement.querySelector('.toggle-indicator');
+        
+        if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            indicator.textContent = "-";
+        } else {
+            content.classList.add('collapsed');
+            indicator.textContent = "+";
+        }
     }
 
+    // Dynamic Rows
     function addRow(tableId) {
         let table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
         let newRow = table.rows[0].cloneNode(true);
-        // Clear inputs in the new row
         let inputs = newRow.getElementsByTagName('input');
-        for(let i=0; i<inputs.length; i++) { inputs[i].value = ""; inputs[i].checked = false; }
+        for(let i=0; i<inputs.length; i++) { 
+            inputs[i].value = ""; 
+            if(inputs[i].type === "checkbox") inputs[i].checked = false;
+        }
         table.appendChild(newRow);
     }
 
-    function saveAllData() {
-        alert("Preparing to sync with Google Sheets...");
-        // This is where we will link the Apps Script 
+    // Update Header Real-time
+    document.getElementById('batchId').addEventListener('input', function(e) {
+        document.getElementById('header-batch-id').textContent = e.target.value || "New Batch";
+    });
+    document.getElementById('beerName').addEventListener('input', function(e) {
+        document.getElementById('header-recipe').textContent = e.target.value || "Select Recipe";
+    });
+
+    function saveBrewLog() {
+        // Future Apps Script hook
+        console.log("Saving data...");
+        alert("Saving Batch Data...");
     }
 </script>
 
