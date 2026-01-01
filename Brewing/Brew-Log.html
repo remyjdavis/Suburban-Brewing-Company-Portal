@@ -442,7 +442,29 @@
         newRow.querySelectorAll('input').forEach(i => { i.value = ""; i.checked = false; });
         tbody.appendChild(newRow);
     }
+function getInventoryBridgeData(grainName, primaryLot) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const invSheet = ss.getSheetByName("invoices"); // Your inventory is here
+  const data = invSheet.getDataRange().getValues();
+  
+  let result = { available: 0, backupLot: null };
 
+  for (let i = 1; i < data.length; i++) {
+    let invGrain = data[i][0]; // Column A: Grain Name
+    let invLot = data[i][2];   // Column C: Lot #
+    let invBal = data[i][5];   // Column F: Current Balance
+    
+    if (invGrain === grainName) {
+      if (invLot === primaryLot) {
+        result.available = invBal;
+      } else if (invBal > 0 && !result.backupLot) {
+        // Found a different lot of the same grain with stock
+        result.backupLot = invLot;
+      }
+    }
+  }
+  return result;
+}
     // Add Dynamic Deep Cuts
     function addDeepCut(containerId) {
         const container = document.getElementById(containerId);
