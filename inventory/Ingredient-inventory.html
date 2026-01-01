@@ -220,35 +220,38 @@
     <span id="low-stock-list">Scanning inventory...</span>
 </div>
             <div class="inventory-grid">
-                <div class="section-card" onclick="setCategoryAndOpenModal('Malt')">
-                    <div class="section-header">Malt / Grains</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>View Current Grain Stock</span></li>
-                    </ul>
+            <div class="section-card" onclick="setCategoryAndOpenModal('Malt')">
+                <div class="section-header">Malt / Grains</div>
+                <div class="item-list" id="summary-Malt">
+                    <div class="item-row"><span>Loading stock...</span></div>
                 </div>
-                <div class="section-card" onclick="setCategoryAndOpenModal('Hops')">
-                    <div class="section-header">Hops</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>View Current Hop Stock</span></li>
-                    </ul>
+            </div>
+
+            <div class="section-card" onclick="setCategoryAndOpenModal('Hops')">
+                <div class="section-header">Hops</div>
+                <div class="item-list" id="summary-Hops">
+                    <div class="item-row"><span>Loading stock...</span></div>
                 </div>
-                <div class="section-card" onclick="setCategoryAndOpenModal('Packaging')">
-                    <div class="section-header">Packaging</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>View Packaging Stock</span></li>
-                    </ul>
+            </div>
+
+            <div class="section-card" onclick="setCategoryAndOpenModal('Packaging')">
+                <div class="section-header">Packaging</div>
+                <div class="item-list" id="summary-Packaging">
+                    <div class="item-row"><span>Loading stock...</span></div>
                 </div>
-                <div class="section-card" onclick="setCategoryAndOpenModal('Yeast')">
-                    <div class="section-header">Yeast</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>View Yeast Pitches</span></li>
-                    </ul>
+            </div>
+
+            <div class="section-card" onclick="setCategoryAndOpenModal('Yeast')">
+                <div class="section-header">Yeast</div>
+                <div class="item-list" id="summary-Yeast">
+                    <div class="item-row"><span>Loading stock...</span></div>
                 </div>
-                <div class="section-card" onclick="setCategoryAndOpenModal('Salts')">
-                    <div class="section-header">Salts & Water Prep</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>View Salt Inventory</span></li>
-                    </ul>
+            </div>
+
+            <div class="section-card" onclick="setCategoryAndOpenModal('Salts')">
+                <div class="section-header">Salts & Water Prep</div>
+                <div class="item-list" id="summary-Salts">
+                    <div class="item-row"><span>Loading stock...</span></div>
                 </div>
             </div>
         </div>
@@ -277,159 +280,91 @@
         </div>
     </div>
 
-    <script>
+<script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxA6EQy6w8k6VSevKLS9Dis0egMQ--k7mHKy9kBJ5u9XsDhk46jDun46w02rs1hcT5iLQ/exec';
-    const form = document.getElementById('inventoryForm');
+    
+    // --- ON PAGE LOAD ---
+    window.onload = () => {
+        updateDashboardAlerts();
+        loadAllSummaries();
+    };
 
-    // --- SEND DATA (POST) ---
-    form.addEventListener('submit', e => {
-        e.preventDefault();
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.innerText = "Syncing with Brewery Sheet...";
-        submitBtn.disabled = true;
-
-        fetch(scriptURL, { 
-            method: 'POST', 
-            body: new FormData(form),
-            mode: 'no-cors' 
-        })
-        .then(() => {
-            alert('Success: Inventory Record Updated!');
-            form.reset();
-            document.getElementById('coa-fields-container').innerHTML = "";
-        })
-        .catch(error => {
-            alert('Connection Error. Check console.');
-            console.error('Error!', error.message);
-        })
-        .finally(() => {
-            submitBtn.innerText = "Update Inventory Levels";
-            submitBtn.disabled = false;
+    function loadAllSummaries() {
+        const cats = ["Malt", "Hops", "Packaging", "Yeast", "Salts"];
+        cats.forEach(cat => {
+            fetch(`${scriptURL}?category=${cat}`)
+                .then(res => res.json())
+                .then(items => {
+                    const container = document.getElementById(`summary-${cat}`);
+                    if (!items || items.length === 0) {
+                        container.innerHTML = '<div class="item-row"><span>No stock found</span></div>';
+                        return;
+                    }
+                    // Show top 2 items as a preview
+                    container.innerHTML = items.slice(0, 2).map(item => `
+                        <div class="item-row">
+                            <span>${item.name}</span>
+                            <span class="qty ${item.isLow ? 'qty-low' : ''}">${item.qty}</span>
+                        </div>
+                    `).join('') + (items.length > 2 ? '<div class="item-row" style="font-size:10px; color:#aaa;">+ more...</div>' : '');
+                });
         });
-    });
-function updateDashboardAlerts() {
-    // This calls the special backend function we discussed
-    fetch(`${scriptURL}?getLowStock=true`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.length > 0) {
+    }
+
+    function updateDashboardAlerts() {
+        fetch(`${scriptURL}?getLowStock=true`)
+            .then(res => res.json())
+            .then(data => {
                 const bar = document.getElementById('low-stock-alert-bar');
-                const list = document.getElementById('low-stock-list');
-                bar.style.display = 'block';
-                
-                // Creates a list like: Malt (3), Hops (1)
-                list.innerHTML = data.map(group => `${group.category} (${group.items.length})`).join(', ');
-            }
-        });
-}
-
-// Run this on page load
-window.onload = updateDashboardAlerts;
-    // --- FETCH DATA (GET) ---
-    function fetchRealData(cat) {
-        const tbody = document.getElementById('inventory-details-rows');
-        tbody.innerHTML = "<tr><td colspan='5'>Loading from Google Sheets...</td></tr>";
-
-        // We append the category as a URL parameter so the Backend knows what to send
-        fetch(`${scriptURL}?category=${cat}`)
-            .then(response => response.json())
-            .then(items => {
-                renderInventoryRows(items);
-            })
-            .catch(err => {
-                console.error("Fetch Error:", err);
-                tbody.innerHTML = "<tr><td colspan='5' style='color:red;'>Error connecting to Google. Make sure you deployed as 'Anyone'.</td></tr>";
+                if (data && data.length > 0) {
+                    const list = document.getElementById('low-stock-list');
+                    bar.style.display = 'block';
+                    list.innerHTML = data.map(group => `${group.category} (${group.items.length})`).join(', ');
+                } else {
+                    bar.style.display = 'none';
+                }
             });
     }
 
-   function renderInventoryRows(items) {
-    const tbody = document.getElementById('inventory-details-rows');
-    if (!items || items.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='5'>No stock found.</td></tr>";
-        return;
-    }
-
-    tbody.innerHTML = items.map((item) => {
-        // Build "Tags" for each spec found in the spreadsheet
-        const specsHtml = Object.entries(item.specs || {})
-            .map(([key, val]) => `
-                <span style="display:inline-block; background:#ebf5fb; border:1px solid #d6eaf8; 
-                             padding:2px 6px; margin:2px; border-radius:4px; font-size:11px;">
-                    <strong style="color:#2980b9">${key}:</strong> ${val}
-                </span>
-            `).join('');
-
-        // Determine if stock is low for styling
-        const lowStockClass = item.isLow ? 'qty-low' : '';
-        const warningLabel = item.isLow ? '<br><small style="color:#e74c3c; font-weight:bold;">⚠️ REORDER</small>' : '';
-
-        return `
-            <tr>
-                <td>
-                    <div style="font-weight:bold; color:#2c3e50;">${item.name}</div>
-                    <div style="font-size:11px; color:#7f8c8d;">${item.source || ''}</div>
-                </td>
-                <td style="font-family:monospace; font-size:12px;">${item.lot}</td>
-                <td class="qty ${lowStockClass}">
-                    ${item.qty} ${warningLabel}
-                </td>
-                <td>
-                    <div style="display:flex; flex-wrap:wrap; max-width:350px;">
-                        ${specsHtml || '<span style="color:#ccc; font-style:italic;">No extra specs</span>'}
-                    </div>
-                </td>
-                <td>
-                    <button class="btn-add-inline" onclick="useItemForEntry('${item.name}', '${item.lot}')">Select</button>
-                </td>
-            </tr>
-        `; // This backtick and semicolon are critical!
-    }).join('');
-}
-        function getLowStockSummary() {
-  const categories = ["Malt", "Hops", "Yeast", "Salts", "Packaging"];
-  let lowItems = [];
-  
-  categories.forEach(cat => {
-    const items = getInventoryByCategory(cat);
-    const filtered = items.filter(i => i.isLow);
-    if(filtered.length > 0) {
-      lowItems.push({ category: cat, items: filtered });
-    }
-  });
-  
-  return lowItems; // This will populate your Dashboard "To Order" card
-}
-
-    // --- UTILITIES (QR & Modals) ---
-    let html5QrCode;
-
-    function toggleScanner() {
-        const readerDiv = document.getElementById('reader');
-        if (readerDiv.style.display === 'none') {
-            readerDiv.style.display = 'block';
-            startScanner();
-        } else {
-            readerDiv.style.display = 'none';
-            if(html5QrCode) html5QrCode.stop();
-        }
-    }
-
-    function startScanner() {
-        html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-        html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-            document.getElementById('inv-lot').value = decodedText;
-            toggleScanner();
-        });
-    }
-
+    // --- MODAL & FORM LOGIC ---
     function setCategoryAndOpenModal(cat) {
         document.getElementById('inv-cat').value = cat;
         renderDynamicFields();
-        const modal = document.getElementById('inventory-modal');
         document.getElementById('modal-title').innerText = cat + " Stock Details";
-        modal.style.display = "block";
+        document.getElementById('inventory-modal').style.display = "block";
         fetchRealData(cat); 
+    }
+
+    function fetchRealData(cat) {
+        const tbody = document.getElementById('inventory-details-rows');
+        tbody.innerHTML = "<tr><td colspan='5'>Loading from Google Sheets...</td></tr>";
+        fetch(`${scriptURL}?category=${cat}`)
+            .then(response => response.json())
+            .then(items => renderInventoryRows(items))
+            .catch(err => {
+                tbody.innerHTML = "<tr><td colspan='5' style='color:red;'>Connection Error</td></tr>";
+            });
+    }
+
+    function renderInventoryRows(items) {
+        const tbody = document.getElementById('inventory-details-rows');
+        if (!items || items.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='5'>No stock found.</td></tr>";
+            return;
+        }
+        tbody.innerHTML = items.map(item => {
+            const specsHtml = Object.entries(item.specs || {}).map(([k, v]) => 
+                `<span style="display:inline-block; background:#f1f5f9; padding:2px 6px; margin:2px; border-radius:4px; font-size:11px;"><strong>${k}:</strong> ${v}</span>`
+            ).join('');
+            return `
+                <tr>
+                    <td><strong>${item.name}</strong></td>
+                    <td style="font-family:monospace;">${item.lot}</td>
+                    <td class="qty ${item.isLow ? 'qty-low' : ''}">${item.qty}</td>
+                    <td>${specsHtml}</td>
+                    <td><button class="btn-add-inline" onclick="useItemForEntry('${item.name}', '${item.lot}')">Select</button></td>
+                </tr>`;
+        }).join('');
     }
 
     function useItemForEntry(name, lot) {
@@ -445,22 +380,46 @@ window.onload = updateDashboardAlerts;
         const cat = document.getElementById('inv-cat').value;
         const container = document.getElementById('coa-fields-container');
         container.innerHTML = ""; 
-        
         if (cat === "Hops") {
-            container.innerHTML = `
-                <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
-                <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
-                <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
+            container.innerHTML = `<div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div><div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div><div class="form-group"><label>Grower</label><input type="text" name="source"></div>`;
         } else if (cat === "Malt") {
-            container.innerHTML = `
-                <div class="form-group"><label>Extract %</label><input type="number" step="0.1" name="extract"></div>
-                <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
-                <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
-                <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
+            container.innerHTML = `<div class="form-group"><label>Extract %</label><input type="number" step="0.1" name="extract"></div><div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div><div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
         } else if (cat === "Yeast") {
-            container.innerHTML = `
-                <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
-                <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
+            container.innerHTML = `<div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div><div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
+        }
+    }
+
+    // --- FORM SUBMIT (POST) ---
+    document.getElementById('inventoryForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        btn.innerText = "Syncing...";
+        btn.disabled = true;
+        fetch(scriptURL, { method: 'POST', body: new FormData(e.target), mode: 'no-cors' })
+        .then(() => {
+            alert('Updated!');
+            e.target.reset();
+            loadAllSummaries();
+        }).finally(() => {
+            btn.innerText = "Update Inventory Levels";
+            btn.disabled = false;
+        });
+    });
+
+    // QR SCANNER LOGIC
+    let html5QrCode;
+    function toggleScanner() {
+        const readerDiv = document.getElementById('reader');
+        if (readerDiv.style.display === 'none') {
+            readerDiv.style.display = 'block';
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                document.getElementById('inv-lot').value = txt;
+                toggleScanner();
+            });
+        } else {
+            readerDiv.style.display = 'none';
+            if(html5QrCode) html5QrCode.stop();
         }
     }
 </script>
