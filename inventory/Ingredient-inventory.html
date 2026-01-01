@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suburban Brewing - Ingredient Inventory</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root {
+            --primary-dark: #2c3e50;
+            --accent-blue: #3498db;
+            --accent-green: #27ae60;
+            --bg-gray: #f4f7f6;
+            --sidebar-width: 240px;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background-color: var(--bg-gray); height: 100vh; }
+
+        /* --- SIDEBAR --- */
+        #sidebar { width: var(--sidebar-width); background: var(--primary-dark); color: white; position: fixed; height: 100%; }
+        .sidebar-header { padding: 25px; border-bottom: 1px solid #34495e; text-align: center; font-weight: bold; }
+        .sidebar-menu { list-style: none; padding: 0; }
+        .sidebar-menu li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #34495e; color: #bdc3c7; }
+        .active-nav { background: var(--accent-blue) !important; color: white !important; }
+
+        /* --- MAIN CONTENT --- */
+        #main-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); overflow-y: auto; padding-bottom: 50px; }
+        .header-bar { background: white; padding: 15px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 20px 30px; }
+
+        /* --- INVENTORY SECTIONS --- */
+        .inventory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+        .section-card { background: white; border-radius: 8px; border: 1px solid #ddd; overflow: hidden; }
+        .section-header { background: #eee; padding: 12px 15px; font-weight: bold; color: var(--primary-dark); border-bottom: 1px solid #ddd; }
+        .item-list { padding: 0; margin: 0; list-style: none; }
+        .item-row { padding: 10px 15px; border-bottom: 1px dotted #eee; display: flex; justify-content: space-between; }
+        .qty { font-weight: bold; color: var(--accent-blue); }
+
+        /* --- ADD NEW / SCANNER --- */
+        .add-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 2px solid var(--accent-blue); }
+        #reader { width: 100%; max-width: 400px; margin: 10px auto; border-radius: 8px; overflow: hidden; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .btn-scan { background: var(--primary-dark); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .btn-save { background: var(--accent-green); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar">
+        <div class="sidebar-header">SUBURBAN BREWING</div>
+        <ul class="sidebar-menu">
+            <li>Brew Log</li>
+            <li>Cellar Management</li>
+            <li class="active-nav">Ingredient Inventory</li>
+            <li>Packaging Log</li>
+        </ul>
+    </nav>
+
+    <main id="main-content">
+        <div class="header-bar">
+            <h2>Ingredient & Supply Inventory</h2>
+            <button class="btn-scan" onclick="toggleScanner()">Toggle QR Scanner</button>
+        </div>
+
+        <div class="container">
+            
+            <div class="add-card">
+                <h3 style="margin-top:0;">Add New Stock</h3>
+                <div id="reader" style="display:none;"></div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="inv-cat">
+                            <option>Malt</option>
+                            <option>Hops</option>
+                            <option>Yeast</option>
+                            <option>Salts/Water</option>
+                            <option>Packaging (Cans/Lids)</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Item Name (or Scanned Code)</label>
+                        <input type="text" id="inv-name" placeholder="Citra, 2-Row, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label>Lot Number</label>
+                        <input type="text" id="inv-lot" placeholder="LOT-12345">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity Add</label>
+                        <input type="number" id="inv-qty" placeholder="Units">
+                    </div>
+                </div>
+                <button class="btn-save" onclick="saveInventory()">Update Inventory Levels</button>
+            </div>
+
+            <div class="inventory-grid">
+                <div class="section-card">
+                    <div class="section-header">Malt / Grains</div>
+                    <ul class="item-list">
+                        <li class="item-row"><span>Pilsner (Weyermann)</span> <span class="qty">1,250 lbs</span></li>
+                        <li class="item-row"><span>White Wheat</span> <span class="qty">450 lbs</span></li>
+                    </ul>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header">Hops</div>
+                    <ul class="item-list">
+                        <li class="item-row"><span>Citra (T-90)</span> <span class="qty">88 lbs</span></li>
+                        <li class="item-row"><span>Mosaic (Cryo)</span> <span class="qty">22 lbs</span></li>
+                    </ul>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header">Packaging (Cans & Lids)</div>
+                    <ul class="item-list">
+                        <li class="item-row"><span>16oz Brite Cans</span> <span class="qty">4,500 units</span></li>
+                        <li class="item-row"><span>Standard Lids (SOT)</span> <span class="qty">12,000 units</span></li>
+                    </ul>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header">Yeast</div>
+                    <ul class="item-list">
+                        <li class="item-row"><span>US-05 (Dry)</span> <span class="qty">15 bricks</span></li>
+                        <li class="item-row"><span>London III (Liquid)</span> <span class="qty">2 pitches</span></li>
+                    </ul>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header">Salts & Water Prep</div>
+                    <ul class="item-list">
+                        <li class="item-row"><span>Calcium Chloride</span> <span class="qty">10 kg</span></li>
+                        <li class="item-row"><span>Gypsum</span> <span class="qty">8 kg</span></li>
+                    </ul>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header">Other Ingredients</div>
+                    <ul class="item-list">
+                        <li class="item-row"><span>Whirlfloc G</span> <span class="qty">5 lbs</span></li>
+                        <li class="item-row"><span>Dextrose</span> <span class="qty">50 lbs</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let html5QrCode;
+
+        function toggleScanner() {
+            const readerDiv = document.getElementById('reader');
+            if (readerDiv.style.display === 'none') {
+                readerDiv.style.display = 'block';
+                startScanner();
+            } else {
+                readerDiv.style.display = 'none';
+                if(html5QrCode) html5QrCode.stop();
+            }
+        }
+
+        function startScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+                // When a QR is scanned, put it in the Name field
+                document.getElementById('inv-name').value = decodedText;
+                // Auto-hide scanner after success
+                toggleScanner();
+            });
+        }
+
+        function saveInventory() {
+            const data = {
+                category: document.getElementById('inv-cat').value,
+                name: document.getElementById('inv-name').value,
+                lot: document.getElementById('inv-lot').value,
+                qty: document.getElementById('inv-qty').value
+            };
+            alert("Inventory updated: " + data.name + " (" + data.qty + " added)");
+        }
+    </script>
+</body>
+</html>
