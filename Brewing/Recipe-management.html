@@ -148,18 +148,24 @@
 </div>
 
     <script>
-        function openEditor(mode, name='', style='', og='', fg='') {
-            const editor = document.getElementById('master-editor');
-            document.getElementById('editor-heading').innerText = mode === 'NEW' ? 'Create New Recipe' : 'Editing: ' + name;
-            document.getElementById('edit-name').value = name;
-            document.getElementById('edit-style').value = style;
-            document.getElementById('edit-og').value = og;
-            document.getElementById('edit-fg').value = fg;
-            editor.style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        function openEditor(mode, name='') {
+    document.getElementById('recipe-list-view').style.display = 'none'; // Hide cards
+    document.getElementById('master-editor').style.display = 'block'; // Show editor
+    
+    if(mode === 'NEW') {
+        document.getElementById('editor-heading').innerText = "Create New Recipe";
+        // Clear all inputs...
+    } else {
+        document.getElementById('editor-heading').innerText = "Editing: " + name;
+        // Fetch data from Sheets to populate...
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-        function closeEditor() { document.getElementById('master-editor').style.display = 'none'; }
+function closeEditor() {
+    document.getElementById('master-editor').style.display = 'none'; // Hide editor
+    document.getElementById('recipe-list-view').style.display = 'block'; // Show cards
+}
 
         function addLine(containerId) {
             const container = document.getElementById(containerId);
