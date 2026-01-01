@@ -191,22 +191,21 @@
 </head>
 <body>
 
-<div class="sticky-header">
+<div class="sticky-header" style="position: sticky; top: 0; background: #2c3e50; color: white; padding: 15px; z-index: 1000; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #27ae60;">
     <div class="batch-summary">
-        BATCH: <span id="header-batch-id">---</span> | <span id="header-recipe">New Entry</span>
-        <div id="brew-header-status" style="position: sticky; top: 0; background: #2c3e50; color: white; padding: 15px; z-index: 1000; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--active-green);">
-    <div>
-        <span id="header-batch-id" style="font-weight: bold; font-size: 1.2em;">BATCH: ---</span> | 
+        <span style="font-weight: bold; font-size: 1.2em;">BATCH: </span>
+        <span id="header-batch-id" style="font-weight: bold; font-size: 1.2em;">---</span> | 
         <span id="header-beer-name">New Entry</span>
     </div>
-    <div id="active-stage-display" style="background: var(--active-green); padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+    
+    <div id="active-stage-display" style="background: #27ae60; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">
         STAGE: 1. BATCH SETUP
     </div>
-    <div id="boil-timer-display" style="font-family: monospace; font-size: 1.5em; color: #f1c40f; display: none;">
-        NEXT ADDITION: --:--
+
+    <div id="boil-timer-display" style="font-family: 'Courier New', monospace; font-size: 1.2em; color: #f1c40f; display: none; border-left: 2px solid #555; padding-left: 15px;">
+        NEXT: --:--
     </div>
 </div>
-    </div>
 </div>
 
 <div id="main-container">
@@ -765,13 +764,13 @@ function getInventoryBridgeData(grainName, primaryLot) {
     
     // Optional: Redirect or reset the form for the next brew
 }
-    function saveAndAdvance(currentSectionId, nextSectionId) {
+   function saveAndAdvance(currentSectionId, nextSectionId) {
     const currentSection = document.getElementById(currentSectionId);
-    
-    // 1. Lock all inputs in the current section
+    if (!currentSection) return;
+
+    // 1. LOCK ALL INPUTS IN CURRENT SECTION
     const inputs = currentSection.querySelectorAll('input, select, textarea, button');
     inputs.forEach(el => {
-        // We keep the Save button itself enabled or hide it
         if (!el.classList.contains('btn-save-section')) {
             el.readOnly = true;
             el.disabled = true; // For checkboxes and selects
@@ -784,25 +783,47 @@ function getInventoryBridgeData(grainName, primaryLot) {
         }
     });
 
-    // 2. Visual Cue: Change header color to show completion
+    // 2. VISUAL CUE: Update section header
     const header = currentSection.previousElementSibling;
-    header.style.borderLeft = "5px solid #2e7d32";
-    header.querySelector('.stage-title').innerHTML += " <span style='color:#2e7d32;'>✓</span>";
+    if (header) {
+        header.style.borderLeft = "5px solid #2e7d32";
+        const title = header.querySelector('.stage-title');
+        if (!title.innerHTML.includes('✓')) {
+            title.innerHTML += " <span style='color:#2e7d32;'>✓</span>";
+        }
+        header.querySelector('.toggle-indicator').innerText = "+";
+    }
 
-    // 3. Close current section
+    // 3. CLOSE CURRENT SECTION
     currentSection.classList.add('collapsed');
-    header.querySelector('.toggle-indicator').innerText = "+";
 
-    // 4. Open the next section
+    // 4. OPEN NEXT SECTION & UPDATE STICKY HEADER
     if (nextSectionId) {
         const nextSection = document.getElementById(nextSectionId);
         const nextHeader = nextSection.previousElementSibling;
         
+        // Open next section
         nextSection.classList.remove('collapsed');
         nextHeader.querySelector('.toggle-indicator').innerText = "-";
         
-        // Scroll the next section into view smoothly
+        // Update the Sticky Header Stage Display
+        const nextTitle = nextHeader.querySelector('.stage-title').innerText;
+        const stageDisplay = document.getElementById('active-stage-display');
+        if (stageDisplay) {
+            stageDisplay.innerText = `STAGE: ${nextTitle.toUpperCase()}`;
+        }
+        
+        // Scroll smoothly to next section
         nextHeader.scrollIntoView({ behavior: 'smooth' });
+
+        // 5. BOIL TIMER TRIGGER
+        // If we are moving into the Boil section, trigger the countdown
+        if (nextSectionId === 'boil-content') {
+            const confirmBoil = confirm("Start Boil Timer?");
+            if (confirmBoil) {
+                startBoilTimer(); // This function should be defined in your script
+            }
+        }
     }
 }
 </script>
