@@ -52,7 +52,7 @@
 <body>
 
     <aside class="sidebar">
-        <div class="sidebar-header">SUBURBAN BREWING</div>
+        <div class="sidebar-header">SUBURBAN</div>
         
         <div class="nav-section-title">Main Menu</div> 
         <a href="../index.html" class="nav-link"><span>Command Center</span></a>
@@ -86,83 +86,36 @@
         <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
     </aside>
 
-    <main id="main-content">
-        <div class="header-bar">
-            <h2>Recipe Management</h2>
-            <button class="btn-add-line" style="background:var(--accent-blue); color:white; padding: 10px 20px;" onclick="openEditor('NEW')">+ Create New Recipe</button>
+    <div class="main-content">
+        <div class="header">
+            <span style="font-weight: 600; color: #6b7280;">Brewing Portal</span>
+            <div id="dateDisplay" style="font-size: 0.9rem; color: #9ca3af;"></div>
         </div>
 
         <div class="container">
-            
-            <div id="master-editor" class="editor-card" style="display:none;">
-                <div style="display:flex; justify-content: space-between; align-items: center;">
-                    <h3 id="editor-heading" style="margin:0;">New Recipe</h3>
-                    <button onclick="closeEditor()" style="background:none; border:none; cursor:pointer; color:red;">[ Cancel ]</button>
-                </div>
-                
-                <div class="form-row" style="margin-top:20px;">
-                    <div><label>Beer Name</label><input type="text" id="edit-name"></div>
-                    <div><label>Style</label><input type="text" id="edit-style"></div>
-                    <div><label>OG</label><input type="number" id="edit-og" step="0.001"></div>
-                    <div><label>FG</label><input type="number" id="edit-fg" step="0.001"></div>
-                </div>
-
-                <div class="recipe-section">
-                    <div class="section-title">Water & Salts</div>
-                    <div class="form-row">
-                        <input type="number" id="edit-strike" placeholder="Strike (Gal)">
-                        <input type="number" id="edit-sparge" placeholder="Sparge (Gal)">
-                        <input type="number" id="edit-ph" placeholder="Target pH">
-                    </div>
-                </div>
-
-                <div class="recipe-section">
-                    <div class="section-title">Grain Bill</div>
-                    <div id="edit-grain-list">
-                        <div class="ingredient-entry"><input type="text" placeholder="Malt"><input type="number" placeholder="Amt"><select><option>Lbs</option></select></div>
-                    </div>
-                    <button class="btn-add-line" onclick="addLine('edit-grain-list')">+ Add Malt</button>
-                </div>
-
-                <div class="recipe-section">
-                    <div class="section-title">Boil & Kettle</div>
-                    <div id="edit-boil-list">
-                        <div class="ingredient-entry"><input type="text" placeholder="Addition"><input type="number" placeholder="Amt"><input type="text" placeholder="Time"></div>
-                    </div>
-                    <button class="btn-add-line" onclick="addLine('edit-boil-list')">+ Add Addition</button>
-                </div>
-
-                <div class="recipe-section">
-                    <div class="section-title">Yeast</div>
-                    <div class="form-row">
-                        <input type="text" id="edit-yeast" placeholder="Strain Name">
-                        <input type="text" id="edit-temp" placeholder="Temp (°F)">
-                    </div>
-                </div>
-
-                <button class="btn-save" onclick="saveRecipe()">Save Recipe Changes</button>
+            <div class="editor-card">
+                <h2>Master Recipe Editor</h2>
+                <button class="btn-save">Save Master Recipe</button>
             </div>
 
             <div class="recipe-grid">
                 <div class="recipe-card">
                     <div class="card-header">
-                        <h3 style="margin:0;">West Coast IPA</h3>
-                        <span class="style-tag">Flagship</span>
+                        <strong style="font-size: 1.1rem;">Suburban IPA</strong>
+                        <span class="style-tag">West Coast IPA</span>
                     </div>
                     <div class="spec-bar">
-                        <div class="spec-item"><span>1.062</span><label>OG</label></div>
-                        <div class="spec-item"><span>1.012</span><label>FG</label></div>
-                        <div class="spec-item"><span>6.5%</span><label>ABV</label></div>
-                        <div class="spec-item"><span>65</span><label>IBU</label></div>
+                        <div class="spec-item"><label>ABV</label><span>6.5%</span></div>
+                        <div class="spec-item"><label>IBU</label><span>65</span></div>
+                        <div class="spec-item"><label>OG</label><span>1.062</span></div>
+                        <div class="spec-item"><label>Batch</label><span>10 BBL</span></div>
                     </div>
-                    <p style="font-size:0.8rem; color:#666;"><strong>Water:</strong> 350 Gal Strike | 5.35 pH</p>
-                    <button class="btn-edit-card" onclick="openEditor('EDIT', 'West Coast IPA', 'Flagship', 1.062, 1.012)">Edit Recipe Details</button>
+                    <button class="btn-save" style="padding: 10px; font-size: 0.9rem; margin-top: 10px; background: var(--accent-orange);">Edit Recipe</button>
                 </div>
             </div>
-
         </div>
+    </div>
     </main>
-
     <script>
         function openEditor(mode, name='', style='', og='', fg='') {
             const editor = document.getElementById('master-editor');
