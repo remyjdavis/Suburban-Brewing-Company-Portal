@@ -672,9 +672,32 @@ function getInventoryBridgeData(grainName, primaryLot) {
     document.getElementById('batchId').oninput = (e) => document.getElementById('header-batch-id').textContent = e.target.value || "---";
     document.getElementById('beerName').oninput = (e) => document.getElementById('header-recipe').textContent = e.target.value || "New Entry";
 /* --- SAVE BREW LOG FUNCTION --- */
-    function saveBrewLog() {
-        alert("Data compiled. Ready for Apps Script injection.");
+  function completeBrewLog() {
+    // 1. Gather the "Summary" data for the Master Log
+    const brewData = {
+        batchId: document.getElementById('batchId').value,
+        beerName: document.getElementById('beerName').value,
+        vessel: document.getElementById('vessel-select').value,
+        og: document.querySelector('input[placeholder="e.g. 1.054"]').value,
+        volume: document.getElementById('ko-volume').value,
+        yeast: document.getElementById('yeast-strain').value
+    };
+
+    // Validation: Ensure a tank was selected
+    if (!brewData.vessel) {
+        alert("Please select a Fermenter/Vessel before completing the brew.");
+        return;
     }
+
+    // 2. Lock the section visually
+    saveAndAdvance('ko-yeast-content', null);
+
+    // 3. Final notification or API call to your Spreadsheet/Database
+    console.log("Syncing to Master Log:", brewData);
+    alert(`Brew Complete! ${brewData.beerName} (${brewData.batchId}) has been assigned to ${brewData.vessel}.`);
+    
+    // Optional: Redirect or reset the form for the next brew
+}
     function saveAndAdvance(currentSectionId, nextSectionId) {
     const currentSection = document.getElementById(currentSectionId);
     
