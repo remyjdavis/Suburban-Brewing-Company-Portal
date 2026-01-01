@@ -1,221 +1,299 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Suburban Brewing Co. | Command Center</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8" />
+  <title>Suburban Brewing Co. | Command Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<style>
-:root {
-  --bg:#f4f6f8;
-  --sidebar:#1f2937;
-  --accent:#2563eb;
-  --text:#1f2937;
-  --card:#fff;
-  --fermenting:#fbbf24;
-  --ready:#10b981;
-}
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --sidebar: #1f2937;
+      --accent: #2563eb;
+      --text: #1f2937;
+      --card-bg: #ffffff;
 
-* { box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-body { margin:0; background:var(--bg); color:var(--text); display:flex; }
+      --fermenting: #fbbf24;
+      --crashing: #3b82f6;
+      --ready: #10b981;
+      --carbonating: #f97316;
+    }
 
-/* ================= SIDEBAR ================= */
-.sidebar {
-  width:240px;
-  background:var(--sidebar);
-  color:#fff;
-  padding:20px 0;
-  position:fixed;
-  height:100vh;
-  z-index:1000;
-}
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-.sidebar h2 { margin:0 20px 20px; font-size:18px; }
-.nav-title { font-size:11px; opacity:.6; margin:18px 20px 6px; }
-.nav-link {
-  display:block;
-  padding:10px 24px;
-  color:#d1d5db;
-  text-decoration:none;
-}
-.nav-link:hover,.nav-link.active {
-  background:#374151;
-  color:#fff;
-  border-left:4px solid var(--accent);
-}
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-/* ================= MAIN ================= */
-.main {
-  margin-left:240px;
-  padding:24px;
-  flex:1;
-}
+    /* ================= SIDEBAR ================= */
+    .sidebar {
+      width: 240px;
+      background: var(--sidebar);
+      color: #fff;
+      padding: 20px 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+    }
 
-.header-bar {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
+    .sidebar h2 {
+      margin: 0 20px 20px;
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
 
-/* ================= CARDS ================= */
-.section { margin-top:30px; }
-.section h3 {
-  border-bottom:2px solid #e5e7eb;
-  padding-bottom:6px;
-}
+    .nav-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      opacity: 0.5;
+      margin: 20px 20px 8px;
+      font-weight: 700;
+    }
 
-.grid-4 {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:20px;
-}
+    .nav-link {
+      display: block;
+      padding: 10px 24px;
+      color: #d1d5db;
+      text-decoration: none;
+      font-size: 14px;
+    }
 
-.card {
-  background:var(--card);
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 2px 4px rgba(0,0,0,.05);
-}
+    .nav-link:hover,
+    .nav-link.active {
+      background: #374151;
+      color: #fff;
+    }
 
-.card .val {
-  font-size:28px;
-  font-weight:800;
-  color:var(--accent);
-}
+    .nav-link.active {
+      border-left: 4px solid var(--accent);
+    }
 
-/* ================= TANKS ================= */
-.tanks {
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:16px;
-}
+    /* ================= MAIN ================= */
+    .main {
+      flex: 1;
+      margin-left: 240px;
+      padding: 30px;
+      width: 100%;
+    }
 
-.tank {
-  background:#fff;
-  border-radius:12px;
-  padding:14px;
-  text-align:center;
-  border:1px solid #e5e7eb;
-  cursor:pointer;
-}
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
 
-.vessel {
-  width:60px;
-  height:100px;
-  background:#f3f4f6;
-  margin:10px auto;
-  border-radius:6px 6px 22px 22px;
-  overflow:hidden;
-  border:2px solid #d1d5db;
-}
+    .section-heading {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 30px 0 15px;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 8px;
+      color: #374151;
+    }
 
-.fill {
-  width:100%;
-  position:absolute;
-  bottom:0;
-}
+    /* ================= TIER 1 ================= */
+    .tier-1 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
 
-.details {
-  display:none;
-  font-size:11px;
-  color:#6b7280;
-}
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
 
-.tank.expanded .details { display:block; }
+    .card h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin: 0;
+    }
 
-/* ================= MOBILE ================= */
-.mobile-btn {
-  display:none;
-  position:fixed;
-  top:14px;
-  left:14px;
-  background:var(--accent);
-  color:#fff;
-  border:none;
-  font-size:20px;
-  padding:8px 12px;
-  border-radius:6px;
-  z-index:1200;
-}
+    .card .val {
+      font-size: 28px;
+      font-weight: 800;
+      margin-top: 10px;
+      color: var(--accent);
+    }
 
-@media (max-width:768px) {
-  .mobile-btn { display:block; }
-  .sidebar { transform:translateX(-100%); transition:.25s; }
-  .sidebar.open { transform:translateX(0); }
-  .main { margin-left:0; padding-top:60px; }
+    /* ================= TIER 2 (FIXED) ================= */
+    .tier-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px;
 
-  .tanks {
-    display:flex;
-    overflow-x:auto;
-    scroll-snap-type:x mandatory;
-  }
-  .tank {
-    min-width:160px;
-    scroll-snap-align:start;
-  }
-}
-</style>
+      /* CRITICAL SAFARI FIX */
+      position: relative;
+      overflow: hidden;
+      max-width: 100%;
+    }
+
+    .tank-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
+      max-width: 200px;
+      margin: 0 auto;
+    }
+
+    .tank-vessel {
+      width: 65px;
+      height: 110px;
+      background: #f3f4f6;
+      margin: 12px auto;
+      border-radius: 5px 5px 25px 25px;
+      position: relative;
+      overflow: hidden;
+      border: 2px solid #d1d5db;
+    }
+
+    .tank-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+
+    /* ================= TIER 3 ================= */
+    .tier-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .foh-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 5px solid #10b981;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* ================= MOBILE ================= */
+    @media (max-width: 1024px) {
+      .sidebar {
+        width: 70px;
+      }
+
+      .sidebar h2,
+      .nav-section-title,
+      .nav-link span {
+        display: none;
+      }
+
+      .main {
+        margin-left: 70px;
+      }
+
+      .tier-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .tier-2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .tier-1 {
+        grid-template-columns: 1fr;
+      }
+
+      .header-bar h1 {
+        font-size: 20px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<button class="mobile-btn" id="menuBtn">☰</button>
-
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar">
   <h2>SUBURBAN</h2>
-  <div class="nav-title">Operations</div>
+
+  <div class="nav-section-title">Operations</div>
   <a class="nav-link active">Command Center</a>
-  <a class="nav-link" href="sales/new invoices.html">New Invoice</a>
-  <a class="nav-link" href="sales/deliveries.html">Deliveries</a>
+  <a class="nav-link">New Invoice</a>
+  <a class="nav-link">Deliveries</a>
 </aside>
 
 <main class="main">
   <div class="header-bar">
     <h1>Brewery Command Center</h1>
-    <div id="date"></div>
+    <div id="current-date"></div>
   </div>
 
-  <section class="section">
-    <h3>Operational Overview</h3>
-    <div class="grid-4">
-      <div class="card"><div class="val">3</div>Upcoming Samplings</div>
-      <div class="card"><div class="val">4.5</div>Hours Blocked</div>
-      <div class="card"><div class="val">2</div>Follow-ups</div>
-      <div class="card"><div class="val">1</div>Low Inventory</div>
-    </div>
-  </section>
+  <div class="section-heading">Operational Overview</div>
+  <div class="tier-1">
+    <div class="card"><h3>Upcoming Samplings</h3><div class="val">3</div></div>
+    <div class="card"><h3>Time Blocked</h3><div class="val">4.5</div></div>
+    <div class="card"><h3>Follow Ups</h3><div class="val">2</div></div>
+    <div class="card"><h3>Inventory Alerts</h3><div class="val">1</div></div>
+  </div>
 
-  <section class="section">
-    <h3>Cellar & Tank Management</h3>
-    <div class="tanks">
-      <div class="tank">
-        <div class="vessel">
-          <div class="fill" style="height:70%; background:var(--fermenting);"></div>
-        </div>
-        <strong>FV-1</strong>
-        <div class="details">IPA · Day 4 · 68°F</div>
+  <div class="section-heading">Cellar & Tank Management</div>
+  <div class="tier-2">
+    <div class="tank-card">
+      <span class="status-badge" style="background:#fef3c7;color:#92400e;">Fermenting</span>
+      <div class="tank-vessel">
+        <div class="tank-fill" style="height:70%;background:var(--fermenting);"></div>
       </div>
-
-      <div class="tank">
-        <div class="vessel">
-          <div class="fill" style="height:45%; background:var(--ready);"></div>
-        </div>
-        <strong>BT-1</strong>
-        <div class="details">Pilsner · Ready</div>
-      </div>
+      FV-1
     </div>
-  </section>
+
+    <div class="tank-card">
+      <span class="status-badge" style="background:#d1fae5;color:#065f46;">Ready</span>
+      <div class="tank-vessel">
+        <div class="tank-fill" style="height:45%;background:var(--ready);"></div>
+      </div>
+      BT-1
+    </div>
+  </div>
+
+  <div class="section-heading">Front of House</div>
+  <div class="tier-3">
+    <div class="foh-card">Draft List Healthy</div>
+    <div class="foh-card" style="border-left-color:#f59e0b;">Manager Notes</div>
+  </div>
 </main>
 
 <script>
-document.getElementById("date").textContent =
-  new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
-
-document.getElementById("menuBtn").onclick = () =>
-  document.getElementById("sidebar").classList.toggle("open");
-
-document.querySelectorAll(".tank").forEach(t =>
-  t.onclick = () => t.classList.toggle("expanded"));
+  document.getElementById("current-date").textContent =
+    new Date().toLocaleDateString(undefined, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
 </script>
 
 </body>
