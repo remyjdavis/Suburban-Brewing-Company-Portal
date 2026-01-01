@@ -84,80 +84,72 @@
         </div>
 
         <div class="container">
-            <form id="inventoryForm" method="POST" action="<?= ScriptApp.getService().getUrl() ?>">
-    <div class="add-card" id="entry-form">
-        <h3 style="margin-top:0; color: var(--accent-blue);">Inventory Entry Portal</h3>
-        <div id="reader" style="display:none;"></div>
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label>Category</label>
-                <select id="inv-cat" name="category" onchange="renderDynamicFields()">
-                    <option value="">Select Category...</option>
-                    <option value="Malt">Malt/Grain</option>
-                    <option value="Hops">Hops</option>
-                    <option value="Yeast">Yeast</option>
-                    <option value="Salts">Salts & Water</option>
-                    <option value="Packaging">Packaging</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Item Name</label>
-                <input type="text" id="inv-name" name="name" placeholder="e.g. Citra">
-            </div>
-            <div class="form-group">
-                <label>Lot Number</label>
-                <input type="text" id="inv-lot" name="lot" placeholder="Scan or Type Lot">
-            </div>
-            <div class="form-group">
-                <label>Quantity</label>
-                <input type="number" id="inv-qty" name="qty" placeholder="0.00">
-            </div>
-        </div>
+            <form id="inventoryForm">
+                <div class="add-card" id="entry-form">
+                    <h3 style="margin-top:0; color: var(--accent-blue);">Inventory Entry Portal</h3>
+                    <div id="reader" style="display:none;"></div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="inv-cat" name="category" onchange="renderDynamicFields()">
+                                <option value="">Select Category...</option>
+                                <option value="Malt">Malt/Grain</option>
+                                <option value="Hops">Hops</option>
+                                <option value="Yeast">Yeast</option>
+                                <option value="Salts">Salts & Water</option>
+                                <option value="Packaging">Packaging</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Item Name</label>
+                            <input type="text" id="inv-name" name="name" placeholder="e.g. Citra">
+                        </div>
+                        <div class="form-group">
+                            <label>Lot Number</label>
+                            <input type="text" id="inv-lot" name="lot" placeholder="Scan or Type Lot">
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input type="number" step="0.01" id="inv-qty" name="qty" placeholder="0.00">
+                        </div>
+                    </div>
 
-        <div id="coa-fields-container" class="form-row"></div>
-        
-        <button type="submit" class="btn-save">Update Inventory Levels</button>
-    </div>
-</form>
+                    <div id="coa-fields-container" class="form-row"></div>
+                    
+                    <button type="submit" class="btn-save">Update Inventory Levels</button>
+                </div>
+            </form>
+
             <div class="inventory-grid">
                 <div class="section-card" onclick="setCategoryAndOpenModal('Malt')">
                     <div class="section-header">Malt / Grains</div>
                     <ul class="item-list">
-                        <li class="item-row"><span>Pilsner (Weyermann)</span> <span class="qty">1,250 lbs</span></li>
-                        <li class="item-row"><span>White Wheat</span> <span class="qty">450 lbs</span></li>
+                        <li class="item-row"><span>View Current Grain Stock</span></li>
                     </ul>
                 </div>
-
                 <div class="section-card" onclick="setCategoryAndOpenModal('Hops')">
                     <div class="section-header">Hops</div>
                     <ul class="item-list">
-                        <li class="item-row"><span>Citra (T-90)</span> <span class="qty">88 lbs</span></li>
-                        <li class="item-row"><span>Mosaic (Cryo)</span> <span class="qty">22 lbs</span></li>
+                        <li class="item-row"><span>View Current Hop Stock</span></li>
                     </ul>
                 </div>
-
                 <div class="section-card" onclick="setCategoryAndOpenModal('Packaging')">
                     <div class="section-header">Packaging</div>
                     <ul class="item-list">
-                        <li class="item-row"><span>16oz Brite Cans</span> <span class="qty">4,500 units</span></li>
-                        <li class="item-row"><span>Standard Lids (SOT)</span> <span class="qty">12,000 units</span></li>
+                        <li class="item-row"><span>View Packaging Stock</span></li>
                     </ul>
                 </div>
-
                 <div class="section-card" onclick="setCategoryAndOpenModal('Yeast')">
                     <div class="section-header">Yeast</div>
                     <ul class="item-list">
-                        <li class="item-row"><span>US-05 (Dry)</span> <span class="qty">15 bricks</span></li>
-                        <li class="item-row"><span>London III (Liquid)</span> <span class="qty">2 pitches</span></li>
+                        <li class="item-row"><span>View Yeast Pitches</span></li>
                     </ul>
                 </div>
-
                 <div class="section-card" onclick="setCategoryAndOpenModal('Salts')">
                     <div class="section-header">Salts & Water Prep</div>
                     <ul class="item-list">
-                        <li class="item-row"><span>Calcium Chloride</span> <span class="qty">10 kg</span></li>
-                        <li class="item-row"><span>Gypsum</span> <span class="qty">8 kg</span></li>
+                        <li class="item-row"><span>View Salt Inventory</span></li>
                     </ul>
                 </div>
             </div>
@@ -181,14 +173,43 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody id="inventory-details-rows">
-                        </tbody>
+                    <tbody id="inventory-details-rows"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
     <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxA6EQy6w8k6VSevKLS9Dis0egMQ--k7mHKy9kBJ5u9XsDhk46jDun46w02rs1hcT5iLQ/exec';
+        const form = document.getElementById('inventoryForm');
+
+        // BACKGROUND FETCH (Bypasses Google Redirects)
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.innerText = "Syncing with Brewery Sheet...";
+            submitBtn.disabled = true;
+
+            fetch(scriptURL, { 
+                method: 'POST', 
+                body: new FormData(form),
+                mode: 'no-cors' 
+            })
+            .then(() => {
+                alert('Success: Inventory Record Updated!');
+                form.reset();
+                document.getElementById('coa-fields-container').innerHTML = "";
+            })
+            .catch(error => {
+                alert('Connection Error. Check console.');
+                console.error('Error!', error.message);
+            })
+            .finally(() => {
+                submitBtn.innerText = "Update Inventory Levels";
+                submitBtn.disabled = false;
+            });
+        });
+
         let html5QrCode;
 
         function toggleScanner() {
@@ -206,22 +227,17 @@
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
             html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-                processScan(decodedText);
+                document.getElementById('inv-lot').value = decodedText;
                 toggleScanner();
             });
         }
 
-        // Fix: Click card opens the detail modal
         function setCategoryAndOpenModal(cat) {
             document.getElementById('inv-cat').value = cat;
             renderDynamicFields();
-            
             const modal = document.getElementById('inventory-modal');
             document.getElementById('modal-title').innerText = cat + " Stock Details";
             modal.style.display = "block";
-
-            // Placeholder to show data immediately. 
-            // In live version, this triggers google.script.run
             fetchRealData(cat); 
         }
 
@@ -233,20 +249,13 @@
                 google.script.run
                     .withSuccessHandler(renderInventoryRows)
                     .getInventoryByCategory(cat);
-            } else {
-                // Dummy data for testing offline
-                const dummyData = [
-                    { name: "Pilsner (Weyermann)", lot: "WEY-2024-A", qty: "1250 lbs", coa: "Extract: 81%" },
-                    { name: "White Wheat", lot: "WW-990-2", qty: "450 lbs", coa: "Protein: 12%" }
-                ];
-                setTimeout(() => renderInventoryRows(dummyData), 500);
             }
         }
 
         function renderInventoryRows(items) {
             const tbody = document.getElementById('inventory-details-rows');
             if (!items || items.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='5'>No stock found in this category.</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='5'>No stock found.</td></tr>";
                 return;
             }
             tbody.innerHTML = items.map(item => `
@@ -254,7 +263,7 @@
                     <td><strong>${item.name}</strong></td>
                     <td>${item.lot}</td>
                     <td class="qty">${item.qty}</td>
-                    <td><small>${item.coa || 'N/A'}</small></td>
+                    <td><small>${item.coa || 'Latest Entry'}</small></td>
                     <td><button class="btn-add-inline" onclick="useItemForEntry('${item.name}', '${item.lot}')">Select</button></td>
                 </tr>
             `).join('');
@@ -267,53 +276,29 @@
             document.getElementById('entry-form').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function closeModal() {
-            document.getElementById('inventory-modal').style.display = "none";
-        }
-
-        // --- PREVIOUS SCAN LOGIC (Maintained) ---
-        function processScan(decodedText) {
-            if (decodedText.includes("Lot:") && (decodedText.includes("Alpha:") || decodedText.includes("Oil:"))) {
-                parseYCHHops(decodedText);
-            } else if (decodedText.includes("SKU-CAN") || decodedText.includes("LID") || decodedText.startsWith("PLT")) {
-                parsePackagingScan(decodedText);
-            } else {
-                document.getElementById('inv-lot').value = decodedText;
-            }
-        }
+        function closeModal() { document.getElementById('inventory-modal').style.display = "none"; }
 
         function renderDynamicFields() {
-    const cat = document.getElementById('inv-cat').value;
-    const container = document.getElementById('coa-fields-container');
-    container.innerHTML = ""; 
-    
-    if (cat === "Hops") {
-        container.innerHTML = `
-            <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
-            <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
-            <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
-    } else if (cat === "Malt") {
-        container.innerHTML = `
-            <div class="form-group"><label>Extract %</label><input type="number" step="0.1" name="extract"></div>
-            <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
-            <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
-            <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
-    } else if (cat === "Yeast") {
-        container.innerHTML = `
-            <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
-            <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
-    }
-}
-
-// Optional: If you want to use the QR scanner to auto-submit, 
-// you can trigger the form submission after processing the scan.
-function processScan(decodedText) {
-    document.getElementById('inv-lot').value = decodedText;
-    // alert("Lot Scanned: " + decodedText);
-}
-        function saveInventory() {
-            alert("Saving to Brewery Inventory...");
-            // Your google.script.run logic here
+            const cat = document.getElementById('inv-cat').value;
+            const container = document.getElementById('coa-fields-container');
+            container.innerHTML = ""; 
+            
+            if (cat === "Hops") {
+                container.innerHTML = `
+                    <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
+                    <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
+                    <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
+            } else if (cat === "Malt") {
+                container.innerHTML = `
+                    <div class="form-group"><label>Extract %</label><input type="number" step="0.1" name="extract"></div>
+                    <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
+                    <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
+                    <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
+            } else if (cat === "Yeast") {
+                container.innerHTML = `
+                    <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
+                    <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
+            }
         }
     </script>
 </body>
