@@ -182,57 +182,82 @@
     </div>
 
     <div id="main-screen">
-        <div class="brew-stage">
-            <div class="stage-header" onclick="toggleSection('setup-content', this)">
-                <h3 class="stage-title">1. Batch Setup</h3>
-                <span class="toggle-indicator">-</span>
-            </div>
-            <div id="setup-content" class="stage-content">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Batch ID</label>
-                        <input type="text" id="batchId" placeholder="B-XXXX" oninput="updateHeader()">
-                    </div>
-                    <div class="input-group">
-                        <label>Brew Date</label>
-                        <input type="date" id="brewDate">
-                    </div>
-                    <div class="input-group">
-                        <label>Beer Name</label>
-                        <input type="text" id="beerName" placeholder="Style/Brand" oninput="updateHeader()">
-                    </div>
-                    <div class="input-group">
-                        <label>Batch Size</label>
-                        <select id="batchSize">
-                            <option value="1">1 BBL</option>
-                            <option value="5">5 BBL</option>
-                            <option value="10">10 BBL</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <button class="btn-save-section" onclick="saveAndAdvance('setup-content', 'grain-content')">
-                        Save & Lock Batch Setup
-                    </button>
-                </div>
-            </div>
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('setup-content', this)">
+            <h3 class="stage-title">1. Batch Setup</h3>
+            <span class="toggle-indicator">-</span>
         </div>
-
-        <div class="brew-stage">
-            <div class="stage-header" onclick="toggleSection('grain-content', this)">
-                <h3 class="stage-title">2. Grain Bill & Mash-In</h3>
-                <span class="toggle-indicator">+</span>
-            </div>
-            <div id="grain-content" class="stage-content collapsed">
-                <p>Grain Bill and Water data entry area.</p>
-                <div style="text-align: right;">
-                    <button class="btn-save-section" onclick="saveAndAdvance('grain-content', 'mash-content')">
-                        Save & Lock Grain Bill
-                    </button>
+        <div id="setup-content" class="stage-content">
+            <div class="form-grid">
+                <div class="input-group"><label>Batch ID</label><input type="text" id="batchId" placeholder="B-XXXX"></div>
+                <div class="input-group"><label>Brew Date</label><input type="date" id="brewDate" value="2026-01-01"></div>
+                <div class="input-group"><label>Beer Name</label><input type="text" id="beerName" placeholder="Style/Brand"></div>
+                <div class="input-group">
+                    <label>Batch Size</label>
+                    <select id="batchSize"><option>1 BBL</option><option>5 BBL</option><option>10 BBL</option></select>
                 </div>
             </div>
+            <button class="btn-save-section" onclick="saveAndAdvance('setup-content', 'grain-content')">Save & Lock Batch Setup</button>
         </div>
     </div>
+
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('grain-content', this)">
+            <h3 class="stage-title">2. Grain Bill & Mash-In</h3>
+            <span class="toggle-indicator">+</span>
+        </div>
+        <div id="grain-content" class="stage-content collapsed">
+            <button class="btn-save-section" onclick="saveAndAdvance('grain-content', 'mash-content')">Save & Lock Grain Bill</button>
+        </div>
+    </div>
+
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('mash-content', this)">
+            <h3 class="stage-title">3. Mash Schedule</h3>
+            <span class="toggle-indicator">+</span>
+        </div>
+        <div id="mash-content" class="stage-content collapsed">
+            <div class="form-grid">
+                <div class="input-group"><label>Mash pH</label><input type="number" step="0.01" placeholder="5.2"></div>
+            </div>
+            <button class="btn-save-section" onclick="saveAndAdvance('mash-content', 'lauter-content')">Save & Lock Mash</button>
+        </div>
+    </div>
+
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('lauter-content', this)">
+            <h3 class="stage-title">4. Lauter & Sparge</h3>
+            <span class="toggle-indicator">+</span>
+        </div>
+        <div id="lauter-content" class="stage-content collapsed">
+            <div class="form-grid">
+                <div class="input-group"><label>Pre-Boil Vol</label><input type="number"></div>
+                <div class="input-group"><label>Pre-Boil Gravity</label><input type="number" step="0.001"></div>
+            </div>
+            <button class="btn-save-section" onclick="saveAndAdvance('lauter-content', 'boil-content')">Save & Lock Lauter</button>
+        </div>
+    </div>
+
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('boil-content', this)">
+            <h3 class="stage-title">5. Boil Additions</h3>
+            <span class="toggle-indicator">+</span>
+        </div>
+        <div id="boil-content" class="stage-content collapsed">
+            <button class="btn-save-section" onclick="saveAndAdvance('boil-content', 'ko-yeast-content')">Save & Lock Boil</button>
+        </div>
+    </div>
+
+    <div class="brew-stage">
+        <div class="stage-header" onclick="toggleSection('ko-yeast-content', this)">
+            <h3 class="stage-title">6. Knockout & Yeast Pitch</h3>
+            <span class="toggle-indicator">+</span>
+        </div>
+        <div id="ko-yeast-content" class="stage-content collapsed">
+            <button class="btn-save-section" onclick="completeBrewLog()">Complete Brew & Sync</button>
+        </div>
+    </div>
+</div>
   </main>
 <script>
     /* --- GLOBALS --- */
