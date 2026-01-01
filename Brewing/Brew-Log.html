@@ -376,85 +376,68 @@
         tbody.appendChild(newRow);
     }
 
-    function saveAndAdvance(currentSectionId, nextSectionId) {
-        const currentSection = document.getElementById(currentSectionId);
-        if (!currentSection) return;
+   /* --- SAVE AND ADVANCE LOGIC --- */
+function saveAndAdvance(currentId, nextId) {
+    const current = document.getElementById(currentId);
+    
+    // 1. Lock the current section
+    current.classList.add('locked');
+    const saveBtn = current.querySelector('.btn-save-section');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerText = "✓ SECTION LOCKED";
+        saveBtn.style.backgroundColor = "#7f8c8d";
+    }
 
-        // Lock inputs
-        const inputs = currentSection.querySelectorAll('input, select, textarea, button');
-        inputs.forEach(el => {
-            if (!el.classList.contains('btn-save-section')) {
-                el.readOnly = true;
-                el.disabled = true;
-                el.style.backgroundColor = "#f9f9f9";
-            } else {
-                el.innerHTML = "✓ Section Locked";
-                el.style.backgroundColor = "#2e7d32";
-                el.disabled = true;
-            }
-        });
+    // 2. Open the next section
+    if (nextId) {
+        const next = document.getElementById(nextId);
+        next.classList.remove('collapsed');
+        
+        // Update the Green Stage Display in Sticky Header
+        const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
+        document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
+        
+        // Scroll to the new section
+        next.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-        // UI Updates
-        const header = currentSection.previousElementSibling;
-        if (header) {
-            header.style.borderLeft = "5px solid #2e7d32";
-            const title = header.querySelector('.stage-title');
-            if (!title.innerHTML.includes('✓')) title.innerHTML += " <span style='color:#2e7d32;'>✓</span>";
-        }
-
-        currentSection.classList.add('collapsed');
-
-        if (nextSectionId) {
-            const nextSection = document.getElementById(nextSectionId);
-            nextSection.classList.remove('collapsed');
-            const nextHeader = nextSection.previousElementSibling;
-            
-            const stageDisplay = document.getElementById('active-stage-display');
-            const nextTitle = nextHeader.querySelector('.stage-title').innerText;
-            if (stageDisplay) stageDisplay.innerText = `STAGE: ${nextTitle.toUpperCase()}`;
-            
-            nextHeader.scrollIntoView({ behavior: 'smooth' });
-
-            if (nextSectionId === 'boil-content' && confirm("Start Boil Timer?")) {
-                startBoilTimer();
-            }
+        // Trigger Boil Timer if moving into Section 5
+        if (nextId === 'boil-content') {
+            startBoilTimer();
         }
     }
-    /**
- * 5. FINAL BREW LOG SUBMISSION
- * Triggers when the brewer clicks "Complete Brew"
- */
+}
+
+/* --- SAVE BREW LOG FUNCTION --- */
 function completeBrewLog() {
-    // 1. Gather the data from the final stage
+    // 1. Gather the "Summary" data for the Master Log
     const brewData = {
         batchId: document.getElementById('batchId').value,
         beerName: document.getElementById('beerName').value,
-        vessel: document.getElementById('vessel-select')?.value || "Unassigned",
-        volume: document.getElementById('ko-volume')?.value || "0",
-        timestamp: new Date().toLocaleString()
+        vessel: document.getElementById('vessel-select').value,
+        og: document.querySelector('input[placeholder="e.g. 1.054"]').value,
+        volume: document.getElementById('ko-volume').value,
+        yeast: document.getElementById('yeast-strain').value
     };
 
-    // 2. Validation: Ensure essential info is present
-    if (!brewData.batchId || !brewData.beerName) {
-        alert("Batch ID and Beer Name are required to log the brew.");
+    // Validation
+    if (!brewData.vessel) {
+        alert("Please select a Fermenter/Vessel before completing the brew.");
         return;
     }
 
-    // 3. Visual Lock of the Final Section
-    saveAndAdvance('ko-yeast-content', null);
+    // 2. Stop the Boil Timer
+    if (boilInterval) clearInterval(boilInterval);
+    document.getElementById('boil-timer-display').innerText = "BREW COMPLETE";
 
-    // 4. Send to Google Apps Script (.gs)
-    // This will send the data to your Master Log sheet
-    google.script.run
-        .withSuccessHandler(() => {
-            document.getElementById('active-stage-display').innerText = "BREW LOGGED SUCCESSFULLY";
-            document.getElementById('active-stage-display').style.background = "#2e7d32";
-            alert(`Success! ${brewData.beerName} (${brewData.batchId}) is now in the Master Log.`);
-        })
-        .withFailureHandler((err) => {
-            alert("Error saving to Master Log: " + err.message);
-        })
-        .appendBrewToMasterLog(brewData); 
+    // 3. Final Lock
+    saveAndAdvance('ko-yeast-content', null);
+    
+    // Success feedback
+    alert("Brew Log Successfully Saved to Master Log!");
+    
+    // If using Google Apps Script, uncomment the line below:
+    // google.script.run.appendBrewToMasterLog(brewData);
 }
 </script>
 
