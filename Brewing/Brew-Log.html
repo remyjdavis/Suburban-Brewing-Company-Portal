@@ -255,7 +255,7 @@
     </div>
 </div>
 
-        <div class="brew-stage">
+       <div class="brew-stage">
     <div class="stage-header" onclick="toggleSection('grain-content', this)">
         <h3 class="stage-title">2. Grain Bill & Mash-In</h3>
         <span class="toggle-indicator">+</span>
@@ -308,15 +308,25 @@
                     <td><input type="text" placeholder="Supplier"></td>
                     <td><input type="text" placeholder="Lot #" onchange="runBridgingLogic(this)"></td>
                     <td>
-                        <input type="number" readonly style="background:#f0f0f0;" value="1000" onchange="runBridgingLogic(this)">
+                        <input type="number" class="grain-weight" style="background:#fff;" value="1000" oninput="calculateGristPercentages()">
                         <div class="inv-status" style="font-size: 10px; color: var(--accent-gray); margin-top:2px;"></div>
                     </td>
-                    <td><input type="number" readonly style="background:#f0f0f0;" value="85"></td>
+                    <td>
+                        <input type="text" class="grain-percent" readonly style="background:#f0f0f0;" value="100%">
+                    </td>
                     <td style="text-align:center;"><input type="checkbox" style="width:20px; height:20px;"></td>
                     <td><input type="time"></td>
                 </tr>
             </tbody>
+            <tfoot>
+                <tr style="background: #f8f9fa; font-weight: bold;">
+                    <td colspan="3" style="text-align: right; padding-right: 10px;">Total Batch Grain Weight:</td>
+                    <td><span id="total-grain-weight">1000</span> lb</td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
         </table>
+        
         <button class="btn-add-row" onclick="addRow('grain-table')">+ Add Specialty Grain</button>
 
         <div class="input-group" style="margin-top:20px;">
@@ -846,6 +856,32 @@ function getInventoryBridgeData(grainName, primaryLot) {
             }
         }
     }
+}
+    function calculateGristPercentages() {
+    const weightInputs = document.querySelectorAll('.grain-weight');
+    const percentInputs = document.querySelectorAll('.grain-percent');
+    const totalDisplay = document.getElementById('total-grain-weight');
+    
+    let totalWeight = 0;
+
+    // 1. Sum up all weights
+    weightInputs.forEach(input => {
+        totalWeight += parseFloat(input.value) || 0;
+    });
+
+    // 2. Update the Total Display
+    totalDisplay.innerText = totalWeight.toFixed(1);
+
+    // 3. Update each row's percentage
+    weightInputs.forEach((input, index) => {
+        let weight = parseFloat(input.value) || 0;
+        if (totalWeight > 0) {
+            let percentage = (weight / totalWeight) * 100;
+            percentInputs[index].value = percentage.toFixed(1) + "%";
+        } else {
+            percentInputs[index].value = "0%";
+        }
+    });
 }
 </script>
 
