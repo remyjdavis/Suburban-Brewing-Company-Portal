@@ -56,7 +56,49 @@
             gap: 15px;
             margin-top: 20px;
         }
+/* Modal Styling */
+#inventory-modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0; top: 0; width: 100%; height: 100%; 
+    background-color: rgba(0,0,0,0.5); 
+}
 
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    width: 80%;
+    max-width: 900px;
+    border-radius: 12px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--accent-blue);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.inventory-table th, .inventory-table td {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.close-btn { font-size: 28px; cursor: pointer; color: #888; }
+.close-btn:hover { color: red; }
         .btn-scan { background: var(--primary-dark); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
         .btn-save { background: var(--accent-green); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 15px; font-weight: bold; }
     </style>
@@ -184,11 +226,71 @@
         }
 
         function setCategoryAndScroll(cat) {
-            const selector = document.getElementById('inv-cat');
-            selector.value = cat;
-            renderDynamicFields();
-            document.querySelector('.add-card').scrollIntoView({ behavior: 'smooth' });
-        }
+    // 1. Prepare the entry form in the background
+    const selector = document.getElementById('inv-cat');
+    selector.value = cat;
+    renderDynamicFields();
+
+    // 2. Open the Modal to see "What's in inventory"
+    openInventoryModal(cat);
+}
+
+function openInventoryModal(cat) {
+    const modal = document.getElementById('inventory-modal');
+    const title = document.getElementById('modal-title');
+    const body = document.getElementById('modal-body');
+
+    title.innerText = cat + " - Current Stock Details";
+    modal.style.display = "block";
+
+    // This is where we call your Google Sheet to get the actual data
+    // For now, I'll show a placeholder table of how it will look:
+    body.innerHTML = `
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Lot #</th>
+                    <th>Quantity</th>
+                    <th>COA Details</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-details-rows">
+                <tr><td colspan="5">Loading fresh data from sheets...</td></tr>
+            </tbody>
+        </table>
+    `;
+
+    // Fetch the real data from your "invoices" or category sheets
+    google.script.run
+        .withSuccessHandler(data => {
+            renderInventoryRows(data);
+        })
+        .getInventoryByCategory(cat);
+}
+
+function closeModal() {
+    document.getElementById('inventory-modal').style.display = "none";
+}
+
+function renderInventoryRows(items) {
+    const tbody = document.getElementById('inventory-details-rows');
+    if (!items || items.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5'>No inventory found for this category.</td></tr>";
+        return;
+    }
+
+    tbody.innerHTML = items.map(item => `
+        <tr>
+            <td>**${item.name}**</td>
+            <td>${item.lot}</td>
+            <td class="qty">${item.qty}</td>
+            <td>${item.coaSummary || 'N/A'}</td>
+            <td><button onclick="closeModal(); document.getElementById('inv-name').value='${item.name}';">Add More</button></td>
+        </tr>
+    `).join('');
+}
 
         function processScan(decodedText) {
             if (decodedText.includes("Lot:") && (decodedText.includes("Alpha:") || decodedText.includes("Oil:"))) {
@@ -291,5 +393,15 @@
                 .processInventoryEntry(data);
         }
     </script>
+    <div id="inventory-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Category Inventory</h2>
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+        </div>
+        <div id="modal-body">
+            </div>
+    </div>
+</div>
 </body>
 </html>
