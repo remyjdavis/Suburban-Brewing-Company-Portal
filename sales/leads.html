@@ -6,15 +6,16 @@
     <title>Sales Activity | Suburban Brewing Co.</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --sidebar-width: 240px; --primary-dark: #111827; --accent: #374151; }
-        body { font-family: -apple-system, sans-serif; background: #f3f4f6; margin: 0; display: flex; color: #1f2937; }
+        :root { --sidebar-width: 240px; --primary-dark: #1f2937; --accent: #2563eb; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f3f4f6; margin: 0; display: flex; color: #1f2937; }
 
         /* Sidebar Styling */
-        .sidebar { width: var(--sidebar-width); background: var(--primary-dark); height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid #1f2937; letter-spacing: 1px; }
-        .nav-links { flex-grow: 1; padding: 20px 0; }
-        .nav-item { padding: 12px 25px; display: block; color: #9ca3af; text-decoration: none; transition: 0.2s; font-size: 0.9rem; }
-        .nav-item:hover, .nav-item.active { background: #1f2937; color: white; }
+        .sidebar { width: var(--sidebar-width); background: #111827; height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-header { padding: 25px 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid #1f2937; letter-spacing: 1px; }
+        .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 1px; }
+        .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
+        .nav-link:hover { background: #1f2937; color: #fff; }
+        .nav-link.active { background: var(--accent); color: #fff; font-weight: 600; }
 
         /* Main Content */
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; min-height: 100vh; }
@@ -27,10 +28,9 @@
         label { display: block; font-weight: 700; margin: 15px 0 5px; font-size: 11px; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
         
-        /* Toggle Buttons for Visit Type */
         .toggle-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        .toggle-btn { flex: 1; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; text-align: center; font-size: 14px; }
-        .toggle-btn.active { background: var(--primary-dark); color: white; border-color: var(--primary-dark); }
+        .toggle-btn { flex: 1; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; text-align: center; font-size: 14px; transition: 0.2s; }
+        .toggle-btn.active { background: #111827; color: white; border-color: #111827; }
 
         .btn-submit { width: 100%; padding: 15px; background: #111827; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 25px; font-size: 16px; transition: background 0.2s; }
         .btn-submit:hover { background: #000; }
@@ -48,40 +48,39 @@
 <body>
 
     <aside class="sidebar">
-    <h2>SUBURBAN BREWING</h2>
-  
-     <div class="nav-section-title">Main Menu</div> 
-    <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-  
-    <div class="nav-section-title">Operations</div>
-    <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-    <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-    <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-    
-    <div class="nav-section-title">Sales & Outreach</div>
-    <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-    <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-    <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-    <a href="../sales/new invoices.html" class="nav-link active"><span>New Invoice</span></a>
+        <div class="sidebar-header">SUBURBAN</div>
+        
+        <div class="nav-section-title">Main Menu</div> 
+        <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+      
+        <div class="nav-section-title">Operations</div>
+        <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+        <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+        <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+        
+        <div class="nav-section-title">Sales & Outreach</div>
+        <a href="../sales/leads.html" class="nav-link active"><span>AI Sales Leads</span></a>
+        <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+        <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+        <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
 
-    <div class="nav-section-title">Inventory</div>
-    <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-    <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-    <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-    <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-    
-    <div class="nav-section-title">Brewing</div>
-    <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-    <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-    <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-    <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
-    
-    <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-    <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-    <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
-  </aside>
-
+        <div class="nav-section-title">Inventory</div>
+        <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+        <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+        <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+        <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+        
+        <div class="nav-section-title">Brewing</div>
+        <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+        <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+        <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+        <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+        
+        <div class="nav-section-title">Reporting & Analytics</div>
+        <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+        <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+        <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
+    </aside>
 
     <div class="main-content">
         <div class="header">
@@ -99,12 +98,11 @@
                         <div id="btnFollow" class="toggle-btn" onclick="setVisitType('Follow-up')">Follow-up Visit</div>
                     </div>
                     <input type="hidden" id="visitType" value="Initial">
-                    <input type="hidden" id="accountType" value="Restaurant">
                    
                     <label>Account Category</label>
                     <div class="toggle-group">
-                    <div id="btnRest" class="toggle-btn active" onclick="setAccountType('Restaurant')">Restaurant</div>
-                    <div id="btnWhole" class="toggle-btn" onclick="setAccountType('Wholesaler')">Wholesaler</div>
+                        <div id="btnRest" class="toggle-btn active" onclick="setAccountType('Restaurant')">Restaurant</div>
+                        <div id="btnWhole" class="toggle-btn" onclick="setAccountType('Wholesaler')">Wholesaler</div>
                     </div>
                     <input type="hidden" id="accountType" value="Restaurant">
                     
@@ -150,7 +148,6 @@
             </div>
         </div>
     </div>
-
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
         
