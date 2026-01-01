@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <title>Sampling Calendar | Suburban Brewing</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+  
   <style>
     :root { --sidebar-width: 240px; }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f8fafc; display: flex; min-height: 100vh; }
     
-    /* Sidebar Styling */
-    .sidebar { width: var(--sidebar-width); background: #1f2937; color: white; height: 100vh; position: fixed; padding: 20px 0; }
+    .sidebar { width: var(--sidebar-width); background: #1f2937; color: white; height: 100vh; position: fixed; padding: 20px 0; overflow-y: auto; }
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; }
     .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.6; margin: 15px 20px 8px; font-weight: 700; }
     .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; }
@@ -19,16 +20,11 @@
     .nav-link.active { background: #2563eb; color: #fff; font-weight: 600; }
 
     .main { margin-left: var(--sidebar-width); flex: 1; padding: 30px; }
-    
-    /* Calendar Card */
     #calendar-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-    #calendar { max-width: 1100px; margin: 0 auto; }
+    
+    /* Loading Spinner */
+    #loading-overlay { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; font-weight: bold; color: #2563eb; }
 
-    /* Custom Event Styling */
-    .fc-event { cursor: pointer; border: none !important; padding: 2px 4px; border-radius: 4px; }
-    .fc-event-title { font-weight: 600; font-size: 12px; }
-
-    /* Mobile Responsive */
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .main { margin-left: 0; padding: 15px; }
@@ -39,51 +35,32 @@
 
  <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    
-   <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-   
-   <div class="nav-section-title">Samplings</div>
+    <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    <div class="nav-section-title">Samplings</div>
     <a href="Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
     <a href="sampling-calendar.html" class="nav-link active"><span>Sampling Calendar</span></a>
     <a href="sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-    
-    <div class="nav-section-title">Sales & Outreach</div>
-    <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-    <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-    <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-    <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
-
-    <div class="nav-section-title">Inventory</div>
-    <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-    <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-    <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-    <a href="../nventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-    
-    <div class="nav-section-title">Brewing</div>
-    <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-    <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-    <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-    <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
-    
-    <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-    <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-    <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
-  </aside>
-
+    </aside>
 
   <div class="main">
-    <div id="calendar-container">
+    <div id="calendar-container" style="position: relative;">
+      <div id="loading-overlay">Syncing with Google Sheets...</div>
       <div id='calendar'></div>
     </div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', async function() {
-      // Replace with your Apps Script URL
+    document.addEventListener('DOMContentLoaded', function() {
+      // Safety Check: Check if library loaded
+      if (typeof FullCalendar === 'undefined') {
+          alert("Calendar Library failed to load. Please check your internet connection.");
+          return;
+      }
+
       const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-      
       const calendarEl = document.getElementById('calendar');
+      const loader = document.getElementById('loading-overlay');
+
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
@@ -94,41 +71,47 @@
         themeSystem: 'standard',
         eventColor: '#2563eb',
         
-        // 1. Fetch live events from your "Sampling Schedule" sheet
         events: async function(info, successCallback, failureCallback) {
+          loader.style.display = 'block';
           try {
-            const response = await fetch(`${API_URL}?action=getSamplingEvents`, { redirect: "follow" });
+            // Updated fetch with no-cache and follow redirect
+            const response = await fetch(`${API_URL}?action=getSamplingEvents`, { 
+              method: 'GET'
+            });
             const rawEvents = await response.json();
             
-            // Map Sheet data to FullCalendar format
+            // Fix: Backend returns "name", not "customer"
             const events = rawEvents.map(ev => ({
-              title: ev.customer,
-              start: ev.date, // Format: YYYY-MM-DD (optionally adds time)
+              title: ev.name,
+              start: ev.date, 
+              allDay: true,
               extendedProps: {
                 items: ev.items,
                 notes: ev.notes,
                 time: ev.time
               }
             }));
+            
+            loader.style.display = 'none';
             successCallback(events);
           } catch (err) {
             console.error("Calendar Load Error:", err);
+            loader.innerHTML = "Error loading data.";
             failureCallback(err);
           }
         },
 
-        // 2. Interaction: Show "Packing List" alert when clicked
         eventClick: function(info) {
           const props = info.event.extendedProps;
           const details = `
-CUSTOMER: ${info.event.title}
-TIME: ${props.time || 'Not Set'}
+            CUSTOMER: ${info.event.title}
+            TIME: ${props.time || 'Not Set'}
 
-PACKING LIST:
-${props.items || 'No specific items selected'}
+            PACKING LIST:
+            ${props.items || 'No specific items selected'}
 
-NOTES:
-${props.notes || 'None'}
+            NOTES:
+            ${props.notes || 'None'}
           `;
           alert(details);
         }
