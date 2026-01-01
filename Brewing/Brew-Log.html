@@ -263,21 +263,37 @@
     <div id="grain-content" class="stage-content collapsed">
         
         <h4 class="sub-section-title">Water & Strike Setup</h4>
-        <div class="form-grid">
-            <div class="input-group">
-                <label>Mash In Time</label>
-                <input type="time">
-            </div>
-            <div class="input-group">
-                <label>Strike Water Amount</label>
-                <input type="text" placeholder="e.g. 15 BBL">
-            </div>
-            <div class="input-group">
-                <label>Mash In Water Temp</label>
-                <input type="text" placeholder="e.g. 165°F">
-            </div>
-        </div>
+<div class="form-grid">
+    <div class="input-group">
+        <label>Foundation Water (BBL)</label>
+        <input type="number" id="foundation-vol" step="0.01" placeholder="Under plates" oninput="calculateTotalLiquor()">
+    </div>
+    <div class="input-group">
+        <label>Mash-In Water (BBL)</label>
+        <input type="number" id="mash-in-vol" step="0.1" placeholder="Main mash" oninput="calculateTotalLiquor()">
+    </div>
+    <div class="input-group">
+        <label><strong>Total Mash Liquor</strong></label>
+        <input type="text" id="total-liquor-display" readonly style="background:#e8f5e9; font-weight:bold; color:#2e7d32;" value="0.00 BBL">
+    </div>
+</div>
 
+<div class="form-grid" style="margin-top:10px;">
+    <div class="input-group">
+        <label>Foundation Water Temp (°F)</label>
+        <input type="text" placeholder="e.g. 170°F">
+    </div>
+    <div class="input-group">
+        <label>Mash-In Water Temp (°F)</label>
+        <input type="text" placeholder="e.g. 162°F">
+    </div>
+    <div class="input-group">
+        <label><strong>Liquor to Grist Ratio</strong></label>
+        <div style="padding: 8px; background: #f8f9fa; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-weight: bold;">
+            <span id="ratio-display">0.00</span> <span style="font-size: 0.8em; color: #666;">qt/lb</span>
+        </div>
+    </div>
+</div>
         <div class="form-grid">
             <div class="input-group" style="grid-column: span 2;">
                 <label>Mash Salts Used</label>
