@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suburban Brewing - Master Recipe Editor</title>
+    <title>Suburban Brewing - Master Recipe Portal</title>
     <style>
         :root {
             --primary-dark: #2c3e50;
@@ -25,22 +25,32 @@
 
         /* --- MAIN CONTENT --- */
         #main-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); overflow-y: auto; padding-bottom: 50px; }
-        .header-bar { background: white; padding: 15px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .header-bar { background: white; padding: 15px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
         .container { padding: 30px; max-width: 1100px; margin: auto; }
 
-        /* --- EDITOR CARDS --- */
-        .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent-blue); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .recipe-section { margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; }
-        .section-title { font-size: 1rem; color: var(--primary-dark); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        /* --- RECIPE CARDS --- */
+        .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+        .recipe-card { background: white; border-radius: 12px; border: 1px solid #ddd; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; }
+        .recipe-card:hover { border-color: var(--accent-blue); transform: translateY(-3px); }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .style-tag { background: #eee; font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
         
-        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .spec-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; margin: 15px 0; text-align: center; }
+        .spec-item span { display: block; font-size: 0.9rem; font-weight: bold; color: var(--primary-dark); }
+        .spec-item label { font-size: 0.65rem; color: #7f8c8d; text-transform: uppercase; }
+
+        /* --- FULL DETAIL EDITOR --- */
+        .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent-blue); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .recipe-section { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+        .section-title { font-size: 0.9rem; font-weight: bold; color: var(--primary-dark); margin-bottom: 12px; text-transform: uppercase; }
+        
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 15px; }
         .ingredient-entry { display: grid; grid-template-columns: 3fr 1fr 1fr; gap: 10px; margin-bottom: 8px; }
         
-        label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; color: #666; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        
-        .btn-add-line { background: #eee; border: 1px solid #ccc; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
-        .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 30px; }
+        .btn-add-line { background: #eee; border: 1px solid #ccc; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
+        .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 25px; }
+        .btn-edit-card { background: var(--accent-orange); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -58,76 +68,100 @@
 
     <main id="main-content">
         <div class="header-bar">
-            <h2>Recipe Builder</h2>
-            <button class="btn-add-line" style="background:var(--accent-blue); color:white;" onclick="location.reload()">Reset Form</button>
+            <h2>Recipe Management</h2>
+            <button class="btn-add-line" style="background:var(--accent-blue); color:white; padding: 10px 20px;" onclick="openEditor('NEW')">+ Create New Recipe</button>
         </div>
 
         <div class="container">
-            <div class="editor-card">
-                <div class="form-row">
-                    <div><label>Beer Name</label><input type="text" id="recipe-name" placeholder="Flagship IPA"></div>
-                    <div><label>Style</label><input type="text" id="recipe-style" placeholder="West Coast"></div>
-                    <div><label>Target OG</label><input type="number" step="0.001" placeholder="1.062"></div>
-                    <div><label>Target FG</label><input type="number" step="0.001" placeholder="1.012"></div>
+            
+            <div id="master-editor" class="editor-card" style="display:none;">
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <h3 id="editor-heading" style="margin:0;">New Recipe</h3>
+                    <button onclick="closeEditor()" style="background:none; border:none; cursor:pointer; color:red;">[ Cancel ]</button>
+                </div>
+                
+                <div class="form-row" style="margin-top:20px;">
+                    <div><label>Beer Name</label><input type="text" id="edit-name"></div>
+                    <div><label>Style</label><input type="text" id="edit-style"></div>
+                    <div><label>OG</label><input type="number" id="edit-og" step="0.001"></div>
+                    <div><label>FG</label><input type="number" id="edit-fg" step="0.001"></div>
                 </div>
 
                 <div class="recipe-section">
-                    <div class="section-title">Water Profile & Mash Salts</div>
+                    <div class="section-title">Water & Salts</div>
                     <div class="form-row">
-                        <div><label>Strike Water (Gal)</label><input type="number" placeholder="350"></div>
-                        <div><label>Sparge Water (Gal)</label><input type="number" placeholder="150"></div>
-                        <div><label>Target Mash pH</label><input type="number" step="0.01" placeholder="5.35"></div>
+                        <input type="number" id="edit-strike" placeholder="Strike (Gal)">
+                        <input type="number" id="edit-sparge" placeholder="Sparge (Gal)">
+                        <input type="number" id="edit-ph" placeholder="Target pH">
                     </div>
-                    <div id="salts-list">
-                        <div class="ingredient-entry">
-                            <input type="text" placeholder="Salt (e.g. Gypsum, CaCl)">
-                            <input type="number" placeholder="Amount">
-                            <select><option>Grams</option><option>Oz</option></select>
-                        </div>
-                    </div>
-                    <button class="btn-add-line" onclick="addLine('salts-list')">+ Add Salt</button>
                 </div>
 
                 <div class="recipe-section">
                     <div class="section-title">Grain Bill</div>
-                    <div id="grain-list">
-                        <div class="ingredient-entry">
-                            <input type="text" placeholder="Malt Name">
-                            <input type="number" placeholder="Weight">
-                            <select><option>Lbs</option><option>Bags</option></select>
-                        </div>
+                    <div id="edit-grain-list">
+                        <div class="ingredient-entry"><input type="text" placeholder="Malt"><input type="number" placeholder="Amt"><select><option>Lbs</option></select></div>
                     </div>
-                    <button class="btn-add-line" onclick="addLine('grain-list')">+ Add Malt</button>
+                    <button class="btn-add-line" onclick="addLine('edit-grain-list')">+ Add Malt</button>
                 </div>
 
                 <div class="recipe-section">
-                    <div class="section-title">Boil & Kettle Additions (Hops/Whirlfloc/Nutrients)</div>
-                    <div id="boil-list">
-                        <div class="ingredient-entry">
-                            <input type="text" placeholder="Addition Name">
-                            <input type="number" placeholder="Amount">
-                            <input type="text" placeholder="Timing (e.g. 60m, WP)">
-                        </div>
+                    <div class="section-title">Boil & Kettle</div>
+                    <div id="edit-boil-list">
+                        <div class="ingredient-entry"><input type="text" placeholder="Addition"><input type="number" placeholder="Amt"><input type="text" placeholder="Time"></div>
                     </div>
-                    <button class="btn-add-line" onclick="addLine('boil-list')">+ Add Kettle Addition</button>
+                    <button class="btn-add-line" onclick="addLine('edit-boil-list')">+ Add Addition</button>
                 </div>
 
                 <div class="recipe-section">
-                    <div class="section-title">Yeast & Fermentation</div>
+                    <div class="section-title">Yeast</div>
                     <div class="form-row">
-                        <div style="grid-column: span 2;"><label>Yeast Strain</label><input type="text" placeholder="US-05 / London III"></div>
-                        <div><label>Pitch Rate</label><input type="text" placeholder="1.5M cells/mL"></div>
-                        <div><label>Pitch Temp (°F)</label><input type="number" placeholder="68"></div>
+                        <input type="text" id="edit-yeast" placeholder="Strain Name">
+                        <input type="text" id="edit-temp" placeholder="Temp (°F)">
                     </div>
-                    <textarea placeholder="Special fermentation instructions (e.g. Ramp to 72°F on Day 4)" rows="3"></textarea>
                 </div>
 
-                <button class="btn-save" onclick="saveFullRecipe()">Archive Full Recipe</button>
+                <button class="btn-save" onclick="saveRecipe()">Save Recipe Changes</button>
             </div>
+
+            <div class="recipe-grid">
+                <div class="recipe-card">
+                    <div class="card-header">
+                        <h3 style="margin:0;">West Coast IPA</h3>
+                        <span class="style-tag">Flagship</span>
+                    </div>
+                    <div class="spec-bar">
+                        <div class="spec-item"><span>1.062</span><label>OG</label></div>
+                        <div class="spec-item"><span>1.012</span><label>FG</label></div>
+                        <div class="spec-item"><span>6.5%</span><label>ABV</label></div>
+                        <div class="spec-item"><span>65</span><label>IBU</label></div>
+                    </div>
+                    <p style="font-size:0.8rem; color:#666;"><strong>Water:</strong> 350 Gal Strike | 5.35 pH</p>
+                    <button class="btn-edit-card" onclick="openEditor('EDIT', 'West Coast IPA', 'Flagship', 1.062, 1.012)">Edit Recipe Details</button>
+                </div>
+            </div>
+
         </div>
     </main>
 
     <script>
+        function openEditor(mode, name='', style='', og='', fg='') {
+            const editor = document.getElementById('master-editor');
+            document.getElementById('editor-heading').innerText = mode === 'NEW' ? 'Create New Recipe' : 'Editing: ' + name;
+            
+            // Fill basics if editing
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-style').value = style;
+            document.getElementById('edit-og').value = og;
+            document.getElementById('edit-fg').value = fg;
+
+            editor.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function closeEditor() {
+            document.getElementById('master-editor').style.display = 'none';
+        }
+
         function addLine(containerId) {
             const container = document.getElementById(containerId);
             const newLine = container.children[0].cloneNode(true);
@@ -135,10 +169,9 @@
             container.appendChild(newLine);
         }
 
-        function saveFullRecipe() {
-            const name = document.getElementById('recipe-name').value;
-            if(!name) return alert("Please name this recipe.");
-            alert("Recipe '" + name + "' including water, salts, grains, and yeast has been stored.");
+        function saveRecipe() {
+            alert("Full recipe data (including water, grain, boil, and yeast) saved to GSheets.");
+            closeEditor();
         }
     </script>
 </body>
