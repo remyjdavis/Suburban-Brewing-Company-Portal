@@ -168,6 +168,25 @@
             .form-grid { grid-template-columns: 1fr; }
             td input { font-size: 16px; } /* Prevent iOS zoom */
         }
+        .btn-save-section {
+    background-color: var(--active-green);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.btn-save-section:hover {
+    background-color: #27ae60;
+}
+
+.stage-content.locked {
+    pointer-events: none; /* Secondary layer of protection */
+    opacity: 0.9;
+}
     </style>
 </head>
 <body>
@@ -182,34 +201,40 @@
 <div id="main-container">
 
     <div id="main-screen">
-        
+        /* --- Batch Setup --- */
         <div class="brew-stage">
-            <div class="stage-header" onclick="toggleSection('setup-content', this)">
-                <h3 class="stage-title">1. Batch Setup</h3>
-                <span class="toggle-indicator">-</span>
+    <div class="stage-header" onclick="toggleSection('setup-content', this)">
+        <h3 class="stage-title">1. Batch Setup</h3>
+        <span class="toggle-indicator">-</span>
+    </div>
+    <div id="setup-content" class="stage-content">
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Batch ID</label>
+                <input type="text" id="batchId" placeholder="B-XXXX">
             </div>
-            <div id="setup-content" class="stage-content">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Batch ID</label>
-                        <input type="text" id="batchId" placeholder="B-XXXX">
-                    </div>
-                    <div class="input-group">
-                        <label>Brew Date</label>
-                        <input type="date" id="brewDate">
-                    </div>
-                    <div class="input-group">
-                        <label>Beer Name</label>
-                        <input type="text" id="beerName" placeholder="Style/Brand">
-                    </div>
-                    <div class="input-group">
-                        <label>Brewer</label>
-                        <input type="text" placeholder="Name">
-                    </div>
-                </div>
+            <div class="input-group">
+                <label>Brew Date</label>
+                <input type="date" id="brewDate">
+            </div>
+            <div class="input-group">
+                <label>Beer Name</label>
+                <input type="text" id="beerName" placeholder="Style/Brand">
+            </div>
+            <div class="input-group">
+                <label>Brewer</label>
+                <input type="text" placeholder="Name">
             </div>
         </div>
 
+        <div class="section-footer" style="margin-top: 20px; text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
+            <button class="btn-save-section" onclick="saveAndAdvance('setup-content', 'grain-content')">
+                Save & Lock Batch Setup
+            </button>
+        </div>
+    </div>
+</div>
+/* --- GRAIN BILL AND MASH IN --- */
         <div class="brew-stage">
             <div class="stage-header" onclick="toggleSection('grain-content', this)">
                 <h3 class="stage-title">2. Grain Bill & Mash-In</h3>
@@ -280,7 +305,7 @@
                 </div>
             </div>
         </div>
-
+/* --- MASH SCHEDULE --- */
         <div class="brew-stage">
             <div class="stage-header" onclick="toggleSection('mash-content', this)">
                 <h3 class="stage-title">3. Mash Schedule</h3>
@@ -326,7 +351,7 @@
                 <p style="font-size: 12px; color: #7f8c8d; margin-top: 10px;">* Steps, Target Temps, and Durations are locked based on the selected Recipe.</p>
             </div>
         </div>
-
+/* --- LAUTER LOG--- */
         <div class="brew-stage">
             <div class="stage-header" onclick="toggleSection('lauter-content', this)">
                 <h3 class="stage-title">4. Lauter & Sparge</h3>
@@ -393,7 +418,7 @@
                 </div>
             </div>
         </div>
-
+/* --- BOIL  --- */
         <div class="brew-stage">
             <div class="stage-header" onclick="toggleSection('boil-content', this)">
                 <h3 class="stage-title">5. Boil Additions</h3>
@@ -421,6 +446,7 @@
         </div>
 
     </div>
+    /* --- KO AND YEAST--- */
 <div class="brew-stage">
     <div class="stage-header" onclick="toggleSection('ko-yeast-content', this)">
         <h3 class="stage-title">6. Knockout & Yeast Pitch</h3>
@@ -519,6 +545,7 @@
 </div>
 
 <script>
+    /* --- YEAST SOURCE FUNCTION --- */
     function toggleYeastSource(select) {
     const label = document.getElementById('source-label');
     const input = document.getElementById('yeast-source-id');
@@ -531,7 +558,7 @@
         input.placeholder = 'Enter Lot #';
     }
 }
-
+/* --- PITCH RATE FUNCTION --- */
 function calculatePitchRate() {
     const volumeBBL = parseFloat(document.getElementById('ko-volume').value) || 0;
     const targetRate = parseFloat(document.getElementById('target-pitch-rate').value) || 0;
@@ -547,21 +574,22 @@ function calculatePitchRate() {
         document.getElementById('calculated-pitch').value = "Waiting for data...";
     }
 }
-    // Toggle Sections
+    /* --- TOGGLE SECTION FUNCTION --- */
+
     function toggleSection(id, header) {
         const content = document.getElementById(id);
         const indicator = header.querySelector('.toggle-indicator');
         content.classList.toggle('collapsed');
         indicator.textContent = content.classList.contains('collapsed') ? "+" : "-";
     }
-
-    // Add Table Rows
+/* --- ADD ROW FUNCTION --- */
     function addRow(tableId) {
         const tbody = document.getElementById(tableId).querySelector('tbody');
         const newRow = tbody.rows[0].cloneNode(true);
         newRow.querySelectorAll('input').forEach(i => { i.value = ""; i.checked = false; });
         tbody.appendChild(newRow);
     }
+    /* --- GET GRAIN INVENTORY --- */
 function getInventoryBridgeData(grainName, primaryLot) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const invSheet = ss.getSheetByName("invoices"); // Your inventory is here
@@ -585,7 +613,7 @@ function getInventoryBridgeData(grainName, primaryLot) {
   }
   return result;
 }
-    // Add Dynamic Deep Cuts
+    /* --- DEEP CUT FUNCTION --- */
     function addDeepCut(containerId) {
         const container = document.getElementById(containerId);
         const div = document.createElement('div');
@@ -598,10 +626,50 @@ function getInventoryBridgeData(grainName, primaryLot) {
     // Sync Header Text
     document.getElementById('batchId').oninput = (e) => document.getElementById('header-batch-id').textContent = e.target.value || "---";
     document.getElementById('beerName').oninput = (e) => document.getElementById('header-recipe').textContent = e.target.value || "New Entry";
-
+/* --- SAVE BREW LOG FUNCTION --- */
     function saveBrewLog() {
         alert("Data compiled. Ready for Apps Script injection.");
     }
+    function saveAndAdvance(currentSectionId, nextSectionId) {
+    const currentSection = document.getElementById(currentSectionId);
+    
+    // 1. Lock all inputs in the current section
+    const inputs = currentSection.querySelectorAll('input, select, textarea, button');
+    inputs.forEach(el => {
+        // We keep the Save button itself enabled or hide it
+        if (!el.classList.contains('btn-save-section')) {
+            el.readOnly = true;
+            el.disabled = true; // For checkboxes and selects
+            el.style.backgroundColor = "#f9f9f9"; // Visual "Locked" state
+            el.style.cursor = "not-allowed";
+        } else {
+            el.innerHTML = "✓ Section Locked";
+            el.style.backgroundColor = "#2e7d32";
+            el.disabled = true;
+        }
+    });
+
+    // 2. Visual Cue: Change header color to show completion
+    const header = currentSection.previousElementSibling;
+    header.style.borderLeft = "5px solid #2e7d32";
+    header.querySelector('.stage-title').innerHTML += " <span style='color:#2e7d32;'>✓</span>";
+
+    // 3. Close current section
+    currentSection.classList.add('collapsed');
+    header.querySelector('.toggle-indicator').innerText = "+";
+
+    // 4. Open the next section
+    if (nextSectionId) {
+        const nextSection = document.getElementById(nextSectionId);
+        const nextHeader = nextSection.previousElementSibling;
+        
+        nextSection.classList.remove('collapsed');
+        nextHeader.querySelector('.toggle-indicator').innerText = "-";
+        
+        // Scroll the next section into view smoothly
+        nextHeader.scrollIntoView({ behavior: 'smooth' });
+    }
+}
 </script>
 
 </body>
