@@ -101,19 +101,8 @@
                     <h2 id="editor-heading" style="margin:0;">Master Recipe Editor</h2>
                     <button class="btn-cancel" onclick="closeEditor()">Close Editor</button>
                 </div>
-<div class="collapsible-header" onclick="toggleSection('basic-info')">1. Basic Information ▾</div>
-<div id="basic-info" class="collapsible-content active">
-    <div class="form-row">
-        <div><label>Recipe Name</label><input type="text" id="edit-name"></div>
-        <div><label>Style</label><input type="text" id="edit-style"></div>
-        <div><label>Target OG</label><input type="number" step="0.001" id="edit-og"></div>
-        <div><label>Target FG</label><input type="number" step="0.001" id="edit-fg"></div>
-    </div>
-</div>
-
 <div class="collapsible-header" onclick="toggleSection('ingredients-section')">2. Water & Grain Bill ▾</div>
 <div id="ingredients-section" class="collapsible-content">
-    
     <div class="section-title">Water Volumes</div>
     <div class="form-row">
         <div><label>Foundation (Gal)</label><input type="number" id="water-foundation"></div>
@@ -121,22 +110,21 @@
         <div><label>Sparge (Gal)</label><input type="number" id="water-sparge"></div>
     </div>
 
-    <div class="section-title" style="margin-top:20px;">Mash Salts / Mineral Additions</div>
-    <div id="salts-container">
+    <div class="section-title" style="margin-top:20px; font-weight: bold; border-bottom: 1px solid #eee;">Mash Salts / Minerals</div>
+    <div id="salts-container" style="margin-top: 10px;">
         <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr;">
-            <input type="text" placeholder="Salt (e.g., Gypsum, CaCl2)">
-            <input type="number" step="0.1" placeholder="Amount (g)">
+            <input type="text" placeholder="Salt (e.g., Gypsum)">
+            <input type="number" step="0.1" placeholder="Grams">
             <select>
                 <option value="Mash">Mash</option>
                 <option value="Sparge">Sparge</option>
-                <option value="Boil">Boil</option>
             </select>
         </div>
     </div>
-    <button class="btn-add-line" onclick="addLine('salts-container')">+ Add Salt/Mineral</button>
+    <button class="btn-add-line" onclick="addLine('salts-container')">+ Add Salt</button>
     
-    <div class="section-title" style="margin-top:20px;">Grain Bill</div>
-    <div id="grain-container">
+    <div class="section-title" style="margin-top:20px; font-weight: bold; border-bottom: 1px solid #eee;">Grain Bill</div>
+    <div id="grain-container" style="margin-top: 10px;">
         <div class="ingredient-entry">
             <input type="text" placeholder="Malt Name">
             <input type="number" placeholder="Lbs">
@@ -148,16 +136,15 @@
 
 <div class="collapsible-header" onclick="toggleSection('mash-section')">3. Mash Schedule & pH ▾</div>
 <div id="mash-section" class="collapsible-content">
-    <div class="form-row" style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+    <div class="form-row" style="margin-bottom: 15px;">
         <div style="max-width: 200px;">
             <label>Target Mash pH</label>
             <input type="number" step="0.01" id="mash-ph" placeholder="5.4" style="border: 2px solid var(--accent);">
         </div>
     </div>
-    
     <div id="mash-container">
         <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr;">
-            <input type="text" placeholder="Step Name (e.g., Saccharification)">
+            <input type="text" placeholder="Step (e.g., Saccharification)">
             <input type="number" placeholder="Temp °F">
             <input type="number" placeholder="Time (min)">
         </div>
@@ -186,22 +173,20 @@
         <div><label>Pitch Rate</label><input type="number" step="0.1" id="pitch-rate"></div>
     </div>
 </div>
-    <div class="collapsible-header" onclick="toggleSection('dry-hop-section')">6. Dry Hopping Schedule ▾</div>
+
+<div class="collapsible-header" onclick="toggleSection('dry-hop-section')">6. Dry Hopping Schedule ▾</div>
 <div id="dry-hop-section" class="collapsible-content">
     <div id="dry-hop-container">
         <div class="ingredient-entry" style="grid-template-columns: 1fr 2fr 1fr 1fr 1fr;">
-            <input type="text" placeholder="Step (e.g. DH 1)" class="dh-step">
+            <input type="text" placeholder="DH Step" class="dh-step">
             <input type="text" placeholder="Hop Variety" class="dh-variety">
             <input type="number" step="0.1" placeholder="AA %" class="dh-aa">
             <input type="number" placeholder="Lbs" class="dh-lbs">
-            <input type="text" placeholder="Day (e.g. Day 3)" class="dh-timing">
+            <input type="text" placeholder="Day" class="dh-timing">
         </div>
     </div>
-    <button class="btn-add-line" onclick="addLine('dry-hop-container')" style="margin-top:10px;">+ Add Another Dry Hop Addition</button>
+    <button class="btn-add-line" onclick="addLine('dry-hop-container')">+ Add Dry Hop Line</button>
 </div>
-</div>
-                <button class="btn-save" onclick="saveRecipe()">Save Master Recipe</button>
-            </div>
 
             <div id="recipe-list-view">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -225,7 +210,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 
     <script>
