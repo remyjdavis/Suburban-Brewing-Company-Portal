@@ -194,6 +194,18 @@
 <div class="sticky-header">
     <div class="batch-summary">
         BATCH: <span id="header-batch-id">---</span> | <span id="header-recipe">New Entry</span>
+        <div id="brew-header-status" style="position: sticky; top: 0; background: #2c3e50; color: white; padding: 15px; z-index: 1000; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--active-green);">
+    <div>
+        <span id="header-batch-id" style="font-weight: bold; font-size: 1.2em;">BATCH: ---</span> | 
+        <span id="header-beer-name">New Entry</span>
+    </div>
+    <div id="active-stage-display" style="background: var(--active-green); padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+        STAGE: 1. BATCH SETUP
+    </div>
+    <div id="boil-timer-display" style="font-family: monospace; font-size: 1.5em; color: #f1c40f; display: none;">
+        NEXT ADDITION: --:--
+    </div>
+</div>
     </div>
 </div>
 
@@ -590,6 +602,61 @@
 </div>
 
 <script>
+    /* --- GLOBALS --- */
+let boilStartTime = null;
+let boilInterval = null;
+/* --- START BOIL TIMER FUNCTION --- */
+function startBoilTimer() {
+    boilStartTime = new Date();
+    const timerDisplay = document.getElementById('boil-timer-display');
+    timerDisplay.style.display = 'block';
+    
+    // Start the background checker
+    boilInterval = setInterval(updateBoilCountdown, 1000);
+}
+/* --- UPDATE BOIL COUNT DOWN --- */
+function updateBoilCountdown() {
+    if (!boilStartTime) return;
+
+    const now = new Date();
+    const elapsedMinutes = Math.floor((now - boilStartTime) / 60000);
+    const totalBoilTime = 60; // Usually matches your longest hop addition
+    const minutesLeftInBoil = totalBoilTime - elapsedMinutes;
+
+    // Grab all rows from the boil table
+    const rows = document.querySelectorAll('#boil-table tbody tr');
+    let nextAddition = null;
+
+    rows.forEach(row => {
+        const minLeft = parseInt(row.cells[0].querySelector('input').value);
+        const ingredient = row.cells[2].querySelector('input').value;
+        const amount = row.cells[3].querySelector('input').value;
+        const isAdded = row.cells[4].querySelector('input').checked;
+
+        // Find the next addition that hasn't been checked yet
+        if (!isAdded && minLeft <= minutesLeftInBoil) {
+            if (!nextAddition || minLeft > nextAddition.minLeft) {
+                nextAddition = { minLeft, ingredient, amount, row };
+            }
+        }
+    });
+
+    if (nextAddition) {
+        const timeUntilAddition = minutesLeftInBoil - nextAddition.minLeft;
+        
+        document.getElementById('boil-timer-display').innerText = 
+            `NEXT: ${nextAddition.amount} ${nextAddition.ingredient} in ${timeUntilAddition}m`;
+
+        // Alert when it hits 0
+        if (timeUntilAddition <= 0) {
+            alert(`TIME FOR ADDITION: ${nextAddition.amount} of ${nextAddition.ingredient}!`);
+            // Highlight the row in the table
+            nextAddition.row.style.backgroundColor = "#fff3cd"; 
+        }
+    } else {
+        document.getElementById('boil-timer-display').innerText = "BOIL IN PROGRESS";
+    }
+}
     /* --- YEAST SOURCE FUNCTION --- */
     function toggleYeastSource(select) {
     const label = document.getElementById('source-label');
