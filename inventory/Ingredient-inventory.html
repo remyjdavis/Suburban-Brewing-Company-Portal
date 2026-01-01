@@ -182,16 +182,83 @@
                 toggleScanner();
             });
         }
+function renderDynamicFields() {
+    const cat = document.getElementById('inv-cat').value;
+    const container = document.getElementById('coa-fields-container');
+    container.innerHTML = ""; 
 
+    let html = "";
+
+    if (cat === "Malt") {
+        html = `
+            <div class="form-group"><label>Maltster</label><input type="text" id="m-source"></div>
+            <div class="form-group"><label>Extract FGDB %</label><input type="number" id="m-ext"></div>
+            <div class="form-group"><label>Color (°L)</label><input type="number" id="m-color"></div>
+            <div class="form-group"><label>Protein %</label><input type="number" id="m-prot"></div>
+            <div class="form-group"><label>S/T Ratio</label><input type="number" id="m-st"></div>
+            <div class="form-group"><label>FAN (mg/L)</label><input type="number" id="m-fan"></div>
+        `;
+    } else if (cat === "Hops") {
+        html = `
+            <div class="form-group"><label>Alpha Acid %</label><input type="number" id="h-alpha"></div>
+            <div class="form-group"><label>Beta Acid %</label><input type="number" id="h-beta"></div>
+            <div class="form-group"><label>Total Oil (mL/100g)</label><input type="number" id="h-oil"></div>
+            <div class="form-group"><label>Myrcene %</label><input type="number" id="h-myr"></div>
+            <div class="form-group"><label>HSI</label><input type="number" id="h-hsi"></div>
+        `;
+    } else if (cat === "Yeast") {
+        html = `
+            <div class="form-group"><label>Source (Lab or Batch #)</label><input type="text" id="y-source"></div>
+            <div class="form-group"><label>Gen #</label><input type="number" id="y-gen"></div>
+            <div class="form-group"><label>Viability %</label><input type="number" id="y-viab"></div>
+            <div class="form-group"><label>Cell Count (B/mL)</label><input type="number" id="y-cells"></div>
+            <div class="form-group"><label>Diastaticus Screen</label><select id="y-dia"><option>Negative</option><option>Positive</option></select></div>
+        `;
+    } else if (cat === "Salts") {
+        html = `
+            <div class="form-group"><label>Purity %</label><input type="number" id="s-purity"></div>
+            <div class="form-group"><label>pH Impact</label><input type="number" id="s-ph"></div>
+            <div class="form-group"><label>Solubility</label><input type="text" id="s-sol"></div>
+        `;
+    } else if (cat === "Packaging") {
+        html = `
+            <div class="form-group"><label>Lining Type</label><input type="text" id="p-lining"></div>
+            <div class="form-group"><label>Dimensions</label><input type="text" id="p-dims"></div>
+            <div class="form-group"><label>Finish/Neck</label><input type="text" id="p-neck"></div>
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
+    container.innerHTML = html;
+}
         function saveInventory() {
-            const data = {
-                category: document.getElementById('inv-cat').value,
-                name: document.getElementById('inv-name').value,
-                lot: document.getElementById('inv-lot').value,
-                qty: document.getElementById('inv-qty').value
-            };
-            alert("Inventory updated: " + data.name + " (" + data.qty + " added)");
-        }
+    const cat = document.getElementById('inv-cat').value;
+    const data = {
+        category: cat,
+        name: document.getElementById('inv-name').value,
+        lot: document.getElementById('inv-lot').value,
+        qty: document.getElementById('inv-qty').value,
+        coa: {} // We store all the dynamic "Pro" data here
+    };
+
+    // Scrape category-specific data
+    if (cat === "Malt") {
+        data.coa.source = document.getElementById('m-source').value;
+        data.coa.extract = document.getElementById('m-ext').value;
+        data.coa.color = document.getElementById('m-color').value;
+        // ... add others as needed
+    } else if (cat === "Hops") {
+        data.coa.alpha = document.getElementById('h-alpha').value;
+        data.coa.oil = document.getElementById('h-oil').value;
+    }
+
+    // Call your Google Apps Script
+    google.script.run
+        .withSuccessHandler(res => alert("Success: " + res))
+        .processInventoryEntry(data);
+}
     </script>
 </body>
 </html>
