@@ -240,12 +240,49 @@
             });
     }
 
-    function renderInventoryRows(items) {
+   function renderInventoryRows(items) {
     const tbody = document.getElementById('inventory-details-rows');
     if (!items || items.length === 0) {
         tbody.innerHTML = "<tr><td colspan='5'>No stock found.</td></tr>";
         return;
     }
+
+    tbody.innerHTML = items.map((item) => {
+        // Build "Tags" for each spec found in the spreadsheet
+        const specsHtml = Object.entries(item.specs)
+            .map(([key, val]) => `
+                <span style="display:inline-block; background:#ebf5fb; border:1px solid #d6eaf8; 
+                             padding:2px 6px; margin:2px; border-radius:4px; font-size:11px;">
+                    <strong style="color:#2980b9">${key}:</strong> ${val}
+                </span>
+            `).join('');
+
+        // NEW: Check if the item is low stock to apply the CSS class
+        const lowStockClass = item.isLow ? 'qty-low' : '';
+        const warningLabel = item.isLow ? '<br><small>⚠️ REORDER</small>' : '';
+
+        return `
+            <tr>
+                <td>
+                    <div style="font-weight:bold; color:#2c3e50;">${item.name}</div>
+                    <div style="font-size:11px; color:#7f8c8d;">${item.source || ''}</div>
+                </td>
+                <td style="font-family:monospace; font-size:12px;">${item.lot}</td>
+                <td class="qty ${lowStockClass}">
+                    ${item.qty} ${warningLabel}
+                </td>
+                <td>
+                    <div style="display:flex; flex-wrap:wrap; max-width:350px;">
+                        ${specsHtml || '<span style="color:#ccc; font-style:italic;">No extra specs</span>'}
+                    </div>
+                </td>
+                <td>
+                    <button class="btn-add-inline" onclick="useItemForEntry('${item.name}', '${item.lot}')">Select</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
 
     tbody.innerHTML = items.map((item) => {
         // Build "Tags" for each spec found in the spreadsheet
@@ -276,6 +313,20 @@
             </tr>
         `;
     }).join('');
+}
+        function getLowStockSummary() {
+  const categories = ["Malt", "Hops", "Yeast", "Salts", "Packaging"];
+  let lowItems = [];
+  
+  categories.forEach(cat => {
+    const items = getInventoryByCategory(cat);
+    const filtered = items.filter(i => i.isLow);
+    if(filtered.length > 0) {
+      lowItems.push({ category: cat, items: filtered });
+    }
+  });
+  
+  return lowItems; // This will populate your Dashboard "To Order" card
 }
     // --- UTILITIES (QR & Modals) ---
     let html5QrCode;
