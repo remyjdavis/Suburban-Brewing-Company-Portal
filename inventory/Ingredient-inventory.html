@@ -180,126 +180,133 @@
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxA6EQy6w8k6VSevKLS9Dis0egMQ--k7mHKy9kBJ5u9XsDhk46jDun46w02rs1hcT5iLQ/exec';
-        const form = document.getElementById('inventoryForm');
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxA6EQy6w8k6VSevKLS9Dis0egMQ--k7mHKy9kBJ5u9XsDhk46jDun46w02rs1hcT5iLQ/exec';
+    const form = document.getElementById('inventoryForm');
 
-        // BACKGROUND FETCH (Bypasses Google Redirects)
-        form.addEventListener('submit', e => {
-            e.preventDefault();
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.innerText = "Syncing with Brewery Sheet...";
-            submitBtn.disabled = true;
+    // --- SEND DATA (POST) ---
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.innerText = "Syncing with Brewery Sheet...";
+        submitBtn.disabled = true;
 
-            fetch(scriptURL, { 
-                method: 'POST', 
-                body: new FormData(form),
-                mode: 'no-cors' 
-            })
-            .then(() => {
-                alert('Success: Inventory Record Updated!');
-                form.reset();
-                document.getElementById('coa-fields-container').innerHTML = "";
-            })
-            .catch(error => {
-                alert('Connection Error. Check console.');
-                console.error('Error!', error.message);
-            })
-            .finally(() => {
-                submitBtn.innerText = "Update Inventory Levels";
-                submitBtn.disabled = false;
-            });
+        fetch(scriptURL, { 
+            method: 'POST', 
+            body: new FormData(form),
+            mode: 'no-cors' 
+        })
+        .then(() => {
+            alert('Success: Inventory Record Updated!');
+            form.reset();
+            document.getElementById('coa-fields-container').innerHTML = "";
+        })
+        .catch(error => {
+            alert('Connection Error. Check console.');
+            console.error('Error!', error.message);
+        })
+        .finally(() => {
+            submitBtn.innerText = "Update Inventory Levels";
+            submitBtn.disabled = false;
         });
+    });
 
-        let html5QrCode;
+    // --- FETCH DATA (GET) ---
+    function fetchRealData(cat) {
+        const tbody = document.getElementById('inventory-details-rows');
+        tbody.innerHTML = "<tr><td colspan='5'>Loading from Google Sheets...</td></tr>";
 
-        function toggleScanner() {
-            const readerDiv = document.getElementById('reader');
-            if (readerDiv.style.display === 'none') {
-                readerDiv.style.display = 'block';
-                startScanner();
-            } else {
-                readerDiv.style.display = 'none';
-                if(html5QrCode) html5QrCode.stop();
-            }
-        }
-
-        function startScanner() {
-            html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-                document.getElementById('inv-lot').value = decodedText;
-                toggleScanner();
+        // We append the category as a URL parameter so the Backend knows what to send
+        fetch(`${scriptURL}?category=${cat}`)
+            .then(response => response.json())
+            .then(items => {
+                renderInventoryRows(items);
+            })
+            .catch(err => {
+                console.error("Fetch Error:", err);
+                tbody.innerHTML = "<tr><td colspan='5' style='color:red;'>Error connecting to Google. Make sure you deployed as 'Anyone'.</td></tr>";
             });
+    }
+
+    function renderInventoryRows(items) {
+        const tbody = document.getElementById('inventory-details-rows');
+        if (!items || items.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='5'>No stock found.</td></tr>";
+            return;
         }
+        tbody.innerHTML = items.map(item => `
+            <tr>
+                <td><strong>${item.name}</strong></td>
+                <td>${item.lot}</td>
+                <td class="qty">${item.qty}</td>
+                <td><small>${item.coa || 'Latest Entry'}</small></td>
+                <td><button class="btn-add-inline" onclick="useItemForEntry('${item.name}', '${item.lot}')">Select</button></td>
+            </tr>
+        `).join('');
+    }
 
-        function setCategoryAndOpenModal(cat) {
-            document.getElementById('inv-cat').value = cat;
-            renderDynamicFields();
-            const modal = document.getElementById('inventory-modal');
-            document.getElementById('modal-title').innerText = cat + " Stock Details";
-            modal.style.display = "block";
-            fetchRealData(cat); 
+    // --- UTILITIES (QR & Modals) ---
+    let html5QrCode;
+
+    function toggleScanner() {
+        const readerDiv = document.getElementById('reader');
+        if (readerDiv.style.display === 'none') {
+            readerDiv.style.display = 'block';
+            startScanner();
+        } else {
+            readerDiv.style.display = 'none';
+            if(html5QrCode) html5QrCode.stop();
         }
+    }
 
-        function fetchRealData(cat) {
-            const tbody = document.getElementById('inventory-details-rows');
-            tbody.innerHTML = "<tr><td colspan='5'>Loading spreadsheet data...</td></tr>";
+    function startScanner() {
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+            document.getElementById('inv-lot').value = decodedText;
+            toggleScanner();
+        });
+    }
 
-            if (typeof google !== 'undefined') {
-                google.script.run
-                    .withSuccessHandler(renderInventoryRows)
-                    .getInventoryByCategory(cat);
-            }
+    function setCategoryAndOpenModal(cat) {
+        document.getElementById('inv-cat').value = cat;
+        renderDynamicFields();
+        const modal = document.getElementById('inventory-modal');
+        document.getElementById('modal-title').innerText = cat + " Stock Details";
+        modal.style.display = "block";
+        fetchRealData(cat); 
+    }
+
+    function useItemForEntry(name, lot) {
+        document.getElementById('inv-name').value = name;
+        document.getElementById('inv-lot').value = lot;
+        closeModal();
+        document.getElementById('entry-form').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeModal() { document.getElementById('inventory-modal').style.display = "none"; }
+
+    function renderDynamicFields() {
+        const cat = document.getElementById('inv-cat').value;
+        const container = document.getElementById('coa-fields-container');
+        container.innerHTML = ""; 
+        
+        if (cat === "Hops") {
+            container.innerHTML = `
+                <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
+                <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
+                <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
+        } else if (cat === "Malt") {
+            container.innerHTML = `
+                <div class="form-group"><label>Extract %</label><input type="number" step="0.1" name="extract"></div>
+                <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
+                <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
+                <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
+        } else if (cat === "Yeast") {
+            container.innerHTML = `
+                <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
+                <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
         }
-
-        function renderInventoryRows(items) {
-            const tbody = document.getElementById('inventory-details-rows');
-            if (!items || items.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='5'>No stock found.</td></tr>";
-                return;
-            }
-            tbody.innerHTML = items.map(item => `
-                <tr>
-                    <td><strong>${item.name}</strong></td>
-                    <td>${item.lot}</td>
-                    <td class="qty">${item.qty}</td>
-                    <td><small>${item.coa || 'Latest Entry'}</small></td>
-                    <td><button class="btn-add-inline" onclick="useItemForEntry('${item.name}', '${item.lot}')">Select</button></td>
-                </tr>
-            `).join('');
-        }
-
-        function useItemForEntry(name, lot) {
-            document.getElementById('inv-name').value = name;
-            document.getElementById('inv-lot').value = lot;
-            closeModal();
-            document.getElementById('entry-form').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function closeModal() { document.getElementById('inventory-modal').style.display = "none"; }
-
-        function renderDynamicFields() {
-            const cat = document.getElementById('inv-cat').value;
-            const container = document.getElementById('coa-fields-container');
-            container.innerHTML = ""; 
-            
-            if (cat === "Hops") {
-                container.innerHTML = `
-                    <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
-                    <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
-                    <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
-            } else if (cat === "Malt") {
-                container.innerHTML = `
-                    <div class="form-group"><label>Extract %</label><input type="number" step="0.1" name="extract"></div>
-                    <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
-                    <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
-                    <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
-            } else if (cat === "Yeast") {
-                container.innerHTML = `
-                    <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
-                    <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
-            }
-        }
-    </script>
+    }
+</script>
 </body>
 </html>
