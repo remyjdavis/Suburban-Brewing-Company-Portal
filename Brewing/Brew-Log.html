@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -171,7 +171,7 @@
     </style>
 </head>
 <body>
-
+/* --- HEADER --- */
 <div class="sticky-header">
     <div class="batch-summary">
         BATCH: <span id="header-batch-id">---</span> | <span id="header-recipe">New Entry</span>
@@ -182,7 +182,7 @@
 <div id="main-container">
 
     <div id="main-screen">
-        
+        /* --- BATCH SETUP --- */
         <div class="brew-stage">
             <div class="stage-header" onclick="toggleSection('setup-content', this)">
                 <h3 class="stage-title">1. Batch Setup</h3>
@@ -209,7 +209,7 @@
                 </div>
             </div>
         </div>
-
+/* --- GRAIN BILL --- */
         <div class="brew-stage">
             <div class="stage-header" onclick="toggleSection('grain-content', this)">
                 <h3 class="stage-title">2. Grain Bill & Mash-In</h3>
@@ -232,7 +232,7 @@
                         <input type="text" placeholder="e.g. 165°F">
                     </div>
                 </div>
-
+/* --- MASH SALTS--- */
                 <h4 class="sub-section-title">Mash Salt Additions</h4>
                 <table id="salts-table" style="margin-bottom: 20px;">
                     <thead>
@@ -255,40 +255,47 @@
                         </tr>
                     </tbody>
                 </table>
-
+/* --- MALT INVENTORY --- */
                 <h4 class="sub-section-title">Malt Inventory & Grist</h4>
-                <table id="grain-table">
-                    <thead>
-                        <tr>
-                            <th width="25%">Malt Type</th>
-                            <th width="15%">Supplier</th>
-                            <th width="15%">Lot #</th>
-                            <th width="15%">Weight (lb)</th>
-                            <th width="10%">% Grist</th>
-                            <th width="10%">Added?</th>
-                            <th width="10%">Time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><input type="text" readonly style="background:#f0f0f0;" value="2-Row Base"></td>
-                            <td><input type="text" placeholder="Supplier"></td>
-                            <td><input type="text" placeholder="Lot #"></td>
-                            <td><input type="number" readonly style="background:#f0f0f0;" value="1000"></td>
-                            <td><input type="number" readonly style="background:#f0f0f0;" value="85"></td>
-                            <td style="text-align:center;"><input type="checkbox" style="width:20px; height:20px;"></td>
-                            <td><input type="time"></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div class="input-group" style="margin-top:20px;">
-                    <label>Grain & Milling Notes</label>
-                    <textarea style="width:100%; height:80px; padding:10px;" placeholder="Milled gap settings, husk condition..."></textarea>
+<table id="grain-table">
+    <thead>
+        <tr>
+            <th width="20%">Malt Type</th>
+            <th width="15%">Supplier</th>
+            <th width="15%">Lot #</th>
+            <th width="10%">Target (lb)</th>
+            <th width="10%">Actual (lb)</th>
+            <th width="20%">Inventory Status</th>
+            <th width="10%">Time</th>
+        </tr>
+    </thead>
+    <tbody id="grain-body">
+        <tr class="malt-row" data-malt-type="2-Row Base">
+            <td><input type="text" value="2-Row Base" readonly class="locked-input"></td>
+            <td><input type="text" placeholder="Supplier" class="inv-supplier" onchange="checkLotAvailability(this)"></td>
+            <td><input type="text" placeholder="Lot #" class="inv-lot" onchange="checkLotAvailability(this)"></td>
+            <td><input type="number" value="1000" readonly class="locked-input target-weight"></td>
+            <td><input type="number" placeholder="Weight" class="actual-weight"></td>
+            <td>
+                <div class="status-box" id="status-row-1">Awaiting Lot #</div>
+                <div class="split-prompt" style="display:none; margin-top:5px; background:#fff3cd; padding:5px; border:1px solid #ffeeba; border-radius:3px;">
+                    <span style="font-size:10px; color:#856404;">SHORTAGE: Split with another Lot?</span>
+                    <button type="button" class="btn-small-add" onclick="splitMaltRow(this)">+ Add 2nd Lot</button>
                 </div>
-            </div>
-        </div>
+            </td>
+            <td><input type="time"></td>
+        </tr>
+    </tbody>
+</table>
 
+<style>
+    .locked-input { background: #f0f0f0; font-weight: bold; border: none; }
+    .status-box { font-size: 11px; padding: 4px; border-radius: 3px; text-align: center; background: #eee; }
+    .status-valid { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status-short { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .status-invalid { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+</style>
+/* --- MASH SCHEDULE --- */
         <div class="brew-stage">
             <div class="stage-header" onclick="toggleSection('mash-content', this)">
                 <h3 class="stage-title">3. Mash Schedule</h3>
@@ -334,7 +341,7 @@
                 <p style="font-size: 12px; color: #7f8c8d; margin-top: 10px;">* Steps, Target Temps, and Durations are locked based on the selected Recipe.</p>
             </div>
         </div>
-
+/* --- LAUTER INFO --- */
         <div class="brew-stage">
             <div class="stage-header" onclick="toggleSection('lauter-content', this)">
                 <h3 class="stage-title">4. Lauter & Sparge</h3>
@@ -401,7 +408,7 @@
                 </div>
             </div>
         </div>
-
+/* --- BOIL --- */
         <div class="brew-stage">
             <div class="stage-header" onclick="toggleSection('boil-content', this)">
                 <h3 class="stage-title">5. Boil Additions</h3>
@@ -435,7 +442,7 @@
 </div>
 
 <script>
-    // Toggle Sections
+    // --- 1. UI & COLLAPSIBLE LOGIC ---
     function toggleSection(id, header) {
         const content = document.getElementById(id);
         const indicator = header.querySelector('.toggle-indicator');
@@ -443,30 +450,107 @@
         indicator.textContent = content.classList.contains('collapsed') ? "+" : "-";
     }
 
-    // Add Table Rows
+    // --- 2. TABLE ROW MANAGEMENT (Logic Fixed for ID Duplication) ---
     function addRow(tableId) {
         const tbody = document.getElementById(tableId).querySelector('tbody');
-        const newRow = tbody.rows[0].cloneNode(true);
-        newRow.querySelectorAll('input').forEach(i => { i.value = ""; i.checked = false; });
+        const templateRow = tbody.rows[0];
+        const newRow = templateRow.cloneNode(true);
+        
+        // Logic: Clear all inputs and strip IDs to prevent browser confusion
+        newRow.querySelectorAll('input').forEach(i => { 
+            i.value = ""; 
+            i.checked = false; 
+            if(i.id) i.removeAttribute('id'); 
+        });
+
+        // Logic: Reset status boxes for the new row
+        const statusBox = newRow.querySelector('.status-box');
+        if(statusBox) {
+            statusBox.textContent = "Awaiting Lot #";
+            statusBox.className = "status-box";
+        }
+        const splitPrompt = newRow.querySelector('.split-prompt');
+        if(splitPrompt) splitPrompt.style.display = "none";
+
         tbody.appendChild(newRow);
     }
 
-    // Add Dynamic Deep Cuts
+    // --- 3. DYNAMIC DEEP CUTS ---
     function addDeepCut(containerId) {
         const container = document.getElementById(containerId);
         const div = document.createElement('div');
         div.style.cssText = "display:flex; gap:10px; margin-top:5px;";
-        div.innerHTML = `<input type="text" placeholder="Reading" style="flex:2">
-                         <input type="time" style="flex:1">`;
+        div.innerHTML = `
+            <input type="text" placeholder="Reading" style="flex:2">
+            <input type="time" style="flex:1">
+        `;
         container.appendChild(div);
     }
 
-    // Sync Header Text
-    document.getElementById('batchId').oninput = (e) => document.getElementById('header-batch-id').textContent = e.target.value || "---";
-    document.getElementById('beerName').oninput = (e) => document.getElementById('header-recipe').textContent = e.target.value || "New Entry";
+    // --- 4. INVENTORY LOGIC (Mocked as requested) ---
+    function checkLotAvailability(element) {
+        // Logic: Use relative navigation (closest('tr')) so the correct row is updated
+        const row = element.closest('tr');
+        const supplier = row.querySelector('.inv-supplier').value;
+        const lot = row.querySelector('.inv-lot').value;
+        const target = parseFloat(row.querySelector('.target-weight').value) || 0;
+        const statusBox = row.querySelector('.status-box');
+        const splitPrompt = row.querySelector('.split-prompt');
 
+        if (supplier && lot) {
+            // MOCK LOGIC: Lot 123 triggers the shortage/split logic
+            let availableStock = (lot === "123") ? 200 : 5000;
+
+            if (availableStock < target) {
+                statusBox.textContent = "Only " + availableStock + " lbs in stock";
+                statusBox.className = "status-box status-short";
+                splitPrompt.style.display = "block"; // Logic: Show split button only on shortage
+            } else {
+                statusBox.textContent = "Lot Verified (" + availableStock + " lb avail)";
+                statusBox.className = "status-box status-valid";
+                splitPrompt.style.display = "none";
+            }
+        }
+    }
+
+    // --- 5. MALT ROW SPLITTING (Logic Fixed for Inventory Tracking) ---
+    function splitMaltRow(button) {
+        const currentRow = button.closest('tr');
+        const maltType = currentRow.getAttribute('data-malt-type');
+        const newRow = currentRow.cloneNode(true);
+        
+        // Logic: Set target to 0 for the 2nd lot so calculations don't double-count
+        const targetInput = newRow.querySelector('.target-weight');
+        if(targetInput) targetInput.value = 0; 
+        
+        newRow.querySelector('.inv-lot').value = "";
+        newRow.querySelector('.actual-weight').value = "";
+        
+        // Logic: Clean state for the split row
+        const statusBox = newRow.querySelector('.status-box');
+        statusBox.textContent = "Select 2nd Lot for " + maltType;
+        statusBox.className = "status-box";
+        newRow.querySelector('.split-prompt').style.display = "none";
+        
+        currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
+    }
+
+    // --- 6. HEADER SYNCING ---
+    document.getElementById('batchId').oninput = (e) => {
+        document.getElementById('header-batch-id').textContent = e.target.value.toUpperCase() || "---";
+    };
+    document.getElementById('beerName').oninput = (e) => {
+        document.getElementById('header-recipe').textContent = e.target.value || "New Entry";
+    };
+
+    // --- 7. SAVE ACTION ---
     function saveBrewLog() {
-        alert("Data compiled. Ready for Apps Script injection.");
+        const bId = document.getElementById('batchId').value;
+        if(!bId) {
+            alert("Please enter a Batch ID.");
+            return;
+        }
+        alert("Logic Validated. Data ready for export.");
     }
 </script>
 
