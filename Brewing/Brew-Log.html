@@ -212,27 +212,69 @@
 
         <div class="brew-stage">
             <div class="stage-header" onclick="toggleSection('grain-content', this)">
-                <h3 class="stage-title">2. Grain Bill</h3>
+                <h3 class="stage-title">2. Grain Bill & Mash-In</h3>
                 <span class="toggle-indicator">+</span>
             </div>
             <div id="grain-content" class="stage-content collapsed">
+                
+                <h4 class="sub-section-title">Water & Strike Setup</h4>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Mash In Time</label>
+                        <input type="time">
+                    </div>
+                    <div class="input-group">
+                        <label>Strike Water Amount</label>
+                        <input type="text" placeholder="e.g. 15 BBL">
+                    </div>
+                    <div class="input-group">
+                        <label>Mash In Water Temp</label>
+                        <input type="text" placeholder="e.g. 165°F">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="input-group" style="grid-column: span 2;">
+                        <label>Mash Salts Used</label>
+                        <input type="text" placeholder="e.g. Gypsum, Calcium Chloride">
+                    </div>
+                    <div class="input-group">
+                        <label>Salt Amounts Added</label>
+                        <input type="text" placeholder="e.g. 200g, 150g">
+                    </div>
+                </div>
+
+                <h4 class="sub-section-title">Malt Inventory & Grist</h4>
                 <table id="grain-table">
                     <thead>
                         <tr>
-                            <th>Malt Type</th><th>Supplier</th><th>Lot #</th><th>Weight (lb)</th><th>%</th>
+                            <th width="25%">Malt Type</th>
+                            <th width="15%">Supplier</th>
+                            <th width="15%">Lot #</th>
+                            <th width="15%">Weight (lb)</th>
+                            <th width="10%">% Grist</th>
+                            <th width="10%">Added?</th>
+                            <th width="10%">Time</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td><input type="text"></td>
-                            <td><input type="text"></td>
-                            <td><input type="text"></td>
-                            <td><input type="number"></td>
-                            <td><input type="number"></td>
+                            <td><input type="text" readonly style="background:#f0f0f0;" value="2-Row Base"></td>
+                            <td><input type="text" placeholder="Supplier"></td>
+                            <td><input type="text" placeholder="Lot #"></td>
+                            <td><input type="number" readonly style="background:#f0f0f0;" value="1000"></td>
+                            <td><input type="number" readonly style="background:#f0f0f0;" value="85"></td>
+                            <td style="text-align:center;"><input type="checkbox" style="width:20px; height:20px;"></td>
+                            <td><input type="time"></td>
                         </tr>
                     </tbody>
                 </table>
-                <button class="btn-add-row" onclick="addRow('grain-table')">+ Add Grain</button>
+                <button class="btn-add-row" onclick="addRow('grain-table')">+ Add Specialty Grain</button>
+
+                <div class="input-group" style="margin-top:20px;">
+                    <label>Grain & Milling Notes</label>
+                    <textarea style="width:100%; height:80px; padding:10px;" placeholder="Milled gap settings, husk condition..."></textarea>
+                </div>
             </div>
         </div>
 
