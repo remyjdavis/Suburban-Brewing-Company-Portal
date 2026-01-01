@@ -69,37 +69,42 @@
         <div class="container">
             
             <div class="add-card">
-                <h3 style="margin-top:0;">Add New Stock</h3>
-                <div id="reader" style="display:none;"></div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select id="inv-cat">
-                            <option>Malt</option>
-                            <option>Hops</option>
-                            <option>Yeast</option>
-                            <option>Salts/Water</option>
-                            <option>Packaging (Cans/Lids)</option>
-                            <option>Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Item Name (or Scanned Code)</label>
-                        <input type="text" id="inv-name" placeholder="Citra, 2-Row, etc.">
-                    </div>
-                    <div class="form-group">
-                        <label>Lot Number</label>
-                        <input type="text" id="inv-lot" placeholder="LOT-12345">
-                    </div>
-                    <div class="form-group">
-                        <label>Quantity Add</label>
-                        <input type="number" id="inv-qty" placeholder="Units">
-                    </div>
-                </div>
-                <button class="btn-save" onclick="saveInventory()">Update Inventory Levels</button>
-            </div>
+    <h3 style="margin-top:0;">Inventory Entry Portal</h3>
+    <div id="reader" style="display:none;"></div>
+    
+    <div class="form-row">
+        <div class="form-group">
+            <label>Category</label>
+            <select id="inv-cat" onchange="renderDynamicFields()">
+                <option value="">Select Category...</option>
+                <option value="Malt">Malt/Grain</option>
+                <option value="Hops">Hops</option>
+                <option value="Yeast">Yeast</option>
+                <option value="Salts">Salts & Water</option>
+                <option value="Packaging">Packaging</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Item Name</label>
+            <input type="text" id="inv-name" placeholder="e.g. Citra">
+        </div>
+        <div class="form-group">
+            <label>Lot Number</label>
+            <input type="text" id="inv-lot" placeholder="Scan or Type Lot">
+        </div>
+        <div class="form-group">
+            <label>Quantity</label>
+            <input type="number" id="inv-qty" placeholder="0.00">
+        </div>
+    </div>
 
+    <div id="coa-fields-container" class="form-row" style="margin-top:20px; border-top: 1px solid #eee; padding-top:15px;">
+        </div>
+
+    <button class="btn-save" onclick="saveInventory()">Update Inventory Levels</button>
+</div>
+
+        
             <div class="inventory-grid">
                 <div class="section-card">
                     <div class="section-header">Malt / Grains</div>
