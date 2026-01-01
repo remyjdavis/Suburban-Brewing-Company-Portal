@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suburban Brewing - Recipe Management</title>
+    <style>
+        :root {
+            --primary-dark: #2c3e50;
+            --accent-blue: #3498db;
+            --accent-green: #27ae60;
+            --bg-gray: #f4f7f6;
+            --sidebar-width: 240px;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background-color: var(--bg-gray); height: 100vh; }
+
+        /* --- SIDEBAR --- */
+        #sidebar { width: var(--sidebar-width); background: var(--primary-dark); color: white; position: fixed; height: 100%; }
+        .sidebar-header { padding: 25px; border-bottom: 1px solid #34495e; text-align: center; font-weight: bold; }
+        .sidebar-menu { list-style: none; padding: 0; }
+        .sidebar-menu li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #34495e; color: #bdc3c7; }
+        .active-nav { background: var(--accent-blue) !important; color: white !important; }
+
+        /* --- MAIN CONTENT --- */
+        #main-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); overflow-y: auto; padding-bottom: 50px; }
+        .header-bar { background: white; padding: 15px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 30px; max-width: 1100px; margin: auto; }
+
+        /* --- RECIPE CARDS --- */
+        .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
+        .recipe-card { background: white; border-radius: 12px; border: 1px solid #ddd; padding: 20px; transition: 0.3s; position: relative; }
+        .recipe-card:hover { border-color: var(--accent-blue); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .recipe-badge { position: absolute; top: 15px; right: 15px; background: #eee; font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; }
+        
+        .spec-row { display: flex; justify-content: space-between; margin: 15px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 10px 0; font-size: 0.9rem; }
+        .spec-item { text-align: center; flex: 1; }
+        .spec-val { font-weight: bold; display: block; color: var(--primary-dark); }
+
+        /* --- EDITOR / ADD NEW --- */
+        .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent-blue); }
+        .form-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .ingredient-entry { display: grid; grid-template-columns: 3fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .btn-add { background: var(--accent-blue); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        .btn-save-recipe { background: var(--accent-green); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar">
+        <div class="sidebar-header">SUBURBAN BREWING</div>
+        <ul class="sidebar-menu">
+            <li>Brew Log</li>
+            <li>Cellar Management</li>
+            <li>Ingredient Inventory</li>
+            <li>Packaging Log</li>
+            <li class="active-nav">Recipe Management</li>
+        </ul>
+    </nav>
+
+    <main id="main-content">
+        <div class="header-bar">
+            <h2>Recipe Library</h2>
+            <button class="btn-add" onclick="toggleEditor()">+ Create New Recipe</button>
+        </div>
+
+        <div class="container">
+            
+            <div id="recipe-editor" class="editor-card" style="display:none;">
+                <h3 style="margin-top:0;">Build New Recipe</h3>
+                <div class="form-row">
+                    <div><label>Beer Name</label><input type="text" id="edit-name" placeholder="e.g. Neon Dream IPA"></div>
+                    <div><label>Style</label><input type="text" id="edit-style" placeholder="Hazy IPA"></div>
+                    <div><label>Target OG</label><input type="number" step="0.001" placeholder="1.065"></div>
+                    <div><label>Target IBU</label><input type="number" placeholder="55"></div>
+                </div>
+
+                <h4>Grain Bill</h4>
+                <div id="grain-list">
+                    <div class="ingredient-entry">
+                        <input type="text" placeholder="Malt Type (e.g. 2-Row)">
+                        <input type="number" placeholder="Weight">
+                        <select><option>Lbs</option><option>Kg</option></select>
+                    </div>
+                </div>
+                <button class="btn-add" onclick="addIngredient('grain-list')">+ Add Grain</button>
+
+                <h4 style="margin-top:20px;">Hop Schedule</h4>
+                <div id="hop-list">
+                    <div class="ingredient-entry">
+                        <input type="text" placeholder="Hop Variety">
+                        <input type="number" placeholder="Amount">
+                        <input type="text" placeholder="Timing (e.g. 60 min / WP)">
+                    </div>
+                </div>
+                <button class="btn-add" onclick="addIngredient('hop-list')">+ Add Hop Addition</button>
+
+                <button class="btn-save-recipe" style="margin-top:30px;" onclick="saveRecipe()">Save Recipe to Database</button>
+            </div>
+
+            <div class="recipe-grid">
+                
+                <div class="recipe-card">
+                    <span class="recipe-badge">Flagship</span>
+                    <h3 style="margin:0;">West Coast IPA</h3>
+                    <small style="color:#7f8c8d;">Style: American IPA</small>
+                    <div class="spec-row">
+                        <div class="spec-item"><span class="spec-val">1.062</span>Target OG</div>
+                        <div class="spec-item"><span class="spec-val">1.012</span>Target FG</div>
+                        <div class="spec-item"><span class="spec-val">6.5%</span>ABV</div>
+                        <div class="spec-item"><span class="spec-val">65</span>IBU</div>
+                    </div>
+                    <p style="font-size:0.85rem; color:#555;"><strong>Key Hops:</strong> Chinook, Centennial, Simcoe.</p>
+                    <button class="btn-add" style="width:100%;" onclick="alert('Loading recipe to Brew Log...')">Start This Brew</button>
+                </div>
+
+                <div class="recipe-card">
+                    <span class="recipe-badge">Seasonal</span>
+                    <h3 style="margin:0;">Suburban Pils</h3>
+                    <small style="color:#7f8c8d;">Style: German Pilsner</small>
+                    <div class="spec-row">
+                        <div class="spec-item"><span class="spec-val">1.048</span>Target OG</div>
+                        <div class="spec-item"><span class="spec-val">1.008</span>Target FG</div>
+                        <div class="spec-item"><span class="spec-val">5.2%</span>ABV</div>
+                        <div class="spec-item"><span class="spec-val">35</span>IBU</div>
+                    </div>
+                    <p style="font-size:0.85rem; color:#555;"><strong>Key Hops:</strong> Hallertau Mittelfruh, Saaz.</p>
+                    <button class="btn-add" style="width:100%;" onclick="alert('Loading recipe to Brew Log...')">Start This Brew</button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function toggleEditor() {
+            const editor = document.getElementById('recipe-editor');
+            editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function addIngredient(listId) {
+            const container = document.getElementById(listId);
+            const newEntry = container.children[0].cloneNode(true);
+            // Clear inputs in cloned node
+            const inputs = newEntry.querySelectorAll('input');
+            inputs.forEach(input => input.value = '');
+            container.appendChild(newEntry);
+        }
+
+        function saveRecipe() {
+            const name = document.getElementById('edit-name').value;
+            if(!name) { alert("Please enter a beer name."); return; }
+            alert("Recipe '" + name + "' saved to the Recipes tab!");
+            toggleEditor();
+        }
+    </script>
+</body>
+</html>
