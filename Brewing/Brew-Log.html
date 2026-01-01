@@ -439,65 +439,60 @@
                 <input type="time">
             </div>
             <div class="input-group">
-                <label>Total KO Volume</label>
-                <input type="text" placeholder="e.g. 12.5 BBL">
+                <label>Total KO Volume (BBL)</label>
+                <input type="number" id="ko-volume" value="12.5" oninput="calculatePitchRate()">
+            </div>
+        </div>
+
+        <h4 class="sub-section-title">Yeast Source & Pitch Calculation</h4>
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Yeast Source</label>
+                <select id="yeast-source-type" onchange="toggleYeastSource(this)" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;">
+                    <option value="inventory">New (From Inventory Sheet)</option>
+                    <option value="batch">Harvest (From Previous Batch)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label id="source-label">Supplier Lot #</label>
+                <input type="text" id="yeast-source-id" placeholder="Enter Lot or Batch #" onchange="runBridgingLogic(this)">
+            </div>
+            <div class="input-group">
+                <label>Target Pitch Rate (cells/mL/°P)</label>
+                <input type="number" id="target-pitch-rate" value="0.75" step="0.05" oninput="calculatePitchRate()">
             </div>
         </div>
 
         <div class="form-grid">
             <div class="input-group">
-                <label>Target OG</label>
-                <input type="text" value="1.052" readonly style="background:#f0f0f0;">
+                <label>Cell Count (Billion cells/mL)</label>
+                <input type="number" id="cell-count" placeholder="e.g. 1.2" oninput="calculatePitchRate()">
             </div>
             <div class="input-group">
-                <label>Actual KO Gravity (OG)</label>
-                <input type="text" placeholder="e.g. 1.054">
-            </div>
-            <div class="input-group">
-                <label>KO Temp (°F)</label>
-                <input type="text" placeholder="e.g. 68°F">
+                <label><strong>Calculated Pitch Qty (kg/L)</strong></label>
+                <input type="text" id="calculated-pitch" readonly style="background:#e8f5e9; font-weight:bold; color:#2e7d32;">
             </div>
         </div>
 
-        <h4 class="sub-section-title">Yeast Inventory & Pitching</h4>
+        <h4 class="sub-section-title">Final Pitch Entry</h4>
         <table id="yeast-table">
             <thead>
                 <tr>
-                    <th width="20%">Yeast Strain</th>
-                    <th width="15%">Source Type</th>
-                    <th width="15%">Source Batch / Lot #</th>
-                    <th width="15%">Generation</th>
-                    <th width="15%">Pitch Qty</th>
-                    <th width="10%">Time</th>
+                    <th width="30%">Yeast Strain</th>
+                    <th width="20%">Generation</th>
+                    <th width="25%">Actual Qty Pitched</th>
+                    <th width="25%">Time</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td><input type="text" readonly style="background:#f0f0f0;" value="US-05 American Ale"></td>
-                    <td>
-                        <select style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;">
-                            <option value="fresh">Fresh (Supplier)</option>
-                            <option value="harvest">Harvested (In-House)</option>
-                        </select>
-                    </td>
-                    <td><input type="text" placeholder="Batch # or Lot #" onchange="runBridgingLogic(this)"></td>
-                    <td><input type="number" value="1" placeholder="Gen #"></td>
-                    <td><input type="text" placeholder="e.g. 500g"></td>
+                    <td><input type="number" value="1"></td>
+                    <td><input type="text" placeholder="e.g. 5.2 kg"></td>
                     <td><input type="time"></td>
                 </tr>
             </tbody>
         </table>
-
-        <div class="form-grid" style="margin-top:20px;">
-            <div class="input-group">
-                <label>Aeration Rate (L/min)</label>
-                <input type="text" placeholder="e.g. 2.0">
-            </div>
-            <div class="input-group" style="grid-column: span 2;">
-                <label>Yeast & KO Notes</label>
-                <input type="text" placeholder="Viability, brink pressure, cold break quality...">
-            </div>
-        </div>
     </div>
 </div>
 </div>
