@@ -1,31 +1,271 @@
-<div id="cellar-management-page" style="display:none;">
-    <div class="page-header">
-        <h2>Cellar Management</h2>
-        <div class="vessel-legend">
-            <span class="badge bbl-10">10 BBL</span>
-            <span class="badge bbl-1">1 BBL</span>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suburban Brewing - Cellar Management</title>
+    <style>
+        :root {
+            --primary-dark: #2c3e50;
+            --accent-blue: #3498db;
+            --accent-green: #27ae60;
+            --accent-brite: #f39c12;
+            --bg-gray: #f4f7f6;
+            --sidebar-width: 240px;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            background-color: var(--bg-gray);
+        }
+
+        /* --- SIDEBAR NAVIGATION --- */
+        #sidebar {
+            width: var(--sidebar-width);
+            background: var(--primary-dark);
+            height: 100vh;
+            color: white;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header { padding: 25px; border-bottom: 1px solid #34495e; text-align: center; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+        .sidebar-menu li { 
+            padding: 15px 25px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            border-bottom: 1px solid #34495e;
+            color: #bdc3c7;
+        }
+        .sidebar-menu li:hover { background: #34495e; color: white; }
+        .active-nav { background: var(--accent-blue) !important; color: white !important; }
+
+        /* --- MAIN CONTENT AREA --- */
+        #main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+        }
+
+        .header-bar {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container { padding: 30px; }
+
+        /* --- VESSEL CARDS & GRIDS --- */
+        .vessel-section { margin-bottom: 40px; }
+        .section-title { 
+            border-left: 5px solid var(--primary-dark); 
+            padding-left: 15px; 
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+        }
+
+        .vessel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .vessel-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px 15px;
+            text-align: center;
+            border: 2px solid #dfe6e9;
+            transition: 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .vessel-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .vessel-card h4 { margin: 0 0 10px 0; color: var(--primary-dark); font-size: 1.2rem; }
+        
+        .status-tag {
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: #f1f2f6;
+            color: #a4b0be;
+        }
+
+        /* Color Variations */
+        .vessel-card.pilot { border-style: dashed; }
+        .vessel-card.brite { border-top: 5px solid var(--accent-brite); }
+        .vessel-card.in-use { border-color: var(--accent-green); background: #f0fff4; }
+        .vessel-card.in-use .status-tag { background: var(--accent-green); color: white; }
+
+        .batch-label {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* --- MODAL FOR UPDATES --- */
+        #vessel-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+            width: 400px;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h2 style="margin:0; font-size: 1.2rem; letter-spacing: 2px;">SUBURBAN</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li onclick="location.reload()">Brew Log</li>
+            <li class="active-nav">Cellar Management</li>
+            <li>Ingredient Inventory</li>
+            <li>Packaging Log</li>
+        </ul>
+    </nav>
+
+    <main id="main-content">
+        <div class="header-bar">
+            <h1 style="font-size: 1.3rem; margin: 0;">Brewery Operations Portal</h1>
+            <div id="date-display">2026-01-01</div>
+        </div>
+
+        <div class="container">
+            
+            <div class="vessel-section">
+                <h3 class="section-title">Main Fermenters (10 BBL)</h3>
+                <div class="vessel-grid">
+                    <div class="vessel-card empty" id="FV-10-01" onclick="openVessel('FV-01')">
+                        <h4>FV-01</h4>
+                        <span class="status-tag">EMPTY</span>
+                        <div class="batch-label">No Active Batch</div>
+                    </div>
+                    <div class="vessel-card empty" id="FV-10-02" onclick="openVessel('FV-02')">
+                        <h4>FV-02</h4>
+                        <span class="status-tag">EMPTY</span>
+                        <div class="batch-label">No Active Batch</div>
+                    </div>
+                    <div class="vessel-card empty" id="FV-10-03" onclick="openVessel('FV-03')">
+                        <h4>FV-03</h4>
+                        <span class="status-tag">EMPTY</span>
+                        <div class="batch-label">No Active Batch</div>
+                    </div>
+                    <div class="vessel-card empty" id="FV-10-04" onclick="openVessel('FV-04')">
+                        <h4>FV-04</h4>
+                        <span class="status-tag">EMPTY</span>
+                        <div class="batch-label">No Active Batch</div>
+                    </div>
+                    <div class="vessel-card empty" id="FV-10-05" onclick="openVessel('FV-05')">
+                        <h4>FV-05</h4>
+                        <span class="status-tag">EMPTY</span>
+                        <div class="batch-label">No Active Batch</div>
+                    </div>
+                    <div class="vessel-card empty" id="FV-10-06" onclick="openVessel('FV-06')">
+                        <h4>FV-06</h4>
+                        <span class="status-tag">EMPTY</span>
+                        <div class="batch-label">No Active Batch</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vessel-section">
+                <h3 class="section-title">Pilot System (1 BBL)</h3>
+                <div class="vessel-grid">
+                    <div class="vessel-card pilot empty" id="FV-01-01" onclick="openVessel('P-FV-01')">
+                        <h4>P-FV-01</h4>
+                        <span class="status-tag">EMPTY</span>
+                        <div class="batch-label">No Active Batch</div>
+                    </div>
+                    <div class="vessel-card pilot empty" id="FV-01-02" onclick="openVessel('P-FV-02')">
+                        <h4>P-FV-02</h4>
+                        <span class="status-tag">EMPTY</span>
+                        <div class="batch-label">No Active Batch</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vessel-section">
+                <h3 class="section-title">Brite Tanks (10 BBL)</h3>
+                <div class="vessel-grid">
+                    <div class="vessel-card brite empty" id="BT-10-01" onclick="openVessel('BT-01')">
+                        <h4>BT-01</h4>
+                        <span class="status-tag">EMPTY</span>
+                        <div class="batch-label">No Active Batch</div>
+                    </div>
+                    <div class="vessel-card brite empty" id="BT-10-02" onclick="openVessel('BT-02')">
+                        <h4>BT-02</h4>
+                        <span class="status-tag">EMPTY</span>
+                        <div class="batch-label">No Active Batch</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div class="overlay" id="overlay" onclick="closeModal()"></div>
+    <div id="vessel-modal">
+        <h2 id="modal-vessel-name">Vessel Details</h2>
+        <hr>
+        <p><strong>Current Status:</strong> <span id="modal-status">Empty</span></p>
+        <div style="margin-top: 20px;">
+            <button style="width:100%; padding: 10px; background: var(--accent-blue); color: white; border:none; border-radius: 5px; cursor:pointer;" onclick="alert('Saving to Cellar Log Tab...')">
+                Update Gravity / Temp
+            </button>
+            <button style="width:100%; padding: 10px; background: #eee; border:none; border-radius: 5px; cursor:pointer; margin-top:10px;" onclick="closeModal()">
+                Close
+            </button>
         </div>
     </div>
 
-    <h3>Fermenters (10 BBL)</h3>
-    <div class="vessel-grid">
-        <div class="vessel-card" id="FV-10-01"><h4>FV-01</h4><p class="status">Empty</p></div>
-        <div class="vessel-card" id="FV-10-02"><h4>FV-02</h4><p class="status">Empty</p></div>
-        <div class="vessel-card" id="FV-10-03"><h4>FV-03</h4><p class="status">Empty</p></div>
-        <div class="vessel-card" id="FV-10-04"><h4>FV-04</h4><p class="status">Empty</p></div>
-        <div class="vessel-card" id="FV-10-05"><h4>FV-05</h4><p class="status">Empty</p></div>
-        <div class="vessel-card" id="FV-10-06"><h4>FV-06</h4><p class="status">Empty</p></div>
-    </div>
+    <script>
+        function openVessel(vesselName) {
+            document.getElementById('modal-vessel-name').innerText = "Vessel: " + vesselName;
+            document.getElementById('vessel-modal').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
 
-    <h3>Pilot Fermenters (1 BBL)</h3>
-    <div class="vessel-grid">
-        <div class="vessel-card pilot" id="FV-01-01"><h4>P-FV-01</h4><p class="status">Empty</p></div>
-        <div class="vessel-card pilot" id="FV-01-02"><h4>P-FV-02</h4><p class="status">Empty</p></div>
-    </div>
+        function closeModal() {
+            document.getElementById('vessel-modal').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
 
-    <h3>Brite Tanks (10 BBL)</h3>
-    <div class="vessel-grid">
-        <div class="vessel-card brite" id="BT-10-01"><h4>BT-01</h4><p class="status">Empty</p></div>
-        <div class="vessel-card brite" id="BT-10-02"><h4>BT-02</h4><p class="status">Empty</p></div>
-    </div>
-</div>
+        // Future Logic: This will connect to Code.gs to populate data
+        window.onload = function() {
+            console.log("Cellar Dashboard Initialized.");
+        };
+    </script>
+</body>
+</html>
