@@ -185,6 +185,33 @@
                 btn.innerText = "Save Activity & Analyze";
             }
         };
+        async function checkExisting() {
+    const nameInput = document.getElementById("name").value.trim();
+    if (!nameInput) return;
+
+    try {
+        // Fetches from the 'Sales Leads' sheet via backend
+        const response = await fetch(`${API_URL}?action=getSalesLeads`);
+        const leads = await response.json();
+
+        // Match existing customer
+        const match = leads.find(l => l.name.toLowerCase() === nameInput.toLowerCase());
+
+        if (match) {
+            // Auto-fill known data
+            document.getElementById("manager").value = match.manager || "";
+            document.getElementById("address").value = match.address || "";
+            document.getElementById("phone").value = match.phone || "";
+            document.getElementById("email").value = match.email || "";
+            
+            // Visual feedback
+            document.getElementById("name").style.borderColor = "#34c759";
+            console.log("Existing lead found: " + match.name);
+        }
+    } catch (err) {
+        console.error("CheckExisting Error:", err);
+    }
+}
     </script>
 </body>
 </html>
