@@ -29,11 +29,13 @@
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
         .container { padding: 30px; max-width: 1100px; margin: 0 auto; }
 
-        /* --- EDITOR STYLING --- */
-        .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent); box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; }
-        .recipe-section { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
-        .section-title { font-size: 0.8rem; font-weight: bold; color: var(--primary-dark); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        
+        /* --- EDITOR & COLLAPSIBLE STYLING --- */
+        .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .collapsible-header { background: #f8f9fa; padding: 12px 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: #374151; transition: 0.2s; }
+        .collapsible-header:hover { background: #edf2f7; }
+        .collapsible-content { padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; display: none; background: white; }
+        .collapsible-content.active { display: block; }
+
         .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px; }
         .ingredient-entry { display: grid; grid-template-columns: 3fr 1fr 1fr; gap: 10px; margin-bottom: 8px; }
         
@@ -41,7 +43,7 @@
         .btn-add-line { background: #f3f4f6; border: 1px solid #d1d5db; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
         
         .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 25px; }
-        .btn-cancel { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; float: right; }
+        .btn-cancel { background: #6b7280; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
 
         /* --- GRID STYLING --- */
         .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
@@ -94,78 +96,123 @@
         </div>
 
         <div class="container">
-    <div id="master-editor" class="editor-card" style="display:none; margin-bottom: 40px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 id="editor-heading" style="margin:0;">Master Recipe Editor</h2>
-            <button class="btn-cancel" onclick="closeEditor()" style="background:#6b7280; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">Close Editor</button>
-        </div>
-
-        <div class="collapsible-header" onclick="toggleSection('basic-info')">1. Basic Information ▾</div>
-        <div id="basic-info" class="collapsible-content active">
-            <div class="form-row">
-                <div><label>Recipe Name</label><input type="text" id="edit-name"></div>
-                <div><label>Style</label><input type="text" id="edit-style"></div>
-                <div><label>Target OG</label><input type="number" step="0.001" id="edit-og"></div>
-                <div><label>Target FG</label><input type="number" step="0.001" id="edit-fg"></div>
-            </div>
-        </div>
-
-        <div class="collapsible-header" onclick="toggleSection('water-section')">2. Water & Mash pH ▾</div>
-        <div id="water-section" class="collapsible-content">
-            <div class="form-row">
-                <div><label>Foundation (Gal)</label><input type="number" id="water-foundation"></div>
-                <div><label>Mash-In (Gal)</label><input type="number" id="water-mash"></div>
-                <div><label>Target Mash pH</label><input type="number" step="0.01" id="mash-ph" placeholder="5.4"></div>
-            </div>
-        </div>
-
-        <button class="btn-save" onclick="collectAndSaveRecipe()">Save Master Recipe</button>
-    </div>
-
-    <div id="recipe-list-view">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2>Current Brand Portfolio</h2>
-            <button onclick="openEditor('NEW')" style="background: var(--primary-dark); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Create New Recipe</button>
-        </div>
-
-        <div class="recipe-grid">
-            <div class="recipe-card">
-                <div class="card-header">
-                    <strong style="font-size: 1.2rem;">Suburban IPA</strong>
-                    <span class="style-tag">West Coast</span>
+            <div id="master-editor" class="editor-card" style="display:none; margin-bottom: 40px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 id="editor-heading" style="margin:0;">Master Recipe Editor</h2>
+                    <button class="btn-cancel" onclick="closeEditor()">Close Editor</button>
                 </div>
-                <div class="spec-bar">
-                    <div class="spec-item"><label>OG</label><span>1.062</span></div>
-                    <div class="spec-item"><label>Mash pH</label><span>5.35</span></div>
-                    <div class="spec-item"><label>KO Vol</label><span>10.5 BBL</span></div>
-                    <div class="spec-item"><label>ABV</label><span>6.5%</span></div>
+
+                <div class="collapsible-header" onclick="toggleSection('basic-info')">1. Basic Information ▾</div>
+                <div id="basic-info" class="collapsible-content active">
+                    <div class="form-row">
+                        <div><label>Recipe Name</label><input type="text" id="edit-name"></div>
+                        <div><label>Style</label><input type="text" id="edit-style"></div>
+                        <div><label>Target OG</label><input type="number" step="0.001" id="edit-og"></div>
+                        <div><label>Target FG</label><input type="number" step="0.001" id="edit-fg"></div>
+                    </div>
                 </div>
-                <button class="btn-save" style="padding: 10px; font-size: 0.9rem; margin-top: 10px; background: var(--accent-orange);" 
-                        onclick="openEditor('EDIT', 'Suburban IPA')">Edit Master Recipe</button>
+
+                <div class="collapsible-header" onclick="toggleSection('water-section')">2. Water & Mash pH ▾</div>
+                <div id="water-section" class="collapsible-content">
+                    <div class="form-row">
+                        <div><label>Foundation (Gal)</label><input type="number" id="water-foundation"></div>
+                        <div><label>Mash-In (Gal)</label><input type="number" id="water-mash"></div>
+                        <div><label>Sparge (Gal)</label><input type="number" id="water-sparge"></div>
+                        <div><label>Target Mash pH</label><input type="number" step="0.01" id="mash-ph"></div>
+                    </div>
+                </div>
+
+                <div class="collapsible-header" onclick="toggleSection('grain-section')">3. Grain Bill ▾</div>
+                <div id="grain-section" class="collapsible-content">
+                    <div id="grain-container">
+                        <div class="ingredient-entry">
+                            <input type="text" placeholder="Malt Name">
+                            <input type="number" placeholder="Lbs">
+                            <input type="text" placeholder="%">
+                        </div>
+                    </div>
+                    <button class="btn-add-line" onclick="addLine('grain-container')">+ Add Malt</button>
+                </div>
+
+                <div class="collapsible-header" onclick="toggleSection('boil-section')">4. Boil Additions & Hop AA% ▾</div>
+                <div id="boil-section" class="collapsible-content">
+                    <div id="boil-container">
+                        <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
+                            <input type="text" placeholder="Hop/Addition">
+                            <input type="number" step="0.1" placeholder="AA %">
+                            <input type="number" placeholder="Weight (oz)">
+                            <input type="number" placeholder="Time (min)">
+                        </div>
+                    </div>
+                    <button class="btn-add-line" onclick="addLine('boil-container')">+ Add Addition</button>
+                </div>
+
+                <div class="collapsible-header" onclick="toggleSection('ko-section')">5. Knockout & Yeast ▾</div>
+                <div id="ko-section" class="collapsible-content">
+                    <div class="form-row">
+                        <div><label>KO Volume (BBL)</label><input type="number" step="0.1" id="ko-vol"></div>
+                        <div><label>Yeast Strain</label><input type="text" id="yeast-strain"></div>
+                        <div><label>Pitch Rate</label><input type="number" step="0.1" id="pitch-rate"></div>
+                    </div>
+                </div>
+
+                <button class="btn-save" onclick="saveRecipe()">Save Master Recipe</button>
+            </div>
+
+            <div id="recipe-list-view">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Current Brand Portfolio</h2>
+                </div>
+
+                <div class="recipe-grid">
+                    <div class="recipe-card">
+                        <div class="card-header">
+                            <strong style="font-size: 1.2rem;">Suburban IPA</strong>
+                            <span class="style-tag">West Coast</span>
+                        </div>
+                        <div class="spec-bar">
+                            <div class="spec-item"><label>OG</label><span>1.062</span></div>
+                            <div class="spec-item"><label>Mash pH</label><span>5.35</span></div>
+                            <div class="spec-item"><label>KO Vol</label><span>10.5 BBL</span></div>
+                            <div class="spec-item"><label>ABV</label><span>6.5%</span></div>
+                        </div>
+                        <button class="btn-save" style="padding: 10px; font-size: 0.9rem; margin-top: 10px; background: var(--accent-orange);" 
+                                onclick="openEditor('EDIT', 'Suburban IPA')">Edit Master Recipe</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
     <script>
-        function openEditor(mode, name='') {
-    document.getElementById('recipe-list-view').style.display = 'none'; // Hide cards
-    document.getElementById('master-editor').style.display = 'block'; // Show editor
-    
-    if(mode === 'NEW') {
-        document.getElementById('editor-heading').innerText = "Create New Recipe";
-        // Clear all inputs...
-    } else {
-        document.getElementById('editor-heading').innerText = "Editing: " + name;
-        // Fetch data from Sheets to populate...
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const isActive = section.classList.contains('active');
+            
+            // Optional: Close others for a clean accordion effect
+            document.querySelectorAll('.collapsible-content').forEach(el => el.classList.remove('active'));
+            
+            if (!isActive) {
+                section.classList.add('active');
+            }
+        }
 
-function closeEditor() {
-    document.getElementById('master-editor').style.display = 'none'; // Hide editor
-    document.getElementById('recipe-list-view').style.display = 'block'; // Show cards
-}
+        function openEditor(mode, name='') {
+            document.getElementById('recipe-list-view').style.display = 'none';
+            document.getElementById('master-editor').style.display = 'block';
+            
+            if(mode === 'NEW') {
+                document.getElementById('editor-heading').innerText = "Create New Recipe";
+            } else {
+                document.getElementById('editor-heading').innerText = "Editing: " + name;
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function closeEditor() {
+            document.getElementById('master-editor').style.display = 'none';
+            document.getElementById('recipe-list-view').style.display = 'block';
+        }
 
         function addLine(containerId) {
             const container = document.getElementById(containerId);
@@ -175,7 +222,7 @@ function closeEditor() {
         }
 
         function saveRecipe() {
-            Swal.fire('Saved!', 'Recipe data updated in Google Sheets.', 'success');
+            Swal.fire('Saved!', 'Recipe data updated across all Sheets tabs.', 'success');
             closeEditor();
         }
     </script>
