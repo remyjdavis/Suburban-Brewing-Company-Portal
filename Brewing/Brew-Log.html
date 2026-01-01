@@ -420,6 +420,42 @@
             }
         }
     }
+    /**
+ * 5. FINAL BREW LOG SUBMISSION
+ * Triggers when the brewer clicks "Complete Brew"
+ */
+function completeBrewLog() {
+    // 1. Gather the data from the final stage
+    const brewData = {
+        batchId: document.getElementById('batchId').value,
+        beerName: document.getElementById('beerName').value,
+        vessel: document.getElementById('vessel-select')?.value || "Unassigned",
+        volume: document.getElementById('ko-volume')?.value || "0",
+        timestamp: new Date().toLocaleString()
+    };
+
+    // 2. Validation: Ensure essential info is present
+    if (!brewData.batchId || !brewData.beerName) {
+        alert("Batch ID and Beer Name are required to log the brew.");
+        return;
+    }
+
+    // 3. Visual Lock of the Final Section
+    saveAndAdvance('ko-yeast-content', null);
+
+    // 4. Send to Google Apps Script (.gs)
+    // This will send the data to your Master Log sheet
+    google.script.run
+        .withSuccessHandler(() => {
+            document.getElementById('active-stage-display').innerText = "BREW LOGGED SUCCESSFULLY";
+            document.getElementById('active-stage-display').style.background = "#2e7d32";
+            alert(`Success! ${brewData.beerName} (${brewData.batchId}) is now in the Master Log.`);
+        })
+        .withFailureHandler((err) => {
+            alert("Error saving to Master Log: " + err.message);
+        })
+        .appendBrewToMasterLog(brewData); 
+}
 </script>
 
 </body>
