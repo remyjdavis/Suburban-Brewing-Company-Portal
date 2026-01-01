@@ -463,18 +463,25 @@
         <table id="yeast-table">
             <thead>
                 <tr>
-                    <th width="30%">Yeast Strain</th>
-                    <th width="20%">Supplier</th>
-                    <th width="20%">Lot # / Generation</th>
-                    <th width="15%">Pitch Weight/Qty</th>
-                    <th width="15%">Pitch Time</th>
+                    <th width="20%">Yeast Strain</th>
+                    <th width="15%">Source Type</th>
+                    <th width="15%">Source Batch / Lot #</th>
+                    <th width="15%">Generation</th>
+                    <th width="15%">Pitch Qty</th>
+                    <th width="10%">Time</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td><input type="text" readonly style="background:#f0f0f0;" value="US-05 American Ale"></td>
-                    <td><input type="text" placeholder="Supplier" value="Fermentis"></td>
-                    <td><input type="text" placeholder="Lot #" onchange="runBridgingLogic(this)"></td>
+                    <td>
+                        <select style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;">
+                            <option value="fresh">Fresh (Supplier)</option>
+                            <option value="harvest">Harvested (In-House)</option>
+                        </select>
+                    </td>
+                    <td><input type="text" placeholder="Batch # or Lot #" onchange="runBridgingLogic(this)"></td>
+                    <td><input type="number" value="1" placeholder="Gen #"></td>
                     <td><input type="text" placeholder="e.g. 500g"></td>
                     <td><input type="time"></td>
                 </tr>
@@ -493,8 +500,6 @@
         </div>
     </div>
 </div>
-    <div id="follow-up-sheet"></div>
-
 </div>
 
 <script>
