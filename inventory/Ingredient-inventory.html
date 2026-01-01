@@ -30,7 +30,8 @@
 
         /* --- INVENTORY SECTIONS --- */
         .inventory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
-        .section-card { background: white; border-radius: 8px; border: 1px solid #ddd; overflow: hidden; }
+        .section-card { background: white; border-radius: 8px; border: 1px solid #ddd; overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .section-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--accent-blue); }
         .section-header { background: #eee; padding: 12px 15px; font-weight: bold; color: var(--primary-dark); border-bottom: 1px solid #ddd; }
         .item-list { padding: 0; margin: 0; list-style: none; }
         .item-row { padding: 10px 15px; border-bottom: 1px dotted #eee; display: flex; justify-content: space-between; }
@@ -44,6 +45,18 @@
         .form-group label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; }
         .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         
+        /* Dynamic COA Container */
+        #coa-fields-container:not(:empty) {
+            background: #fdfdfd;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
         .btn-scan { background: var(--primary-dark); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
         .btn-save { background: var(--accent-green); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 15px; font-weight: bold; }
     </style>
@@ -69,44 +82,42 @@
         <div class="container">
             
             <div class="add-card">
-    <h3 style="margin-top:0;">Inventory Entry Portal</h3>
-    <div id="reader" style="display:none;"></div>
-    
-    <div class="form-row">
-        <div class="form-group">
-            <label>Category</label>
-            <select id="inv-cat" onchange="renderDynamicFields()">
-                <option value="">Select Category...</option>
-                <option value="Malt">Malt/Grain</option>
-                <option value="Hops">Hops</option>
-                <option value="Yeast">Yeast</option>
-                <option value="Salts">Salts & Water</option>
-                <option value="Packaging">Packaging</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Item Name</label>
-            <input type="text" id="inv-name" placeholder="e.g. Citra">
-        </div>
-        <div class="form-group">
-            <label>Lot Number</label>
-            <input type="text" id="inv-lot" placeholder="Scan or Type Lot">
-        </div>
-        <div class="form-group">
-            <label>Quantity</label>
-            <input type="number" id="inv-qty" placeholder="0.00">
-        </div>
-    </div>
+                <h3 style="margin-top:0;">Inventory Entry Portal</h3>
+                <div id="reader" style="display:none;"></div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="inv-cat" onchange="renderDynamicFields()">
+                            <option value="">Select Category...</option>
+                            <option value="Malt">Malt/Grain</option>
+                            <option value="Hops">Hops</option>
+                            <option value="Yeast">Yeast</option>
+                            <option value="Salts">Salts & Water</option>
+                            <option value="Packaging">Packaging</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Item Name</label>
+                        <input type="text" id="inv-name" placeholder="e.g. Citra">
+                    </div>
+                    <div class="form-group">
+                        <label>Lot Number</label>
+                        <input type="text" id="inv-lot" placeholder="Scan or Type Lot">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="inv-qty" placeholder="0.00">
+                    </div>
+                </div>
 
-    <div id="coa-fields-container" class="form-row" style="margin-top:20px; border-top: 1px solid #eee; padding-top:15px;">
-        </div>
+                <div id="coa-fields-container" class="form-row"></div>
 
-    <button class="btn-save" onclick="saveInventory()">Update Inventory Levels</button>
-</div>
+                <button class="btn-save" onclick="saveInventory()">Update Inventory Levels</button>
+            </div>
 
-        
             <div class="inventory-grid">
-                <div class="section-card">
+                <div class="section-card" onclick="setCategoryAndScroll('Malt')">
                     <div class="section-header">Malt / Grains</div>
                     <ul class="item-list">
                         <li class="item-row"><span>Pilsner (Weyermann)</span> <span class="qty">1,250 lbs</span></li>
@@ -114,7 +125,7 @@
                     </ul>
                 </div>
 
-                <div class="section-card">
+                <div class="section-card" onclick="setCategoryAndScroll('Hops')">
                     <div class="section-header">Hops</div>
                     <ul class="item-list">
                         <li class="item-row"><span>Citra (T-90)</span> <span class="qty">88 lbs</span></li>
@@ -122,7 +133,7 @@
                     </ul>
                 </div>
 
-                <div class="section-card">
+                <div class="section-card" onclick="setCategoryAndScroll('Packaging')">
                     <div class="section-header">Packaging (Cans & Lids)</div>
                     <ul class="item-list">
                         <li class="item-row"><span>16oz Brite Cans</span> <span class="qty">4,500 units</span></li>
@@ -130,7 +141,7 @@
                     </ul>
                 </div>
 
-                <div class="section-card">
+                <div class="section-card" onclick="setCategoryAndScroll('Yeast')">
                     <div class="section-header">Yeast</div>
                     <ul class="item-list">
                         <li class="item-row"><span>US-05 (Dry)</span> <span class="qty">15 bricks</span></li>
@@ -138,19 +149,11 @@
                     </ul>
                 </div>
 
-                <div class="section-card">
+                <div class="section-card" onclick="setCategoryAndScroll('Salts')">
                     <div class="section-header">Salts & Water Prep</div>
                     <ul class="item-list">
                         <li class="item-row"><span>Calcium Chloride</span> <span class="qty">10 kg</span></li>
                         <li class="item-row"><span>Gypsum</span> <span class="qty">8 kg</span></li>
-                    </ul>
-                </div>
-
-                <div class="section-card">
-                    <div class="section-header">Other Ingredients</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>Whirlfloc G</span> <span class="qty">5 lbs</span></li>
-                        <li class="item-row"><span>Dextrose</span> <span class="qty">50 lbs</span></li>
                     </ul>
                 </div>
             </div>
@@ -174,91 +177,119 @@
         function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
             html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-                // When a QR is scanned, put it in the Name field
-                document.getElementById('inv-name').value = decodedText;
-                // Auto-hide scanner after success
+                processScan(decodedText);
                 toggleScanner();
             });
         }
-function renderDynamicFields() {
-    const cat = document.getElementById('inv-cat').value;
-    const container = document.getElementById('coa-fields-container');
-    container.innerHTML = ""; 
 
-    let html = "";
+        function setCategoryAndScroll(cat) {
+            const selector = document.getElementById('inv-cat');
+            selector.value = cat;
+            renderDynamicFields();
+            document.querySelector('.add-card').scrollIntoView({ behavior: 'smooth' });
+        }
 
-    if (cat === "Malt") {
-        html = `
-            <div class="form-group"><label>Maltster</label><input type="text" id="m-source"></div>
-            <div class="form-group"><label>Extract FGDB %</label><input type="number" id="m-ext"></div>
-            <div class="form-group"><label>Color (°L)</label><input type="number" id="m-color"></div>
-            <div class="form-group"><label>Protein %</label><input type="number" id="m-prot"></div>
-            <div class="form-group"><label>S/T Ratio</label><input type="number" id="m-st"></div>
-            <div class="form-group"><label>FAN (mg/L)</label><input type="number" id="m-fan"></div>
-        `;
-    } else if (cat === "Hops") {
-        html = `
-            <div class="form-group"><label>Alpha Acid %</label><input type="number" id="h-alpha"></div>
-            <div class="form-group"><label>Beta Acid %</label><input type="number" id="h-beta"></div>
-            <div class="form-group"><label>Total Oil (mL/100g)</label><input type="number" id="h-oil"></div>
-            <div class="form-group"><label>Myrcene %</label><input type="number" id="h-myr"></div>
-            <div class="form-group"><label>HSI</label><input type="number" id="h-hsi"></div>
-        `;
-    } else if (cat === "Yeast") {
-        html = `
-            <div class="form-group"><label>Source (Lab or Batch #)</label><input type="text" id="y-source"></div>
-            <div class="form-group"><label>Gen #</label><input type="number" id="y-gen"></div>
-            <div class="form-group"><label>Viability %</label><input type="number" id="y-viab"></div>
-            <div class="form-group"><label>Cell Count (B/mL)</label><input type="number" id="y-cells"></div>
-            <div class="form-group"><label>Diastaticus Screen</label><select id="y-dia"><option>Negative</option><option>Positive</option></select></div>
-        `;
-    } else if (cat === "Salts") {
-        html = `
-            <div class="form-group"><label>Purity %</label><input type="number" id="s-purity"></div>
-            <div class="form-group"><label>pH Impact</label><input type="number" id="s-ph"></div>
-            <div class="form-group"><label>Solubility</label><input type="text" id="s-sol"></div>
-        `;
-    } else if (cat === "Packaging") {
-        html = `
-            <div class="form-group"><label>Lining Type</label><input type="text" id="p-lining"></div>
-            <div class="form-group"><label>Dimensions</label><input type="text" id="p-dims"></div>
-            <div class="form-group"><label>Finish/Neck</label><input type="text" id="p-neck"></div>
-        `;
-    }
+        function processScan(decodedText) {
+            if (decodedText.includes("Lot:") && (decodedText.includes("Alpha:") || decodedText.includes("Oil:"))) {
+                parseYCHHops(decodedText);
+            } 
+            else if (decodedText.includes("SKU-CAN") || decodedText.includes("LID") || decodedText.startsWith("PLT")) {
+                parsePackagingScan(decodedText);
+            }
+            else if (decodedText.startsWith("http")) {
+                document.getElementById('inv-lot').value = "URL Detected";
+                window.open(decodedText, '_blank'); 
+            }
+            else {
+                document.getElementById('inv-lot').value = decodedText;
+            }
+        }
 
-    container.innerHTML = html;
-}
+        function parseYCHHops(data) {
+            setCategoryAndScroll('Hops');
+            const parts = data.split(',');
+            parts.forEach(part => {
+                const [key, val] = part.split(':');
+                if (key.trim() === "Lot") document.getElementById('inv-lot').value = val.trim();
+                if (key.trim() === "Alpha") document.getElementById('h-alpha').value = val.trim();
+                if (key.trim() === "Oil") document.getElementById('h-oil').value = val.trim();
+            });
+        }
 
-    container.innerHTML = html;
-}
+        function parsePackagingScan(decodedText) {
+            setCategoryAndScroll('Packaging');
+            document.getElementById('inv-lot').value = decodedText;
+            if (decodedText.startsWith("PLT")) {
+                document.getElementById('inv-qty').value = 2000;
+            } else {
+                document.getElementById('inv-qty').value = 24;
+            }
+        }
+
+        function renderDynamicFields() {
+            const cat = document.getElementById('inv-cat').value;
+            const container = document.getElementById('coa-fields-container');
+            container.innerHTML = ""; 
+            let html = "";
+
+            if (cat === "Malt") {
+                html = `
+                    <div class="form-group"><label>Maltster</label><input type="text" id="m-source"></div>
+                    <div class="form-group"><label>Extract %</label><input type="number" id="m-ext"></div>
+                    <div class="form-group"><label>Color (°L)</label><input type="number" id="m-color"></div>
+                    <div class="form-group"><label>Protein %</label><input type="number" id="m-prot"></div>
+                `;
+            } else if (cat === "Hops") {
+                html = `
+                    <div class="form-group"><label>Alpha Acid %</label><input type="number" id="h-alpha"></div>
+                    <div class="form-group"><label>Total Oil</label><input type="number" id="h-oil"></div>
+                    <div class="form-group"><label>HSI</label><input type="number" id="h-hsi"></div>
+                `;
+            } else if (cat === "Yeast") {
+                html = `
+                    <div class="form-group"><label>Gen #</label><input type="number" id="y-gen"></div>
+                    <div class="form-group"><label>Viability %</label><input type="number" id="y-viab"></div>
+                    <div class="form-group"><label>Cell Count</label><input type="text" id="y-cells"></div>
+                `;
+            } else if (cat === "Salts") {
+                html = `
+                    <div class="form-group"><label>Purity %</label><input type="number" id="s-purity"></div>
+                    <div class="form-group"><label>pH Impact</label><input type="number" id="s-ph"></div>
+                `;
+            } else if (cat === "Packaging") {
+                html = `
+                    <div class="form-group"><label>Lining</label><input type="text" id="p-lining"></div>
+                    <div class="form-group"><label>Neck Finish</label><input type="text" id="p-neck"></div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
         function saveInventory() {
-    const cat = document.getElementById('inv-cat').value;
-    const data = {
-        category: cat,
-        name: document.getElementById('inv-name').value,
-        lot: document.getElementById('inv-lot').value,
-        qty: document.getElementById('inv-qty').value,
-        coa: {} // We store all the dynamic "Pro" data here
-    };
+            const cat = document.getElementById('inv-cat').value;
+            const data = {
+                category: cat,
+                name: document.getElementById('inv-name').value,
+                lot: document.getElementById('inv-lot').value,
+                qty: document.getElementById('inv-qty').value,
+                coa: {}
+            };
 
-    // Scrape category-specific data
-    if (cat === "Malt") {
-        data.coa.source = document.getElementById('m-source').value;
-        data.coa.extract = document.getElementById('m-ext').value;
-        data.coa.color = document.getElementById('m-color').value;
-        // ... add others as needed
-    } else if (cat === "Hops") {
-        data.coa.alpha = document.getElementById('h-alpha').value;
-        data.coa.oil = document.getElementById('h-oil').value;
-    }
+            // Mapping for COA data collection
+            if (cat === "Malt") {
+                data.coa.source = document.getElementById('m-source')?.value;
+                data.coa.extract = document.getElementById('m-ext')?.value;
+            } else if (cat === "Hops") {
+                data.coa.alpha = document.getElementById('h-alpha')?.value;
+                data.coa.oil = document.getElementById('h-oil')?.value;
+            }
 
-    // Call your Google Apps Script
-    google.script.run
-        .withSuccessHandler(res => alert("Success: " + res))
-        .processInventoryEntry(data);
-}
+            // Backend Call
+            google.script.run
+                .withSuccessHandler(res => alert("Inventory Updated Successfully"))
+                .processInventoryEntry(data);
+        }
     </script>
 </body>
 </html>
