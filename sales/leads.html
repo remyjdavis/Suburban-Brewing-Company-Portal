@@ -75,7 +75,14 @@
                     </div>
                     <input type="hidden" id="visitType" value="Initial">
                     <input type="hidden" id="accountType" value="Restaurant">
-
+                   
+                    <label>Account Category</label>
+                    <div class="toggle-group">
+                    <div id="btnRest" class="toggle-btn active" onclick="setAccountType('Restaurant')">Restaurant</div>
+                    <div id="btnWhole" class="toggle-btn" onclick="setAccountType('Wholesaler')">Wholesaler</div>
+                    </div>
+                    <input type="hidden" id="accountType" value="Restaurant">
+                    
                     <label>Account Name</label>
                     <input list="customers" id="name" placeholder="Search accounts..." onblur="checkExisting()" required>
                     <datalist id="customers"></datalist>
@@ -185,28 +192,41 @@
                 btn.innerText = "Save Activity & Analyze";
             }
         };
-        async function checkExisting() {
+        // 1. Handles the UI toggle for Restaurant vs Wholesaler
+function setAccountType(type) {
+    document.getElementById('accountType').value = type;
+    document.getElementById('btnRest').classList.toggle('active', type === 'Restaurant');
+    document.getElementById('btnWhole').classList.toggle('active', type === 'Wholesaler');
+    
+    // Refresh the datalist based on the selected category
+    checkExisting(); 
+}
+
+// 2. Updated CheckExisting to filter by the selected Account Type
+async function checkExisting() {
     const nameInput = document.getElementById("name").value.trim();
+    const selectedCategory = document.getElementById("accountType").value;
     if (!nameInput) return;
 
     try {
-        // Fetches from the 'Sales Leads' sheet via backend
         const response = await fetch(`${API_URL}?action=getSalesLeads`);
         const leads = await response.json();
 
-        // Match existing customer
-        const match = leads.find(l => l.name.toLowerCase() === nameInput.toLowerCase());
+        // Filter by both Name AND Type (Restaurant/Wholesaler)
+        const match = leads.find(l => 
+            l.name.toLowerCase() === nameInput.toLowerCase() && 
+            l.type === selectedCategory
+        );
 
         if (match) {
-            // Auto-fill known data
             document.getElementById("manager").value = match.manager || "";
             document.getElementById("address").value = match.address || "";
             document.getElementById("phone").value = match.phone || "";
             document.getElementById("email").value = match.email || "";
-            
-            // Visual feedback
             document.getElementById("name").style.borderColor = "#34c759";
-            console.log("Existing lead found: " + match.name);
+            setVisitType('Follow-up');
+        } else {
+            document.getElementById("name").style.borderColor = "#d1d5db";
         }
     } catch (err) {
         console.error("CheckExisting Error:", err);
