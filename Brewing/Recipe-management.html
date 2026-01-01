@@ -3,90 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suburban Brewing - Master Recipe Portal</title>
+    <title>Recipe Management | Suburban Brewing Co.</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root {
-            --primary-dark: #2c3e50;
-            --accent-blue: #3498db;
+        :root { 
+            --sidebar-width: 240px; 
+            --primary-dark: #1f2937; 
+            --accent: #2563eb; 
             --accent-green: #27ae60;
             --accent-orange: #f39c12;
-            --bg-gray: #f4f7f6;
-            --sidebar-width: 240px;
         }
+        
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f3f4f6; margin: 0; display: flex; color: #1f2937; }
 
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background-color: var(--bg-gray); height: 100vh; }
-
-        /* --- SIDEBAR --- */
-        #sidebar { width: var(--sidebar-width); background: var(--primary-dark); color: white; position: fixed; height: 100%; }
-        .sidebar-header { padding: 25px; border-bottom: 1px solid #34495e; text-align: center; font-weight: bold; }
-        .sidebar-menu { list-style: none; padding: 0; }
-        .sidebar-menu li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #34495e; color: #bdc3c7; }
-        .active-nav { background: var(--accent-blue) !important; color: white !important; }
+        /* --- SIDEBAR (Matched to Sales Portal) --- */
+        .sidebar { width: var(--sidebar-width); background: #111827; height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-header { padding: 25px 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid #1f2937; letter-spacing: 1px; }
+        .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 1px; }
+        .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
+        .nav-link:hover { background: #1f2937; color: #fff; }
+        .nav-link.active { background: var(--accent); color: #fff; font-weight: 600; }
 
         /* --- MAIN CONTENT --- */
-        #main-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); overflow-y: auto; padding-bottom: 50px; }
-        .header-bar { background: white; padding: 15px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
-        .container { padding: 30px; max-width: 1100px; margin: auto; }
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; min-height: 100vh; }
+        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
+        .container { padding: 30px; max-width: 1100px; margin: 0 auto; }
 
-        /* --- RECIPE CARDS --- */
+        /* --- RECIPE SPECIFIC STYLING --- */
         .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
         .recipe-card { background: white; border-radius: 12px; border: 1px solid #ddd; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; }
-        .recipe-card:hover { border-color: var(--accent-blue); transform: translateY(-3px); }
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-        .style-tag { background: #eee; font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+        .recipe-card:hover { border-color: var(--accent); transform: translateY(-3px); }
         
         .spec-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; margin: 15px 0; text-align: center; }
         .spec-item span { display: block; font-size: 0.9rem; font-weight: bold; color: var(--primary-dark); }
         .spec-item label { font-size: 0.65rem; color: #7f8c8d; text-transform: uppercase; }
 
-        /* --- FULL DETAIL EDITOR --- */
-        .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent-blue); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .recipe-section { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
-        .section-title { font-size: 0.9rem; font-weight: bold; color: var(--primary-dark); margin-bottom: 12px; text-transform: uppercase; }
+        .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
         
-        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 15px; }
-        .ingredient-entry { display: grid; grid-template-columns: 3fr 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-        
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .btn-add-line { background: #eee; border: 1px solid #ccc; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
         .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 25px; }
-        .btn-edit-card { background: var(--accent-orange); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+        }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-    <h2>SUBURBAN</h2>
-    
-   <div class="nav-section-title">Operations</div>
-    <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-    <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-    <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-    
-    <div class="nav-section-title">Sales & Outreach</div>
-    <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-    <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-    <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-    <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+        <div class="sidebar-header">SUBURBAN BREWING</div>
+        
+        <div class="nav-section-title">Main Menu</div> 
+        <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+      
+        <div class="nav-section-title">Operations</div>
+        <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+        <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+        <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+        
+        <div class="nav-section-title">Sales & Outreach</div>
+        <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+        <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+        <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+        <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
 
-    <div class="nav-section-title">Inventory</div>
-    <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-    <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-    <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-    <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-    
-    <div class="nav-section-title">Brewing</div>
-    <a href="Recipe-management.html" class="nav-link active"><span>Recipe Management</span></a>
-    <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-    <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
-    <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
-    
-    <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-    <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-    <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
-  </aside>
+        <div class="nav-section-title">Inventory</div>
+        <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+        <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+        <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+        <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+        
+        <div class="nav-section-title">Brewing</div>
+        <a href="Recipe-management.html" class="nav-link active"><span>Recipe Management</span></a>
+        <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+        <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
+        <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
+        
+        <div class="nav-section-title">Reporting & Analytics</div>
+        <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+        <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+        <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
+    </aside>
 
     <main id="main-content">
         <div class="header-bar">
