@@ -428,7 +428,28 @@
     </div>
     <div id="ko-yeast-content" class="stage-content collapsed">
         
-        <h4 class="sub-section-title">Knockout (KO) Details</h4>
+        <h4 class="sub-section-title">Knockout (KO) & Vessel Destination</h4>
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Vessel Destination</label>
+                <select style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px; background: #fff9e6; font-weight: bold;">
+                    <option value="">-- Select Tank --</option>
+                    <option value="FV1">FV 1</option>
+                    <option value="FV2">FV 2</option>
+                    <option value="FV3">FV 3</option>
+                    <option value="BBT1">BBT 1</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Total KO Volume (BBL)</label>
+                <input type="number" id="ko-volume" value="12.5" oninput="calculatePitchRate()">
+            </div>
+            <div class="input-group">
+                <label>KO Temp (°F)</label>
+                <input type="text" placeholder="e.g. 68°F">
+            </div>
+        </div>
+
         <div class="form-grid">
             <div class="input-group">
                 <label>KO Start Time</label>
@@ -439,8 +460,8 @@
                 <input type="time">
             </div>
             <div class="input-group">
-                <label>Total KO Volume (BBL)</label>
-                <input type="number" id="ko-volume" value="12.5" oninput="calculatePitchRate()">
+                <label>Actual KO Gravity (OG)</label>
+                <input type="text" placeholder="e.g. 1.054">
             </div>
         </div>
 
@@ -449,13 +470,13 @@
             <div class="input-group">
                 <label>Yeast Source</label>
                 <select id="yeast-source-type" onchange="toggleYeastSource(this)" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;">
-                    <option value="inventory">New (From Inventory Sheet)</option>
+                    <option value="inventory">New (From Inventory)</option>
                     <option value="batch">Harvest (From Previous Batch)</option>
                 </select>
             </div>
             <div class="input-group">
                 <label id="source-label">Supplier Lot #</label>
-                <input type="text" id="yeast-source-id" placeholder="Enter Lot or Batch #" onchange="runBridgingLogic(this)">
+                <input type="text" id="yeast-source-id" placeholder="Enter Lot #" onchange="runBridgingLogic(this)">
             </div>
             <div class="input-group">
                 <label>Target Pitch Rate (cells/mL/°P)</label>
@@ -469,7 +490,7 @@
                 <input type="number" id="cell-count" placeholder="e.g. 1.2" oninput="calculatePitchRate()">
             </div>
             <div class="input-group">
-                <label><strong>Calculated Pitch Qty (kg/L)</strong></label>
+                <label><strong>Calculated Pitch Qty</strong></label>
                 <input type="text" id="calculated-pitch" readonly style="background:#e8f5e9; font-weight:bold; color:#2e7d32;">
             </div>
         </div>
@@ -498,6 +519,34 @@
 </div>
 
 <script>
+    function toggleYeastSource(select) {
+    const label = document.getElementById('source-label');
+    const input = document.getElementById('yeast-source-id');
+    
+    if (select.value === 'batch') {
+        label.innerText = 'Source Batch #';
+        input.placeholder = 'e.g. BATCH-101';
+    } else {
+        label.innerText = 'Supplier Lot #';
+        input.placeholder = 'Enter Lot #';
+    }
+}
+
+function calculatePitchRate() {
+    const volumeBBL = parseFloat(document.getElementById('ko-volume').value) || 0;
+    const targetRate = parseFloat(document.getElementById('target-pitch-rate').value) || 0;
+    const cellCount = parseFloat(document.getElementById('cell-count').value) || 0; 
+    
+    const plato = 13; // This would ideally pull from your Actual OG field
+    const volumeLiters = volumeBBL * 117.34;
+
+    if (volumeBBL > 0 && targetRate > 0 && cellCount > 0) {
+        const needed = (targetRate * volumeLiters * plato) / cellCount;
+        document.getElementById('calculated-pitch').value = (needed / 1000).toFixed(2) + " kg/L";
+    } else {
+        document.getElementById('calculated-pitch').value = "Waiting for data...";
+    }
+}
     // Toggle Sections
     function toggleSection(id, header) {
         const content = document.getElementById(id);
