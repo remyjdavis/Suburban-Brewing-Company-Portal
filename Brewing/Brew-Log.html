@@ -604,6 +604,27 @@
     /* --- GLOBALS --- */
 let boilStartTime = null;
 let boilInterval = null;
+// Function to sync Batch Setup inputs with the Sticky Header
+function updateHeaderDetails() {
+    const batchInput = document.getElementById('batchId');
+    const nameInput = document.getElementById('beerName');
+    
+    const headerBatch = document.getElementById('header-batch-id');
+    const headerName = document.getElementById('header-beer-name');
+
+    // Update Header when Batch ID changes
+    batchInput.addEventListener('input', () => {
+        headerBatch.innerText = batchInput.value || "---";
+    });
+
+    // Update Header when Beer Name changes
+    nameInput.addEventListener('input', () => {
+        headerName.innerText = nameInput.value || "New Entry";
+    });
+}
+
+// Call this function once when the page loads
+window.onload = updateHeaderDetails;
 /* --- START BOIL TIMER FUNCTION --- */
 function startBoilTimer() {
     boilStartTime = new Date();
