@@ -84,39 +84,42 @@
         </div>
 
         <div class="container">
-            <div class="add-card" id="entry-form">
-                <h3 style="margin-top:0; color: var(--accent-blue);">Inventory Entry Portal</h3>
-                <div id="reader" style="display:none;"></div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select id="inv-cat" onchange="renderDynamicFields()">
-                            <option value="">Select Category...</option>
-                            <option value="Malt">Malt/Grain</option>
-                            <option value="Hops">Hops</option>
-                            <option value="Yeast">Yeast</option>
-                            <option value="Salts">Salts & Water</option>
-                            <option value="Packaging">Packaging</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Item Name</label>
-                        <input type="text" id="inv-name" placeholder="e.g. Citra">
-                    </div>
-                    <div class="form-group">
-                        <label>Lot Number</label>
-                        <input type="text" id="inv-lot" placeholder="Scan or Type Lot">
-                    </div>
-                    <div class="form-group">
-                        <label>Quantity</label>
-                        <input type="number" id="inv-qty" placeholder="0.00">
-                    </div>
-                </div>
-                <div id="coa-fields-container" class="form-row"></div>
-                <button class="btn-save" onclick="saveInventory()">Update Inventory Levels</button>
+            <form id="inventoryForm" method="POST" action="<?= ScriptApp.getService().getUrl() ?>">
+    <div class="add-card" id="entry-form">
+        <h3 style="margin-top:0; color: var(--accent-blue);">Inventory Entry Portal</h3>
+        <div id="reader" style="display:none;"></div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Category</label>
+                <select id="inv-cat" name="category" onchange="renderDynamicFields()">
+                    <option value="">Select Category...</option>
+                    <option value="Malt">Malt/Grain</option>
+                    <option value="Hops">Hops</option>
+                    <option value="Yeast">Yeast</option>
+                    <option value="Salts">Salts & Water</option>
+                    <option value="Packaging">Packaging</option>
+                </select>
             </div>
+            <div class="form-group">
+                <label>Item Name</label>
+                <input type="text" id="inv-name" name="name" placeholder="e.g. Citra">
+            </div>
+            <div class="form-group">
+                <label>Lot Number</label>
+                <input type="text" id="inv-lot" name="lot" placeholder="Scan or Type Lot">
+            </div>
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="inv-qty" name="qty" placeholder="0.00">
+            </div>
+        </div>
 
+        <div id="coa-fields-container" class="form-row"></div>
+        
+        <button type="submit" class="btn-save">Update Inventory Levels</button>
+    </div>
+</form>
             <div class="inventory-grid">
                 <div class="section-card" onclick="setCategoryAndOpenModal('Malt')">
                     <div class="section-header">Malt / Grains</div>
@@ -280,18 +283,34 @@
         }
 
         function renderDynamicFields() {
-            const cat = document.getElementById('inv-cat').value;
-            const container = document.getElementById('coa-fields-container');
-            container.innerHTML = ""; 
-            if (cat === "Hops") {
-                container.innerHTML = `<div class="form-group"><label>Alpha %</label><input type="number" id="h-alpha"></div>
-                                       <div class="form-group"><label>Oil</label><input type="number" id="h-oil"></div>`;
-            } else if (cat === "Malt") {
-                container.innerHTML = `<div class="form-group"><label>Extract %</label><input type="number" id="m-ext"></div>
-                                       <div class="form-group"><label>Color</label><input type="number" id="m-color"></div>`;
-            }
-        }
+    const cat = document.getElementById('inv-cat').value;
+    const container = document.getElementById('coa-fields-container');
+    container.innerHTML = ""; 
+    
+    if (cat === "Hops") {
+        container.innerHTML = `
+            <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
+            <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
+            <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
+    } else if (cat === "Malt") {
+        container.innerHTML = `
+            <div class="form-group"><label>Extract %</label><input type="number" step="0.1" name="extract"></div>
+            <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
+            <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
+            <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
+    } else if (cat === "Yeast") {
+        container.innerHTML = `
+            <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
+            <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
+    }
+}
 
+// Optional: If you want to use the QR scanner to auto-submit, 
+// you can trigger the form submission after processing the scan.
+function processScan(decodedText) {
+    document.getElementById('inv-lot').value = decodedText;
+    // alert("Lot Scanned: " + decodedText);
+}
         function saveInventory() {
             alert("Saving to Brewery Inventory...");
             // Your google.script.run logic here
