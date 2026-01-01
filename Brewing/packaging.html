@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suburban Brewing - Packaging Operations</title>
+    <style>
+        :root {
+            --primary-dark: #2c3e50;
+            --accent-blue: #3498db;
+            --accent-green: #27ae60;
+            --accent-red: #e74c3c;
+            --bg-gray: #f4f7f6;
+            --sidebar-width: 240px;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background-color: var(--bg-gray); height: 100vh; }
+
+        /* --- SIDEBAR --- */
+        #sidebar { width: var(--sidebar-width); background: var(--primary-dark); color: white; position: fixed; height: 100%; }
+        .sidebar-header { padding: 25px; border-bottom: 1px solid #34495e; text-align: center; font-weight: bold; }
+        .sidebar-menu { list-style: none; padding: 0; }
+        .sidebar-menu li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #34495e; color: #bdc3c7; }
+        .active-nav { background: var(--accent-blue) !important; color: white !important; }
+
+        /* --- MAIN CONTENT --- */
+        #main-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); overflow-y: auto; }
+        .header-bar { background: white; padding: 15px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .container { padding: 30px; max-width: 1000px; margin: auto; }
+
+        /* --- PACKAGING CARD --- */
+        .card { background: white; border-radius: 12px; padding: 30px; border: 1px solid #dfe6e9; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .section-title { color: var(--primary-dark); border-bottom: 2px solid var(--accent-blue); padding-bottom: 10px; margin-bottom: 25px; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; color: #444; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        
+        /* --- YIELD BLOCKS --- */
+        .yield-block { background: #f8f9fa; padding: 20px; border-radius: 8px; border-top: 4px solid var(--accent-green); }
+        .waste-block { background: #fff5f5; padding: 20px; border-radius: 8px; border-top: 4px solid var(--accent-red); }
+        
+        .full-width { grid-column: span 3; }
+        .btn-submit { background: var(--accent-green); color: white; border: none; padding: 20px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 20px; }
+        .btn-submit:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar">
+        <div class="sidebar-header">SUBURBAN BREWING</div>
+        <ul class="sidebar-menu">
+            <li>Brew Log</li>
+            <li>Cellar Management</li>
+            <li>Ingredient Inventory</li>
+            <li class="active-nav">Packaging Log</li>
+        </ul>
+    </nav>
+
+    <main id="main-content">
+        <div class="header-bar"><h2>Packaging Out-Turn & Waste</h2></div>
+
+        <div class="container">
+            <div class="card">
+                <h3 class="section-title">Production Entry</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Source Vessel</label>
+                        <select id="vessel-source">
+                            <option>BT-01</option><option>BT-02</option>
+                            <option>FV-01</option><option>FV-02</option><option>FV-03</option>
+                            <option>FV-04</option><option>FV-05</option><option>FV-06</option>
+                            <option>P-FV-01</option><option>P-FV-02</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Batch ID</label>
+                        <input type="text" id="pkg-batch-id" placeholder="e.g. B-2026-042">
+                    </div>
+                    <div class="form-group">
+                        <label>Date Packaged</label>
+                        <input type="date" id="pkg-date" value="2026-01-01">
+                    </div>
+
+                    <div class="full-width"><h4>Saleable Inventory (Yield)</h4></div>
+                    
+                    <div class="form-group yield-block">
+                        <label>1/2 BBL Kegs</label>
+                        <input type="number" id="yield-half" value="0">
+                    </div>
+                    <div class="form-group yield-block">
+                        <label>1/6 BBL Kegs</label>
+                        <input type="number" id="yield-sixth" value="0">
+                    </div>
+                    <div class="form-group yield-block">
+                        <label>Cases (Canned)</label>
+                        <input type="number" id="yield-cases" value="0">
+                    </div>
+
+                    <div class="full-width"><h4>Production Loss (Waste)</h4></div>
+                    
+                    <div class="form-group waste-block">
+                        <label>Low Fills (Cans)</label>
+                        <input type="number" id="waste-lowfill" value="0">
+                    </div>
+                    <div class="form-group waste-block">
+                        <label>Seam Failures</label>
+                        <input type="number" id="waste-seams" value="0">
+                    </div>
+                    <div class="form-group waste-block">
+                        <label>Tank Bottoms (BBL)</label>
+                        <input type="number" id="waste-bottoms" step="0.1" value="0">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Notes (e.g., Canning line issues, specific lot numbers used)</label>
+                        <input type="text" id="pkg-notes" placeholder="Seamer adjustment made halfway through...">
+                    </div>
+                </div>
+
+                <button class="btn-submit" onclick="submitPackaging()">
+                    Save Packaging Run & Close Tank
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function submitPackaging() {
+            const payload = {
+                vessel: document.getElementById('vessel-source').value,
+                batchId: document.getElementById('pkg-batch-id').value,
+                date: document.getElementById('pkg-date').value,
+                yield: {
+                    halfBBL: document.getElementById('yield-half').value,
+                    sixthBBL: document.getElementById('yield-sixth').value,
+                    cases: document.getElementById('yield-cases').value
+                },
+                waste: {
+                    lowFills: document.getElementById('waste-lowfill').value,
+                    seams: document.getElementById('waste-seams').value,
+                    bottoms: document.getElementById('waste-bottoms').value
+                },
+                notes: document.getElementById('pkg-notes').value
+            };
+
+            console.log("Saving Packaging Record:", payload);
+            alert("Packaging Run Logged Successfully. Waste metrics recorded.");
+            
+            // Link to Apps Script: google.script.run.saveBrewData(payload);
+        }
+    </script>
+</body>
+</html>
