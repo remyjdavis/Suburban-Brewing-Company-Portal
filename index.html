@@ -30,7 +30,7 @@
       min-height: 100vh;
     }
 
-    /* --- SIDEBAR --- */
+    /* --- SIDEBAR (Desktop) --- */
     .sidebar { 
       width: 260px; 
       background: var(--sidebar); 
@@ -93,12 +93,10 @@
       position: relative;
       overflow: hidden;
     }
-    /* Alert Animation for Inventory */
     .card.alert-active { border: 1px solid var(--danger); }
     .card.alert-active::before {
       content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--danger);
     }
-
     .card h3 { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
     .card .val { font-size: 32px; font-weight: 800; margin: 12px 0 4px; color: var(--text-main); }
     .card p { margin: 0; font-size: 13px; color: var(--text-muted); }
@@ -121,24 +119,39 @@
        TABLET & MOBILE LOGIC
        ========================= */
     @media (max-width: 1024px) {
-      .sidebar { width: 80px; }
-      .sidebar h2, .sidebar .nav-section-title, .sidebar .nav-link span { display: none; }
-      .nav-link { justify-content: center; padding: 20px 0; font-size: 22px; }
-      .nav-link::before { content: attr(data-icon); }
-      .main { margin-left: 80px; padding: 25px; }
+      .sidebar { width: 100px; }
+      .sidebar h2, .sidebar .nav-section-title { display: none; }
+      .nav-link { justify-content: center; padding: 20px 10px; font-size: 11px; text-align: center; font-weight: 600; border: none; }
+      .main { margin-left: 100px; padding: 25px; }
     }
 
     @media (max-width: 768px) {
+      /* REMOVED ICONS: Navigation is now text-only scrollable bar */
       .sidebar {
         position: fixed; bottom: 0; top: auto; left: 0; right: 0;
-        height: 65px; width: 100%; display: flex; flex-direction: row;
+        height: 60px; width: 100%; display: flex; flex-direction: row;
         padding: 0; border-radius: 0; background: var(--sidebar);
-        justify-content: space-around; overflow-x: auto;
+        justify-content: flex-start; overflow-x: auto; white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
       }
-      .nav-link { padding: 0 15px; flex: 0 0 auto; border: none; }
-      .nav-link.active { border-top: 3px solid var(--accent); background: #1e293b; }
+      .sidebar h2, .sidebar .nav-section-title { display: none; }
+      .nav-link { 
+        display: inline-flex; 
+        padding: 0 20px; 
+        height: 100%; 
+        align-items: center; 
+        border: none; 
+        font-size: 12px; 
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      /* Hide Icon placeholder */
+      .nav-link::before { content: "" !important; display: none !important; }
       
-      .main { margin-left: 0; padding: 20px 20px 80px; }
+      .nav-link.active { border-top: 4px solid var(--accent); background: #1e293b; color: #fff; }
+      
+      .main { margin-left: 0; padding: 20px 20px 90px; }
       
       .tier-2 {
         display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
@@ -157,27 +170,27 @@
     <h2>SUBURBAN</h2>
     
     <div class="nav-section-title">Operations</div>
-    <a href="index.html" class="nav-link active" data-icon="📊"><span>Command Center</span></a>
-    <a href="Samplings/Schedule-Sampling.html" class="nav-link" data-icon="📅"><span>Schedule Sampling</span></a>
-    <a href="Samplings/sampling-calendar.html" class="nav-link" data-icon="🗓️"><span>Sampling Calendar</span></a>
-    <a href="Samplings/sampling-report.html" class="nav-link" data-icon="📝"><span>Log Sampling Report</span></a>
+    <a href="index.html" class="nav-link active"><span>Command Center</span></a>
+    <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+    <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+    <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
     
     <div class="nav-section-title">Sales & Outreach</div>
-    <a href="sales/leads.html" class="nav-link" data-icon="🎯"><span>AI Sales Leads</span></a>
-    <a href="sales/invoice-search.html" class="nav-link" data-icon="🔍"><span>Invoice Search</span></a>
-    <a href="sales/deliveries.html" class="nav-link" data-icon="🚚"><span>Delivery Tracking</span></a>
-    <a href="sales/new invoices.html" class="nav-link" data-icon="➕"><span>New Invoice</span></a>
+    <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+    <a href="sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+    <a href="sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+    <a href="sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
 
     <div class="nav-section-title">Production & Cellar</div>
-    <a href="inventory/brewery.html" class="nav-link" data-icon="🍺"><span>Brewery Inventory</span></a>
-    <a href="inventory/cellar.html" class="nav-link" data-icon="🧬"><span>Cellar Management</span></a>
-    <a href="inventory/wholesaler-inventory.html" class="nav-link" data-icon="🏢"><span>Wholesaler Stock</span></a>
-    <a href="inventory/restaurant-inventory.html" class="nav-link" data-icon="🍴"><span>Restaurant Stock</span></a>
+    <a href="inventory/brewery.html" class="nav-link"><span>Brewery Inventory</span></a>
+    <a href="inventory/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+    <a href="inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Stock</span></a>
+    <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Stock</span></a>
     
     <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="Reports/Monthly-sales.html" class="nav-link" data-icon="📈"><span>Monthly Sales Report</span></a>
-    <a href="Reports/sales-route.html" class="nav-link" data-icon="📍"><span>Sales Route Opt.</span></a>
-    <a href="Reports/client-inventory.html" class="nav-link" data-icon="📦"><span>Client Inventory</span></a>
+    <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+    <a href="Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    <a href="Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
   </aside>
 
   <main class="main">
