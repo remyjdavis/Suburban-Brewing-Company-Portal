@@ -609,45 +609,64 @@
     // 4. SAVE AND ADVANCE LOGIC (Bypassing CORS for Production)
     // ---------------------------------------------------------
     async function saveAndAdvance(currentId, nextId) {
-        if(!document.getElementById('batchId').value) return Swal.fire('Missing ID', 'Please enter a Batch ID.', 'warning');
-
-        const current = document.getElementById(currentId);
-        const saveBtn = current.querySelector('.btn-save-section');
-        const originalText = saveBtn.innerText;
-
-        saveBtn.innerText = "Syncing...";
-        saveBtn.disabled = true;
-
-        try {
-            // FIX: Using no-cors mode to bypass Access-Control-Allow-Origin block
-            await fetch(LOG_SAVE_URL, {
-                method: "POST",
-                mode: "no-cors", 
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify({ 
-                    action: "saveBrewLog", 
-                    data: scrapeBrewData() 
-                })
-            });
-            
-            // Handle success visually
-            current.classList.add('locked');
-            saveBtn.innerText = "✓ SYNCED";
-            saveBtn.style.backgroundColor = "#7f8c8d";
-
-            if (nextId) {
-                const next = document.getElementById(nextId);
-                next.classList.remove('collapsed');
-                const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
-                document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
-                next.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        } catch(err) {
-            Swal.fire('Sync Error', 'Check Production Script permissions.', 'error');
-            saveBtn.innerText = originalText;
-            saveBtn.disabled = false;
-        }
+    if(!document.getElementById('batchId').value) {
+        return Swal.fire('Missing ID', 'Please enter a Batch ID.', 'warning');
     }
+
+    const current = document.getElementById(currentId);
+    const saveBtn = current.querySelector('.btn-save-section');
+    const originalText = saveBtn.innerText;
+
+    saveBtn.innerText = "Syncing...";
+    saveBtn.disabled = true;
+
+    try {
+        // Sends data to the Production Sheet
+        await fetch(LOG_SAVE_URL, {
+            method: "POST",
+            mode: "no-cors", 
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({ 
+                action: "saveBrewLog", 
+                data: scrapeBrewData() 
+            })
+        });
+        
+        // 1. Mark as locked
+        current.classList.add('locked');
+        saveBtn.innerText = "✓ SYNCED";
+        saveBtn.style.backgroundColor = "#7f8c8d";
+
+        // 2. CLOSE the current section
+        current.classList.add('collapsed');
+        // Find the header to update the "+" indicator
+        const currentHeader = current.parentElement.querySelector('.toggle-indicator');
+        if (currentHeader) currentHeader.innerText = "+";
+
+        // 3. OPEN and scroll to the next section
+        if (nextId) {
+            const next = document.getElementById(nextId);
+            next.classList.remove('collapsed');
+            
+            // Update the header indicator for the next section
+            const nextHeader = next.parentElement.querySelector('.toggle-indicator');
+            if (nextHeader) nextHeader.innerText = "-";
+
+            // Update the sticky stage display
+            const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
+            document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
+            
+            // Smooth scroll
+            next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            Swal.fire('Brew Log Complete', 'All data has been synced to the production sheet.', 'success');
+        }
+    } catch(err) {
+        Swal.fire('Sync Error', 'Check Production Script permissions.', 'error');
+        saveBtn.innerText = originalText;
+        saveBtn.disabled = false;
+    }
+}
 
     // ---------------------------------------------------------
     // 5. DATA SCRAPER
