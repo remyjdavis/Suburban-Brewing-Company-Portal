@@ -20,39 +20,35 @@
       --danger: #ef4444;
       --ml-blue: #3498db;
     }
-/* SWIPEABLE ROW LOGIC */
+
+    /* --- SWIPEABLE ROW LOGIC --- */
     .tier-1, .tier-2, .tier-3 {
-        display: flex !important; /* Force horizontal alignment */
-        overflow-x: auto !important; /* Enable horizontal scroll */
+        display: flex !important;
+        overflow-x: auto !important;
         scroll-snap-type: x mandatory;
-        gap: 16px;
-        padding-bottom: 15px; /* Space for scrollbar */
+        gap: 20px;
+        padding: 10px 5px 25px 5px;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Hide scrollbar for Firefox */
+        scrollbar-width: none; /* Hide scrollbar Firefox */
     }
 
     .tier-1::-webkit-scrollbar, 
     .tier-2::-webkit-scrollbar, 
     .tier-3::-webkit-scrollbar {
-        display: none; /* Hide scrollbar for Chrome/Safari */
+        display: none; /* Hide scrollbar Chrome/Safari */
     }
 
     /* CARD SIZING FOR SWIPE */
-    .card, .tank-card, .ml-card {
-        flex: 0 0 280px; /* Each card takes fixed width */
+    .card, .ml-card {
+        flex: 0 0 300px;
         scroll-snap-align: start;
-        margin-bottom: 0 !important;
     }
 
-    /* Adjust specific sizing for tanks to fit more on screen */
     .tank-card {
-        flex: 0 0 160px; 
+        flex: 0 0 170px;
+        scroll-snap-align: start;
     }
 
-    /* Adjust ML cards to be wider for charts */
-    .ml-card {
-        flex: 0 0 320px;
-    }
     /* --- COLLAPSIBLE ML CARD STYLING --- */
     .ml-card {
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -104,7 +100,6 @@
       min-height: 100vh;
     }
 
-    /* --- SIDEBAR --- */
     .sidebar { 
       width: 260px; 
       background: var(--sidebar); 
@@ -139,7 +134,6 @@
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-    /* --- MAIN CONTENT --- */
     .main { flex: 1; margin-left: 260px; padding: 40px; transition: all 0.3s ease; }
     .header-bar { margin-bottom: 32px; }
     .header-bar h1 { font-size: 28px; font-weight: 800; margin: 0; }
@@ -156,8 +150,6 @@
     }
     .section-heading::after { content: ""; flex: 1; height: 1px; background: #e2e8f0; }
 
-    /* --- OPERATIONAL TIERS --- */
-    .tier-1 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
     .card { 
       background: var(--card-bg); 
       padding: 24px; 
@@ -166,40 +158,21 @@
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
       position: relative;
     }
-    .card.alert-active { border: 1px solid var(--danger); }
-    .card.alert-active::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--danger); }
     .card h3 { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
     .card .val { font-size: 32px; font-weight: 800; margin: 12px 0 4px; color: var(--text-main); }
     .card p { margin: 0; font-size: 13px; color: var(--text-muted); }
 
-    .tier-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
     .tank-card { background: #fff; border-radius: 20px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; }
     .tank-vessel { width: 70px; height: 110px; background: #f1f5f9; margin: 16px auto; border-radius: 8px 8px 30px 30px; position: relative; overflow: hidden; border: 2px solid #e2e8f0; }
     .tank-fill { position: absolute; bottom: 0; width: 100%; transition: height 1s ease; }
     .status-badge { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; }
 
-    /* --- ML GRID (SIDE BY SIDE) --- */
-    .tier-3 { 
-        display: grid; 
-        grid-template-columns: 1fr 1fr; 
-        gap: 24px; 
-        align-items: start;
-    }
-
-    .ml-stats-grid { display: flex; justify-content: space-around; margin-top: 20px; flex-wrap: wrap; gap: 20px; }
-    .ml-stat-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; }
-    .ml-stat-val { font-size: 24px; font-weight: 800; color: var(--text-main); }
-
-    /* RESPONSIVENESS */
-    @media (max-width: 1100px) { .tier-3 { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
       .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; background: var(--sidebar); overflow-x: auto; }
       .sidebar h2, .sidebar .nav-section-title { display: none; }
       .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; font-size: 12px; font-weight: 700; }
       .nav-link.active { border-top: 4px solid var(--accent); background: #1e293b; }
       .main { margin-left: 0; padding: 20px 20px 90px; }
-      .tier-2 { display: flex; overflow-x: auto; gap: 16px; }
-      .tank-card { min-width: 180px; }
     }
   </style>
 </head>
@@ -263,9 +236,14 @@
       </div>
     </div>
 
-    <div class="section-heading">Cellar & Tanks (Swipe)</div>
-<div class="tier-2" id="tank-grid">
-    </div>
+    <div class="section-heading">Production FVs (10 BBL)</div>
+    <div class="tier-2" id="grid-production"></div>
+
+    <div class="section-heading">Pilot System (1 BBL)</div>
+    <div class="tier-2" id="grid-pilot"></div>
+
+    <div class="section-heading">Brite Tanks (10 BBL)</div>
+    <div class="tier-2" id="grid-brite"></div>
 
     <div class="section-heading">Machine Learning Intelligence (Click to Expand)</div>
     <div class="tier-3">
@@ -277,11 +255,9 @@
                 </div>
                 <div id="ml-efficiency-display" class="ml-stat-val" style="font-size: 2.2rem; line-height: 1;">--%</div>
             </div>
-            <div class="chart-container">
-                <canvas id="efficiencyChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="efficiencyChart"></canvas></div>
             <div style="margin-top: 15px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #edf2f7;">
-                <p id="ml-advice" style="margin: 0; font-size: 12px; color: #475569; font-style: italic;">Connecting to ML Engine...</p>
+                <p id="ml-advice" style="margin: 0; font-size: 12px; color: #475569; font-style: italic;">Connecting...</p>
             </div>
         </div>
 
@@ -311,179 +287,118 @@
     </div>
   </main>
 
- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script>
-  // --- CONFIGURATION ---
-  const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; 
-  const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
-  
-  const AUTO_REFRESH_MS = 300000; // 5 Minutes
+  <script>
+    // --- CONFIGURATION ---
+    const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; 
+    const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
+    const AUTO_REFRESH_MS = 300000; 
 
-  // --- INITIALIZATION ---
-  window.addEventListener('DOMContentLoaded', () => {
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      const dateEl = document.getElementById('current-date');
-      if (dateEl) dateEl.textContent = new Date().toLocaleDateString(undefined, options);
+    window.addEventListener('DOMContentLoaded', () => {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString(undefined, options);
 
-      // Initial Data Load
-      runAllSyncs();
+        runAllSyncs();
+        setInterval(runAllSyncs, AUTO_REFRESH_MS);
 
-      // Automated Refresh
-      setInterval(() => {
-          console.log("Auto-refreshing Command Center...");
-          runAllSyncs();
-      }, AUTO_REFRESH_MS);
+        const perfCard = document.getElementById('perfCard');
+        if (perfCard) {
+            perfCard.addEventListener('click', () => {
+                if (window.mlChart) setTimeout(() => window.mlChart.resize(), 450);
+            });
+        }
+    });
 
-      const perfCard = document.getElementById('perfCard');
-      if (perfCard) {
-          perfCard.addEventListener('click', () => {
-              if (window.mlChart) setTimeout(() => window.mlChart.resize(), 450);
-          });
-      }
-  });
-
-  function runAllSyncs() {
-      refreshMLEngine();    
-      refreshCellarTanks();  
-  }
-
-  /**
- * REFRESH CELLAR TANKS
- * Maps physical vessels to live data and sorts by category
- */
-async function refreshCellarTanks() {
-    const tankGrid = document.getElementById('tank-grid');
-    if (!tankGrid) return;
-
-    // YOUR FULL CELLAR CATEGORIES
-    const productionFVs = ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"];
-    const pilotFVs = ["Pilot 1", "Pilot 2"];
-    const brites = ["BT 1", "BT 2"];
-    
-    // Combine into one master list for the swipe row
-    const physicalTanks = [...productionFVs, ...pilotFVs, ...brites];
-
-    try {
-        const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, {
-            method: "GET",
-            redirect: "follow"
-        });
-        const liveBatches = await res.json();
-
-        tankGrid.innerHTML = ""; 
-
-        physicalTanks.forEach(tankName => {
-            const liveData = Array.isArray(liveBatches) ? liveBatches.find(b => b.vessel === tankName) : null;
-            const isActive = !!liveData;
-            
-            let color = "var(--text-muted)"; 
-            let statusText = "Empty/Clean";
-            
-            if (isActive) {
-                statusText = liveData.status;
-                if (statusText.includes("Condition") || statusText.includes("Crash")) color = "var(--crashing)";
-                else if (statusText.includes("Ready")) color = "var(--ready)";
-                else color = "var(--fermenting)";
-            }
-
-            tankGrid.innerHTML += `
-                <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'};">
-                    <span class="status-badge" style="background: ${isActive ? color + '22' : '#f1f5f9'}; color: ${color};">
-                        ${statusText}
-                    </span>
-                    <div class="tank-vessel">
-                        <div class="tank-fill" style="height: ${isActive ? liveData.fill : 0}%; background: ${color}; transition: height 1s ease;"></div>
-                    </div>
-                    <div style="font-weight:700; font-size: 14px;">${tankName}</div>
-                    <div style="font-size: 11px; color: var(--text-muted);">${isActive ? liveData.brand : 'Available'}</div>
-                    <div style="font-size: 9px; margin-top: 5px; color: ${isActive ? 'var(--accent)' : 'transparent'}; font-weight: bold;">
-                        Batch: ${isActive ? liveData.batchId : '---'}
-                    </div>
-                </div>`;
-        });
-    } catch (err) {
-        console.error("Cellar Sync Error:", err);
+    function runAllSyncs() {
+        refreshMLEngine();    
+        refreshCellarTanks();  
     }
-}
 
-  /**
-   * FULL REFRESH ML ENGINE
-   */
-  async function refreshMLEngine() {
-    const effDisplay = document.getElementById('ml-efficiency-display');
-    const ogDisplay = document.getElementById('ml-og-display');
-    const advice = document.getElementById('ml-advice');
-    const lbsSavedDisplay = document.getElementById('cost-lbs-saved');
-    const cashSavedDisplay = document.getElementById('cost-dollars-saved');
+    async function refreshCellarTanks() {
+        const categories = {
+            'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"],
+            'grid-pilot': ["Pilot 1", "Pilot 2"],
+            'grid-brite': ["BT 1", "BT 2"]
+        };
 
-    try {
-        const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { 
-            method: "GET", 
-            redirect: "follow" 
-        });
-        const data = await res.json();
+        try {
+            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { method: "GET", redirect: "follow" });
+            const liveBatches = await res.json();
 
-        const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
-        const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
-        const avgCost = data.avgMaltCost || 0.65;
+            Object.keys(categories).forEach(gridId => {
+                const container = document.getElementById(gridId);
+                if (!container) return;
+                container.innerHTML = ""; 
 
-        if (effDisplay) {
-            effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%";
-            effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
-        }
+                categories[gridId].forEach(tankName => {
+                    const liveData = Array.isArray(liveBatches) ? liveBatches.find(b => b.vessel === tankName) : null;
+                    const isActive = !!liveData;
+                    let sizeLabel = gridId === 'grid-pilot' ? "1 BBL" : "10 BBL";
+                    let color = "var(--text-muted)"; 
+                    let statusText = "Empty/Clean";
+                    
+                    if (isActive) {
+                        statusText = liveData.status;
+                        color = statusText.includes("Ready") ? "var(--ready)" : (statusText.includes("Crash") ? "var(--crashing)" : "var(--fermenting)");
+                    }
 
-        if (ogDisplay) {
-            const predictedPoints = (100 * 37 * learnedEff) / 31;
-            ogDisplay.innerText = (1 + (predictedPoints / 1000)).toFixed(3);
-        }
-
-        const lbsSaved = Math.round(4000 * (1 - (0.70 / learnedEff)));
-        if (lbsSavedDisplay) lbsSavedDisplay.innerText = (lbsSaved > 0 ? lbsSaved : 0) + " lbs";
-        if (cashSavedDisplay) cashSavedDisplay.innerText = "$" + (lbsSaved > 0 ? lbsSaved * avgCost : 0).toFixed(2);
-
-        const ctx = document.getElementById('efficiencyChart').getContext('2d');
-        if (window.mlChart instanceof Chart) window.mlChart.destroy();
-        window.mlChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: history.map((_, i) => `B${i + 1}`),
-                datasets: [{
-                    label: 'Efficiency',
-                    data: history.map(v => v * 100),
-                    borderColor: '#3498db',
-                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 3,
-                    pointRadius: 4
-                }, {
-                    label: 'Baseline',
-                    data: Array(history.length).fill(75),
-                    borderColor: '#e2e8f0',
-                    borderDash: [5, 5],
-                    fill: false,
-                    pointRadius: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { min: 60, max: 90, ticks: { callback: v => v + "%" } },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
-
-        if (advice) {
-            advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
-        }
-    } catch (err) {
-        console.error("ML Error:", err);
+                    container.innerHTML += `
+                        <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'};">
+                            <span class="status-badge" style="background: ${isActive ? color + '22' : '#f1f5f9'}; color: ${color};">${statusText}</span>
+                            <div class="tank-vessel">
+                                <div class="tank-fill" style="height: ${isActive ? liveData.fill : 0}%; background: ${color}; transition: height 1s ease;"></div>
+                            </div>
+                            <div style="font-weight:700; font-size: 14px;">${tankName}</div>
+                            <div style="font-size: 10px; color: var(--text-muted); font-weight: bold;">${sizeLabel}</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${isActive ? liveData.brand : 'Available'}</div>
+                            <div style="font-size: 9px; margin-top: 5px; color: ${isActive ? 'var(--accent)' : 'transparent'}; font-weight: bold;">Batch: ${isActive ? liveData.batchId : '---'}</div>
+                        </div>`;
+                });
+            });
+        } catch (e) { console.error("Cellar Error:", e); }
     }
-  }
-</script>
+
+    async function refreshMLEngine() {
+        const effDisplay = document.getElementById('ml-efficiency-display');
+        const ogDisplay = document.getElementById('ml-og-display');
+        const advice = document.getElementById('ml-advice');
+        const lbsSavedDisplay = document.getElementById('cost-lbs-saved');
+        const cashSavedDisplay = document.getElementById('cost-dollars-saved');
+
+        try {
+            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { method: "GET", redirect: "follow" });
+            const data = await res.json();
+
+            const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
+            const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
+            const avgCost = data.avgMaltCost || 0.65;
+
+            if (effDisplay) {
+                effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%";
+                effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
+            }
+            if (ogDisplay) {
+                const predictedPoints = (100 * 37 * learnedEff) / 31;
+                ogDisplay.innerText = (1 + (predictedPoints / 1000)).toFixed(3);
+            }
+            const lbsSaved = Math.round(4000 * (1 - (0.70 / learnedEff)));
+            if (lbsSavedDisplay) lbsSavedDisplay.innerText = (lbsSaved > 0 ? lbsSaved : 0) + " lbs";
+            if (cashSavedDisplay) cashSavedDisplay.innerText = "$" + (lbsSaved > 0 ? lbsSaved * avgCost : 0).toFixed(2);
+
+            const ctx = document.getElementById('efficiencyChart').getContext('2d');
+            if (window.mlChart) window.mlChart.destroy();
+            window.mlChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: history.map((_, i) => `B${i + 1}`),
+                    datasets: [{ label: 'Efficiency', data: history.map(v => v * 100), borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)', fill: true, tension: 0.4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+            if (advice) advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
+        } catch (e) { console.error("ML Error:", e); }
+    }
+  </script>
 </body>
 </html>
