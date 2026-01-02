@@ -16,6 +16,7 @@
             --accent-gray: #7f8c8d;
             --highlight: #f1c40f;
             --delete-red: #e74c3c;
+            --calc-blue: #3498db;
         }
 
         body {
@@ -143,6 +144,26 @@
 
         /* ACTUALS (EDITABLE) */
         input.actual-input { background: #fff; border: 1px solid #999; color: #000; font-weight: 600; }
+
+        /* CALCULATOR BOX */
+        .calc-box {
+            background: #eaf6ff;
+            border: 1px solid #aed6f1;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .calc-result {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--calc-blue);
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            border: 2px solid var(--calc-blue);
+            display: block;
+            text-align: center;
+        }
 
         /* TABLES */
         .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9rem; }
@@ -297,7 +318,10 @@
                 <div class="input-group"><label>Batch ID</label><input type="text" id="batchId" class="actual-input" placeholder="B-XXXX"></div>
                 <div class="input-group"><label>Brew Date</label><input type="date" id="brewDate" class="actual-input"></div>
                 <div class="input-group"><label>Beer Name</label><span class="target-display" id="beerName">-</span></div>
-                <div class="input-group"><label>Vessel</label><select id="vessel-select"><option>FV-1</option><option>FV-2</option><option>FV-3</option></select></div>
+                <div class="input-group">
+                    <label>Batch Size (BBL)</label>
+                    <input type="number" id="setup-batch-size" class="actual-input" onchange="calcYeast()">
+                </div>
             </div>
             <button class="btn-save-section" onclick="saveAndAdvance('setup-content', 'grain-content')">Save & Lock Batch Setup</button>
         </div>
@@ -309,7 +333,6 @@
             <span class="toggle-indicator">+</span>
         </div>
         <div id="grain-content" class="stage-content collapsed">
-            
             <div class="form-grid">
                 <div class="input-group"><label>Foundation Target (Gal)</label><span class="target-display" id="t-foundation">-</span></div>
                 <div class="input-group"><label>Foundation Actual</label><input type="number" class="actual-input"></div>
@@ -446,18 +469,43 @@
             <span class="toggle-indicator">+</span>
         </div>
         <div id="ko-yeast-content" class="stage-content collapsed">
+            
+            <div class="calc-box">
+                <div class="lauter-header" style="border:none; color:#2c3e50;">Yeast Pitch Calculator</div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Yeast Source</label>
+                        <select id="yeast-source" onchange="toggleYeastFields()">
+                            <option value="Fresh">Fresh Pitch</option>
+                            <option value="Harvest">Harvest / Repitch</option>
+                        </select>
+                    </div>
+                    <div class="input-group"><label>Yeast Strain</label><span class="target-display" id="t-yeast">-</span></div>
+                    <div class="input-group"><label>Target Pitch Rate</label><span class="target-display" id="t-pitch">-</span></div>
+                    <div class="input-group"><label>Target OG (Plato)</label><span class="target-display" id="t-calc-og">-</span></div>
+                </div>
+
+                <div id="harvest-fields" style="display:none;">
+                    <div class="form-grid">
+                        <div class="input-group"><label>Source Tank</label><input type="text" class="actual-input" placeholder="e.g. FV-02"></div>
+                        <div class="input-group"><label>Cell Count (Million/mL)</label><input type="number" id="cell-count" class="actual-input" onkeyup="calcYeast()"></div>
+                        <div class="input-group"><label>Viability % (Optional)</label><input type="number" id="viability" class="actual-input" value="95" onkeyup="calcYeast()"></div>
+                    </div>
+                    
+                    <div class="input-group" style="margin-top:10px;">
+                        <label>Required Pitch Volume</label>
+                        <span id="calc-result" class="calc-result">0 Liters</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-grid">
-                <div class="input-group"><label>Target OG</label><span class="target-display" id="t-og">-</span></div>
-                <div class="input-group"><label>Actual OG</label><input type="number" step="0.001" class="actual-input"></div>
+                <div class="input-group"><label>Actual Pitch Vol (Liters/Gal)</label><input type="number" class="actual-input"></div>
                 <div class="input-group"><label>KO Volume (BBL)</label><input type="number" id="ko-volume" class="actual-input"></div>
                 <div class="input-group"><label>KO Temp (°F)</label><input type="number" class="actual-input"></div>
                 <div class="input-group"><label>Oxygen (LPM)</label><input type="number" class="actual-input"></div>
             </div>
-            <div class="form-grid">
-                <div class="input-group"><label>Yeast Strain</label><span class="target-display" id="t-yeast">-</span></div>
-                <div class="input-group"><label>Pitch Rate Target</label><span class="target-display" id="t-pitch">-</span></div>
-                <div class="input-group"><label>Generation / Lot</label><input type="text" class="actual-input"></div>
-            </div>
+            
             <button class="btn-save-section" onclick="completeBrewLog()">Complete Brew & Sync</button>
         </div>
     </div>
@@ -470,7 +518,7 @@
     
     let allRecipes = [];
     let timerInterval = null;
-    let totalTime = 3600; // 60 mins in seconds
+    let totalTime = 3600; 
     let isRunning = false;
 
     window.onload = async function() {
@@ -482,7 +530,6 @@
             batchInput.addEventListener('input', () => { headerBatch.innerText = batchInput.value || "---"; });
         }
 
-        // Fetch Recipes
         try {
             const res = await fetch(API_URL);
             const data = await res.json();
@@ -512,9 +559,9 @@
         const r = allRecipes.find(x => x.name === name);
         if(!r) return;
 
-        // Header Update
         document.getElementById('header-beer-name').innerText = r.name;
         document.getElementById('beerName').innerText = r.name;
+        if(r.batchSize) document.getElementById('setup-batch-size').value = r.batchSize;
 
         // 1. Water
         if(r.waterProfile) {
@@ -551,6 +598,15 @@
         document.getElementById('t-pre-g').innerText = r.preBoil || '-';
         document.getElementById('t-post-g').innerText = r.postBoil || '-';
         document.getElementById('t-og').innerText = r.og || '-';
+        
+        // Convert SG to Plato for Calc (SG - 1) * 250 approx or standard formula
+        let plato = 0;
+        if(r.og) {
+            const sg = parseFloat(r.og);
+            // Simple Plato approximation: (SG - 1) * 1000 / 4
+            plato = (sg - 1) * 250; 
+        }
+        document.getElementById('t-calc-og').innerText = plato.toFixed(1);
 
         // 6. Boil
         const boilBody = document.getElementById('boil-body');
@@ -566,6 +622,41 @@
         if(r.yeast) {
             document.getElementById('t-yeast').innerText = r.yeast.strain || '-';
             document.getElementById('t-pitch').innerText = r.yeast.pitch || '-';
+        }
+    }
+
+    // --- YEAST CALCULATOR ---
+    function toggleYeastFields() {
+        const mode = document.getElementById('yeast-source').value;
+        document.getElementById('harvest-fields').style.display = mode === 'Harvest' ? 'block' : 'none';
+    }
+
+    function calcYeast() {
+        const bbl = parseFloat(document.getElementById('setup-batch-size').value) || 0;
+        const rate = parseFloat(document.getElementById('t-pitch').innerText) || 0;
+        const platoStr = document.getElementById('t-calc-og').innerText;
+        const plato = parseFloat(platoStr) || 12; // Default if missing
+        const cellCount = parseFloat(document.getElementById('cell-count').value) || 0;
+        const viability = parseFloat(document.getElementById('viability').value) || 95;
+
+        // BBL to Liters (1 BBL = 117.348 Liters)
+        const volLiters = bbl * 117.348;
+        
+        // Standard Formula: (Rate * Plato * Batch_mL) / (Count * Viability)
+        // Rate is typically "Million Cells per mL per Plato"
+        // Target Cells = Rate * Plato * (volLiters * 1000)
+        
+        if (cellCount > 0 && bbl > 0 && rate > 0) {
+            const totalCellsNeeded = rate * plato * (volLiters * 1000); // Result in Millions
+            const viableDensity = cellCount * (viability / 100); // Million cells / ml
+            
+            // Volume to pitch (mL) = Total Cells / Viable Density
+            const pitchMl = totalCellsNeeded / viableDensity;
+            const pitchLiters = pitchMl / 1000;
+            
+            document.getElementById('calc-result').innerText = pitchLiters.toFixed(2) + " Liters";
+        } else {
+            document.getElementById('calc-result').innerText = "Enter Cell Count";
         }
     }
 
