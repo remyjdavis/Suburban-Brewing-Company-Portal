@@ -111,14 +111,19 @@
                 </div>
 
                 <div class="collapsible-header" onclick="toggleSection('basic-info')">1. Basic Information ▾</div>
-                <div id="basic-info" class="collapsible-content active">
-                    <div class="form-row">
-                        <div><label>Recipe Name</label><input type="text" id="edit-name"></div>
-                        <div><label>Style</label><input type="text" id="edit-style"></div>
-                        <div><label>Target OG</label><input type="number" step="0.001" id="edit-og"></div>
-                        <div><label>Target FG</label><input type="number" step="0.001" id="edit-fg"></div>
-                    </div>
-                </div>
+<div id="basic-info" class="collapsible-content active">
+    <div class="form-row">
+        <div><label>Recipe Name</label><input type="text" id="edit-name"></div>
+        <div><label>Style</label><input type="text" id="edit-style"></div>
+        <div><label>Batch Size (BBL)</label><input type="number" step="0.1" id="edit-batch-size"></div>
+    </div>
+    <div class="form-row">
+        <div><label>Target OG</label><input type="number" step="0.001" id="edit-og"></div>
+        <div><label>Target FG</label><input type="number" step="0.001" id="edit-fg"></div>
+        <div><label>Target ABV %</label><input type="number" step="0.1" id="edit-abv"></div>
+        <div><label>Target IBU</label><input type="number" id="edit-ibu"></div>
+    </div>
+</div>
 
                 <div class="collapsible-header" onclick="toggleSection('ingredients-section')">2. Water & Grain Bill ▾</div>
                 <div id="ingredients-section" class="collapsible-content">
@@ -239,79 +244,128 @@
                                 onclick="openEditor('EDIT', 'Suburban IPA')">Edit Master Recipe</button>
                     </div> </div> </div> </div> </div> 
     <script>
-        
-        function toggleSection(sectionId) {
-            const section = document.getElementById(sectionId);
-            const isActive = section.classList.contains('active');
-            
-            // Close others for a clean accordion effect
-            document.querySelectorAll('.collapsible-content').forEach(el => el.classList.remove('active'));
-            
-            if (!isActive) {
-                section.classList.add('active');
-            }
+    function toggleSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        const isActive = section.classList.contains('active');
+        document.querySelectorAll('.collapsible-content').forEach(el => el.classList.remove('active'));
+        if (!isActive) {
+            section.classList.add('active');
         }
-/**
- * Handles the visual toggle of the Dry Hop section.
- * Updates the badge and reveals the input rows.
- */
-function toggleDryHopUI() {
-    const isEnabled = document.getElementById('has-dry-hop').checked;
-    const wrapper = document.getElementById('dry-hop-inputs-wrapper');
-    const badge = document.getElementById('dh-status-badge');
-
-    if (isEnabled) {
-        wrapper.style.display = 'block';
-        badge.innerText = "ENABLED";
-        badge.style.color = "var(--accent-green)";
-    } else {
-        wrapper.style.display = 'none';
-        badge.innerText = "DISABLED";
-        badge.style.color = "#6b7280";
-        // Optional: Clear any inputs if disabled to prevent accidental saving
-        document.querySelectorAll('#dry-hop-container input').forEach(i => i.value = '');
     }
-}
+
+    function toggleDryHopUI() {
+        const isEnabled = document.getElementById('has-dry-hop').checked;
+        const wrapper = document.getElementById('dry-hop-inputs-wrapper');
+        const badge = document.getElementById('dh-status-badge');
+
+        if (isEnabled) {
+            wrapper.style.display = 'block';
+            badge.innerText = "ENABLED";
+            badge.style.color = "var(--accent-green)";
+        } else {
+            wrapper.style.display = 'none';
+            badge.innerText = "DISABLED";
+            badge.style.color = "#6b7280";
+            document.querySelectorAll('#dry-hop-container input').forEach(i => i.value = '');
+        }
+    }
+
     function openEditor(mode, name = '', data = null) {
         document.getElementById('recipe-list-view').style.display = 'none';
         document.getElementById('master-editor').style.display = 'block';
         
         if(mode === 'NEW') {
             document.getElementById('editor-heading').innerText = "Create New Recipe";
-            document.getElementById('master-form').reset(); // Clear form for new entry
+            // Clear all inputs
+            document.querySelectorAll('#master-editor input').forEach(i => i.value = '');
+            document.getElementById('has-dry-hop').checked = false;
+            toggleDryHopUI();
         } else {
             document.getElementById('editor-heading').innerText = "Editing: " + name;
-            // Populate Target Pre/Post Boil if data is passed from the row click
+            // If data is passed from the card, populate the main targets
             if(data) {
-                document.getElementById('target-preboil').value = data.preBoil;
-                document.getElementById('target-postboil').value = data.postBoil;
+                document.getElementById('edit-name').value = name;
+                document.getElementById('target-preboil').value = data.preBoil || '';
+                document.getElementById('target-postboil').value = data.postBoil || '';
             }
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function closeEditor() {
+        document.getElementById('master-editor').style.display = 'none';
+        document.getElementById('recipe-list-view').style.display = 'block';
+    }
+
+    function addLine(containerId) {
+        const container = document.getElementById(containerId);
+        const newLine = container.children[0].cloneNode(true);
+        newLine.querySelectorAll('input').forEach(i => i.value = '');
+        container.appendChild(newLine);
+    }
+
+    /**
+     * Technical Data Scraper
+     * Collects all nested rows from the various recipe sections.
+     */
+    function gatherAllSectionData() {
+        return {
+            water: [
+                document.getElementById('water-foundation').value,
+                document.getElementById('water-mash').value,
+                document.getElementById('water-sparge').value,
+                document.getElementById('mash-ph').value
+            ],
+            grains: Array.from(document.querySelectorAll('#grain-container .ingredient-entry')).map(row => {
+                const inputs = row.querySelectorAll('input');
+                return [inputs[0].value, inputs[1].value, inputs[2].value]; // Name, Lbs, %
+            }).filter(r => r[0] !== ""),
+            
+            mash: Array.from(document.querySelectorAll('#mash-container .ingredient-entry')).map(row => {
+                const inputs = row.querySelectorAll('input');
+                return [inputs[0].value, inputs[1].value, inputs[2].value]; // Step, Temp, Time
+            }).filter(r => r[0] !== ""),
+
+            boil: Array.from(document.querySelectorAll('#boil-container .ingredient-entry')).map(row => {
+                const inputs = row.querySelectorAll('input');
+                return [inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value]; // Name, AA, Weight, Time, Type
+            }).filter(r => r[0] !== ""),
+
+            yeast: [
+                document.getElementById('yeast-strain').value,
+                document.getElementById('pitch-rate').value,
+                document.getElementById('ko-vol').value
+            ],
+
+            dryHop: !document.getElementById('has-dry-hop').checked ? [] : 
+                Array.from(document.querySelectorAll('#dry-hop-container .ingredient-entry')).map(row => {
+                    const inputs = row.querySelectorAll('input');
+                    return [row.querySelector('.dh-step').value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value];
+                }).filter(r => r[1] !== "")
+        };
+    }
+
     function saveRecipe() {
-        const hasDryHop = document.getElementById('has-dry-hop').checked;
-        
-        // 1. Gather Basic Recipe Data (Now including Kettle Targets)
         const recipeData = {
             name: document.getElementById('edit-name').value,
             style: document.getElementById('edit-style').value,
-            targetPreboil: document.getElementById('target-preboil').value, // NEW
-            targetPostboil: document.getElementById('target-postboil').value, // NEW
+            targetPreboil: document.getElementById('target-preboil').value,
+            targetPostboil: document.getElementById('target-postboil').value,
             og: document.getElementById('edit-og').value,
             fg: document.getElementById('edit-fg').value,
             abv: document.getElementById('edit-abv').value,
             ibu: document.getElementById('edit-ibu').value,
             batchSize: document.getElementById('edit-batch-size').value,
-            hasDryHop: hasDryHop
+            hasDryHop: document.getElementById('has-dry-hop').checked
         };
 
-        // 2. Gather Section Data (Grains, Water, etc.)
-        // This assumes you've gathered these into an object called 'sectionData'
-        let sectionData = gatherAllSectionData(); 
+        if (!recipeData.name) {
+            Swal.fire('Error', 'Recipe Name is required', 'error');
+            return;
+        }
 
-        // 3. Send to Google Apps Script
+        const sectionData = gatherAllSectionData();
+
         Swal.fire({ 
             title: 'Saving Master Recipe...', 
             allowOutsideClick: false, 
@@ -320,9 +374,8 @@ function toggleDryHopUI() {
 
         google.script.run
             .withSuccessHandler(() => {
-                Swal.fire('Success!', 'Technical Recipe and Kettle Targets updated.', 'success');
+                Swal.fire('Success!', 'Recipe and all technical tabs updated.', 'success');
                 closeEditor();
-                // Optional: refresh portfolio list
             })
             .withFailureHandler(err => {
                 Swal.fire('Error', 'Update failed: ' + err, 'error');
