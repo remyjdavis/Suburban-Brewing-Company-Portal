@@ -9,9 +9,16 @@
         :root { --sidebar-width: 240px; --primary-dark: #111827; --accent: #2563eb; --accent-green: #27ae60; --accent-orange: #f39c12; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f3f4f6; margin: 0; display: flex; color: #1f2937; height: 100vh; overflow: hidden; }
         
-        /* --- LAYOUT & SIDEBAR --- */
+        /* --- SIDEBAR --- */
         .sidebar { width: var(--sidebar-width); background: var(--primary-dark); height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
         .sidebar-header { padding: 25px 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid #1f2937; }
+        
+        /* Section Titles in Sidebar */
+        .nav-section-title { 
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; 
+            color: #9ca3af; margin: 20px 20px 10px 20px; font-weight: 700; 
+        }
+
         .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
         .nav-link:hover { background: #1f2937; color: #fff; }
         .nav-link.active { background: var(--accent); color: #fff; font-weight: 600; }
@@ -20,33 +27,26 @@
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
         .container { padding: 30px; flex-grow: 1; overflow-y: auto; }
         
-        /* --- HORIZONTAL SCROLLING (PURE CSS) --- */
+        /* --- HORIZONTAL SCROLLING --- */
         .category-group { margin-bottom: 30px; }
         .category-header { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 15px; border-left: 5px solid var(--accent); padding-left: 10px; text-transform: uppercase; }
         
         .horizontal-scroll-container { 
-            display: flex; 
-            gap: 20px; 
-            overflow-x: auto; /* Enables native scroll */
-            padding: 10px 5px 25px 5px;
-            /* Smooth scrolling */
-            scroll-behavior: smooth; 
-            -webkit-overflow-scrolling: touch; /* Critical for iOS/Mac momentum */
+            display: flex; gap: 20px; overflow-x: auto; padding: 10px 5px 25px 5px;
+            cursor: grab; -webkit-overflow-scrolling: touch; 
+            scrollbar-width: none; -ms-overflow-style: none;
         }
-        
-        /* Styling the scrollbar so it's visible but subtle */
-        .horizontal-scroll-container::-webkit-scrollbar { height: 8px; }
-        .horizontal-scroll-container::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 4px; }
-        .horizontal-scroll-container::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-        .horizontal-scroll-container::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        .horizontal-scroll-container::-webkit-scrollbar { display: none; }
+        .horizontal-scroll-container.active { cursor: grabbing; cursor: -webkit-grabbing; }
 
         .recipe-card { 
             background: white; border-radius: 15px; border: 1px solid #ddd; padding: 25px; 
             min-width: 320px; max-width: 320px; flex-shrink: 0; transition: 0.2s; position: relative; 
+            user-select: none; 
         }
         .recipe-card:hover { transform: translateY(-3px); border-color: var(--accent); }
 
-        /* --- EDITOR STYLES --- */
+        /* --- EDITOR --- */
         .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent); }
         .collapsible-header { background: #f8f9fa; padding: 12px 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: #374151; }
         .collapsible-content { padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; display: none; background: white; }
@@ -56,6 +56,7 @@
         input, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
         .calc-bar { background: #eef2ff; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 20px; align-items: center; justify-content: space-around; }
         .color-swatch { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #e5e7eb; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
         .btn-add-line { background: #f3f4f6; border: 1px solid #d1d5db; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
         .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 25px; }
         .btn-edit { background: var(--accent-orange); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
@@ -70,14 +71,14 @@
     <aside class="sidebar">
         <div class="sidebar-header">SUBURBAN BREWING</div>
         
-            <div class="nav-section-title">Main Menu</div> 
+        <div class="nav-section-title">Main Menu</div>
         <a href="../index.html" class="nav-link"><span>Command Center</span></a>
         
-            <div class="nav-section-title">Samplings</div>
+        <div class="nav-section-title">Samplings</div>
         <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
         <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
         <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-            
+        
         <div class="nav-section-title">Sales & Outreach</div>
         <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
         <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
@@ -85,22 +86,22 @@
         <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
 
         <div class="nav-section-title">Inventory</div>
-    <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-    <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-    <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-    <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+        <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+        <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+        <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+        <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
     
         <div class="nav-section-title">Brewing</div>
-    <a href="Recipe-management.html" class="nav-link active"><span>Recipe Management</span></a>
-    <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-    <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
-    <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
+        <a href="Recipe-management.html" class="nav-link active"><span>Recipe Management</span></a>
+        <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+        <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
+        <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
     
         <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-    <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-    <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
-  </aside>
+        <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+        <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+        <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
+    </aside>
 
     <div class="main-content">
         <div class="header">
@@ -222,6 +223,37 @@
     
     let refGrains = []; 
     let refWaterAdditions = [];
+
+    // --- MOUSE DRAG SCROLLING ONLY (Trackpad handles natively) ---
+    function enableMouseDragScrolling() {
+        const sliders = document.querySelectorAll('.horizontal-scroll-container');
+        sliders.forEach(slider => {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            slider.addEventListener('mousedown', (e) => {
+                // Ignore button clicks
+                if(e.target.tagName === 'BUTTON') return;
+                
+                isDown = true;
+                slider.classList.add('active');
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+            });
+
+            slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('active'); });
+            slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('active'); });
+
+            slider.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault(); 
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 2; 
+                slider.scrollLeft = scrollLeft - walk;
+            });
+        });
+    }
 
     // --- PAGE LOGIC ---
     function toggleSection(id) {
@@ -540,7 +572,7 @@
                 const card = document.createElement('div');
                 card.className = 'recipe-card';
                 card.innerHTML = `
-                    <div> 
+                    <div style="pointer-events: none;"> 
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <div class="color-swatch" style="background:${srmColor}; width:30px; height:30px;" title="Calc Color"></div>
@@ -557,12 +589,41 @@
                             <div class="spec-item"><label>BBL</label><span>${r.batchSize || '10'}</span></div>
                         </div>
                     </div>
-                    <button class="btn-edit" onclick='openEditor("EDIT", "${r.name.replace(/'/g, "\\'")}", ${JSON.stringify(r)})'>Edit Master Recipe</button>
+                    <button class="btn-edit" style="pointer-events: auto;" onclick='openEditor("EDIT", "${r.name.replace(/'/g, "\\'")}", ${JSON.stringify(r)})'>Edit Master Recipe</button>
                 `;
                 scrollRow.appendChild(card);
             });
             section.appendChild(scrollRow);
             container.appendChild(section);
+        });
+        
+        enableMouseDragScrolling();
+    }
+    
+    // RE-ENABLE DRAG SCROLLING
+    function enableMouseDragScrolling() {
+        const sliders = document.querySelectorAll('.horizontal-scroll-container');
+        sliders.forEach(slider => {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            slider.addEventListener('mousedown', (e) => {
+                if(e.target.tagName === 'BUTTON') return; 
+                isDown = true;
+                slider.classList.add('active');
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+            });
+            slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('active'); });
+            slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('active'); });
+            slider.addEventListener('mousemove', (e) => {
+                if(!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 2; 
+                slider.scrollLeft = scrollLeft - walk;
+            });
         });
     }
 </script>
