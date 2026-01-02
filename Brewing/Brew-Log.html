@@ -845,151 +845,172 @@
     // ---------------------------------------------------------
     // 3. RECIPE LOADING LOGIC (RESTORED FULL ENGINE + QC MATH)
     // ---------------------------------------------------------
-    function loadRecipeToLog() {
-        const name = document.getElementById('recipe-select').value;
-        const r = allRecipes.find(x => x.name === name);
-        const inventory = allData.inventory; 
+    /**
+ * UPDATED RECIPE LOADING LOGIC
+ * Performs real-time QC math for AA% and Extract FGDB%
+ * Prepares data fields for Machine Learning and Efficiency Analysis.
+ */
+function loadRecipeToLog() {
+    const name = document.getElementById('recipe-select').value;
+    const r = allRecipes.find(x => x.name === name);
+    const inventory = allData.inventory; 
 
-        if(!r) return;
+    if(!r) return;
 
-        document.getElementById('header-beer-name').innerText = r.name;
-        document.getElementById('beerName').innerText = r.name;
-        if(r.batchSize) document.getElementById('setup-batch-size').value = r.batchSize;
+    document.getElementById('header-beer-name').innerText = r.name;
+    document.getElementById('beerName').innerText = r.name;
+    if(r.batchSize) document.getElementById('setup-batch-size').value = r.batchSize;
 
-        if(r.waterProfile) {
-            document.getElementById('t-foundation').innerText = r.waterProfile.foundation || '-';
-            document.getElementById('t-mash').innerText = r.waterProfile.mash || '-';
-            document.getElementById('t-sparge').innerText = r.waterProfile.sparge || '-';
-            document.getElementById('t-ph').innerText = r.waterProfile.mashPh || '-';
-        }
+    if(r.waterProfile) {
+        document.getElementById('t-foundation').innerText = r.waterProfile.foundation || '-';
+        document.getElementById('t-mash').innerText = r.waterProfile.mash || '-';
+        document.getElementById('t-sparge').innerText = r.waterProfile.sparge || '-';
+        document.getElementById('t-ph').innerText = r.waterProfile.mashPh || '-';
+    }
 
-        // --- QC SECTION 1: SALTS & ACIDS ---
-        const saltBody = document.getElementById('salt-body');
-        saltBody.innerHTML = (r.salts || []).map(s => {
-            const saltName = s[0];
-            const targetM = parseFloat(s[1]) || 0;
-            const targetS = parseFloat(s[2]) || 0;
-            const invMatch = inventory.water.find(i => i.name.toLowerCase() === saltName.toLowerCase());
-            
-            let suggestM = targetM;
-            let suggestS = targetS;
-
-            /**
-             * AUTOMATED ACID ADJUSTMENT
-             * Normalized to 88% Lactic Acid baseline
-             */
-            if (invMatch && invMatch.specs.strength) {
-                const actualStrength = parseFloat(invMatch.specs.strength);
-                if (actualStrength > 0) {
-                    suggestM = (targetM * 0.88) / actualStrength;
-                    suggestS = (targetS * 0.88) / actualStrength;
-                }
-            }
-
-            return `<tr>
-                <td>${saltName}<br><small>Lot: ${invMatch ? invMatch.lot : 'N/A'}</small></td>
-                <td><span class="target-display">${targetM}</span></td>
-                <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestM.toFixed(2)}</span></td>
-                <td><input type="number" class="actual-input"></td>
-                <td><span class="target-display">${targetS}</span></td>
-                <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestS.toFixed(2)}</span></td>
-                <td><input type="number" class="actual-input"></td>
-            </tr>`;
-        }).join('');
-
-        // --- QC SECTION 2: GRAIN BILL ---
-        const grainBody = document.getElementById('grain-body');
-        grainBody.innerHTML = (r.grains || []).map(g => {
-            const maltName = g[0];
-            const targetQty = parseFloat(g[1]);
-            const invMatch = inventory.grains.find(i => i.name.toLowerCase() === maltName.toLowerCase());
-            
-            /**
-             * AUTOMATED EXTRACT ADJUSTMENT
-             * Based on Extract FGDB % (Normalized to 37.0 baseline)
-             */
-            let suggested = targetQty;
-            if (invMatch && invMatch.specs.extract) {
-                const actualExtract = parseFloat(invMatch.specs.extract);
-                if (actualExtract > 0) {
-                    suggested = (targetQty * 37.0) / actualExtract;
-                }
-            }
-
-            return `<tr>
-                <td>${maltName}</td>
-                <td><span class="target-display">${targetQty}</span></td>
-                <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggested.toFixed(2)}</span></td>
-                <td><input type="number" class="actual-input" placeholder="${suggested.toFixed(2)}"></td>
-                <td>
-                    <span class="badge" style="padding:5px; color:white; border-radius:4px; font-size:0.7rem; background-color:${invMatch && invMatch.qty < suggested ? '#e74c3c' : '#27ae60'}">
-                        Lot: ${invMatch ? invMatch.lot : 'N/A'} (Stock: ${invMatch ? invMatch.qty : 0})
-                    </span>
-                </td>
-            </tr>`;
-        }).join('');
-
-        if(r.mash && r.mash.length > 0) document.getElementById('t-mash-temp').innerText = (r.mash[0][1] || '-') + "°F"; 
-        document.getElementById('t-pre-g').innerText = r.og || '-';
-        document.getElementById('t-post-g').innerText = r.og || '-';
+    // --- QC SECTION 1: SALTS & ACIDS ---
+    const saltBody = document.getElementById('salt-body');
+    saltBody.innerHTML = (r.salts || []).map(s => {
+        const saltName = s[0];
+        const targetM = parseFloat(s[1]) || 0;
+        const targetS = parseFloat(s[2]) || 0;
+        const invMatch = inventory.water.find(i => i.name.toLowerCase() === saltName.toLowerCase());
         
-        // --- QC SECTION 3: BOIL ADDITIONS (HOP ALPHA ACID SCALING) ---
-        const boilBody = document.getElementById('boil-body');
-        boilBody.innerHTML = '';
-        if(r.boil) {
-            r.boil.sort((a, b) => b[3] - a[3]).forEach(b => {
-                const addName = b[0];
-                const targetW = parseFloat(b[2]);
-                const recipeAA = parseFloat(b[3]); // Target AA% defined in recipe
-                const invMatch = inventory.hops.find(i => i.name.toLowerCase() === addName.toLowerCase());
+        let suggestM = targetM;
+        let suggestS = targetS;
 
-                /**
-                 * AUTOMATED BITTERNESS NORMALIZATION
-                 * (Recipe Weight * Recipe AA) / Actual Lot AA
-                 */
-                let suggestedHop = targetW;
-                if (invMatch && invMatch.specs.alpha) {
-                    const actualAA = parseFloat(invMatch.specs.alpha);
-                    if (actualAA > 0) {
-                        suggestedHop = (targetW * recipeAA) / actualAA;
-                    }
-                }
-
-                boilBody.innerHTML += `<tr data-time="${b[3]}">
-                    <td>${addName}<br><small>Lot: ${invMatch ? invMatch.lot : 'N/A'}</small></td>
-                    <td>${b[3]} min</td>
-                    <td><span class="target-display">${targetW}</span></td>
-                    <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestedHop.toFixed(2)}</span></td>
-                    <td><input type="number" class="actual-input" placeholder="${suggestedHop.toFixed(2)}"></td>
-                    <td>${invMatch ? invMatch.specs.alpha : '??'}% AA</td>
-                </tr>`;
-            });
+        /**
+         * AUTOMATED ACID ADJUSTMENT
+         * Normalized to 88% Lactic Acid baseline
+         */
+        if (invMatch && invMatch.specs.strength) {
+            const actualStrength = parseFloat(invMatch.specs.strength);
+            if (actualStrength > 0) {
+                suggestM = (targetM * 0.88) / actualStrength;
+                suggestS = (targetS * 0.88) / actualStrength;
+            }
         }
 
-        // --- QC SECTION 4: YEAST HEALTH CHECKS ---
-        if(r.yeast) {
-            document.getElementById('t-yeast').innerText = r.yeast.strain || '-';
-            document.getElementById('t-pitch').innerText = r.yeast.pitch || '-';
-            const yeastInv = inventory.yeast.find(y => y.name.toLowerCase() === r.yeast.strain.toLowerCase());
-            
-            if (yeastInv) {
-                document.getElementById('inv-gen-display').innerText = yeastInv.specs.gen || '--';
-                
-                /**
-                 * DYNAMIC QC ALERT BOX
-                 * Displays viability and generation warnings automatically
-                 */
-                document.getElementById('yeast-info').innerHTML = `
-                    <div style="background:#eef2ff; border: 1px solid #c7d2fe; padding:15px; border-radius:8px; margin-bottom:20px;">
-                        <strong>Yeast Health Profile:</strong> 
-                        Lot: ${yeastInv.lot} | 
-                        Generation: ${yeastInv.specs.gen} | 
-                        Viability: ${yeastInv.specs.viability}% | 
-                        Stock: ${yeastInv.qty} ${yeastInv.unit}
-                    </div>`;
+        return `<tr>
+            <td>${saltName}<br><small>Lot: ${invMatch ? invMatch.lot : 'N/A'}</small></td>
+            <td><span class="target-display">${targetM}</span></td>
+            <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestM.toFixed(2)}</span></td>
+            <td><input type="number" class="actual-input"></td>
+            <td><span class="target-display">${targetS}</span></td>
+            <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestS.toFixed(2)}</span></td>
+            <td><input type="number" class="actual-input"></td>
+        </tr>`;
+    }).join('');
+
+    // --- QC SECTION 2: GRAIN BILL & ML EXTRACT PREP ---
+    let totalPotentialPoints = 0; // Tracking for Machine Learning Efficiency Model
+    const grainBody = document.getElementById('grain-body');
+    grainBody.innerHTML = (r.grains || []).map(g => {
+        const maltName = g[0];
+        const targetQty = parseFloat(g[1]);
+        const invMatch = inventory.grains.find(i => i.name.toLowerCase() === maltName.toLowerCase());
+        
+        /**
+         * AUTOMATED EXTRACT ADJUSTMENT (QC)
+         * Based on Extract FGDB % (Normalized to 37.0 baseline)
+         */
+        let suggested = targetQty;
+        let actualCOAExtract = 37.0; 
+
+        if (invMatch && invMatch.specs.extract) {
+            actualCOAExtract = parseFloat(invMatch.specs.extract);
+            if (actualCOAExtract > 0) {
+                suggested = (targetQty * 37.0) / actualCOAExtract;
             }
+        }
+
+        // ML DATA ACCUMULATION: Summing potential extract for efficiency calc
+        totalPotentialPoints += (suggested * actualCOAExtract);
+
+        return `<tr>
+            <td>${maltName}</td>
+            <td><span class="target-display">${targetQty}</span></td>
+            <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggested.toFixed(2)}</span></td>
+            <td><input type="number" class="actual-input" placeholder="${suggested.toFixed(2)}"></td>
+            <td>
+                <span class="badge" style="padding:5px; color:white; border-radius:4px; font-size:0.7rem; background-color:${invMatch && invMatch.qty < suggested ? '#e74c3c' : '#27ae60'}">
+                    Lot: ${invMatch ? invMatch.lot : 'N/A'} (Stock: ${invMatch ? invMatch.qty : 0})
+                </span>
+            </td>
+        </tr>`;
+    }).join('');
+
+    if(r.mash && r.mash.length > 0) document.getElementById('t-mash-temp').innerText = (r.mash[0][1] || '-') + "°F"; 
+    document.getElementById('t-pre-g').innerText = r.og || '-';
+    document.getElementById('t-post-g').innerText = r.og || '-';
+    
+    // --- QC SECTION 3: BOIL ADDITIONS (AUTOMATED HOP AA% SCALING) ---
+    const boilBody = document.getElementById('boil-body');
+    boilBody.innerHTML = '';
+    if(r.boil) {
+        r.boil.sort((a, b) => b[3] - a[3]).forEach(b => {
+            const addName = b[0];
+            const targetW = parseFloat(b[2]);
+            const recipeAA = parseFloat(b[3]); // Target AA% defined in recipe
+            const invMatch = inventory.hops.find(i => i.name.toLowerCase() === addName.toLowerCase());
+
+            /**
+             * AUTOMATED BITTERNESS NORMALIZATION (IBU QC)
+             * (Recipe Weight * Recipe AA) / Actual Lot AA
+             */
+            let suggestedHop = targetW;
+            let currentLotAA = recipeAA;
+
+            if (invMatch && invMatch.specs.alpha) {
+                currentLotAA = parseFloat(invMatch.specs.alpha);
+                if (currentLotAA > 0) {
+                    suggestedHop = (targetW * recipeAA) / currentLotAA;
+                }
+            }
+
+            boilBody.innerHTML += `<tr data-time="${b[3]}">
+                <td>${addName}<br><small>Lot: ${invMatch ? invMatch.lot : 'N/A'}</small></td>
+                <td>${b[3]} min</td>
+                <td><span class="target-display">${targetW}</span></td>
+                <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestedHop.toFixed(2)}</span></td>
+                <td><input type="number" class="actual-input" placeholder="${suggestedHop.toFixed(2)}"></td>
+                <td>${currentLotAA}% AA</td>
+            </tr>`;
+        });
+    }
+
+    // --- QC SECTION 4: YEAST HEALTH CHECKS ---
+    if(r.yeast) {
+        document.getElementById('t-yeast').innerText = r.yeast.strain || '-';
+        document.getElementById('t-pitch').innerText = r.yeast.pitch || '-';
+        const yeastInv = inventory.yeast.find(y => y.name.toLowerCase() === r.yeast.strain.toLowerCase());
+        
+        if (yeastInv) {
+            document.getElementById('inv-gen-display').innerText = yeastInv.specs.gen || '--';
+            
+            /**
+             * DYNAMIC QC ALERT BOX
+             * Displays viability and generation warnings automatically
+             */
+            document.getElementById('yeast-info').innerHTML = `
+                <div style="background:#eef2ff; border: 1px solid #c7d2fe; padding:15px; border-radius:8px; margin-bottom:20px;">
+                    <strong>Predictive Quality Alert:</strong> 
+                    Lot: ${yeastInv.lot} | 
+                    Generation: ${yeastInv.specs.gen} | 
+                    Viability: ${yeastInv.specs.viability}% | 
+                    Stock: ${yeastInv.qty} ${yeastInv.unit}
+                </div>`;
         }
     }
+
+    /**
+     * MACHINE LEARNING: PREDICTIVE BREWHOUSE EFFICIENCY
+     * This logic calculates the Theoretical Maximum Yield based on the COA.
+     * The scraper will later compare this to Actual OG to train the ML model.
+     */
+    const theoreticalMaxPoints = totalPotentialPoints / (r.batchSize * 31); 
+    console.log("ML Prep: Theoretical Max Yield for this lot configuration: " + theoreticalMaxPoints.toFixed(4));
+}
 
     /**
      * PERFORMS QUALITY CONTROL ADJUSTMENTS (Internal Logic Engine)
@@ -1100,72 +1121,109 @@
     // ---------------------------------------------------------
     // 5. DATA SCRAPER (Full explicit mapping - NO CONSOLIDATION)
     // ---------------------------------------------------------
-    function scrapeBrewData() {
-        const dataObject = {
-            meta: {
-                batchId: document.getElementById('batchId').value,
-                date: document.getElementById('brewDate').value,
-                recipeName: document.getElementById('header-beer-name').innerText
+    /**
+ * DATA SCRAPER
+ * Preserves all original lines while adding Machine Learning data points.
+ * Captures mash efficiency, lauter extraction, and boil utilization data.
+ */
+function scrapeBrewData() {
+    // --- MACHINE LEARNING FEATURE ACCUMULATION ---
+    const grainTableRows = Array.from(document.querySelectorAll('#grain-body tr'));
+    const totalActualGrainWeight = grainTableRows.reduce((sum, row) => {
+        const val = parseFloat(row.querySelectorAll('input')[0]?.value) || 0;
+        return sum + val;
+    }, 0);
+
+    const mashTempML = parseFloat(document.querySelector('#mash-content input[placeholder="°F"]')?.value) || 0;
+    const mashPhML = parseFloat(document.querySelector('#mash-content input[placeholder="5.xx"]')?.value) || 0;
+    const preBoilGravML = parseFloat(document.querySelector('#lauter-content input[placeholder="1.xxx"]')?.value) || 0;
+    const postBoilGravML = parseFloat(document.querySelectorAll('#boil-content input[step="0.001"]')[1]?.value) || 0;
+    const batchSizeML = parseFloat(document.getElementById('setup-batch-size')?.value) || 0;
+
+    return {
+        // 1. ORIGINAL META BLOCK (Preserved)
+        meta: {
+            batchId: document.getElementById('batchId').value,
+            date: document.getElementById('brewDate').value,
+            recipeName: document.getElementById('header-beer-name').innerText
+        },
+
+        // 2. NEW MACHINE LEARNING METRICS (Added logic)
+        mlEfficiencyMetrics: {
+            totalGrainLbs: totalActualGrainWeight,
+            recordedMashTemp: mashTempML,
+            recordedMashPh: mashPhML,
+            preBoilGravity: preBoilGravML,
+            postBoilGravity: postBoilGravML,
+            predictedEfficiency: (preBoilGravML > 0) ? "Pending Analysis" : "Insufficient Data",
+            timestamp: new Date().toISOString()
+        },
+
+        // 3. ORIGINAL WATER BLOCK (Preserved)
+        water: {
+            foundation: document.querySelector('#grain-content .actual-input')?.value || "",
+            mashIn: document.querySelectorAll('#grain-content .actual-input')[1]?.value || ""
+        },
+
+        // 4. ORIGINAL GRAINS BLOCK (Preserved)
+        grains: Array.from(document.querySelectorAll('#grain-body tr')).map(row => ({
+            name: row.cells[0].innerText,
+            actual: row.querySelectorAll('input')[0]?.value || "",
+            lot: row.querySelectorAll('input')[1]?.value || ""
+        })),
+
+        // 5. ORIGINAL SALTS BLOCK (Preserved)
+        salts: Array.from(document.querySelectorAll('#salt-body tr')).map(row => ({
+            name: row.cells[0].innerText,
+            mashActual: row.querySelectorAll('input')[0]?.value || "",
+            spargeActual: row.querySelectorAll('input')[1]?.value || ""
+        })),
+
+        // 6. ORIGINAL MASH BLOCK (Preserved)
+        mash: {
+            temp: document.querySelector('#mash-content input[placeholder="°F"]')?.value || "",
+            ph: document.querySelector('#mash-content input[placeholder="5.xx"]')?.value || ""
+        },
+
+        // 7. ORIGINAL LAUTER BLOCK (Preserved)
+        lauter: {
+            firstWort: { 
+                start: document.getElementById('fw-start')?.value || "", 
+                gravity: document.querySelector('#lauter-content input[placeholder="1.xxx"]')?.value || "" 
             },
-            water: {
-                foundation: document.querySelector('#grain-content .actual-input')?.value || "",
-                mashIn: document.querySelectorAll('#grain-content .actual-input')[1]?.value || ""
+            sparge1: { 
+                start: document.getElementById('sp1-start')?.value || "" 
             },
-            grains: Array.from(document.querySelectorAll('#grain-body tr')).map(row => {
-                return {
-                    name: row.cells[0].innerText,
-                    actual: row.querySelectorAll('input')[0]?.value || "",
-                    lot: row.querySelectorAll('input')[1]?.value || ""
-                };
-            }),
-            salts: Array.from(document.querySelectorAll('#salt-body tr')).map(row => {
-                return {
-                    name: row.cells[0].innerText,
-                    mashActual: row.querySelectorAll('input')[0]?.value || "",
-                    spargeActual: row.querySelectorAll('input')[1]?.value || ""
-                };
-            }),
-            mash: {
-                temp: document.querySelector('#mash-content input[placeholder="°F"]')?.value || "",
-                ph: document.querySelector('#mash-content input[placeholder="5.xx"]')?.value || ""
+            sparge2: { 
+                start: document.getElementById('sp2-start')?.value || "" 
             },
-            lauter: {
-                firstWort: { 
-                    start: document.getElementById('fw-start')?.value || "", 
-                    gravity: document.querySelector('#lauter-content input[placeholder="1.xxx"]')?.value || "" 
-                },
-                sparge1: { 
-                    start: document.getElementById('sp1-start')?.value || "" 
-                },
-                sparge2: { 
-                    start: document.getElementById('sp2-start')?.value || "" 
-                },
-                finalRunnings: { 
-                    start: document.getElementById('fr-start')?.value || "", 
-                    gravity: document.querySelectorAll('#lauter-content input[placeholder="1.xxx"]')[1]?.value || "" 
-                }
-            },
-            boil: {
-                actualPreBoilG: document.querySelectorAll('#boil-content input[step="0.001"]')[0]?.value || "",
-                actualPostG: document.querySelectorAll('#boil-content input[step="0.001"]')[1]?.value || "",
-                additions: Array.from(document.querySelectorAll('#boil-body tr')).map(row => {
-                    return {
-                        name: row.cells[0].innerText,
-                        time: row.getAttribute('data-time'),
-                        actual: row.querySelectorAll('input')[0]?.value || "",
-                        lot: row.querySelectorAll('input')[1]?.value || ""
-                    };
-                })
-            },
-            yeast: {
-                strain: document.getElementById('t-yeast')?.innerText || "",
-                source: document.getElementById('yeast-source')?.value || "",
-                actualPitch: document.querySelector('#ko-yeast-content .actual-input')?.value || "",
-                koVol: document.getElementById('ko-volume')?.value || ""
+            finalRunnings: { 
+                start: document.getElementById('fr-start')?.value || "", 
+                gravity: document.querySelectorAll('#lauter-content input[placeholder="1.xxx"]')[1]?.value || "" 
             }
-        };
-        return dataObject;
-    }
+        },
+
+        // 8. ORIGINAL BOIL BLOCK (Preserved)
+        boil: {
+            actualPreBoilG: document.querySelectorAll('#boil-content input[step="0.001"]')[0]?.value || "",
+            actualPostG: document.querySelectorAll('#boil-content input[step="0.001"]')[1]?.value || "",
+            additions: Array.from(document.querySelectorAll('#boil-body tr')).map(row => ({
+                name: row.cells[0].innerText,
+                time: row.getAttribute('data-time'),
+                actual: row.querySelectorAll('input')[0]?.value || "",
+                lot: row.querySelectorAll('input')[1]?.value || ""
+            }))
+        },
+
+        // 9. ORIGINAL YEAST BLOCK (Preserved)
+        yeast: {
+            strain: document.getElementById('t-yeast')?.innerText || "",
+            source: document.getElementById('yeast-source')?.value || "",
+            actualPitch: document.querySelector('#ko-yeast-content .actual-input')?.value || "",
+            koVol: document.getElementById('ko-volume')?.value || ""
+        }
+    };
+}
 
     // --- OTHER UTILS ---
     function toggleYeastFields() { 
