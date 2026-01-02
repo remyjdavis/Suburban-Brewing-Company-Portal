@@ -167,15 +167,17 @@
                     <datalist id="grain-list"></datalist>
                 </div>
 
-                <div class="collapsible-header" onclick="toggleSection('mash-section')">3. Mash & Boil ▾</div>
+                <div class="collapsible-header" onclick="toggleSection('mash-section')">3. Mash Schedule ▾</div>
                 <div id="mash-section" class="collapsible-content">
-                    <div style="font-weight:bold; margin-bottom:5px;">Mash Schedule</div>
                     <div id="mash-container"></div>
                     <button class="btn-add-line" onclick="addMashLine()">+ Add Mash Step</button>
+                </div>
 
-                    <div class="form-row" style="margin-top:20px;">
-                        <div><label>Target Pre-Boil</label><input type="number" step="0.001" id="target-preboil"></div>
-                        <div><label>Target Post-Boil</label><input type="number" step="0.001" id="target-postboil"></div>
+                <div class="collapsible-header" onclick="toggleSection('boil-section')">4. Boil & Whirlpool ▾</div>
+                <div id="boil-section" class="collapsible-content">
+                    <div class="form-row" style="margin-bottom:20px;">
+                        <div><label>Target Pre-Boil Gravity</label><input type="number" step="0.001" id="target-preboil"></div>
+                        <div><label>Target Post-Boil Gravity</label><input type="number" step="0.001" id="target-postboil"></div>
                     </div>
                     
                     <div style="font-weight:bold; margin-bottom:5px;">Boil Additions</div>
@@ -184,10 +186,8 @@
                     <datalist id="hop-list"></datalist>
                 </div>
 
-                <div class="collapsible-header" onclick="toggleSection('ko-section')">4. KO, Yeast & Dry Hops ▾</div>
+                <div class="collapsible-header" onclick="toggleSection('ko-section')">5. KO & Yeast ▾</div>
                 <div id="ko-section" class="collapsible-content">
-                    
-                    <h4 style="margin-top:0;">Yeast Profile</h4>
                     <div class="form-row">
                         <div><label>Yeast Strain</label><select id="yeast-strain"></select></div>
                         <div><label>Pitch Rate (Cells/mL/P)</label><input type="number" step="0.1" id="pitch-rate"></div>
@@ -196,20 +196,19 @@
                         <div><label>O2 (LPM)</label><input type="number" id="ko-o2"></div>
                     </div>
                     <div class="form-row"><div style="grid-column: span 2;"><label>Yeast Notes</label><input type="text" id="yeast-notes"></div></div>
+                </div>
 
-                    <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-                    
-                    <label style="display:flex; align-items:center; gap:10px; font-weight:bold; cursor:pointer;">
+                <div class="collapsible-header" onclick="toggleSection('dry-hop-section')">6. Dry Hops ▾</div>
+                <div id="dry-hop-section" class="collapsible-content">
+                    <label style="display:flex; align-items:center; gap:10px; font-weight:bold; cursor:pointer; margin-bottom: 15px;">
                         <input type="checkbox" id="has-dry-hop" onchange="toggleDryHop()">
                         This beer is dry hopped
                     </label>
 
                     <div id="dry-hop-wrapper">
-                        <div style="font-weight:bold; margin-bottom:5px;">Dry Hop Schedule</div>
                         <div id="dry-hop-container"></div>
                         <button class="btn-add-line" onclick="addDryHopLine()">+ Add Dry Hop</button>
                     </div>
-
                 </div>
 
                 <div style="margin-top:20px;">
@@ -241,8 +240,8 @@
     let refYeast = [];
     let refGrains = []; 
     let refWaterAdditions = [];
-    let refHops = [];   // NEW
-    let refStyles = []; // NEW
+    let refHops = [];   
+    let refStyles = []; 
 
     // --- 1. INITIAL LOAD LOGIC ---
     async function loadPageData() {
@@ -258,8 +257,8 @@
                 refGrains = data.refGrains || [];
                 refWaterAdditions = data.refWaterAdditions || [];
                 refYeast = data.refYeast || [];
-                refHops = data.refHops || [];     // NEW
-                refStyles = data.refStyles || []; // NEW
+                refHops = data.refHops || [];     
+                refStyles = data.refStyles || []; 
             }
 
             // Populate Grains Datalist
@@ -280,7 +279,7 @@
                 saltList.appendChild(opt);
             });
 
-            // Populate Hops Datalist (NEW)
+            // Populate Hops Datalist
             const hopList = document.getElementById('hop-list');
             hopList.innerHTML = '';
             refHops.forEach(h => {
@@ -289,12 +288,12 @@
                 hopList.appendChild(opt);
             });
             
-            // Populate Styles Datalist (NEW)
+            // Populate Styles Datalist
             const styleList = document.getElementById('style-list');
             styleList.innerHTML = '';
             refStyles.forEach(s => {
                 const opt = document.createElement('option');
-                opt.value = s.name; // Assuming backend sends {name: "IPA"}
+                opt.value = s.name;
                 styleList.appendChild(opt);
             });
 
