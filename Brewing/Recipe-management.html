@@ -157,18 +157,31 @@
                     <button class="btn-add-line" onclick="addLine('mash-container')">+ Add Mash Step</button>
                 </div>
 
-                <div class="collapsible-header" onclick="toggleSection('boil-section')">4. Boil Additions ▾</div>
-                <div id="boil-section" class="collapsible-content">
-                    <div id="boil-container">
-                        <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
-                            <input type="text" placeholder="Hop/Addition">
-                            <input type="number" step="0.1" placeholder="AA %">
-                            <input type="number" placeholder="Oz">
-                            <input type="number" placeholder="Min">
-                        </div>
-                    </div>
-                    <button class="btn-add-line" onclick="addLine('boil-container')">+ Add Addition</button>
-                </div>
+               <div class="collapsible-header" onclick="toggleSection('boil-section')">5. Boil Additions & Targets ▾</div>
+            <div id="boil-section" class="collapsible-content">
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--accent-orange);">
+        <div>
+            <label style="font-weight: bold; font-size: 0.8rem; color: #374151;">TARGET PRE-BOIL GRAVITY</label>
+            <input type="number" step="0.001" id="target-preboil" placeholder="e.g. 1.050" style="margin-top: 5px;">
+        </div>
+        <div>
+            <label style="font-weight: bold; font-size: 0.8rem; color: #374151;">TARGET POST-BOIL GRAVITY</label>
+            <input type="number" step="0.001" id="target-postboil" placeholder="e.g. 1.062" style="margin-top: 5px;">
+        </div>
+    </div>
+
+    <div id="boil-container">
+        <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+            <input type="text" placeholder="Ingredient/Hop" class="boil-name">
+            <input type="number" step="0.1" placeholder="AA%" class="boil-aa">
+            <input type="number" placeholder="Weight (oz)" class="boil-weight">
+            <input type="number" placeholder="Time (min)" class="boil-time">
+            <input type="text" placeholder="Type" class="boil-type">
+        </div>
+    </div>
+    <button type="button" class="btn-add-line" onclick="addLine('boil-container')">+ Add Boil Addition</button>
+</div>
 
                 <div class="collapsible-header" onclick="toggleSection('ko-section')">5. Knockout & Yeast ▾</div>
                 <div id="ko-section" class="collapsible-content">
