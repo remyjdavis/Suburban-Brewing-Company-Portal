@@ -220,16 +220,16 @@
     // --- UPDATED GET HANDLER (Handles Google Redirects) ---
 function fetchRealData(cat) {
     const tbody = document.getElementById('inventory-details-rows');
-    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Loading from Google Sheets...</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Connecting to Suburban API...</td></tr>";
 
-    // Standard fetch parameters to bypass common CORS redirect blocks
-    fetch(`${scriptURL}?category=${encodeURIComponent(cat)}`, {
+    // encodeURIComponent ensures category names like "Salts & Additions" don't break the URL
+    const url = `${scriptURL}?category=${encodeURIComponent(cat)}`;
+
+    fetch(url, {
         method: "GET",
-        mode: "cors", // Explicitly request CORS
-        redirect: "follow", // CRITICAL: Tells browser to follow Google's redirect
-        headers: {
-            "Content-Type": "text/plain;charset=utf-8" // Helps avoid complex pre-flight checks
-        }
+        // 'follow' is the critical setting for Google Apps Script redirects
+        redirect: "follow", 
+        // We use no headers here to keep the request "simple" and avoid CORS pre-flight blocks
     })
     .then(response => {
         if (!response.ok) throw new Error('Network response was not ok');
@@ -241,8 +241,8 @@ function fetchRealData(cat) {
     .catch(err => {
         console.error("Fetch Error:", err);
         tbody.innerHTML = `<tr><td colspan='5' style='color:red; text-align:center;'>
-            Connection Error: ${err.message}. <br>
-            Check if the Script is deployed as "Anyone".
+            Fetch Failed: ${err.message}. <br>
+            Check that the Script is deployed to 'Anyone'.
         </td></tr>`;
     });
 }
