@@ -604,7 +604,45 @@
             document.getElementById('t-pitch').innerText = r.yeast.pitch || '-';
         }
     }
+/**
+ * PERFORMS QUALITY CONTROL ADJUSTMENTS
+ * Compares Recipe Targets vs. Actual Inventory COA Data
+ */
+function calculateQCAdjustment(ingredientName, recipeValue, category) {
+    // 1. Find the item in our loaded inventory data
+    const invItem = allInventoryData.find(item => item.name === ingredientName);
+    
+    if (!invItem || !invItem.specs) return recipeValue; // No COA found, use recipe default
 
+    let suggestedValue = recipeValue;
+
+    if (category === "Hops") {
+        const actualAA = parseFloat(invItem.specs["Alpha %"]);
+        const targetAA = 12.0; // Assume 12% is your recipe baseline
+        if (actualAA && actualAA !== targetAA) {
+            // Formula: (Recipe Weight * Target AA) / Actual AA
+            suggestedValue = (recipeValue * targetAA) / actualAA;
+        }
+    } 
+    
+    else if (category === "Malt") {
+        const actualPotential = parseFloat(invItem.specs["Extract %"]);
+        const targetPotential = 37.0; // Assume 1.037 is baseline
+        if (actualPotential && actualPotential !== targetPotential) {
+            suggestedValue = (recipeValue * targetPotential) / actualPotential;
+        }
+    }
+
+    else if (category === "Water") {
+        const actualStrength = parseFloat(invItem.specs["Strength/Purity %"]);
+        const targetStrength = 0.88; // Assume 88% Lactic baseline
+        if (actualStrength && actualStrength !== targetStrength) {
+            suggestedValue = (recipeValue * targetStrength) / actualStrength;
+        }
+    }
+
+    return parseFloat(suggestedValue).toFixed(2);
+}
     // ---------------------------------------------------------
     // 4. SAVE AND ADVANCE LOGIC (Bypassing CORS for Production)
     // ---------------------------------------------------------
