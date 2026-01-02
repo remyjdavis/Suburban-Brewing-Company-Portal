@@ -126,7 +126,7 @@
                 <div class="collapsible-header" onclick="toggleSection('basic-info')">1. Basic Information ▾</div>
                 <div id="basic-info" class="collapsible-content active">
                     <div class="form-row">
-                        <div><label>Recipe Name</label><input type="text" id="edit-name"></div>
+                        <input type="hidden" id="edit-id"> <div><label>Recipe Name</label><input type="text" id="edit-name"></div>
                         <div><label>Style</label><input type="text" id="edit-style"></div>
                         <div><label>Category</label><select id="edit-category"><option value="Core">Core</option><option value="Rotating">Rotating</option><option value="Seasonal">Seasonal</option></select></div>
                         <div><label>Batch Size (BBL)</label><input type="number" step="0.1" id="edit-batch-size" onchange="calculateStats()"></div>
@@ -181,7 +181,7 @@
                     <button class="btn-add-line" onclick="addBoilLine()">+ Add Boil Addition</button>
                 </div>
 
-                <div class="collapsible-header" onclick="toggleSection('ko-section')">4. KO & Dry Hop ▾</div>
+                <div class="collapsible-header" onclick="toggleSection('ko-section')">4. KO & Yeast ▾</div>
                 <div id="ko-section" class="collapsible-content">
                     <div class="form-row">
                         <div><label>Yeast Strain</label><input type="text" id="yeast-strain"></div>
@@ -191,11 +191,6 @@
                         <div><label>O2</label><input type="number" id="ko-o2"></div>
                     </div>
                     <div class="form-row"><div style="grid-column: span 2;"><label>Yeast Notes</label><input type="text" id="yeast-notes"></div></div>
-
-                    <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-                    <div style="font-weight:bold; margin-bottom:5px;">Dry Hop Schedule</div>
-                    <div id="dry-hop-container"></div>
-                    <button class="btn-add-line" onclick="addDryHopLine()">+ Add Dry Hop</button>
                 </div>
 
                 <div style="margin-top:20px;">
@@ -218,13 +213,13 @@
     </div>
 
 <script>
-    // --- PASTE YOUR URL HERE ---
+    // --- PASTE YOUR API URL HERE ---
     const RECIPE_API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
     
     let refGrains = []; 
     let refWaterAdditions = [];
 
-    // --- MOUSE DRAG SCROLLING ONLY (Trackpad handles natively) ---
+    // --- MOUSE DRAG SCROLLING ---
     function enableMouseDragScrolling() {
         const sliders = document.querySelectorAll('.horizontal-scroll-container');
         sliders.forEach(slider => {
@@ -233,18 +228,14 @@
             let scrollLeft;
 
             slider.addEventListener('mousedown', (e) => {
-                // Ignore button clicks
                 if(e.target.tagName === 'BUTTON') return;
-                
                 isDown = true;
                 slider.classList.add('active');
                 startX = e.pageX - slider.offsetLeft;
                 scrollLeft = slider.scrollLeft;
             });
-
             slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('active'); });
             slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('active'); });
-
             slider.addEventListener('mousemove', (e) => {
                 if (!isDown) return;
                 e.preventDefault(); 
@@ -294,7 +285,7 @@
 
             recipes.sort((a, b) => a.name.localeCompare(b.name));
             renderPortfolio(recipes);
-        } catch (err) { console.error("API Error:", err); 
+        } catch (err) { console.error("API Error:", err); }
     }
 
     // --- CALCULATORS ---
@@ -390,13 +381,6 @@
         div.innerHTML = `<input class="boil-name" placeholder="Hop" value="${name}"><input class="boil-aa" type="number" placeholder="AA%" value="${aa}"><input class="boil-oz" type="number" placeholder="Oz" value="${oz}"><input class="boil-min" type="number" placeholder="Min" value="${min}"><input class="boil-type" placeholder="Type" value="${type}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
         document.getElementById('boil-container').appendChild(div);
     }
-    function addDryHopLine(step='', variety='', aa='', lbs='', day='', temp='') {
-        const div = document.createElement('div');
-        div.className = 'ingredient-entry';
-        div.style.gridTemplateColumns = "1fr 2fr 1fr 1fr 1fr 1fr 30px";
-        div.innerHTML = `<input class="dh-step" placeholder="Step" value="${step}"><input class="dh-var" placeholder="Variety" value="${variety}"><input class="dh-aa" type="number" placeholder="AA%" value="${aa}"><input class="dh-lbs" type="number" placeholder="Lbs" value="${lbs}"><input class="dh-day" placeholder="Day" value="${day}"><input class="dh-temp" type="number" placeholder="Temp F" value="${temp}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
-        document.getElementById('dry-hop-container').appendChild(div);
-    }
 
     // --- EDITOR ---
     function openEditor(mode, name = '', data = null) {
@@ -406,12 +390,12 @@
         document.getElementById('salt-container').innerHTML = '';
         document.getElementById('mash-container').innerHTML = '';
         document.getElementById('boil-container').innerHTML = '';
-        document.getElementById('dry-hop-container').innerHTML = '';
         
         if(mode === 'NEW') {
             document.querySelectorAll('#master-editor input:not(#efficiency), #master-editor select').forEach(i => i.value = '');
             addGrainLine(); addSaltLine(); addMashLine(); addBoilLine();
         } else if(data) {
+            document.getElementById('edit-id').value = data.id || ''; // Hidden ID
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-style').value = data.style || '';
             document.getElementById('edit-category').value = data.category || 'Core';
@@ -447,7 +431,6 @@
             if(data.salts) data.salts.forEach(s => addSaltLine(s[0], s[1], s[2], s[3]));
             if(data.mash) data.mash.forEach(m => addMashLine(m[0], m[1], m[2], m[3]));
             if(data.boil) data.boil.forEach(b => addBoilLine(b[0], b[1], b[2], b[3], b[4]));
-            if(data.dryHops) data.dryHops.forEach(d => addDryHopLine(d[0], d[1], d[2], d[3], d[4], d[5]));
             
             calculateStats();
         }
@@ -487,16 +470,8 @@
             row.querySelector('.boil-type').value
         ]).filter(x => x[0]);
 
-        const dryHops = Array.from(document.querySelectorAll('#dry-hop-container .ingredient-entry')).map(row => [
-            row.querySelector('.dh-step').value,
-            row.querySelector('.dh-var').value,
-            row.querySelector('.dh-aa').value,
-            row.querySelector('.dh-lbs').value,
-            row.querySelector('.dh-day').value,
-            row.querySelector('.dh-temp').value
-        ]).filter(x => x[1]);
-
         const data = {
+            id: document.getElementById('edit-id').value, // Send ID for updating
             name: document.getElementById('edit-name').value,
             style: document.getElementById('edit-style').value,
             category: document.getElementById('edit-category').value,
@@ -528,103 +503,85 @@
                 o2: document.getElementById('ko-o2').value,
                 notes: document.getElementById('yeast-notes').value
             },
-            grains, salts, mash, boil, dryHops
+            grains: grains,
+            salts: salts,
+            mash: mash,
+            boil: boil
         };
 
-        if(!data.name) return Swal.fire('Error', 'Name is required', 'error');
-        
-        Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() });
         try {
-            const res = await fetch(RECIPE_API_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: 'syncMaster', data: data }) 
+            const res = await fetch(RECIPE_API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify({ action: "syncMaster", data: data })
             });
             const result = await res.json();
             
             if(result.status === 'success') {
-                Swal.fire('Saved', 'Recipe updated successfully', 'success');
-                await loadPageData();
+                Swal.fire('Saved!', 'Master Recipe updated.', 'success');
                 closeEditor();
+                loadPageData(); // Refresh list
             } else {
-                throw new Error(result.message);
+                Swal.fire('Error', result.message, 'error');
             }
-        } catch (e) { 
-            console.error(e);
-            Swal.fire('Error', 'Save failed: ' + e.message, 'error'); 
+        } catch(e) {
+            Swal.fire('Network Error', 'Check connection.', 'error');
         }
     }
 
     function renderPortfolio(recipes) {
         const container = document.getElementById('portfolio-container');
-        container.innerHTML = ''; 
-        const categories = ['Core', 'Rotating', 'Seasonal'];
-
+        container.innerHTML = '';
+        
+        const categories = [...new Set(recipes.map(r => r.category || 'Uncategorized'))];
+        
         categories.forEach(cat => {
-            const catRecipes = recipes.filter(r => r.category === cat);
-            const section = document.createElement('div');
-            section.className = 'category-group';
-            section.innerHTML = `<div class="category-header">${cat} Brands</div>`;
-            const scrollRow = document.createElement('div');
-            scrollRow.className = 'horizontal-scroll-container';
-
-            catRecipes.forEach(r => {
-                const srmColor = getSRMColor(r.grains, r.batchSize);
+            const group = document.createElement('div');
+            group.className = 'category-group';
+            
+            const title = document.createElement('div');
+            title.className = 'category-header';
+            title.innerText = cat;
+            
+            const scrollArea = document.createElement('div');
+            scrollArea.className = 'horizontal-scroll-container';
+            
+            recipes.filter(r => (r.category || 'Uncategorized') === cat).forEach(r => {
                 const card = document.createElement('div');
                 card.className = 'recipe-card';
+                
+                // Color Circle logic
+                const colorHex = getSRMColor(r.grains, r.batchSize);
+                
                 card.innerHTML = `
-                    <div style="pointer-events: none;"> 
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div class="color-swatch" style="background:${srmColor}; width:30px; height:30px;" title="Calc Color"></div>
-                                <div>
-                                    <strong style="font-size: 1.15rem; line-height: 1.2; display:block;">${r.name}</strong>
-                                    <span class="style-tag">${r.style || 'Style'}</span>
-                                </div>
-                            </div>
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div>
+                            <h3 style="margin:0 0 5px 0;">${r.name}</h3>
+                            <div style="font-size:0.8rem; color:#6b7280; font-weight:bold;">${r.style}</div>
                         </div>
-                        <div class="spec-bar">
-                            <div class="spec-item"><label>OG</label><span>${r.og || '-'}</span></div>
-                            <div class="spec-item"><label>ABV</label><span>${r.abv || '-'}%</span></div>
-                            <div class="spec-item"><label>IBU</label><span>${r.ibu || '-'}</span></div>
-                            <div class="spec-item"><label>BBL</label><span>${r.batchSize || '10'}</span></div>
+                        <div style="width:20px; height:20px; border-radius:50%; background:${colorHex}; border:1px solid #ddd;" title="Est. Color"></div>
+                    </div>
+                    <div style="margin-top:15px; display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.85rem;">
+                        <div style="background:#f3f4f6; padding:8px; border-radius:6px; text-align:center;">
+                            <div style="font-size:0.7rem; color:#6b7280; font-weight:bold;">ABV</div>
+                            <div style="font-weight:800;">${r.abv || '-'}%</div>
+                        </div>
+                        <div style="background:#f3f4f6; padding:8px; border-radius:6px; text-align:center;">
+                            <div style="font-size:0.7rem; color:#6b7280; font-weight:bold;">IBU</div>
+                            <div style="font-weight:800;">${r.ibu || '-'}</div>
                         </div>
                     </div>
-                    <button class="btn-edit" style="pointer-events: auto;" onclick='openEditor("EDIT", "${r.name.replace(/'/g, "\\'")}", ${JSON.stringify(r)})'>Edit Master Recipe</button>
+                    <button class="btn-edit" onclick='openEditor("EDIT", "${r.name.replace(/'/g, "&#39;")}", ${JSON.stringify(r).replace(/'/g, "&#39;")})'>Edit Recipe</button>
                 `;
-                scrollRow.appendChild(card);
+                scrollArea.appendChild(card);
             });
-            section.appendChild(scrollRow);
-            container.appendChild(section);
+            
+            group.appendChild(title);
+            group.appendChild(scrollArea);
+            container.appendChild(group);
         });
         
         enableMouseDragScrolling();
-    }
-    
-    // RE-ENABLE DRAG SCROLLING
-    function enableMouseDragScrolling() {
-        const sliders = document.querySelectorAll('.horizontal-scroll-container');
-        sliders.forEach(slider => {
-            let isDown = false;
-            let startX;
-            let scrollLeft;
-
-            slider.addEventListener('mousedown', (e) => {
-                if(e.target.tagName === 'BUTTON') return; 
-                isDown = true;
-                slider.classList.add('active');
-                startX = e.pageX - slider.offsetLeft;
-                scrollLeft = slider.scrollLeft;
-            });
-            slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('active'); });
-            slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('active'); });
-            slider.addEventListener('mousemove', (e) => {
-                if(!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - slider.offsetLeft;
-                const walk = (x - startX) * 2; 
-                slider.scrollLeft = scrollLeft - walk;
-            });
-        });
     }
 </script>
 </body>
