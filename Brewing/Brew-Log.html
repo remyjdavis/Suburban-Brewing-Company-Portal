@@ -15,6 +15,7 @@
             --input-bg: #fdfdfd;
             --accent-gray: #7f8c8d;
             --highlight: #f1c40f;
+            --delete-red: #e74c3c;
         }
 
         body {
@@ -39,7 +40,14 @@
             overflow-y: auto;
         }
 
-        .sidebar-header { margin-bottom: 20px; font-weight: 800; font-size: 1.2rem; letter-spacing: 1px; border-bottom: 1px solid #34495e; padding-bottom: 15px; }
+        .sidebar-header { 
+            margin-bottom: 20px; 
+            font-weight: 800; 
+            font-size: 1.2rem; 
+            letter-spacing: 1px; 
+            border-bottom: 1px solid #34495e; 
+            padding-bottom: 15px; 
+        }
 
         .nav-section-title {
             font-size: 0.75rem;
@@ -113,11 +121,13 @@
         .stage-content.collapsed { display: none; }
         .stage-content.locked { pointer-events: none; opacity: 0.7; background: #f9f9f9; }
 
+        /* --- FORMS --- */
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
+            align-items: start;
         }
 
         .input-group { display: flex; flex-direction: column; }
@@ -163,8 +173,33 @@
             font-size: 1.2rem;
         }
 
-        .time-wrapper { display: flex; align-items: stretch; }
+        .time-wrapper { display: flex; align-items: stretch; margin-bottom: 5px; }
         .time-wrapper input { border-radius: 4px 0 0 4px; }
+        
+        .btn-delete {
+            background: var(--delete-red);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin-left: 5px;
+            padding: 0 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-add-deep {
+            background: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            color: #2c3e50;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 5px;
+            width: fit-content;
+        }
+        .btn-add-deep:hover { background: #bdc3c7; }
 
         /* TIMER */
         .timer-box { 
@@ -330,7 +365,11 @@
             <div class="form-grid">
                 <div class="input-group"><label>Start Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="fw-start"><button class="btn-now" onclick="setNow('fw-start')">🕒</button></div></div>
                 <div class="input-group"><label>End Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="fw-end"><button class="btn-now" onclick="setNow('fw-end')">🕒</button></div></div>
-                <div class="input-group"><label>Deep Cut (Log Time)</label><div class="time-wrapper"><input type="time" class="actual-input" id="fw-cut"><button class="btn-now" onclick="setNow('fw-cut')">🕒</button></div></div>
+                <div class="input-group">
+                    <label>Deep Cuts</label>
+                    <div id="fw-cuts-container"></div>
+                    <button class="btn-add-deep" onclick="addDeepCut('fw-cuts-container')">+ Add Cut</button>
+                </div>
                 <div class="input-group"><label>First Wort Gravity</label><input type="number" step="0.001" class="actual-input" placeholder="1.xxx"></div>
             </div>
 
@@ -338,14 +377,22 @@
             <div class="form-grid">
                 <div class="input-group"><label>Start Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp1-start"><button class="btn-now" onclick="setNow('sp1-start')">🕒</button></div></div>
                 <div class="input-group"><label>End Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp1-end"><button class="btn-now" onclick="setNow('sp1-end')">🕒</button></div></div>
-                <div class="input-group"><label>Deep Cut (Log Time)</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp1-cut"><button class="btn-now" onclick="setNow('sp1-cut')">🕒</button></div></div>
+                <div class="input-group">
+                    <label>Deep Cuts</label>
+                    <div id="sp1-cuts-container"></div>
+                    <button class="btn-add-deep" onclick="addDeepCut('sp1-cuts-container')">+ Add Cut</button>
+                </div>
             </div>
 
             <div class="lauter-header">Second Sparge</div>
             <div class="form-grid">
                 <div class="input-group"><label>Start Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp2-start"><button class="btn-now" onclick="setNow('sp2-start')">🕒</button></div></div>
                 <div class="input-group"><label>End Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp2-end"><button class="btn-now" onclick="setNow('sp2-end')">🕒</button></div></div>
-                <div class="input-group"><label>Deep Cut (Log Time)</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp2-cut"><button class="btn-now" onclick="setNow('sp2-cut')">🕒</button></div></div>
+                <div class="input-group">
+                    <label>Deep Cuts</label>
+                    <div id="sp2-cuts-container"></div>
+                    <button class="btn-add-deep" onclick="addDeepCut('sp2-cuts-container')">+ Add Cut</button>
+                </div>
             </div>
 
             <div class="lauter-header">Final Runnings</div>
@@ -453,6 +500,11 @@
                 select.appendChild(opt);
             });
         } catch (err) { console.error("Error loading recipes", err); }
+        
+        // Add default Deep Cut rows
+        addDeepCut('fw-cuts-container');
+        addDeepCut('sp1-cuts-container');
+        addDeepCut('sp2-cuts-container');
     };
 
     function loadRecipeToLog() {
@@ -497,8 +549,8 @@
 
         // 5. Gravity Targets
         document.getElementById('t-pre-g').innerText = r.preBoil || '-';
-        document.getElementById('t-og').innerText = r.og || '-';
         document.getElementById('t-post-g').innerText = r.postBoil || '-';
+        document.getElementById('t-og').innerText = r.og || '-';
 
         // 6. Boil
         const boilBody = document.getElementById('boil-body');
@@ -517,47 +569,22 @@
         }
     }
 
-    function toggleSection(id, header) {
-        const content = document.getElementById(id);
-        const indicator = header.querySelector('.toggle-indicator');
-        const isCollapsed = content.classList.contains('collapsed');
-        
-        if(isCollapsed) {
-            content.classList.remove('collapsed');
-            indicator.innerText = "-";
-        } else {
-            content.classList.add('collapsed');
-            indicator.innerText = "+";
-        }
+    // --- DEEP CUTS LOGIC (Multiple Entries) ---
+    function addDeepCut(containerId) {
+        const container = document.getElementById(containerId);
+        const uniqueId = containerId + '-' + Date.now() + Math.random().toString(36).substr(2, 9);
+        const div = document.createElement('div');
+        div.className = 'time-wrapper';
+        div.innerHTML = `
+            <input type="time" class="actual-input" id="${uniqueId}">
+            <button class="btn-now" onclick="setNow('${uniqueId}')">🕒</button>
+            <button class="btn-delete" onclick="this.parentElement.remove()">×</button>
+        `;
+        container.appendChild(div);
     }
 
-    function saveAndAdvance(currentId, nextId) {
-        const current = document.getElementById(currentId);
-        current.classList.add('locked');
-        
-        const saveBtn = current.querySelector('.btn-save-section');
-        if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.innerText = "✓ LOCKED";
-            saveBtn.style.backgroundColor = "#7f8c8d";
-        }
-
-        if (nextId) {
-            const next = document.getElementById(nextId);
-            next.classList.remove('collapsed');
-            
-            // Update Header Stage
-            const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
-            document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
-            
-            next.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-
-    // --- UTILS ---
     function setNow(id) {
         const now = new Date();
-        // Format to HH:MM for time input
         const timeString = now.toTimeString().split(' ')[0].substring(0,5);
         document.getElementById(id).value = timeString;
     }
@@ -613,6 +640,44 @@
                 row.classList.remove('active-addition');
             }
         });
+    }
+
+    // --- SECTION LOGIC ---
+    function toggleSection(id, header) {
+        const content = document.getElementById(id);
+        const indicator = header.querySelector('.toggle-indicator');
+        const isCollapsed = content.classList.contains('collapsed');
+        
+        if(isCollapsed) {
+            content.classList.remove('collapsed');
+            indicator.innerText = "-";
+        } else {
+            content.classList.add('collapsed');
+            indicator.innerText = "+";
+        }
+    }
+
+    function saveAndAdvance(currentId, nextId) {
+        const current = document.getElementById(currentId);
+        current.classList.add('locked');
+        
+        const saveBtn = current.querySelector('.btn-save-section');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerText = "✓ LOCKED";
+            saveBtn.style.backgroundColor = "#7f8c8d";
+        }
+
+        if (nextId) {
+            const next = document.getElementById(nextId);
+            next.classList.remove('collapsed');
+            
+            // Update Header Stage
+            const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
+            document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
+            
+            next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     }
 
     function completeBrewLog() {
