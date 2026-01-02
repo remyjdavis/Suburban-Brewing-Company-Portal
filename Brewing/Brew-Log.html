@@ -513,23 +513,34 @@
 </main>
 
 <script>
-    // --- PASTE YOUR API URL HERE ---
-    const API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+    // ---------------------------------------------------------
+    // 1. CONFIGURATION
+    // ---------------------------------------------------------
+    // PASTE YOUR DEPLOYED WEB APP URL HERE
+    const API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec"; 
     
     let allRecipes = [];
     let timerInterval = null;
     let totalTime = 3600; 
     let isRunning = false;
 
+    // ---------------------------------------------------------
+    // 2. INITIALIZATION
+    // ---------------------------------------------------------
     window.onload = async function() {
+        // Set Default Date
         document.getElementById('brewDate').valueAsDate = new Date();
+        
+        // Sync Batch ID to Header
         const batchInput = document.getElementById('batchId');
         const headerBatch = document.getElementById('header-batch-id');
-        
         if (batchInput) {
-            batchInput.addEventListener('input', () => { headerBatch.innerText = batchInput.value || "---"; });
+            batchInput.addEventListener('input', () => { 
+                headerBatch.innerText = batchInput.value || "---"; 
+            });
         }
 
+        // Fetch Recipes from Backend
         try {
             const res = await fetch(API_URL);
             const data = await res.json();
@@ -537,6 +548,7 @@
             if (Array.isArray(data)) { allRecipes = data; } 
             else { allRecipes = data.recipes || []; }
 
+            // Populate Dropdown
             const select = document.getElementById('recipe-select');
             allRecipes.sort((a, b) => a.name.localeCompare(b.name));
             
@@ -546,86 +558,130 @@
                 opt.text = r.name;
                 select.appendChild(opt);
             });
-        } catch (err) { console.error("Error loading recipes", err); }
+        } catch (err) { 
+            console.error("Error loading recipes", err); 
+            Swal.fire('Error', 'Could not load recipes from Google Sheets.', 'error');
+        }
         
-        // Add default Deep Cut rows
+        // Initialize Dynamic Rows
         addDeepCut('fw-cuts-container');
         addDeepCut('sp1-cuts-container');
         addDeepCut('sp2-cuts-container');
     };
 
+    // ---------------------------------------------------------
+    // 3. RECIPE LOADING LOGIC (The Core Logic)
+    // ---------------------------------------------------------
     function loadRecipeToLog() {
         const name = document.getElementById('recipe-select').value;
         const r = allRecipes.find(x => x.name === name);
         if(!r) return;
 
+        // --- A. Header & Basic Info ---
         document.getElementById('header-beer-name').innerText = r.name;
         document.getElementById('beerName').innerText = r.name;
         if(r.batchSize) document.getElementById('setup-batch-size').value = r.batchSize;
 
-        // 1. Water
+        // --- B. Water Targets ---
         if(r.waterProfile) {
-            document.getElementById('t-foundation').innerText = r.waterProfile.foundation || '-';
-            document.getElementById('t-mash').innerText = r.waterProfile.mash || '-';
-            document.getElementById('t-sparge').innerText = r.waterProfile.sparge || '-'; // This is in Section 4 now
-            document.getElementById('t-ph').innerText = r.waterProfile.mashPh || '-';
+            document.getElementById('t-foundation').innerText = r.waterProfile.foundation || 0;
+            document.getElementById('t-mash').innerText = r.waterProfile.mash || 0;
+            document.getElementById('t-sparge').innerText = r.waterProfile.sparge || 0;
+            document.getElementById('t-ph').innerText = r.waterProfile.mashPh || 5.2;
         }
 
-        // 2. Salts
+        // --- C. Salts & Acids ---
+        // Backend Data: [Name, MashAmount, SpargeAmount, Notes]
         const saltBody = document.getElementById('salt-body');
         saltBody.innerHTML = '';
-        if(r.salts) {
+        if(r.salts && r.salts.length > 0) {
             r.salts.forEach(s => {
-                saltBody.innerHTML += `<tr><td>${s[0]}</td><td><span class="target-display">${s[1]||0}</span></td><td><input type="number" class="actual-input"></td><td><span class="target-display">${s[2]||0}</span></td><td><input type="number" class="actual-input"></td></tr>`;
+                const row = `
+                    <tr>
+                        <td>${s[0]}</td>
+                        <td><span class="target-display">${s[1] || 0}</span></td>
+                        <td><input type="number" class="actual-input" placeholder="${s[1] || 0}"></td>
+                        <td><span class="target-display">${s[2] || 0}</span></td>
+                        <td><input type="number" class="actual-input" placeholder="${s[2] || 0}"></td>
+                    </tr>`;
+                saltBody.innerHTML += row;
             });
         }
 
-        // 3. Grains
+        // --- D. Grain Bill ---
+        // Backend Data: [MaltName, Weight, Percentage]
         const grainBody = document.getElementById('grain-body');
         grainBody.innerHTML = '';
-        if(r.grains) {
+        if(r.grains && r.grains.length > 0) {
             r.grains.forEach(g => {
-                grainBody.innerHTML += `<tr><td>${g[0]}</td><td><span class="target-display">${g[1]}</span></td><td><input type="number" class="actual-input" placeholder="${g[1]}"></td><td><input type="text" class="actual-input"></td></tr>`;
+                const row = `
+                    <tr>
+                        <td>${g[0]}</td>
+                        <td><span class="target-display">${g[1]}</span></td>
+                        <td><input type="number" class="actual-input" placeholder="${g[1]}"></td>
+                        <td><input type="text" class="actual-input" placeholder="Lot #"></td>
+                    </tr>`;
+                grainBody.innerHTML += row;
             });
         }
 
-        // 4. Mash Temp
+        // --- E. Mash Schedule ---
+        // Backend Data: [StepName, Temp, Time, Ratio]
         if(r.mash && r.mash.length > 0) {
-            document.getElementById('t-mash-temp').innerText = r.mash[0][1] + "°F" || '-'; 
+            // We only have one 'Target Mash Temp' field in the simple UI, taking the first step's temp
+            document.getElementById('t-mash-temp').innerText = (r.mash[0][1] || '-') + " °F"; 
         }
 
-        // 5. Gravity Targets
+        // --- F. Gravity Targets ---
         document.getElementById('t-pre-g').innerText = r.preBoil || '-';
         document.getElementById('t-post-g').innerText = r.postBoil || '-';
-        document.getElementById('t-og').innerText = r.og || '-';
         
-        // Convert SG to Plato for Calc (SG - 1) * 250 approx or standard formula
+        // Calculate Plato for Yeast: (SG - 1) * 250 is a rough approximation
         let plato = 0;
         if(r.og) {
             const sg = parseFloat(r.og);
-            // Simple Plato approximation: (SG - 1) * 1000 / 4
-            plato = (sg - 1) * 250; 
+            if(!isNaN(sg)) plato = (sg - 1) * 250; 
         }
         document.getElementById('t-calc-og').innerText = plato.toFixed(1);
 
-        // 6. Boil
+        // --- G. Boil Additions ---
+        // Backend Data: [Name, AA, Amount, Time, Type]
         const boilBody = document.getElementById('boil-body');
         boilBody.innerHTML = '';
-        if(r.boil) {
-            r.boil.forEach(b => {
-                // b[3] is Time Min, b[2] is Oz
-                boilBody.innerHTML += `<tr data-time="${b[3]}"><td>${b[0]}</td><td>${b[3]} min</td><td><span class="target-display">${b[2]}</span></td><td><input type="number" class="actual-input" placeholder="${b[2]}"></td><td><input type="text" class="actual-input"></td></tr>`;
+        if(r.boil && r.boil.length > 0) {
+            // Sort by time (descending) so 60min is at top
+            const sortedBoil = [...r.boil].sort((a, b) => b[3] - a[3]);
+            
+            sortedBoil.forEach(b => {
+                const name = b[0];
+                const amount = b[2];
+                const time = b[3];
+                
+                const row = `
+                    <tr data-time="${time}">
+                        <td>${name}</td>
+                        <td style="font-weight:bold;">${time} min</td>
+                        <td><span class="target-display">${amount}</span></td>
+                        <td><input type="number" class="actual-input" placeholder="${amount}"></td>
+                        <td><input type="text" class="actual-input" placeholder="Lot #"></td>
+                    </tr>`;
+                boilBody.innerHTML += row;
             });
         }
 
-        // 7. Yeast
+        // --- H. Yeast & KO ---
         if(r.yeast) {
             document.getElementById('t-yeast').innerText = r.yeast.strain || '-';
             document.getElementById('t-pitch').innerText = r.yeast.pitch || '-';
         }
+        
+        // Trigger generic recalculations
+        calcYeast();
     }
 
-    // --- YEAST CALCULATOR ---
+    // ---------------------------------------------------------
+    // 4. CALCULATORS & HELPERS
+    // ---------------------------------------------------------
     function toggleYeastFields() {
         const mode = document.getElementById('yeast-source').value;
         document.getElementById('harvest-fields').style.display = mode === 'Harvest' ? 'block' : 'none';
@@ -635,22 +691,22 @@
         const bbl = parseFloat(document.getElementById('setup-batch-size').value) || 0;
         const rate = parseFloat(document.getElementById('t-pitch').innerText) || 0;
         const platoStr = document.getElementById('t-calc-og').innerText;
-        const plato = parseFloat(platoStr) || 12; // Default if missing
+        const plato = parseFloat(platoStr) || 12; 
         const cellCount = parseFloat(document.getElementById('cell-count').value) || 0;
         const viability = parseFloat(document.getElementById('viability').value) || 95;
 
-        // BBL to Liters (1 BBL = 117.348 Liters)
-        const volLiters = bbl * 117.348;
+        // 1 BBL = 117.348 Liters
+        const volLiters = bbl * 117.348; 
         
-        // Standard Formula: (Rate * Plato * Batch_mL) / (Count * Viability)
-        // Rate is typically "Million Cells per mL per Plato"
-        // Target Cells = Rate * Plato * (volLiters * 1000)
+        // Formula: Need (Cells in Billions) / (Density in Billion/L)
+        // Simply: Rate * Plato * Vol(ml) / Count / Viability
         
         if (cellCount > 0 && bbl > 0 && rate > 0) {
+            // Target Total Cells (in Billions) = Rate * Plato * Vol(ml) / 1000
+            // Rate is typically Million Cells / ml / P
             const totalCellsNeeded = rate * plato * (volLiters * 1000); // Result in Millions
             const viableDensity = cellCount * (viability / 100); // Million cells / ml
             
-            // Volume to pitch (mL) = Total Cells / Viable Density
             const pitchMl = totalCellsNeeded / viableDensity;
             const pitchLiters = pitchMl / 1000;
             
@@ -660,7 +716,7 @@
         }
     }
 
-    // --- DEEP CUTS LOGIC (Multiple Entries) ---
+    // --- DEEP CUTS (Timestamps) ---
     function addDeepCut(containerId) {
         const container = document.getElementById(containerId);
         const uniqueId = containerId + '-' + Date.now() + Math.random().toString(36).substr(2, 9);
@@ -676,11 +732,12 @@
 
     function setNow(id) {
         const now = new Date();
+        // Format to HH:MM
         const timeString = now.toTimeString().split(' ')[0].substring(0,5);
         document.getElementById(id).value = timeString;
     }
 
-    // --- TIMER LOGIC ---
+    // --- BOIL TIMER ---
     function toggleTimer() {
         if(isRunning) {
             clearInterval(timerInterval);
@@ -694,7 +751,7 @@
     function resetTimer() {
         clearInterval(timerInterval);
         isRunning = false;
-        totalTime = 3600; // Reset to 60 min (can be made dynamic based on recipe later)
+        totalTime = 3600; // Default 60 min
         updateDisplay();
         document.querySelectorAll('#boil-body tr').forEach(r => r.classList.remove('active-addition'));
     }
@@ -717,6 +774,8 @@
     }
 
     function checkAdditions() {
+        // Logic: If current timer matches an addition time, highlight it
+        // Note: This logic assumes simple countdown.
         const currentMin = Math.ceil(totalTime / 60);
         const rows = document.querySelectorAll('#boil-body tr');
         rows.forEach(row => {
@@ -724,8 +783,6 @@
             if(time === currentMin) {
                 if(!row.classList.contains('active-addition')) {
                     row.classList.add('active-addition');
-                    // Play simple beep (optional, browser policy dependent)
-                    // new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play().catch(e=>{});
                 }
             } else {
                 row.classList.remove('active-addition');
@@ -733,7 +790,9 @@
         });
     }
 
-    // --- SECTION LOGIC ---
+    // ---------------------------------------------------------
+    // 5. UI INTERACTION (Saving & Locking)
+    // ---------------------------------------------------------
     function toggleSection(id, header) {
         const content = document.getElementById(id);
         const indicator = header.querySelector('.toggle-indicator');
@@ -762,16 +821,15 @@
         if (nextId) {
             const next = document.getElementById(nextId);
             next.classList.remove('collapsed');
-            
-            // Update Header Stage
             const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
             document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
-            
             next.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
     function completeBrewLog() {
+        // Here you would gather all 'actual-input' values and send to backend
+        // For now, just a visual confirmation
         if(confirm("Are you sure you want to finish this brew?")) {
             Swal.fire('Brew Complete', 'Data ready for sync!', 'success');
             saveAndAdvance('ko-yeast-content', null);
