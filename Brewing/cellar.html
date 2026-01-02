@@ -42,7 +42,6 @@
         .vessel-card { background: white; border-radius: 12px; padding: 15px; text-align: center; border: 2px solid #e5e7eb; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .vessel-card:hover { transform: translateY(-3px); border-color: var(--accent); }
         
-        /* Status Colors */
         .vessel-card.active { border-color: var(--accent-green); border-width: 3px; }
         .vessel-card.dirty { border-color: var(--status-dirty); border-width: 3px; background: #fef2f2; }
         .vessel-card.clean { border-color: var(--status-clean); border-width: 3px; border-style: dashed; }
@@ -123,49 +122,14 @@
         </div>
 
         <div class="container">
-            
             <div class="grid-section-title">Production Fermenters (10 BBL)</div>
-            <div class="vessel-grid">
-                <div class="vessel-card active" onclick="openModal('FV-01', '24-001', 'Suburban IPA', 'Active')">
-                    <p class="tank-name">FV-01</p><span class="status-tag" style="color:var(--accent-green);">ACTIVE</span><br><small>Suburban IPA</small>
-                </div>
-                <div class="vessel-card dirty" onclick="openModal('FV-02', null, null, 'Dirty')">
-                    <p class="tank-name">FV-02</p><span class="status-tag" style="color:var(--status-dirty);">DIRTY</span>
-                </div>
-                <div class="vessel-card clean" onclick="openModal('FV-03', null, null, 'Clean')">
-                    <p class="tank-name">FV-03</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
-                </div>
-                <div class="vessel-card clean" onclick="openModal('FV-04', null, null, 'Clean')">
-                    <p class="tank-name">FV-04</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
-                </div>
-                <div class="vessel-card clean" onclick="openModal('FV-05', null, null, 'Clean')">
-                    <p class="tank-name">FV-05</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
-                </div>
-                <div class="vessel-card clean" onclick="openModal('FV-06', null, null, 'Clean')">
-                    <p class="tank-name">FV-06</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
-                </div>
-            </div>
+            <div id="grid-production" class="vessel-grid"></div>
 
             <div class="grid-section-title" style="border-color: var(--accent-orange);">Pilot Fermenters (1 BBL)</div>
-            <div class="vessel-grid">
-                <div class="vessel-card active" onclick="openModal('P-FV-01', '24-050', 'Exp. Pale Ale', 'Active')">
-                    <p class="tank-name">P-FV-01</p><span class="status-tag" style="color:var(--accent-green);">ACTIVE</span><br><small>Exp. Pale Ale</small>
-                </div>
-                <div class="vessel-card clean" onclick="openModal('P-FV-02', null, null, 'Clean')">
-                    <p class="tank-name">P-FV-02</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
-                </div>
-            </div>
+            <div id="grid-pilot" class="vessel-grid"></div>
 
             <div class="grid-section-title" style="border-color: var(--accent-green);">Brite Tanks (10 BBL)</div>
-            <div class="vessel-grid">
-                <div class="vessel-card brite-active" onclick="openModal('BT-01', '24-001', 'Suburban IPA', 'Active')">
-                    <p class="tank-name">BT-01</p><span class="status-tag" style="color:var(--accent-orange);">CARBING</span><br><small>Suburban IPA</small>
-                </div>
-                <div class="vessel-card clean" onclick="openModal('BT-02', null, null, 'Clean')">
-                    <p class="tank-name">BT-02</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
-                </div>
-            </div>
-
+            <div id="grid-brite" class="vessel-grid"></div>
         </div>
     </main>
 
@@ -180,9 +144,9 @@
         </div>
 
         <div class="modal-tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-daily')">Daily Log</button>
-            <button class="tab-btn" onclick="switchTab('tab-actions')">Actions & Status</button>
-            <button class="tab-btn" onclick="switchTab('tab-drops')">Drops & Harvests</button>
+            <button class="tab-btn active" onclick="switchTab('tab-daily', this)">Daily Log</button>
+            <button class="tab-btn" onclick="switchTab('tab-actions', this)">Actions & Status</button>
+            <button class="tab-btn" onclick="switchTab('tab-drops', this)">Drops & Harvests</button>
         </div>
 
         <div class="modal-content-area">
@@ -205,15 +169,14 @@
                 <div class="form-group">
                     <label>Update Tank Status</label>
                     <select id="status-select">
-                        <option value="Primary">Primary Fermentation</option>
-                        <option value="Free Rise">Free Rise (Diacetyl Rest)</option>
+                        <option value="Primary Fermentation">Primary Fermentation</option>
+                        <option value="Diacetyl Rest">Diacetyl Rest</option>
                         <option value="Spunding">Spunding / Capped</option>
                         <option value="Soft Crash">Soft Crash (50°F)</option>
                         <option value="Cold Crash">Cold Crash (32°F)</option>
-                        <option disabled>──────────</option>
                         <option value="Ready to Package">Ready to Package</option>
                         <option value="Dirty">Dirty</option>
-                        <option value="Clean">Clean / Ready for Next Brew</option>
+                        <option value="Clean">Clean / Available</option>
                     </select>
                     <button class="btn-action btn-blue" onclick="updateStatus()">Update Status</button>
                 </div>
@@ -223,7 +186,7 @@
                 <div id="dry-hop-section" style="display:none;">
                     <label style="color:var(--accent-orange); font-weight:bold;">PENDING DRY HOP DETECTED</label>
                     <div style="background:#fff7ed; border:1px solid #ffedd5; padding:15px; border-radius:8px; margin-top:5px;">
-                        <p style="margin:0 0 10px 0; font-size:0.9rem;"><strong>Action:</strong> Dry Hop #1 (Citra/Mosaic)</p>
+                        <p style="margin:0 0 10px 0; font-size:0.9rem;"><strong>Action:</strong> Dry Hop (Scheduled)</p>
                         <button class="btn-action btn-orange" onclick="logDryHop()">Confirm Dry Hop Added</button>
                     </div>
                 </div>
@@ -246,12 +209,51 @@
     </div>
 
     <script>
-        // PASTE YOUR CELLAR WEB APP URL HERE
-        const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+        // --- CONFIGURATION ---
+        const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
         
         let currentBatchId = null;
         let currentVessel = null;
 
+        // --- 1. INITIALIZATION: LOAD LIVE TANKS ---
+        window.onload = refreshGrid;
+
+        async function refreshGrid() {
+            const categories = {
+                'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"],
+                'grid-pilot': ["Pilot 1", "Pilot 2"],
+                'grid-brite': ["BT 1", "BT 2"]
+            };
+
+            try {
+                const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { redirect: "follow" });
+                const live = await res.json();
+
+                Object.keys(categories).forEach(gridId => {
+                    const container = document.getElementById(gridId);
+                    if (!container) return;
+                    container.innerHTML = "";
+                    
+                    categories[gridId].forEach(name => {
+                        const data = Array.isArray(live) ? live.find(b => b.vessel === name) : null;
+                        const active = !!data && data.isActive;
+                        const status = active ? data.status : "Available";
+                        
+                        let cardClass = active ? "active" : "clean";
+                        if (status === "Dirty") cardClass = "dirty";
+
+                        container.innerHTML += `
+                            <div class="vessel-card ${cardClass}" onclick="openModal('${name}', '${active ? data.batchId : ''}', '${active ? data.brand : ''}', '${status}')">
+                                <p class="tank-name">${name}</p>
+                                <span class="status-tag">${status}</span>
+                                <br><small>${active ? data.brand : '---'}</small>
+                            </div>`;
+                    });
+                });
+            } catch (e) { console.error("Grid Load Error:", e); }
+        }
+
+        // --- 2. MODAL & INTERACTION LOGIC ---
         function openModal(vessel, batchId, beerName, status) {
             currentVessel = vessel;
             currentBatchId = batchId;
@@ -260,15 +262,14 @@
             document.getElementById('overlay').style.display = 'block';
             document.getElementById('modal-title').innerText = vessel;
             
-            if (status === 'Dirty' || status === 'Clean') {
-                document.getElementById('modal-subtitle').innerText = "Tank is " + status;
-                document.getElementById('dry-hop-section').style.display = 'none';
-            } else {
+            if (batchId) {
                 document.getElementById('modal-subtitle').innerText = `${beerName} (Batch #${batchId})`;
-                document.getElementById('dry-hop-section').style.display = 'block'; 
+                document.getElementById('dry-hop-section').style.display = 'block';
+                initChart(batchId);
+            } else {
+                document.getElementById('modal-subtitle').innerText = "Vessel is " + status;
+                document.getElementById('dry-hop-section').style.display = 'none';
             }
-            
-            initChart(); 
         }
 
         function closeModal() {
@@ -276,66 +277,93 @@
             document.getElementById('overlay').style.display = 'none';
         }
 
-        function switchTab(tabId) {
+        function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
+            btn.classList.add('active');
         }
 
+        // --- 3. DATA PERSISTENCE FUNCTIONS (POST) ---
         async function updateStatus() {
-            const newStatus = document.getElementById('status-select').value;
-            // You can add fetch call here to update !Fermentation_Batches
-            Swal.fire('Updated', `Tank status set to: ${newStatus}`, 'success');
+            const newStage = document.getElementById('status-select').value;
+            if (!currentBatchId) return Swal.fire("No Active Batch", "Cannot update an empty vessel.", "warning");
+
+            try {
+                await fetch(CELLAR_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ action: 'updateStage', data: { batchId: currentBatchId, stage: newStage } })
+                });
+                Swal.fire('Updated', `Vessel stage set to: ${newStage}`, 'success').then(() => {
+                    closeModal();
+                    refreshGrid();
+                });
+            } catch(e) { Swal.fire('Error', 'Sync failed', 'error'); }
         }
 
-        async function logDryHop() {
-            Swal.fire('Success', 'Dry Hop recorded.', 'success');
-            document.getElementById('dry-hop-section').style.display = 'none';
+        async function submitDailyLog() {
+            const payload = {
+                batchId: currentBatchId,
+                gravity: document.getElementById('log-sg').value,
+                temp: document.getElementById('log-temp').value,
+                ph: document.getElementById('log-ph').value,
+                psi: document.getElementById('log-psi').value
+            };
+
+            try {
+                await fetch(CELLAR_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ action: 'logDaily', data: payload })
+                });
+                Swal.fire('Success', 'Daily fermentation log saved.', 'success');
+            } catch(e) { Swal.fire('Error', 'Submission failed', 'error'); }
         }
 
         async function logDrop() {
             const payload = {
-                action: 'logDrop',
-                data: {
-                    batchId: currentBatchId,
-                    vessel: currentVessel,
-                    type: document.getElementById('drop-type').value,
-                    volume: document.getElementById('drop-vol').value,
-                    notes: document.getElementById('drop-notes').value
-                }
+                batchId: currentBatchId,
+                vessel: currentVessel,
+                type: document.getElementById('drop-type').value,
+                volume: document.getElementById('drop-vol').value,
+                notes: document.getElementById('drop-notes').value
             };
             
             try {
                 await fetch(CELLAR_API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ action: 'logDrop', data: payload })
                 });
-                Swal.fire('Logged', 'Fermenter drop recorded.', 'success');
+                Swal.fire('Logged', 'Action recorded in Fermenter Drops.', 'success');
                 document.getElementById('drop-vol').value = '';
                 document.getElementById('drop-notes').value = '';
-            } catch(e) {
-                Swal.fire('Error', 'Connection failed', 'error');
-            }
+            } catch(e) { Swal.fire('Error', 'Sync failed', 'error'); }
         }
 
-        function submitDailyLog() {
-             Swal.fire('Success', 'Daily Log Saved', 'success');
+        async function logDryHop() {
+            // This would link to a task completion logic
+            Swal.fire('Success', 'Dry Hop task marked as completed.', 'success');
+            document.getElementById('dry-hop-section').style.display = 'none';
         }
 
-        function initChart() {
+        // --- 4. VISUALIZATION ---
+        function initChart(batchId) {
             const ctx = document.getElementById('fermChart').getContext('2d');
-            if(window.myChart instanceof Chart) window.myChart.destroy();
-            window.myChart = new Chart(ctx, {
+            if(window.fermChartObj) window.fermChartObj.destroy();
+            
+            window.fermChartObj = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Day 1', 'Day 2', 'Day 3'],
+                    labels: ['Day 0', 'Day 1', 'Day 2', 'Day 3'],
                     datasets: [{
-                        label: 'Gravity',
-                        data: [1.060, 1.050, 1.040],
+                        label: 'Gravity Progress',
+                        data: [1.060, 1.052, 1.044, 1.036],
                         borderColor: '#2563eb',
-                        tension: 0.3
+                        tension: 0.3,
+                        fill: true,
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)'
                     }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
