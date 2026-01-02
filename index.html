@@ -328,53 +328,58 @@
     const tankGrid = document.getElementById('tank-grid');
     if (!tankGrid) return;
 
+    // YOUR ACTUAL CELLAR LAYOUT
+    const physicalTanks = [
+        "FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6", // 10BBL FVs
+        "Pilot 1", "Pilot 2",                          // 1BBL Pilot FVs
+        "BT 1", "BT 2"                                 // 10BBL Brite Tanks
+    ]; 
+
     try {
-      const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, {
-        method: "GET",
-        redirect: "follow"
-      });
-      const tanks = await res.json();
-
-      // Clear whatever is currently in the grid (including old placeholders)
-      tankGrid.innerHTML = ""; 
-
-      if (Array.isArray(tanks) && tanks.length > 0) {
-        tanks.forEach(tank => {
-          // Color logic based on your backend 'status' strings
-          let color = "var(--text-muted)"; 
-          let isActive = tank.isActive || false;
-          
-          if (isActive) {
-            if (tank.status.includes("Condition") || tank.status.includes("Crash")) color = "var(--crashing)";
-            else if (tank.status.includes("Ready")) color = "var(--ready)";
-            else color = "var(--fermenting)";
-          }
-
-          // Generate the live card using the keys from your backend: vessel, brand, batchId
-          tankGrid.innerHTML += `
-            <div class="tank-card" style="opacity: ${isActive ? '1' : '0.6'}; border-style: ${isActive ? 'solid' : 'dashed'}; min-width: 180px;">
-                <span class="status-badge" style="background: ${isActive ? color + '22' : '#f1f5f9'}; color: ${color};">
-                    ${tank.status || 'Empty'}
-                </span>
-                <div class="tank-vessel" style="background: ${isActive ? '#f1f5f9' : '#f8fafc'};">
-                    <div class="tank-fill" style="height: ${tank.fill || 0}%; background: ${color}; transition: height 1s ease;"></div>
-                </div>
-                <div style="font-weight:700; font-size: 14px;">${tank.vessel || 'Unnamed'}</div>
-                <div style="font-size: 11px; color: var(--text-muted);">${tank.brand || 'No Brew'}</div>
-                <div style="font-size: 9px; margin-top: 5px; color: ${isActive ? 'var(--accent)' : 'transparent'}; font-weight: bold;">
-                    Batch: ${tank.batchId || '---'}
-                </div>
-            </div>`;
+        const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, {
+            method: "GET",
+            redirect: "follow"
         });
-      } else {
-        // Show this if the backend returns an empty list
-        tankGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 20px;">No tanks found in backend.</p>`;
-      }
+        const liveBatches = await res.json();
+
+        // Clear the grid to rebuild from the physical list
+        tankGrid.innerHTML = ""; 
+
+        physicalTanks.forEach(tankName => {
+            // Find if this specific vessel has an active batch in the backend
+            const liveData = Array.isArray(liveBatches) ? liveBatches.find(b => b.vessel === tankName) : null;
+            const isActive = !!liveData;
+            
+            // Set Visuals
+            let color = "var(--text-muted)"; 
+            let statusText = "Empty/Clean";
+            
+            if (isActive) {
+                statusText = liveData.status;
+                if (statusText.includes("Condition") || statusText.includes("Crash")) color = "var(--crashing)";
+                else if (statusText.includes("Ready")) color = "var(--ready)";
+                else color = "var(--fermenting)";
+            }
+
+            tankGrid.innerHTML += `
+                <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'}; min-width: 160px;">
+                    <span class="status-badge" style="background: ${isActive ? color + '22' : '#f1f5f9'}; color: ${color};">
+                        ${statusText}
+                    </span>
+                    <div class="tank-vessel">
+                        <div class="tank-fill" style="height: ${isActive ? liveData.fill : 0}%; background: ${color}; transition: height 1s ease;"></div>
+                    </div>
+                    <div style="font-weight:700; font-size: 14px;">${tankName}</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">${isActive ? liveData.brand : 'Available'}</div>
+                    <div style="font-size: 9px; margin-top: 5px; color: ${isActive ? 'var(--accent)' : 'transparent'}; font-weight: bold;">
+                        Batch: ${isActive ? liveData.batchId : '---'}
+                    </div>
+                </div>`;
+        });
     } catch (err) {
-      console.error("Cellar Sync Error:", err);
-      tankGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: 20px;">Connection Error: Check Cellar API URL</p>`;
+        console.error("Cellar Sync Error:", err);
     }
-  }
+}
 
   /**
    * FULL REFRESH ML ENGINE
