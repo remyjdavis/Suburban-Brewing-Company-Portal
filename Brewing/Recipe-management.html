@@ -286,11 +286,48 @@ function toggleDryHopUI() {
         }
 
         function saveRecipe() {
-            // Reminder: Brewery inventory is in the invoices sheet, 
-            // so we'll eventually link this to your Google Sheet data.
-            Swal.fire('Saved!', 'Recipe data updated across all Sheets tabs.', 'success');
+    const hasDryHop = document.getElementById('has-dry-hop').checked;
+    
+    // 1. Gather Basic Recipe Data
+    const recipeData = {
+        name: document.getElementById('edit-name').value,
+        style: document.getElementById('edit-style').value,
+        og: document.getElementById('edit-og').value,
+        fg: document.getElementById('edit-fg').value,
+        mashPh: document.getElementById('mash-ph').value,
+        koVol: document.getElementById('ko-vol').value,
+        hasDryHop: hasDryHop
+    };
+
+    // 2. Gather Dry Hop Data ONLY if toggle is ON
+    let dryHopRows = [];
+    if (hasDryHop) {
+        const container = document.getElementById('dry-hop-container');
+        const rows = container.querySelectorAll('.ingredient-entry');
+        rows.forEach(row => {
+            dryHopRows.push({
+                step: row.querySelector('.dh-step').value,
+                variety: row.querySelector('.dh-variety').value,
+                aa: row.querySelector('.dh-aa').value,
+                lbs: row.querySelector('.dh-lbs').value,
+                timing: row.querySelector('.dh-timing').value
+            });
+        });
+    }
+
+    // 3. Send to Google Apps Script
+    Swal.fire({ title: 'Saving Master Recipe...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+
+    google.script.run
+        .withSuccessHandler(() => {
+            Swal.fire('Success!', 'Recipe and Inventory targets updated.', 'success');
             closeEditor();
-        }
+        })
+        .withFailureHandler(err => {
+            Swal.fire('Error', 'Update failed: ' + err, 'error');
+        })
+        .updateMasterRecipeBackend(recipeData, dryHopRows);
+}
     </script>
 </body>
 </html>
