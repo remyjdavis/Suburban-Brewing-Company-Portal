@@ -29,8 +29,10 @@
             overflow-x: auto; 
             padding: 10px 5px 25px 5px;
             cursor: grab; 
-            /* Essential for smooth trackpad scrolling */
+            /* Essential for native trackpad scrolling */
             -webkit-overflow-scrolling: touch; 
+            
+            /* Hides Scrollbar but keeps functionality */
             scrollbar-width: none; 
             -ms-overflow-style: none;
         }
@@ -40,6 +42,7 @@
         .recipe-card { 
             background: white; border-radius: 15px; border: 1px solid #ddd; padding: 25px; 
             min-width: 320px; max-width: 320px; flex-shrink: 0; transition: 0.2s; position: relative; 
+            user-select: none; /* Prevents text highlighting while dragging */
         }
         .recipe-card:hover { transform: translateY(-3px); border-color: var(--accent); }
 
@@ -192,28 +195,16 @@
     let refGrains = []; 
     let refWaterAdditions = [];
 
-    // --- SMART SCROLL LOGIC ---
-    function enableSmartScrolling() {
+    // --- DRAG SCROLL ONLY (Trackpad works natively) ---
+    function enableDragScrolling() {
         const sliders = document.querySelectorAll('.horizontal-scroll-container');
         sliders.forEach(slider => {
             let isDown = false;
             let startX;
             let scrollLeft;
 
-            // 1. MOUSE WHEEL (Vertical Wheel -> Horizontal Scroll)
-            // But IGNORE if it's a trackpad swipe (which usually has deltaX)
-            slider.addEventListener('wheel', (e) => {
-                // If pure vertical wheel (mouse), convert to horizontal
-                if (e.deltaY !== 0 && Math.abs(e.deltaX) < 5) {
-                    e.preventDefault();
-                    slider.scrollLeft += e.deltaY; 
-                }
-                // If deltaX exists (trackpad), let the browser handle it naturally.
-            });
-
-            // 2. CLICK AND DRAG (Backup)
             slider.addEventListener('mousedown', (e) => {
-                if(e.target.tagName === 'BUTTON') return;
+                if(e.target.tagName === 'BUTTON') return; 
                 isDown = true;
                 slider.classList.add('active');
                 startX = e.pageX - slider.offsetLeft;
@@ -225,7 +216,7 @@
                 if(!isDown) return;
                 e.preventDefault();
                 const x = e.pageX - slider.offsetLeft;
-                const walk = (x - startX) * 2;
+                const walk = (x - startX) * 2; 
                 slider.scrollLeft = scrollLeft - walk;
             });
         });
@@ -273,7 +264,7 @@
         } catch (err) { console.error("API Error:", err); }
     }
 
-    // ... (Calculators unchanged) ...
+    // ... (Keep calculators: calculateStats, getSRMColor, srmToHex - unchanged) ...
     function calculateStats() {
         const batchBBL = parseFloat(document.getElementById('edit-batch-size').value) || 0;
         const eff = parseFloat(document.getElementById('efficiency').value) || 85;
@@ -337,7 +328,7 @@
         if (srm <= 24) return "#261716"; if (srm <= 30) return "#16100F"; return "#030403"; 
     }
 
-    // --- ADD ROWS ---
+    // ... (Keep row adding functions - unchanged) ...
     function addGrainLine(name='', lbs='', pct='') {
         const div = document.createElement('div');
         div.className = 'ingredient-entry';
@@ -374,6 +365,7 @@
         document.getElementById('dry-hop-container').appendChild(div);
     }
 
+    // ... (Keep openEditor, closeEditor, saveRecipe logic - unchanged) ...
     function openEditor(mode, name = '', data = null) {
         document.getElementById('recipe-list-view').style.display = 'none';
         document.getElementById('master-editor').style.display = 'block';
@@ -572,7 +564,7 @@
             container.appendChild(section);
         });
         
-        enableSmartScrolling();
+        enableDragScrolling();
     }
 </script>
 </body>
