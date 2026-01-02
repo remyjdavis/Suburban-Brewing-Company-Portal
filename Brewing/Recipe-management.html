@@ -196,19 +196,14 @@
                             <div class="spec-item"><label>KO Vol</label><span>10.5 BBL</span></div>
                             <div class="spec-item"><label>ABV</label><span>6.5%</span></div>
                         </div>
-                        <button class="btn-save" style="padding: 10px; font-size: 0.9rem; margin-top: 10px; background: var(--accent-orange);" 
+                      <button class="btn-save" style="padding: 10px; font-size: 0.9rem; margin-top: 10px; background: var(--accent-orange);" 
                                 onclick="openEditor('EDIT', 'Suburban IPA')">Edit Master Recipe</button>
-                    </div>
-                </div>
-            </div>
-
-        </div> </div> <script>
-    <script>
+                    </div> </div> </div> </div> </div> <script>
         function toggleSection(sectionId) {
             const section = document.getElementById(sectionId);
             const isActive = section.classList.contains('active');
             
-            // Optional: Close others for a clean accordion effect
+            // Close others for a clean accordion effect
             document.querySelectorAll('.collapsible-content').forEach(el => el.classList.remove('active'));
             
             if (!isActive) {
@@ -217,6 +212,7 @@
         }
 
         function openEditor(mode, name='') {
+            // This switches the view: Hides Portfolio, Shows Editor
             document.getElementById('recipe-list-view').style.display = 'none';
             document.getElementById('master-editor').style.display = 'block';
             
@@ -229,6 +225,7 @@
         }
 
         function closeEditor() {
+            // This switches back: Hides Editor, Shows Portfolio (!Main screen)
             document.getElementById('master-editor').style.display = 'none';
             document.getElementById('recipe-list-view').style.display = 'block';
         }
@@ -241,6 +238,8 @@
         }
 
         function saveRecipe() {
+            // Reminder: Brewery inventory is in the invoices sheet, 
+            // so we'll eventually link this to your Google Sheet data.
             Swal.fire('Saved!', 'Recipe data updated across all Sheets tabs.', 'success');
             closeEditor();
         }
