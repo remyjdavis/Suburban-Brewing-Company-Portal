@@ -605,6 +605,101 @@
         }
     }
 /**
+ * Loads the selected recipe and performs real-time QC math 
+ * based on live inventory specs.
+ */
+function loadRecipeToLog(recipeName) {
+    const recipe = allData.recipes.find(r => r.name === recipeName);
+    const inventory = allData.inventory;
+
+    if (!recipe) return;
+
+    // --- 1. MALT QC ADJUSTMENT ---
+    const maltTable = document.getElementById('grain-log-body');
+    maltTable.innerHTML = recipe.grains.map(g => {
+        const name = g[0];
+        const targetQty = parseFloat(g[1]);
+        const invItem = inventory.grains.find(i => i.name === name);
+        
+        // Math: (Target Qty * Standard Extract 37.0) / Actual COA Extract
+        let suggested = targetQty;
+        if (invItem && invItem.specs.extract) {
+            const actualExtract = parseFloat(invItem.specs.extract);
+            if (actualExtract > 0) suggested = (targetQty * 37.0) / actualExtract;
+        }
+
+        return `
+            <tr>
+                <td>${name}<br><small class="text-muted">Lot: ${invItem ? invItem.lot : 'N/A'}</small></td>
+                <td>${targetQty} lbs</td>
+                <td><input type="number" class="form-control" value="${suggested.toFixed(2)}"></td>
+                <td><span class="badge ${invItem && invItem.qty < suggested ? 'bg-danger' : 'bg-success'}">
+                    Stock: ${invItem ? invItem.qty : 0}
+                </span></td>
+            </tr>`;
+    }).join('');
+
+    // --- 2. HOP IBU ADJUSTMENT ---
+    const hopTable = document.getElementById('hop-log-body');
+    hopTable.innerHTML = recipe.boil.filter(b => b[1] === "Hop").map(h => {
+        const name = h[2];
+        const targetWeight = parseFloat(h[4]);
+        const invItem = inventory.hops.find(i => i.name === name);
+        
+        // Math: (Target Weight * Recipe AA) / Actual COA Alpha
+        let suggested = targetWeight;
+        const recipeAA = parseFloat(h[3]); // AA% defined in Recipe
+        if (invItem && invItem.specs.alpha) {
+            const actualAA = parseFloat(invItem.specs.alpha);
+            if (actualAA > 0) suggested = (targetWeight * recipeAA) / actualAA;
+        }
+
+        return `
+            <tr>
+                <td>${name} (${h[0]} min)<br><small>Lot: ${invItem ? invItem.lot : 'N/A'}</small></td>
+                <td>${targetWeight} lbs</td>
+                <td><input type="number" class="form-control" value="${suggested.toFixed(2)}"></td>
+                <td>${invItem ? invItem.specs.alpha : '??'}% AA</td>
+            </tr>`;
+    }).join('');
+
+    // --- 3. WATER CHEMISTRY (ACID) ADJUSTMENT ---
+    const waterTable = document.getElementById('water-log-body');
+    waterTable.innerHTML = recipe.salts.map(s => {
+        const name = s[0];
+        const targetVol = parseFloat(s[1]);
+        const invItem = inventory.water.find(i => i.name === name);
+        
+        // Math: (Target Vol * 0.88) / Actual COA Strength
+        let suggested = targetVol;
+        if (invItem && invItem.specs.strength) {
+            const actualStrength = parseFloat(invItem.specs.strength);
+            if (actualStrength > 0) suggested = (targetVol * 0.88) / actualStrength;
+        }
+
+        return `
+            <tr>
+                <td>${name}<br><small>Lot: ${invItem ? invItem.lot : 'N/A'}</small></td>
+                <td>${targetVol} ${s[2]}</td>
+                <td><input type="number" class="form-control" value="${suggested.toFixed(2)}"></td>
+                <td>Spec: ${invItem ? (invItem.specs.strength * 100).toFixed(0) : '??'}%</td>
+            </tr>`;
+    }).join('');
+    
+    // --- 4. YEAST QC ALERT ---
+    const yeastSection = document.getElementById('yeast-info');
+    const yeastInv = inventory.yeast.find(y => y.name === recipe.yeast.strain);
+    if (yeastInv) {
+        yeastSection.innerHTML = `
+            <div class="alert alert-info">
+                <strong>Yeast Health:</strong> ${recipe.yeast.strain} | 
+                Generation: ${yeastInv.specs.gen} | 
+                Viability: ${yeastInv.specs.viability}% | 
+                Lot: ${yeastInv.lot}
+            </div>`;
+    }
+}
+    /**
  * PERFORMS QUALITY CONTROL ADJUSTMENTS
  * Compares Recipe Targets vs. Actual Inventory COA Data
  */
