@@ -191,6 +191,11 @@
                         <div><label>O2</label><input type="number" id="ko-o2"></div>
                     </div>
                     <div class="form-row"><div style="grid-column: span 2;"><label>Yeast Notes</label><input type="text" id="yeast-notes"></div></div>
+
+                    <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+                    <div style="font-weight:bold; margin-bottom:5px;">Dry Hop Schedule</div>
+                    <div id="dry-hop-container"></div>
+                    <button class="btn-add-line" onclick="addDryHopLine()">+ Add Dry Hop</button>
                 </div>
 
                 <div style="margin-top:20px;">
@@ -381,6 +386,13 @@
         div.innerHTML = `<input class="boil-name" placeholder="Hop" value="${name}"><input class="boil-aa" type="number" placeholder="AA%" value="${aa}"><input class="boil-oz" type="number" placeholder="Oz" value="${oz}"><input class="boil-min" type="number" placeholder="Min" value="${min}"><input class="boil-type" placeholder="Type" value="${type}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
         document.getElementById('boil-container').appendChild(div);
     }
+    function addDryHopLine(step='', variety='', aa='', lbs='', day='', temp='') {
+        const div = document.createElement('div');
+        div.className = 'ingredient-entry';
+        div.style.gridTemplateColumns = "1fr 2fr 1fr 1fr 1fr 1fr 30px";
+        div.innerHTML = `<input class="dh-step" placeholder="Step" value="${step}"><input class="dh-var" placeholder="Variety" value="${variety}"><input class="dh-aa" type="number" placeholder="AA%" value="${aa}"><input class="dh-lbs" type="number" placeholder="Lbs" value="${lbs}"><input class="dh-day" placeholder="Day" value="${day}"><input class="dh-temp" type="number" placeholder="Temp F" value="${temp}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
+        document.getElementById('dry-hop-container').appendChild(div);
+    }
 
     // --- EDITOR ---
     function openEditor(mode, name = '', data = null) {
@@ -390,6 +402,7 @@
         document.getElementById('salt-container').innerHTML = '';
         document.getElementById('mash-container').innerHTML = '';
         document.getElementById('boil-container').innerHTML = '';
+        document.getElementById('dry-hop-container').innerHTML = '';
         
         if(mode === 'NEW') {
             document.querySelectorAll('#master-editor input:not(#efficiency), #master-editor select').forEach(i => i.value = '');
@@ -431,6 +444,7 @@
             if(data.salts) data.salts.forEach(s => addSaltLine(s[0], s[1], s[2], s[3]));
             if(data.mash) data.mash.forEach(m => addMashLine(m[0], m[1], m[2], m[3]));
             if(data.boil) data.boil.forEach(b => addBoilLine(b[0], b[1], b[2], b[3], b[4]));
+            if(data.dryHops) data.dryHops.forEach(d => addDryHopLine(d[0], d[1], d[2], d[3], d[4], d[5]));
             
             calculateStats();
         }
@@ -470,6 +484,15 @@
             row.querySelector('.boil-type').value
         ]).filter(x => x[0]);
 
+        const dryHops = Array.from(document.querySelectorAll('#dry-hop-container .ingredient-entry')).map(row => [
+            row.querySelector('.dh-step').value,
+            row.querySelector('.dh-var').value,
+            row.querySelector('.dh-aa').value,
+            row.querySelector('.dh-lbs').value,
+            row.querySelector('.dh-day').value,
+            row.querySelector('.dh-temp').value
+        ]).filter(x => x[1]);
+
         const data = {
             id: document.getElementById('edit-id').value, // Send ID for updating
             name: document.getElementById('edit-name').value,
@@ -506,7 +529,8 @@
             grains: grains,
             salts: salts,
             mash: mash,
-            boil: boil
+            boil: boil,
+            dryHops: dryHops
         };
 
         try {
