@@ -286,120 +286,143 @@
  * Fetches batch history, learned efficiency, and malt costs.
  * Updates the trend chart and calculates financial savings.
  */
+/**
+ * FULL REFRESH ML ENGINE
+ * Fetches batch history, learned efficiency, and malt costs.
+ * Updates the trend chart and calculates financial savings.
+ */
 async function refreshMLEngine() {
+    // 1. DOM Element References
     const effDisplay = document.getElementById('ml-efficiency-display');
     const ogDisplay = document.getElementById('ml-og-display');
     const advice = document.getElementById('ml-advice');
     const lbsSavedDisplay = document.getElementById('cost-lbs-saved');
     const cashSavedDisplay = document.getElementById('cost-dollars-saved');
 
-    // Constants for Math
-    const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; // Update with your URL
-    const BASELINE_EFFICIENCY = 0.70; // Our un-optimized benchmark
-    const AVG_MONTHLY_GRAIN_USAGE = 4000; // Estimated total lbs moved per month
+    // 2. Configuration (PASTE YOUR ACTUAL EXEC URL HERE)
+    const PRODUCTION_API_URL = "https://script.google.com/macros/s/YOUR_PRODUCTION_SCRIPT_ID/exec"; 
+    
+    // 3. Calculation Constants
+    const BASELINE_EFFICIENCY = 0.70; 
+    const AVG_MONTHLY_GRAIN_USAGE = 4000; 
 
     try {
-        // 1. Fetch learned data from the Middleman Backend
+        // 4. Fetch learned data from the Middleman Backend
+        // Added 'redirect: follow' to prevent "Load Failed" errors
         const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, {
             method: "GET",
             redirect: "follow"
         });
+
+        if (!res.ok) {
+            throw new Error('Network response was not ok');
+        }
+
         const data = await res.json();
 
+        // 5. Data Extraction with Fallbacks
         const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
-        const history = data.batchHistory || [0.75];
+        const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
         const avgCost = data.avgMaltCost || 0.65;
 
-        // 2. Update Core Efficiency Display
+        // 6. Update Efficiency Display
         const effPercent = (learnedEff * 100).toFixed(1);
-        effDisplay.innerText = effPercent + "%";
-        effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
+        if (effDisplay) {
+            effDisplay.innerText = effPercent + "%";
+            effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
+        }
 
-        // 3. Update Predictive OG (Based on a 100lb sample bill in 31gal)
-        // Formula: (Lbs * 37 ppg * Efficiency) / Volume
-        const predictedPoints = (100 * 37 * learnedEff) / 31;
-        const predictedOG = 1 + (predictedPoints / 1000);
-        ogDisplay.innerText = predictedOG.toFixed(3);
+        // 7. Update Predictive OG (Based on a 100lb sample bill in 31gal)
+        if (ogDisplay) {
+            const predictedPoints = (100 * 37 * learnedEff) / 31;
+            const predictedOG = 1 + (predictedPoints / 1000);
+            ogDisplay.innerText = predictedOG.toFixed(3);
+        }
 
-        // 4. Calculate Financial Impact (Waste Reduction)
+        // 8. Financial Impact Math
         if (learnedEff > BASELINE_EFFICIENCY) {
-            // Formula: Potential Savings = Usage * (1 - (Baseline / Current))
             const lbsSaved = Math.round(AVG_MONTHLY_GRAIN_USAGE * (1 - (BASELINE_EFFICIENCY / learnedEff)));
             const dollarsSaved = lbsSaved * avgCost;
 
-            lbsSavedDisplay.innerText = lbsSaved + " lbs";
-            cashSavedDisplay.innerText = "$" + dollarsSaved.toFixed(2);
-            cashSavedDisplay.style.color = "#10b981";
-        } else {
-            lbsSavedDisplay.innerText = "0 lbs";
-            cashSavedDisplay.innerText = "$0.00";
-            cashSavedDisplay.style.color = "var(--text-muted)";
-        }
-
-        // 5. Render Trend Chart (Last 10 Batches)
-        const ctx = document.getElementById('efficiencyChart').getContext('2d');
-        
-        // Destroy existing chart instance if it exists to prevent overlap on refresh
-        if (window.mlChart instanceof Chart) {
-            window.mlChart.destroy();
-        }
-
-        window.mlChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: history.map((_, i) => `Batch ${i + 1}`),
-                datasets: [{
-                    label: 'Learned Efficiency',
-                    data: history.map(v => v * 100),
-                    borderColor: '#3498db',
-                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 3,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#3498db'
-                }, {
-                    label: 'Target (75%)',
-                    data: Array(history.length).fill(75),
-                    borderColor: '#e2e8f0',
-                    borderDash: [5, 5],
-                    fill: false,
-                    pointRadius: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { 
-                        min: 60, 
-                        max: 90, 
-                        ticks: { callback: v => v + "%" },
-                        grid: { color: '#f1f5f9' } 
-                    },
-                    x: { grid: { display: false } }
-                }
+            if (lbsSavedDisplay) lbsSavedDisplay.innerText = lbsSaved + " lbs";
+            if (cashSavedDisplay) {
+                cashSavedDisplay.innerText = "$" + dollarsSaved.toFixed(2);
+                cashSavedDisplay.style.color = "#10b981";
             }
-        });
-
-        // 6. Update Smart Advice
-        if (learnedEff >= 0.78) {
-            advice.innerText = "Brewhouse is peak optimized. All extraction signals are normal.";
-        } else if (learnedEff < 0.72) {
-            advice.innerText = "Yield dip detected. AI suggests checking mill gap or sparge flow rates.";
         } else {
-            advice.innerText = "Performance is stable and matching recipe baselines.";
+            if (lbsSavedDisplay) lbsSavedDisplay.innerText = "0 lbs";
+            if (cashSavedDisplay) cashSavedDisplay.innerText = "$0.00";
+        }
+
+        // 9. Render Trend Chart
+        const chartCanvas = document.getElementById('efficiencyChart');
+        if (chartCanvas) {
+            const ctx = chartCanvas.getContext('2d');
+            
+            // Destroy existing instance to prevent "Canvas already in use" errors
+            if (window.mlChart instanceof Chart) {
+                window.mlChart.destroy();
+            }
+
+            window.mlChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: history.map((_, i) => `B${i + 1}`),
+                    datasets: [{
+                        label: 'Learned Efficiency',
+                        data: history.map(v => v * 100),
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#3498db'
+                    }, {
+                        label: 'Baseline',
+                        data: Array(history.length).fill(75),
+                        borderColor: '#e2e8f0',
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            min: 60, 
+                            max: 90, 
+                            ticks: { callback: (v) => v + "%" },
+                            grid: { color: '#f1f5f9' } 
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // 10. Logic-Based Advice
+        if (advice) {
+            if (learnedEff >= 0.78) {
+                advice.innerText = "Efficiency Peak: All systems optimized.";
+            } else if (learnedEff < 0.72) {
+                advice.innerText = "Yield Alert: Check mill gap or sparge rates.";
+            } else {
+                advice.innerText = "Stability Detected: Matching recipe baselines.";
+            }
         }
 
     } catch (err) {
         console.error("ML Engine Error:", err);
-        advice.innerText = "Connection to ML Engine lost. Check backend deployment.";
-        effDisplay.innerText = "ERR";
+        if (advice) advice.innerText = "Engine Error: Check API connection.";
+        if (effDisplay) effDisplay.innerText = "OFFLINE";
     }
 }
 
-// Ensure the dashboard initializes on load
+// Initial load call
 window.addEventListener('DOMContentLoaded', refreshMLEngine);
 </script>
 </body>
