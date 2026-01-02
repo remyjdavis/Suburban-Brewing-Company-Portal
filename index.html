@@ -292,110 +292,153 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    // Configuration
-    const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    // Date Logic
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const dateEl = document.getElementById('current-date');
-    if (dateEl) dateEl.textContent = new Date().toLocaleDateString(undefined, options);
+<script>
+  // --- CONFIGURATION ---
+  const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; 
+  const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
 
-    /**
-     * FULL REFRESH ML ENGINE
-     */
-    async function refreshMLEngine() {
-      const effDisplay = document.getElementById('ml-efficiency-display');
-      const ogDisplay = document.getElementById('ml-og-display');
-      const advice = document.getElementById('ml-advice');
-      const lbsSavedDisplay = document.getElementById('cost-lbs-saved');
-      const cashSavedDisplay = document.getElementById('cost-dollars-saved');
+  // --- INITIALIZATION ---
+  window.addEventListener('DOMContentLoaded', () => {
+      // Set Current Date
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateEl = document.getElementById('current-date');
+      if (dateEl) dateEl.textContent = new Date().toLocaleDateString(undefined, options);
 
-      try {
-          const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { 
-              method: "GET", 
-              redirect: "follow" 
+      // Fire both independent data engines
+      refreshMLEngine();    // Request 1: Production Sheet
+      refreshCellarTanks();  // Request 2: Cellar Sheet
+
+      // Chart resize logic for the collapsible card
+      const perfCard = document.getElementById('perfCard');
+      if (perfCard) {
+          perfCard.addEventListener('click', () => {
+              if (window.mlChart) setTimeout(() => window.mlChart.resize(), 450);
           });
-          const data = await res.json();
-
-          const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
-          const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
-          const avgCost = data.avgMaltCost || 0.65;
-
-          // 1. Update Core Displays
-          if (effDisplay) {
-              effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%";
-              effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
-          }
-
-          if (ogDisplay) {
-              const predictedPoints = (100 * 37 * learnedEff) / 31;
-              ogDisplay.innerText = (1 + (predictedPoints / 1000)).toFixed(3);
-          }
-
-          // 2. Financial Math
-          const lbsSaved = Math.round(4000 * (1 - (0.70 / learnedEff)));
-          if (lbsSavedDisplay) lbsSavedDisplay.innerText = (lbsSaved > 0 ? lbsSaved : 0) + " lbs";
-          if (cashSavedDisplay) cashSavedDisplay.innerText = "$" + (lbsSaved > 0 ? lbsSaved * avgCost : 0).toFixed(2);
-
-          // 3. Render Trend Chart
-          const ctx = document.getElementById('efficiencyChart').getContext('2d');
-          if (window.mlChart instanceof Chart) window.mlChart.destroy();
-          window.mlChart = new Chart(ctx, {
-              type: 'line',
-              data: {
-                  labels: history.map((_, i) => `B${i + 1}`),
-                  datasets: [{
-                      label: 'Efficiency',
-                      data: history.map(v => v * 100),
-                      borderColor: '#3498db',
-                      backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                      fill: true,
-                      tension: 0.4,
-                      borderWidth: 3,
-                      pointRadius: 4
-                  }, {
-                      label: 'Baseline',
-                      data: Array(history.length).fill(75),
-                      borderColor: '#e2e8f0',
-                      borderDash: [5, 5],
-                      fill: false,
-                      pointRadius: 0
-                  }]
-              },
-              options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { legend: { display: false } },
-                  scales: {
-                      y: { min: 60, max: 90, ticks: { callback: v => v + "%" } },
-                      x: { grid: { display: false } }
-                  }
-              }
-          });
-
-          if (advice) {
-              advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
-          }
-
-      } catch (err) {
-          console.error("ML Error:", err);
-          if (effDisplay) effDisplay.innerText = "OFFLINE";
       }
-    }
+  });
 
-    // Initialize Page
-    window.addEventListener('DOMContentLoaded', () => {
-        refreshMLEngine();
-        
-        // Handle Chart Resize on Card Expansion
-        const perfCard = document.getElementById('perfCard');
-        if (perfCard) {
-            perfCard.addEventListener('click', () => {
-                if (window.mlChart) setTimeout(() => window.mlChart.resize(), 450);
-            });
+  /**
+   * REFRESH CELLAR TANKS
+   * Pulls live fermentation data from the Cellar Web App
+   */
+  async function refreshCellarTanks() {
+    const tankGrid = document.getElementById('tank-grid');
+    try {
+      const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, {
+        method: "GET",
+        redirect: "follow"
+      });
+      const tanks = await res.json();
+
+      if (tankGrid && tanks) {
+        tankGrid.innerHTML = ""; // Clear placeholders
+        tanks.forEach(tank => {
+          let color = "var(--fermenting)"; // Default Amber
+          if (tank.status.includes("Condition") || tank.status.includes("Crash")) color = "var(--crashing)";
+          if (tank.status.includes("Ready")) color = "var(--ready)";
+
+          tankGrid.innerHTML += `
+            <div class="tank-card">
+                <span class="status-badge" style="background: ${color}22; color: ${color};">${tank.status}</span>
+                <div class="tank-vessel">
+                    <div class="tank-fill" style="height: ${tank.fill}%; background: ${color};"></div>
+                </div>
+                <div style="font-weight:700; font-size: 14px;">${tank.vessel}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">${tank.brand}</div>
+                <div style="font-size: 9px; margin-top: 5px; color: var(--accent); font-weight: bold;">Batch: ${tank.batchId}</div>
+            </div>`;
+        });
+      }
+    } catch (err) {
+      console.error("Cellar Sync Error:", err);
+    }
+  }
+
+  /**
+   * FULL REFRESH ML ENGINE
+   * Pulls yield trends and financial data from the Production Web App
+   */
+  async function refreshMLEngine() {
+    const effDisplay = document.getElementById('ml-efficiency-display');
+    const ogDisplay = document.getElementById('ml-og-display');
+    const advice = document.getElementById('ml-advice');
+    const lbsSavedDisplay = document.getElementById('cost-lbs-saved');
+    const cashSavedDisplay = document.getElementById('cost-dollars-saved');
+
+    try {
+        const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { 
+            method: "GET", 
+            redirect: "follow" 
+        });
+        const data = await res.json();
+
+        const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
+        const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
+        const avgCost = data.avgMaltCost || 0.65;
+
+        // 1. Update Core Displays
+        if (effDisplay) {
+            effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%";
+            effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
         }
-    });
-  </script>
+
+        if (ogDisplay) {
+            const predictedPoints = (100 * 37 * learnedEff) / 31;
+            ogDisplay.innerText = (1 + (predictedPoints / 1000)).toFixed(3);
+        }
+
+        // 2. Financial Math
+        const lbsSaved = Math.round(4000 * (1 - (0.70 / learnedEff)));
+        if (lbsSavedDisplay) lbsSavedDisplay.innerText = (lbsSaved > 0 ? lbsSaved : 0) + " lbs";
+        if (cashSavedDisplay) cashSavedDisplay.innerText = "$" + (lbsSaved > 0 ? lbsSaved * avgCost : 0).toFixed(2);
+
+        // 3. Render Trend Chart
+        const ctx = document.getElementById('efficiencyChart').getContext('2d');
+        if (window.mlChart instanceof Chart) window.mlChart.destroy();
+        window.mlChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: history.map((_, i) => `B${i + 1}`),
+                datasets: [{
+                    label: 'Efficiency',
+                    data: history.map(v => v * 100),
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 4
+                }, {
+                    label: 'Baseline',
+                    data: Array(history.length).fill(75),
+                    borderColor: '#e2e8f0',
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min: 60, max: 90, ticks: { callback: v => v + "%" } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        if (advice) {
+            advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
+        }
+
+    } catch (err) {
+        console.error("ML Error:", err);
+        if (effDisplay) effDisplay.innerText = "OFFLINE";
+    }
+  }
+</script>
 </body>
 </html>
