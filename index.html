@@ -20,7 +20,39 @@
       --danger: #ef4444;
       --ml-blue: #3498db;
     }
+/* SWIPEABLE ROW LOGIC */
+    .tier-1, .tier-2, .tier-3 {
+        display: flex !important; /* Force horizontal alignment */
+        overflow-x: auto !important; /* Enable horizontal scroll */
+        scroll-snap-type: x mandatory;
+        gap: 16px;
+        padding-bottom: 15px; /* Space for scrollbar */
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Hide scrollbar for Firefox */
+    }
 
+    .tier-1::-webkit-scrollbar, 
+    .tier-2::-webkit-scrollbar, 
+    .tier-3::-webkit-scrollbar {
+        display: none; /* Hide scrollbar for Chrome/Safari */
+    }
+
+    /* CARD SIZING FOR SWIPE */
+    .card, .tank-card, .ml-card {
+        flex: 0 0 280px; /* Each card takes fixed width */
+        scroll-snap-align: start;
+        margin-bottom: 0 !important;
+    }
+
+    /* Adjust specific sizing for tanks to fit more on screen */
+    .tank-card {
+        flex: 0 0 160px; 
+    }
+
+    /* Adjust ML cards to be wider for charts */
+    .ml-card {
+        flex: 0 0 320px;
+    }
     /* --- COLLAPSIBLE ML CARD STYLING --- */
     .ml-card {
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -317,23 +349,20 @@
   }
 
   /**
-   * REFRESH CELLAR TANKS
-   * Pulls live data from !Fermentation_Batches
-   */
-  /**
-   * REFRESH CELLAR TANKS
-   * Hits the Cellar Web App directly to populate fermenter/brite cards
-   */
-  async function refreshCellarTanks() {
+ * REFRESH CELLAR TANKS
+ * Maps physical vessels to live data and sorts by category
+ */
+async function refreshCellarTanks() {
     const tankGrid = document.getElementById('tank-grid');
     if (!tankGrid) return;
 
-    // YOUR ACTUAL CELLAR LAYOUT
-    const physicalTanks = [
-        "FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6", // 10BBL FVs
-        "Pilot 1", "Pilot 2",                          // 1BBL Pilot FVs
-        "BT 1", "BT 2"                                 // 10BBL Brite Tanks
-    ]; 
+    // YOUR FULL CELLAR CATEGORIES
+    const productionFVs = ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"];
+    const pilotFVs = ["Pilot 1", "Pilot 2"];
+    const brites = ["BT 1", "BT 2"];
+    
+    // Combine into one master list for the swipe row
+    const physicalTanks = [...productionFVs, ...pilotFVs, ...brites];
 
     try {
         const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, {
@@ -342,15 +371,12 @@
         });
         const liveBatches = await res.json();
 
-        // Clear the grid to rebuild from the physical list
         tankGrid.innerHTML = ""; 
 
         physicalTanks.forEach(tankName => {
-            // Find if this specific vessel has an active batch in the backend
             const liveData = Array.isArray(liveBatches) ? liveBatches.find(b => b.vessel === tankName) : null;
             const isActive = !!liveData;
             
-            // Set Visuals
             let color = "var(--text-muted)"; 
             let statusText = "Empty/Clean";
             
@@ -362,7 +388,7 @@
             }
 
             tankGrid.innerHTML += `
-                <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'}; min-width: 160px;">
+                <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'};">
                     <span class="status-badge" style="background: ${isActive ? color + '22' : '#f1f5f9'}; color: ${color};">
                         ${statusText}
                     </span>
