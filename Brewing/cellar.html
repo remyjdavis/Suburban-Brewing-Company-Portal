@@ -33,10 +33,16 @@
         .container { padding: 30px; }
 
         /* --- VESSEL GRID --- */
-        .vessel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-bottom: 35px; }
+        .grid-section-title {
+            font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);
+            margin: 30px 0 15px 0; border-left: 5px solid var(--accent); padding-left: 10px;
+        }
+        .vessel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        
         .vessel-card { background: white; border-radius: 12px; padding: 15px; text-align: center; border: 2px solid #e5e7eb; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .vessel-card:hover { transform: translateY(-3px); border-color: var(--accent); }
         
+        /* Status Colors */
         .vessel-card.active { border-color: var(--accent-green); border-width: 3px; }
         .vessel-card.dirty { border-color: var(--status-dirty); border-width: 3px; background: #fef2f2; }
         .vessel-card.clean { border-color: var(--status-clean); border-width: 3px; border-style: dashed; }
@@ -80,34 +86,10 @@
         <div class="sidebar-header">SUBURBAN BREWING</div>
         <div class="nav-section-title">Main Menu</div> 
         <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-        
-        <div class="nav-section-title">Samplings</div>
-        <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-        <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-        <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-        
-        <div class="nav-section-title">Sales & Outreach</div>
-        <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-        <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-        <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-        <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
-
-        <div class="nav-section-title">Inventory</div>
-        <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-        <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-        <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-        <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-    
         <div class="nav-section-title">Brewing</div>
-        <a href="Recipe-management.html" class="nav-link active"><span>Recipe Management</span></a>
+        <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
         <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-        <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
-        <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
-    
-        <div class="nav-section-title">Reporting & Analytics</div>
-        <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-        <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-        <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
+        <a href="cellar.html" class="nav-link active"><span>Cellar Management</span></a>
     </aside>
 
     <main class="main-content">
@@ -117,12 +99,11 @@
         </div>
 
         <div class="container">
-            <h3 style="border-left: 5px solid var(--primary-dark); padding-left: 10px;">Production Fermenters</h3>
+            
+            <div class="grid-section-title">Production Fermenters (10 BBL)</div>
             <div class="vessel-grid">
                 <div class="vessel-card active" onclick="openModal('FV-01', '24-001', 'Suburban IPA', 'Active')">
-                    <p class="tank-name">FV-01</p>
-                    <span class="status-tag" style="color:var(--accent-green);">ACTIVE</span><br>
-                    <small>Suburban IPA</small>
+                    <p class="tank-name">FV-01</p><span class="status-tag" style="color:var(--accent-green);">ACTIVE</span><br><small>Suburban IPA</small>
                 </div>
                 <div class="vessel-card dirty" onclick="openModal('FV-02', null, null, 'Dirty')">
                     <p class="tank-name">FV-02</p><span class="status-tag" style="color:var(--status-dirty);">DIRTY</span>
@@ -130,7 +111,37 @@
                 <div class="vessel-card clean" onclick="openModal('FV-03', null, null, 'Clean')">
                     <p class="tank-name">FV-03</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
                 </div>
+                <div class="vessel-card clean" onclick="openModal('FV-04', null, null, 'Clean')">
+                    <p class="tank-name">FV-04</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
+                </div>
+                <div class="vessel-card clean" onclick="openModal('FV-05', null, null, 'Clean')">
+                    <p class="tank-name">FV-05</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
+                </div>
+                <div class="vessel-card clean" onclick="openModal('FV-06', null, null, 'Clean')">
+                    <p class="tank-name">FV-06</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
+                </div>
             </div>
+
+            <div class="grid-section-title" style="border-color: var(--accent-orange);">Pilot Fermenters (1 BBL)</div>
+            <div class="vessel-grid">
+                <div class="vessel-card active" onclick="openModal('P-FV-01', '24-050', 'Exp. Pale Ale', 'Active')">
+                    <p class="tank-name">P-FV-01</p><span class="status-tag" style="color:var(--accent-green);">ACTIVE</span><br><small>Exp. Pale Ale</small>
+                </div>
+                <div class="vessel-card clean" onclick="openModal('P-FV-02', null, null, 'Clean')">
+                    <p class="tank-name">P-FV-02</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
+                </div>
+            </div>
+
+            <div class="grid-section-title" style="border-color: var(--accent-green);">Brite Tanks (10 BBL)</div>
+            <div class="vessel-grid">
+                <div class="vessel-card brite-active" onclick="openModal('BT-01', '24-001', 'Suburban IPA', 'Active')">
+                    <p class="tank-name">BT-01</p><span class="status-tag" style="color:var(--accent-orange);">CARBING</span><br><small>Suburban IPA</small>
+                </div>
+                <div class="vessel-card clean" onclick="openModal('BT-02', null, null, 'Clean')">
+                    <p class="tank-name">BT-02</p><span class="status-tag" style="color:var(--status-clean);">READY</span>
+                </div>
+            </div>
+
         </div>
     </main>
 
@@ -211,7 +222,9 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+        // PASTE YOUR CELLAR WEB APP URL HERE
+        const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+        
         let currentBatchId = null;
         let currentVessel = null;
 
@@ -248,12 +261,12 @@
 
         async function updateStatus() {
             const newStatus = document.getElementById('status-select').value;
-            // Send to backend logic here
+            // You can add fetch call here to update !Fermentation_Batches
             Swal.fire('Updated', `Tank status set to: ${newStatus}`, 'success');
         }
 
         async function logDryHop() {
-            Swal.fire('Success', 'Dry Hop recorded. Inventory deducted.', 'success');
+            Swal.fire('Success', 'Dry Hop recorded.', 'success');
             document.getElementById('dry-hop-section').style.display = 'none';
         }
 
@@ -270,7 +283,7 @@
             };
             
             try {
-                await fetch(WEB_APP_URL, {
+                await fetch(CELLAR_API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     body: JSON.stringify(payload)
