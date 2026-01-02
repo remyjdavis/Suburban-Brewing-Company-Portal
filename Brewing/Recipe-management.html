@@ -19,7 +19,7 @@
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; }
         .container { padding: 30px; flex-grow: 1; overflow-y: auto; }
         
-        /* --- HORIZONTAL SCROLLING (Refined) --- */
+        /* --- HORIZONTAL SCROLLING --- */
         .category-group { margin-bottom: 30px; }
         .category-header { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 15px; border-left: 5px solid var(--accent); padding-left: 10px; text-transform: uppercase; }
         
@@ -28,14 +28,15 @@
             gap: 20px; 
             overflow-x: auto; 
             padding: 10px 5px 25px 5px;
-            cursor: grab; 
-            /* Hide Scrollbars */
+            /* Smooth scrolling for trackpads */
+            scroll-behavior: smooth; 
             scrollbar-width: none; 
             -ms-overflow-style: none;
-            user-select: none; /* Crucial for dragging */
         }
         .horizontal-scroll-container::-webkit-scrollbar { display: none; }
-        .horizontal-scroll-container.active { cursor: grabbing; cursor: -webkit-grabbing; }
+        
+        /* When dragging via JS */
+        .horizontal-scroll-container.active { cursor: grabbing; cursor: -webkit-grabbing; scroll-behavior: auto; }
 
         .recipe-card { 
             background: white; border-radius: 15px; border: 1px solid #ddd; padding: 25px; 
@@ -112,12 +113,12 @@
                             <div><label>Target Mash pH</label><input type="number" step="0.01" id="target-mash-ph"></div>
                         </div>
                         <div style="display:grid; grid-template-columns: repeat(6, 1fr); gap:10px; margin-top:15px;">
-                            <div><label>Ca ppm</label><input type="number" id="target-ca"></div>
-                            <div><label>Mg ppm</label><input type="number" id="target-mg"></div>
-                            <div><label>Na ppm</label><input type="number" id="target-na"></div>
-                            <div><label>Cl ppm</label><input type="number" id="target-cl"></div>
-                            <div><label>SO4 ppm</label><input type="number" id="target-so4"></div>
-                            <div><label>Bicarb ppm</label><input type="number" id="target-hco3"></div>
+                            <div><label>Ca</label><input type="number" id="target-ca"></div>
+                            <div><label>Mg</label><input type="number" id="target-mg"></div>
+                            <div><label>Na</label><input type="number" id="target-na"></div>
+                            <div><label>Cl</label><input type="number" id="target-cl"></div>
+                            <div><label>SO4</label><input type="number" id="target-so4"></div>
+                            <div><label>Bicarb</label><input type="number" id="target-hco3"></div>
                         </div>
                     </div>
 
@@ -192,33 +193,37 @@
     let refGrains = []; 
     let refWaterAdditions = [];
 
-    // --- SWIPE LOGIC (FIXED) ---
-    function enableDragScrolling() {
+    // --- SWIPE / SCROLL LOGIC ---
+    function enableHorizontalScrolling() {
         const sliders = document.querySelectorAll('.horizontal-scroll-container');
         sliders.forEach(slider => {
             let isDown = false;
             let startX;
             let scrollLeft;
 
-            slider.addEventListener('mousedown', (e) => {
-                // Ignore if clicking a button inside
-                if (e.target.tagName === 'BUTTON') return;
-                
-                isDown = true;
-                slider.classList.add('active');
-                // Use pageX directly, offsetLeft logic can be buggy with fixed sidebars
-                startX = e.pageX;
-                scrollLeft = slider.scrollLeft;
+            // 1. Mouse Wheel = Horizontal Scroll (Best for Trackpads & Mice)
+            slider.addEventListener('wheel', (e) => {
+                if (e.deltaY !== 0) {
+                    e.preventDefault();
+                    slider.scrollLeft += e.deltaY;
+                }
             });
 
+            // 2. Click and Drag (Backup for Mouse users)
+            slider.addEventListener('mousedown', (e) => {
+                if(e.target.tagName === 'BUTTON') return; // Don't drag if clicking a button
+                isDown = true;
+                slider.classList.add('active');
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+            });
             slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('active'); });
             slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('active'); });
-
             slider.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
+                if(!isDown) return;
                 e.preventDefault();
-                const x = e.pageX;
-                const walk = (x - startX) * 2; // Scroll-fast speed
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 2; // Scroll Speed
                 slider.scrollLeft = scrollLeft - walk;
             });
         });
@@ -266,7 +271,7 @@
         } catch (err) { console.error("API Error:", err); }
     }
 
-    // --- CALCULATORS ---
+    // ... (Keep calculators: calculateStats, getSRMColor, srmToHex - unchanged) ...
     function calculateStats() {
         const batchBBL = parseFloat(document.getElementById('edit-batch-size').value) || 0;
         const eff = parseFloat(document.getElementById('efficiency').value) || 85;
@@ -330,7 +335,7 @@
         if (srm <= 24) return "#261716"; if (srm <= 30) return "#16100F"; return "#030403"; 
     }
 
-    // --- ADD ROW FUNCS ---
+    // ... (Keep row adding functions - unchanged) ...
     function addGrainLine(name='', lbs='', pct='') {
         const div = document.createElement('div');
         div.className = 'ingredient-entry';
@@ -367,7 +372,7 @@
         document.getElementById('dry-hop-container').appendChild(div);
     }
 
-    // --- EDITOR ---
+    // ... (Keep openEditor, closeEditor, saveRecipe logic - unchanged) ...
     function openEditor(mode, name = '', data = null) {
         document.getElementById('recipe-list-view').style.display = 'none';
         document.getElementById('master-editor').style.display = 'block';
@@ -428,6 +433,7 @@
     }
 
     async function saveRecipe() {
+        // ... (Keep standard gathering logic)
         const grains = Array.from(document.querySelectorAll('#grain-container .ingredient-entry')).map(row => [
             row.querySelector('.grain-search').value,
             row.querySelector('.grain-weight').value,
@@ -566,7 +572,7 @@
             container.appendChild(section);
         });
         
-        enableDragScrolling();
+        enableHorizontalScrolling();
     }
 </script>
 </body>
