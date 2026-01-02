@@ -224,7 +224,9 @@
                         </div>
                       <button class="btn-save" style="padding: 10px; font-size: 0.9rem; margin-top: 10px; background: var(--accent-orange);" 
                                 onclick="openEditor('EDIT', 'Suburban IPA')">Edit Master Recipe</button>
-                    </div> </div> </div> </div> </div> <script>
+                    </div> </div> </div> </div> </div> 
+    <script>
+        
         function toggleSection(sectionId) {
             const section = document.getElementById(sectionId);
             const isActive = section.classList.contains('active');
@@ -236,7 +238,27 @@
                 section.classList.add('active');
             }
         }
+/**
+ * Handles the visual toggle of the Dry Hop section.
+ * Updates the badge and reveals the input rows.
+ */
+function toggleDryHopUI() {
+    const isEnabled = document.getElementById('has-dry-hop').checked;
+    const wrapper = document.getElementById('dry-hop-inputs-wrapper');
+    const badge = document.getElementById('dh-status-badge');
 
+    if (isEnabled) {
+        wrapper.style.display = 'block';
+        badge.innerText = "ENABLED";
+        badge.style.color = "var(--accent-green)";
+    } else {
+        wrapper.style.display = 'none';
+        badge.innerText = "DISABLED";
+        badge.style.color = "#6b7280";
+        // Optional: Clear any inputs if disabled to prevent accidental saving
+        document.querySelectorAll('#dry-hop-container input').forEach(i => i.value = '');
+    }
+}
         function openEditor(mode, name='') {
             // This switches the view: Hides Portfolio, Shows Editor
             document.getElementById('recipe-list-view').style.display = 'none';
