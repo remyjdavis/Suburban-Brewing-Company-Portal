@@ -374,7 +374,45 @@
                 }).filter(r => r[1] !== "")
         };
     }
+/**
+ * 1. Fetches the list from Google and triggers the render
+ */
+async function loadRecipeCards() {
+    try {
+        const response = await fetch(WEB_APP_URL); // Hits the doGet we just wrote
+        const recipes = await response.json();
+        renderCards(recipes);
+    } catch (err) {
+        console.error("Failed to load cards:", err);
+    }
+}
 
+/**
+ * 2. Clears the list and builds new cards
+ */
+function renderCards(recipes) {
+    const container = document.getElementById('recipe-list-view'); // Or your specific card container
+    // Keep your "Add New" button but clear previous cards
+    const addButton = container.querySelector('.add-recipe-card'); 
+    container.innerHTML = '';
+    if(addButton) container.appendChild(addButton);
+
+    recipes.forEach(recipe => {
+        const card = document.createElement('div');
+        card.className = 'recipe-card';
+        card.onclick = () => openEditor('EDIT', recipe.name, recipe);
+        
+        card.innerHTML = `
+            <h3>${recipe.name}</h3>
+            <p><strong>Style:</strong> ${recipe.style}</p>
+            <div class="card-stats">
+                <span>OG: ${recipe.og}</span>
+                <span>ABV: ${recipe.abv}%</span>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
     async function saveRecipe() {
         const payload = {
             action: 'syncMaster',
