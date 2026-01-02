@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe Management | Suburban Brewing Co.</title>
+    <title>Recipe Design | Suburban Brewing Co.</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { 
@@ -19,32 +19,25 @@
         /* --- SIDEBAR --- */
         .sidebar { width: var(--sidebar-width); background: var(--primary-dark); height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
         .sidebar-header { padding: 25px 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid #1f2937; letter-spacing: 1px; }
-        .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 1px; }
         .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
         .nav-link:hover { background: #1f2937; color: #fff; }
         .nav-link.active { background: var(--accent); color: #fff; font-weight: 600; }
 
-        /* --- MAIN CONTENT --- */
+        /* --- LAYOUT --- */
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; height: 100vh; display: flex; flex-direction: column; width: calc(100% - var(--sidebar-width)); }
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
         .container { padding: 30px; flex-grow: 1; overflow-y: auto; }
 
-        /* --- HORIZONTAL SCROLLING LAYOUT --- */
+        /* --- SCROLLING LAYOUT --- */
         .category-group { margin-bottom: 30px; }
         .category-header { 
             font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); 
             margin-bottom: 15px; border-left: 5px solid var(--accent); padding-left: 10px; 
             text-transform: uppercase; letter-spacing: 0.5px;
         }
-
         .horizontal-scroll-container {
-            display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            padding: 10px 5px 25px 5px;
-            scroll-snap-type: x mandatory;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent-orange) transparent;
+            display: flex; gap: 20px; overflow-x: auto; padding: 10px 5px 25px 5px;
+            scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--accent-orange) transparent;
         }
         .horizontal-scroll-container::-webkit-scrollbar { height: 8px; }
         .horizontal-scroll-container::-webkit-scrollbar-thumb { background: var(--accent-orange); border-radius: 10px; }
@@ -54,7 +47,7 @@
             background: white; border-radius: 15px; border: 1px solid #ddd; padding: 25px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.08); min-width: 320px; max-width: 320px; 
             scroll-snap-align: start; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; 
-            transition: 0.2s;
+            transition: 0.2s; position: relative; overflow: hidden;
         }
         .recipe-card:hover { transform: translateY(-3px); border-color: var(--accent); }
 
@@ -63,55 +56,46 @@
         .collapsible-header { background: #f8f9fa; padding: 12px 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: #374151; }
         .collapsible-content { padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; display: none; background: white; }
         .collapsible-content.active { display: block; }
+        
         .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px; }
-        .ingredient-entry { display: grid; grid-template-columns: 3fr 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; }
-        .btn-add-line { background: #f3f4f6; border: 1px solid #d1d5db; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
-        .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 25px; }
-        .btn-edit { background: var(--accent-orange); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
-        .btn-cancel { background: #6b7280; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
-        .style-tag { background: #f3f4f6; font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; color: #4b5563; }
+        .ingredient-entry { display: grid; grid-template-columns: 3fr 1fr 1fr 30px; gap: 10px; margin-bottom: 8px; align-items: center; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+        
+        /* --- CALCULATOR BAR & COLOR SWATCHES --- */
+        .calc-bar { 
+            background: #eef2ff; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; 
+            margin-bottom: 20px; display: flex; gap: 20px; align-items: center; justify-content: space-around; 
+        }
+        .calc-item { text-align: center; }
+        .calc-item label { font-size: 0.7rem; font-weight: bold; color: #4b5563; display: block; text-transform: uppercase; }
+        .calc-item span { font-size: 1.1rem; font-weight: 800; color: #1f2937; }
+        
+        /* The Beer Color Box */
+        .color-swatch { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #e5e7eb; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* Card Spec Bar */
         .spec-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; margin: 15px 0; text-align: center; }
         .spec-item span { display: block; font-size: 0.9rem; font-weight: bold; }
         .spec-item label { font-size: 0.6rem; color: #6b7280; text-transform: uppercase; }
 
+        .btn-add-line { background: #f3f4f6; border: 1px solid #d1d5db; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
+        .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 25px; }
+        .btn-edit { background: var(--accent-orange); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
+        .btn-cancel { background: #6b7280; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
+        .btn-delete { color: #ef4444; background: none; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
+        .style-tag { background: #f3f4f6; font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; color: #4b5563; }
+
         @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; width: 100%; } }
     </style>
 </head>
-<body onload="loadRecipeCards()">
+<body onload="loadPageData()">
 
     <aside class="sidebar">
         <div class="sidebar-header">SUBURBAN BREWING</div>
-        <div class="nav-section-title">Main Menu</div> 
         <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-        
-        <div class="nav-section-title">Samplings</div>
-        <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-        <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-        <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-        
-        <div class="nav-section-title">Sales & Outreach</div>
-        <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-        <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-        <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-        <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
-
-        <div class="nav-section-title">Inventory</div>
-        <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-        <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-        <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-        <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-    
-        <div class="nav-section-title">Brewing</div>
         <a href="Recipe-management.html" class="nav-link active"><span>Recipe Management</span></a>
         <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
         <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
-        <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
-    
-        <div class="nav-section-title">Reporting & Analytics</div>
-        <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-        <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-        <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
     </aside>
 
     <div class="main-content">
@@ -127,6 +111,13 @@
                     <button class="btn-cancel" onclick="closeEditor()">Close Editor</button>
                 </div>
 
+                <div class="calc-bar">
+                    <div class="calc-item"><label>Calc Pre-Boil</label><span id="calc-preboil">1.000</span></div>
+                    <div class="calc-item"><label>Calc SRM</label><span id="calc-srm">0</span></div>
+                    <div class="color-swatch" id="calc-swatch" style="background: #fff;" title="Estimated Beer Color"></div>
+                    <div class="calc-item"><label>Brewhouse Eff.</label><input type="number" id="efficiency" value="85" style="width:60px; padding:5px; text-align:center; border:1px solid #ccc; border-radius:4px;" onchange="calculateStats()"> %</div>
+                </div>
+
                 <div class="collapsible-header" onclick="toggleSection('basic-info')">1. Basic Information ▾</div>
                 <div id="basic-info" class="collapsible-content active">
                     <div class="form-row">
@@ -140,7 +131,7 @@
                                 <option value="Seasonal">Seasonal Brand</option>
                             </select>
                         </div>
-                        <div><label>Batch Size (BBL)</label><input type="number" step="0.1" id="edit-batch-size"></div>
+                        <div><label>Batch Size (BBL)</label><input type="number" step="0.1" id="edit-batch-size" onchange="calculateStats()"></div>
                     </div>
                     <div class="form-row">
                         <div><label>Target OG</label><input type="number" step="0.001" id="edit-og"></div>
@@ -157,71 +148,62 @@
                         <div><label>Mash-In (Gal)</label><input type="number" id="water-mash"></div>
                         <div><label>Sparge (Gal)</label><input type="number" id="water-sparge"></div>
                     </div>
-                    <div class="section-title" style="margin-top:20px;">Water Additions</div>
                     <div id="salt-container">
-                        <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
+                        <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr 1fr 30px;">
                             <select class="salt-name">
                                 <option value="">Select Salt...</option>
-                                <option value="Gypsum (CaSO4)">Gypsum</option>
-                                <option value="Calcium Chloride (CaCl2)">Calcium Chloride</option>
-                                <option value="Epsom Salt (MgSO4)">Epsom Salt</option>
-                                <option value="Canning Salt (NaCl)">Canning Salt</option>
-                                <option value="Chalk (CaCO3)">Chalk</option>
-                                <option value="Lactic Acid (88%)">Lactic Acid (ml)</option>
+                                <option value="Gypsum">Gypsum</option>
+                                <option value="CaCl">CaCl</option>
+                                <option value="Lactic Acid">Lactic Acid</option>
                             </select>
-                            <input type="number" placeholder="Mash (g)" class="salt-mash">
-                            <input type="number" placeholder="Sparge (g)" class="salt-sparge">
+                            <input type="number" placeholder="Mash" class="salt-mash">
+                            <input type="number" placeholder="Sparge" class="salt-sparge">
                             <input type="text" placeholder="Notes" class="salt-notes">
+                            <button class="btn-delete" onclick="this.parentElement.remove()">×</button>
                         </div>
                     </div>
-                    <button class="btn-add-line" onclick="addLine('salt-container')">+ Add Salt/Acid</button>
-                    <div class="section-title" style="margin-top:25px;">Grain Bill</div>
-                    <div id="grain-container">
-                        <div class="ingredient-entry"><input type="text" placeholder="Malt Name"><input type="number" placeholder="Lbs"><input type="text" placeholder="%"></div>
-                    </div>
-                    <button class="btn-add-line" onclick="addLine('grain-container')">+ Add Malt</button>
+                    <button class="btn-add-line" onclick="addSaltLine()">+ Add Salt</button>
+                    
+                    <div style="margin-top:20px; font-weight:bold; border-bottom:1px solid #eee; padding-bottom:5px;">Grain Bill (Auto-Calc)</div>
+                    <div id="grain-container"></div>
+                    <button class="btn-add-line" onclick="addGrainLine()">+ Add Malt</button>
+                    <datalist id="grain-list"></datalist>
                 </div>
 
-                <div class="collapsible-header" onclick="toggleSection('mash-section')">3. Mash Schedule & pH ▾</div>
+                <div class="collapsible-header" onclick="toggleSection('mash-section')">3. Mash & Boil ▾</div>
                 <div id="mash-section" class="collapsible-content">
                     <div class="form-row"><div><label>Target Mash pH</label><input type="number" step="0.01" id="mash-ph"></div></div>
                     <div id="mash-container">
-                        <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr;"><input type="text" placeholder="Step (e.g., Saccharification)"><input type="number" placeholder="Temp °F"><input type="number" placeholder="Time (min)"></div>
+                        <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr 30px;"><input type="text" placeholder="Step"><input type="number" placeholder="°F"><input type="number" placeholder="Min"><button class="btn-delete" onclick="this.parentElement.remove()">×</button></div>
                     </div>
-                    <button class="btn-add-line" onclick="addLine('mash-container')">+ Add Mash Step</button>
-                </div>
-
-                <div class="collapsible-header" onclick="toggleSection('boil-section')">4. Boil Additions & Targets ▾</div>
-                <div id="boil-section" class="collapsible-content">
-                    <div class="form-row">
-                        <div><label>Target Pre-Boil Gravity</label><input type="number" step="0.001" id="target-preboil"></div>
-                        <div><label>Target Post-Boil Gravity</label><input type="number" step="0.001" id="target-postboil"></div>
+                    <button class="btn-add-line" onclick="addSimpleLine('mash-container')">+ Add Step</button>
+                    <div class="form-row" style="margin-top:20px;">
+                        <div><label>Pre-Boil Gravity</label><input type="number" step="0.001" id="target-preboil"></div>
+                        <div><label>Post-Boil Gravity</label><input type="number" step="0.001" id="target-postboil"></div>
                     </div>
                     <div id="boil-container">
-                        <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
-                            <input type="text" placeholder="Ingredient/Hop" class="boil-name"><input type="number" step="0.1" placeholder="AA%"><input type="number" placeholder="oz"><input type="number" placeholder="min"><input type="text" placeholder="Type">
+                        <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr 30px;">
+                            <input type="text" placeholder="Hop"><input type="number" placeholder="AA%"><input type="number" placeholder="oz"><input type="number" placeholder="Min"><input type="text" placeholder="Type"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>
                         </div>
                     </div>
-                    <button class="btn-add-line" onclick="addLine('boil-container')">+ Add Boil Addition</button>
+                    <button class="btn-add-line" onclick="addBoilLine()">+ Add Boil Addition</button>
                 </div>
 
-                <div class="collapsible-header" onclick="toggleSection('ko-section')">5. Knockout & Yeast ▾</div>
+                <div class="collapsible-header" onclick="toggleSection('ko-section')">4. KO & Dry Hop ▾</div>
                 <div id="ko-section" class="collapsible-content">
                     <div class="form-row">
-                        <div><label>KO Vol (BBL)</label><input type="number" step="0.1" id="ko-vol"></div>
                         <div><label>Yeast Strain</label><input type="text" id="yeast-strain"></div>
                         <div><label>Pitch Rate</label><input type="number" step="0.1" id="pitch-rate"></div>
+                        <div><label>KO Vol</label><input type="number" id="ko-vol"></div>
                     </div>
-                </div>
-
-                <div class="collapsible-header" onclick="toggleSection('dry-hop-section')">6. Dry Hopping Schedule ▾</div>
-                <div id="dry-hop-section" class="collapsible-content">
-                    <label style="display:flex; align-items:center;"><input type="checkbox" id="has-dry-hop" onchange="toggleDryHopUI()" style="width:auto; margin-right:10px;"> Enable Dry Hopping</label>
-                    <div id="dry-hop-inputs-wrapper" style="display:none; margin-top:15px;">
+                    <label style="display:block; margin-top:20px;"><input type="checkbox" id="has-dry-hop" onchange="toggleDryHopUI()"> Enable Dry Hopping</label>
+                    <div id="dry-hop-inputs-wrapper" style="display:none; margin-top:10px;">
                         <div id="dry-hop-container">
-                            <div class="ingredient-entry" style="grid-template-columns: 1fr 2fr 1fr 1fr 1fr;"><input type="text" placeholder="Step" class="dh-step"><input type="text" placeholder="Variety"><input type="number" step="0.1" placeholder="AA%"><input type="number" placeholder="Lbs"><input type="text" placeholder="Day"></div>
+                            <div class="ingredient-entry" style="grid-template-columns: 1fr 2fr 1fr 1fr 1fr 30px;">
+                                <input type="text" placeholder="Step"><input type="text" placeholder="Variety"><input type="number" placeholder="AA%"><input type="number" placeholder="Lbs"><input type="text" placeholder="Day"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>
+                            </div>
                         </div>
-                        <button class="btn-add-line" onclick="addLine('dry-hop-container')">+ Add Dry Hop</button>
+                        <button class="btn-add-line" onclick="addDryHopLine()">+ Add Dry Hop</button>
                     </div>
                 </div>
 
@@ -236,7 +218,10 @@
     </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+    // --- PASTE YOUR RECIPE WEB APP URL HERE ---
+    const RECIPE_API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+    
+    let refGrains = []; 
 
     function toggleSection(id) {
         const el = document.getElementById(id);
@@ -249,79 +234,159 @@
         document.getElementById('dry-hop-inputs-wrapper').style.display = document.getElementById('has-dry-hop').checked ? 'block' : 'none';
     }
 
-    function addLine(containerId) {
-        const c = document.getElementById(containerId);
-        const n = c.children[0].cloneNode(true);
-        n.querySelectorAll('input, select').forEach(i => i.value = '');
-        c.appendChild(n);
-    }
-
-    async function loadRecipeCards() {
+    // --- PAGE LOAD ---
+    async function loadPageData() {
         try {
-            const res = await fetch(WEB_APP_URL);
-            let recipes = await res.json();
-            // Alphabetical Sort
+            const res = await fetch(RECIPE_API_URL);
+            const data = await res.json();
+            
+            // 1. Store Reference Data
+            refGrains = data.refGrains || [];
+            populateGrainDatalist();
+
+            // 2. Render Recipes
+            const recipes = data.recipes || [];
             recipes.sort((a, b) => a.name.localeCompare(b.name));
             renderPortfolio(recipes);
         } catch (err) { console.error(err); }
     }
 
-    // Logic to separate brands into 3 horizontal scroll rows
-    function renderPortfolio(recipes) {
-        const container = document.getElementById('portfolio-container');
-        container.innerHTML = ''; // Clear previous
-
-        const categories = ['Core', 'Rotating', 'Seasonal'];
-
-        categories.forEach(cat => {
-            const catRecipes = recipes.filter(r => r.category === cat);
-            
-            // Create Section Wrapper
-            const section = document.createElement('div');
-            section.className = 'category-group';
-            
-            // Create Header
-            const header = document.createElement('div');
-            header.className = 'category-header';
-            header.innerText = cat + " Brands";
-            section.appendChild(header);
-
-            // Create Horizontal Scroll Container
-            const scrollRow = document.createElement('div');
-            scrollRow.className = 'horizontal-scroll-container';
-
-            // Populate Row
-            catRecipes.forEach(r => {
-                const card = document.createElement('div');
-                card.className = 'recipe-card';
-                card.innerHTML = `
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                            <strong style="font-size: 1.15rem; line-height: 1.2;">${r.name}</strong>
-                            <span class="style-tag">${r.style || 'Style'}</span>
-                        </div>
-                        <div class="spec-bar">
-                            <div class="spec-item"><label>OG</label><span>${r.og || '-'}</span></div>
-                            <div class="spec-item"><label>ABV</label><span>${r.abv || '-'}%</span></div>
-                            <div class="spec-item"><label>IBU</label><span>${r.ibu || '-'}</span></div>
-                            <div class="spec-item"><label>BBL</label><span>${r.batchSize || '10'}</span></div>
-                        </div>
-                    </div>
-                    <button class="btn-edit" onclick="openEditor('EDIT', '${r.name.replace(/'/g, "\\'")}', ${JSON.stringify(r).replace(/"/g, '&quot;')})">Edit Master Recipe</button>
-                `;
-                scrollRow.appendChild(card);
-            });
-
-            section.appendChild(scrollRow);
-            container.appendChild(section);
+    function populateGrainDatalist() {
+        const list = document.getElementById('grain-list');
+        list.innerHTML = '';
+        refGrains.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.name;
+            list.appendChild(opt);
         });
     }
 
+    // --- CALCULATE COLOR FOR CARD ---
+    function getSRMColor(grains, batchSize) {
+        if (!grains || !batchSize) return '#fff'; // Default white
+        let totalMCU = 0;
+        grains.forEach(g => {
+            const name = g[0];
+            const weight = parseFloat(g[1]) || 0;
+            const ref = refGrains.find(r => r.name === name);
+            if (ref) totalMCU += (weight * ref.color);
+        });
+        const volGal = batchSize * 31;
+        if (volGal === 0) return '#fff';
+        const MCU = totalMCU / volGal;
+        const SRM = 1.4922 * Math.pow(MCU, 0.6859);
+        
+        return srmToHex(SRM);
+    }
+
+    function srmToHex(srm) {
+        if (srm <= 2) return "#F8F753"; // Straw
+        if (srm <= 3) return "#F6F513"; // Pale Gold
+        if (srm <= 4) return "#ECE61A"; // Deep Gold
+        if (srm <= 6) return "#D5BC26"; // Pale Amber
+        if (srm <= 9) return "#BF923B"; // Medium Amber
+        if (srm <= 12) return "#BF813A"; // Deep Amber
+        if (srm <= 15) return "#BC6733"; // Amber-Brown
+        if (srm <= 18) return "#8D4C32"; // Brown
+        if (srm <= 20) return "#5D341A"; // Ruby Brown
+        if (srm <= 24) return "#261716"; // Deep Brown
+        if (srm <= 30) return "#16100F"; // Black
+        return "#030403"; // Pitch Black
+    }
+
+    // --- CALCULATOR LOGIC (EDITOR) ---
+    function calculateStats() {
+        const batchBBL = parseFloat(document.getElementById('edit-batch-size').value) || 0;
+        const eff = parseFloat(document.getElementById('efficiency').value) || 85;
+        
+        if(batchBBL === 0) return;
+
+        let totalPoints = 0;
+        let totalMCU = 0;
+        let totalWeight = 0;
+
+        document.querySelectorAll('#grain-container .ingredient-entry').forEach(row => {
+            const name = row.querySelector('.grain-search').value;
+            const weight = parseFloat(row.querySelector('.grain-weight').value) || 0;
+            
+            const ref = refGrains.find(r => r.name === name);
+            if(ref && weight > 0) {
+                const potentialPPG = 46 * (parseFloat(ref.potential) / 100); 
+                const points = potentialPPG * weight * (eff / 100);
+                totalPoints += points;
+                totalMCU += (weight * ref.color);
+                totalWeight += weight;
+            }
+        });
+
+        document.querySelectorAll('#grain-container .ingredient-entry').forEach(row => {
+            const weight = parseFloat(row.querySelector('.grain-weight').value) || 0;
+            const pctField = row.querySelector('.grain-pct');
+            if(totalWeight > 0) pctField.value = ((weight / totalWeight) * 100).toFixed(1) + "%";
+            else pctField.value = "0%";
+        });
+
+        const volGal = batchBBL * 31; 
+        const gravityPoints = totalPoints / volGal;
+        const estimatedOG = 1 + (gravityPoints / 1000);
+        document.getElementById('calc-preboil').innerText = estimatedOG.toFixed(3);
+
+        const MCU = totalMCU / volGal;
+        const SRM = 1.4922 * Math.pow(MCU, 0.6859);
+        document.getElementById('calc-srm').innerText = SRM.toFixed(1);
+        document.getElementById('calc-swatch').style.background = srmToHex(SRM);
+    }
+
+    // --- DYNAMIC ROWS ---
+    function addGrainLine(name='', lbs='', pct='') {
+        const div = document.createElement('div');
+        div.className = 'ingredient-entry';
+        div.innerHTML = `
+            <input list="grain-list" class="grain-search" placeholder="Malt Name" value="${name}" onchange="calculateStats()">
+            <input type="number" class="grain-weight" placeholder="Lbs" value="${lbs}" onchange="calculateStats()">
+            <input type="text" class="grain-pct" placeholder="%" readonly value="${pct}" style="background:#f9fafb;">
+            <button class="btn-delete" onclick="this.parentElement.remove(); calculateStats()">×</button>
+        `;
+        document.getElementById('grain-container').appendChild(div);
+    }
+
+    function addSaltLine() {
+        const c = document.getElementById('salt-container');
+        const n = c.children[0].cloneNode(true);
+        n.querySelectorAll('input').forEach(i => i.value = '');
+        c.appendChild(n);
+    }
+    
+    function addSimpleLine(id) {
+        const c = document.getElementById(id);
+        const n = c.children[0].cloneNode(true);
+        n.querySelectorAll('input').forEach(i => i.value = '');
+        c.appendChild(n);
+    }
+
+    function addBoilLine() {
+        const c = document.getElementById('boil-container');
+        const n = c.children[0].cloneNode(true);
+        n.querySelectorAll('input').forEach(i => i.value = '');
+        c.appendChild(n);
+    }
+
+    function addDryHopLine() {
+        const c = document.getElementById('dry-hop-container');
+        const n = c.children[0].cloneNode(true);
+        n.querySelectorAll('input').forEach(i => i.value = '');
+        c.appendChild(n);
+    }
+
+    // --- EDITOR ---
     function openEditor(mode, name = '', data = null) {
         document.getElementById('recipe-list-view').style.display = 'none';
         document.getElementById('master-editor').style.display = 'block';
+        document.getElementById('grain-container').innerHTML = ''; 
+        
         if(mode === 'NEW') {
-            document.querySelectorAll('#master-editor input, #master-editor select').forEach(i => i.value = '');
+            document.querySelectorAll('#master-editor input:not(#efficiency), #master-editor select').forEach(i => i.value = '');
+            addGrainLine();
         } else if(data) {
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-style').value = data.style || '';
@@ -333,6 +398,21 @@
             document.getElementById('edit-ibu').value = data.ibu || '';
             document.getElementById('target-preboil').value = data.preBoil || '';
             document.getElementById('target-postboil').value = data.postBoil || '';
+            
+            if(data.water) {
+                document.getElementById('water-foundation').value = data.water[0] || '';
+                document.getElementById('water-mash').value = data.water[1] || '';
+                document.getElementById('water-sparge').value = data.water[2] || '';
+                document.getElementById('mash-ph').value = data.water[3] || '';
+            }
+
+            // Populate Grains
+            if(data.grains && data.grains.length > 0) {
+                data.grains.forEach(g => addGrainLine(g[0], g[1], g[2]));
+            } else {
+                addGrainLine();
+            }
+            calculateStats();
         }
     }
 
@@ -341,8 +421,16 @@
         document.getElementById('recipe-list-view').style.display = 'block';
     }
 
-    function gatherAllSectionData() {
-        return {
+    async function saveRecipe() {
+        const grains = Array.from(document.querySelectorAll('#grain-container .ingredient-entry')).map(row => {
+            return [
+                row.querySelector('.grain-search').value,
+                row.querySelector('.grain-weight').value,
+                row.querySelector('.grain-pct').value
+            ];
+        }).filter(g => g[0] !== "");
+
+        const data = {
             name: document.getElementById('edit-name').value,
             style: document.getElementById('edit-style').value,
             category: document.getElementById('edit-category').value,
@@ -354,25 +442,63 @@
             targetPreboil: document.getElementById('target-preboil').value,
             targetPostboil: document.getElementById('target-postboil').value,
             water: [document.getElementById('water-foundation').value, document.getElementById('water-mash').value, document.getElementById('water-sparge').value, document.getElementById('mash-ph').value],
-            salts: Array.from(document.querySelectorAll('#salt-container .ingredient-entry')).map(row => [row.querySelector('select').value, row.querySelectorAll('input')[0].value, row.querySelectorAll('input')[1].value, row.querySelectorAll('input')[2].value]).filter(r => r[0] !== ""),
-            grains: Array.from(document.querySelectorAll('#grain-container .ingredient-entry')).map(row => Array.from(row.querySelectorAll('input')).map(i => i.value)).filter(r => r[0] !== ""),
-            mash: Array.from(document.querySelectorAll('#mash-container .ingredient-entry')).map(row => Array.from(row.querySelectorAll('input')).map(i => i.value)).filter(r => r[0] !== ""),
-            boil: Array.from(document.querySelectorAll('#boil-container .ingredient-entry')).map(row => Array.from(row.querySelectorAll('input')).map(i => i.value)).filter(r => r[0] !== ""),
-            yeast: [document.getElementById('yeast-strain').value, document.getElementById('pitch-rate').value, document.getElementById('ko-vol').value],
-            dryHop: !document.getElementById('has-dry-hop').checked ? [] : Array.from(document.querySelectorAll('#dry-hop-container .ingredient-entry')).map(row => Array.from(row.querySelectorAll('input')).map(i => i.value)).filter(r => r[1] !== "")
+            grains: grains
         };
-    }
 
-    async function saveRecipe() {
-        const data = gatherAllSectionData();
         if(!data.name) return Swal.fire('Error', 'Name is required', 'error');
-        Swal.fire({ title: 'Syncing to Brewery Master...', text:'Sending data to Google Sheets...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        
+        Swal.fire({ title: 'Saving...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         try {
-            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'syncMaster', data: data }) });
-            Swal.fire({ icon: 'success', title: 'Master Sync Sent', timer: 1500 });
+            await fetch(RECIPE_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'syncMaster', data: data }) });
+            Swal.fire({ icon: 'success', title: 'Saved', timer: 1500 });
             await loadRecipeCards();
             closeEditor();
-        } catch (e) { Swal.fire('Sync Failed', 'Connection error. Check GAS deployment.', 'error'); }
+        } catch (e) { Swal.fire('Error', 'Save failed', 'error'); }
+    }
+
+    // --- RENDER CARDS ---
+    function renderPortfolio(recipes) {
+        const container = document.getElementById('portfolio-container');
+        container.innerHTML = ''; 
+        const categories = ['Core', 'Rotating', 'Seasonal'];
+
+        categories.forEach(cat => {
+            const catRecipes = recipes.filter(r => r.category === cat);
+            const section = document.createElement('div');
+            section.className = 'category-group';
+            section.innerHTML = `<div class="category-header">${cat} Brands</div>`;
+            const scrollRow = document.createElement('div');
+            scrollRow.className = 'horizontal-scroll-container';
+
+            catRecipes.forEach(r => {
+                const srmColor = getSRMColor(r.grains, r.batchSize);
+                const card = document.createElement('div');
+                card.className = 'recipe-card';
+                card.innerHTML = `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div class="color-swatch" style="background:${srmColor}; width:30px; height:30px;" title="Calc Color"></div>
+                                <div>
+                                    <strong style="font-size: 1.15rem; line-height: 1.2; display:block;">${r.name}</strong>
+                                    <span class="style-tag">${r.style || 'Style'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="spec-bar">
+                            <div class="spec-item"><label>OG</label><span>${r.og || '-'}</span></div>
+                            <div class="spec-item"><label>ABV</label><span>${r.abv || '-'}%</span></div>
+                            <div class="spec-item"><label>IBU</label><span>${r.ibu || '-'}</span></div>
+                            <div class="spec-item"><label>BBL</label><span>${r.batchSize || '10'}</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-edit" onclick='openEditor("EDIT", "${r.name.replace(/'/g, "\\'")}", ${JSON.stringify(r)})'>Edit Master Recipe</button>
+                `;
+                scrollRow.appendChild(card);
+            });
+            section.appendChild(scrollRow);
+            container.appendChild(section);
+        });
     }
 </script>
 </body>
