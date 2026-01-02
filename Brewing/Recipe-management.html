@@ -48,7 +48,7 @@
 
         /* --- GRID STYLING --- */
         .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
-        .recipe-card { background: white; border-radius: 12px; border: 1px solid #ddd; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; cursor: pointer; }
+        .recipe-card { background: white; border-radius: 12px; border: 1px solid #ddd; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; }
         .recipe-card:hover { border-color: var(--accent); transform: translateY(-3px); }
         .style-tag { background: #f3f4f6; font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
         
@@ -96,6 +96,7 @@
         <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
     </aside>
 
+
     <div class="main-content">
         <div class="header">
             <span style="font-weight: 600; color: #6b7280;">Brewing Portal</span>
@@ -114,6 +115,14 @@
                     <div class="form-row">
                         <div><label>Recipe Name</label><input type="text" id="edit-name"></div>
                         <div><label>Style</label><input type="text" id="edit-style"></div>
+                        <div>
+                            <label>Brand Category</label>
+                            <select id="edit-category">
+                                <option value="Core">Core Brand</option>
+                                <option value="Rotating">Rotating Brand</option>
+                                <option value="Seasonal">Seasonal Brand</option>
+                            </select>
+                        </div>
                         <div><label>Batch Size (BBL)</label><input type="number" step="0.1" id="edit-batch-size"></div>
                     </div>
                     <div class="form-row">
@@ -133,7 +142,7 @@
                         <div><label>Sparge (Gal)</label><input type="number" id="water-sparge"></div>
                     </div>
 
-                    <div class="section-title" style="margin-top:20px;">Water Additions</div>
+                    <div class="section-title" style="margin-top:20px;">Water Additions (Salts/Minerals)</div>
                     <div id="salt-container">
                         <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
                             <select class="salt-name">
@@ -141,6 +150,8 @@
                                 <option value="Gypsum (CaSO4)">Gypsum</option>
                                 <option value="Calcium Chloride (CaCl2)">Calcium Chloride</option>
                                 <option value="Epsom Salt (MgSO4)">Epsom Salt</option>
+                                <option value="Canning Salt (NaCl)">Canning Salt</option>
+                                <option value="Chalk (CaCO3)">Chalk</option>
                                 <option value="Lactic Acid (88%)">Lactic Acid (ml)</option>
                             </select>
                             <input type="number" step="0.1" placeholder="Mash (g)" class="salt-mash">
@@ -163,10 +174,15 @@
 
                 <div class="collapsible-header" onclick="toggleSection('mash-section')">3. Mash Schedule & pH ▾</div>
                 <div id="mash-section" class="collapsible-content">
-                    <div class="form-row"><div style="max-width: 200px;"><label>Target Mash pH</label><input type="number" step="0.01" id="mash-ph" placeholder="5.4"></div></div>
+                    <div class="form-row">
+                        <div style="max-width: 200px;">
+                            <label>Target Mash pH</label>
+                            <input type="number" step="0.01" id="mash-ph" placeholder="5.4">
+                        </div>
+                    </div>
                     <div id="mash-container">
                         <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr;">
-                            <input type="text" placeholder="Step">
+                            <input type="text" placeholder="Step (e.g., Saccharification)">
                             <input type="number" placeholder="Temp °F">
                             <input type="number" placeholder="Time (min)">
                         </div>
@@ -174,12 +190,19 @@
                     <button class="btn-add-line" onclick="addLine('mash-container')">+ Add Mash Step</button>
                 </div>
 
-                <div class="collapsible-header" onclick="toggleSection('boil-section')">4. Boil Additions & Targets ▾</div>
+                <div class="collapsible-header" onclick="toggleSection('boil-section')">5. Boil Additions & Targets ▾</div>
                 <div id="boil-section" class="collapsible-content">
-                    <div class="form-row">
-                        <div><label>Pre-Boil Gravity</label><input type="number" step="0.001" id="target-preboil"></div>
-                        <div><label>Post-Boil Gravity</label><input type="number" step="0.001" id="target-postboil"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--accent-orange);">
+                        <div>
+                            <label style="font-weight: bold; font-size: 0.8rem; color: #374151;">TARGET PRE-BOIL GRAVITY</label>
+                            <input type="number" step="0.001" id="target-preboil" placeholder="e.g. 1.050" style="margin-top: 5px;">
+                        </div>
+                        <div>
+                            <label style="font-weight: bold; font-size: 0.8rem; color: #374151;">TARGET POST-BOIL GRAVITY</label>
+                            <input type="number" step="0.001" id="target-postboil" placeholder="e.g. 1.062" style="margin-top: 5px;">
+                        </div>
                     </div>
+
                     <div id="boil-container">
                         <div class="ingredient-entry" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
                             <input type="text" placeholder="Ingredient/Hop" class="boil-name">
@@ -189,7 +212,7 @@
                             <input type="text" placeholder="Type" class="boil-type">
                         </div>
                     </div>
-                    <button class="btn-add-line" onclick="addLine('boil-container')">+ Add Boil Addition</button>
+                    <button type="button" class="btn-add-line" onclick="addLine('boil-container')">+ Add Boil Addition</button>
                 </div>
 
                 <div class="collapsible-header" onclick="toggleSection('ko-section')">5. Knockout & Yeast ▾</div>
@@ -212,17 +235,18 @@
                             Enable Dry Hopping for this Recipe
                         </label>
                     </div>
+
                     <div id="dry-hop-inputs-wrapper" style="display: none;">
                         <div id="dry-hop-container">
                             <div class="ingredient-entry" style="grid-template-columns: 1fr 2fr 1fr 1fr 1fr;">
                                 <input type="text" placeholder="Step" class="dh-step">
-                                <input type="text" placeholder="Variety" class="dh-variety">
+                                <input type="text" placeholder="Hop Variety" class="dh-variety">
                                 <input type="number" step="0.1" placeholder="AA%" class="dh-aa">
                                 <input type="number" placeholder="Lbs" class="dh-lbs">
                                 <input type="text" placeholder="Day" class="dh-timing">
                             </div>
                         </div>
-                        <button class="btn-add-line" onclick="addLine('dry-hop-container')">+ Add Dry Hop</button>
+                        <button type="button" class="btn-add-line" onclick="addLine('dry-hop-container')">+ Add Dry Hop Line</button>
                     </div>
                 </div>
 
@@ -244,76 +268,53 @@
         const section = document.getElementById(sectionId);
         const isActive = section.classList.contains('active');
         document.querySelectorAll('.collapsible-content').forEach(el => el.classList.remove('active'));
-        if (!isActive) section.classList.add('active');
+        if (!isActive) {
+            section.classList.add('active');
+        }
     }
 
     function toggleDryHopUI() {
         const isEnabled = document.getElementById('has-dry-hop').checked;
-        document.getElementById('dry-hop-inputs-wrapper').style.display = isEnabled ? 'block' : 'none';
+        const wrapper = document.getElementById('dry-hop-inputs-wrapper');
         const badge = document.getElementById('dh-status-badge');
-        badge.innerText = isEnabled ? "ENABLED" : "DISABLED";
-        badge.style.color = isEnabled ? "var(--accent-green)" : "#6b7280";
-    }
 
-    function addLine(containerId) {
-        const container = document.getElementById(containerId);
-        const newLine = container.children[0].cloneNode(true);
-        newLine.querySelectorAll('input, select').forEach(i => i.value = '');
-        container.appendChild(newLine);
-    }
-
-    async function loadRecipeCards() {
-        try {
-            const response = await fetch(WEB_APP_URL);
-            const recipes = await response.json();
-            renderCards(recipes);
-        } catch (err) { console.error("Load failed:", err); }
-    }
-
-    function renderCards(recipes) {
-        const grid = document.getElementById('main-grid');
-        grid.innerHTML = '';
-        recipes.forEach(recipe => {
-            const card = document.createElement('div');
-            card.className = 'recipe-card';
-            card.onclick = () => openEditor('EDIT', recipe.name, recipe);
-            card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <strong style="font-size: 1.1rem;">${recipe.name}</strong>
-                    <span class="style-tag">${recipe.style}</span>
-                </div>
-                <div class="spec-bar">
-                    <div class="spec-item"><label>OG</label><span>${recipe.og}</span></div>
-                    <div class="spec-item"><label>ABV</label><span>${recipe.abv}%</span></div>
-                    <div class="spec-item"><label>IBU</label><span>${recipe.ibu}</span></div>
-                    <div class="spec-item"><label>BBL</label><span>${recipe.batchSize}</span></div>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
+        if (isEnabled) {
+            wrapper.style.display = 'block';
+            badge.innerText = "ENABLED";
+            badge.style.color = "var(--accent-green)";
+        } else {
+            wrapper.style.display = 'none';
+            badge.innerText = "DISABLED";
+            badge.style.color = "#6b7280";
+            document.querySelectorAll('#dry-hop-container input').forEach(i => i.value = '');
+        }
     }
 
     function openEditor(mode, name = '', data = null) {
         document.getElementById('recipe-list-view').style.display = 'none';
         document.getElementById('master-editor').style.display = 'block';
+        
         if(mode === 'NEW') {
             document.getElementById('editor-heading').innerText = "Create New Recipe";
-            document.querySelectorAll('#master-editor input, #master-editor select').forEach(i => i.value = '');
+            document.querySelectorAll('#master-editor input').forEach(i => i.value = '');
+            document.getElementById('has-dry-hop').checked = false;
+            toggleDryHopUI();
         } else {
             document.getElementById('editor-heading').innerText = "Editing: " + name;
             if(data) {
-                document.getElementById('edit-name').value = data.name;
-                document.getElementById('edit-style').value = data.style;
-                document.getElementById('edit-batch-size').value = data.batchSize;
-                document.getElementById('edit-og').value = data.og;
-                document.getElementById('edit-fg').value = data.fg;
-                document.getElementById('edit-abv').value = data.abv;
-                document.getElementById('edit-ibu').value = data.ibu;
+                document.getElementById('edit-name').value = name;
+                document.getElementById('edit-style').value = data.style || '';
+                document.getElementById('edit-category').value = data.category || 'Core';
+                document.getElementById('edit-batch-size').value = data.batchSize || '';
+                document.getElementById('edit-og').value = data.og || '';
+                document.getElementById('edit-fg').value = data.fg || '';
+                document.getElementById('edit-abv').value = data.abv || '';
+                document.getElementById('edit-ibu').value = data.ibu || '';
                 document.getElementById('target-preboil').value = data.preBoil || '';
                 document.getElementById('target-postboil').value = data.postBoil || '';
             }
         }
-        window.scrollTo(0,0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function closeEditor() {
@@ -321,10 +322,18 @@
         document.getElementById('recipe-list-view').style.display = 'block';
     }
 
+    function addLine(containerId) {
+        const container = document.getElementById(containerId);
+        const newLine = container.children[0].cloneNode(true);
+        newLine.querySelectorAll('input').forEach(i => i.value = '');
+        container.appendChild(newLine);
+    }
+
     function gatherAllSectionData() {
         return {
             name: document.getElementById('edit-name').value,
             style: document.getElementById('edit-style').value,
+            category: document.getElementById('edit-category').value,
             batchSize: document.getElementById('edit-batch-size').value,
             og: document.getElementById('edit-og').value,
             fg: document.getElementById('edit-fg').value,
@@ -338,23 +347,24 @@
                 document.getElementById('water-sparge').value,
                 document.getElementById('mash-ph').value
             ],
-            salts: Array.from(document.querySelectorAll('#salt-container .ingredient-entry')).map(row => [
-                row.querySelector('.salt-name').value, 
-                row.querySelector('.salt-mash').value, 
-                row.querySelector('.salt-sparge').value, 
-                row.querySelector('.salt-notes').value
-            ]).filter(r => r[0] !== ""),
+            salts: Array.from(document.querySelectorAll('#salt-container .ingredient-entry')).map(row => {
+                const sel = row.querySelector('.salt-name').value;
+                const mash = row.querySelector('.salt-mash').value;
+                const sparge = row.querySelector('.salt-sparge').value;
+                const notes = row.querySelector('.salt-notes').value;
+                return [sel, mash, sparge, notes];
+            }).filter(r => r[0] !== ""),
             grains: Array.from(document.querySelectorAll('#grain-container .ingredient-entry')).map(row => {
-                const i = row.querySelectorAll('input');
-                return [i[0].value, i[1].value, i[2].value];
+                const inputs = row.querySelectorAll('input');
+                return [inputs[0].value, inputs[1].value, inputs[2].value]; 
             }).filter(r => r[0] !== ""),
             mash: Array.from(document.querySelectorAll('#mash-container .ingredient-entry')).map(row => {
-                const i = row.querySelectorAll('input');
-                return [i[0].value, i[1].value, i[2].value];
+                const inputs = row.querySelectorAll('input');
+                return [inputs[0].value, inputs[1].value, inputs[2].value];
             }).filter(r => r[0] !== ""),
             boil: Array.from(document.querySelectorAll('#boil-container .ingredient-entry')).map(row => {
-                const i = row.querySelectorAll('input');
-                return [i[0].value, i[1].value, i[2].value, i[3].value, i[4].value];
+                const inputs = row.querySelectorAll('input');
+                return [inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value];
             }).filter(r => r[0] !== ""),
             yeast: [
                 document.getElementById('yeast-strain').value,
@@ -363,31 +373,85 @@
             ],
             dryHop: !document.getElementById('has-dry-hop').checked ? [] : 
                 Array.from(document.querySelectorAll('#dry-hop-container .ingredient-entry')).map(row => {
-                    const i = row.querySelectorAll('input');
-                    return [row.querySelector('.dh-step').value, i[1].value, i[2].value, i[3].value, i[4].value];
+                    const inputs = row.querySelectorAll('input');
+                    return [row.querySelector('.dh-step').value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value];
                 }).filter(r => r[1] !== "")
         };
     }
 
+    async function loadRecipeCards() {
+        try {
+            const response = await fetch(WEB_APP_URL);
+            const recipes = await response.json();
+            renderCards(recipes);
+        } catch (err) {
+            console.error("Failed to load cards:", err);
+        }
+    }
+
+    function renderCards(recipes) {
+        const grid = document.getElementById('main-grid');
+        grid.innerHTML = '';
+        recipes.forEach(recipe => {
+            const card = document.createElement('div');
+            card.className = 'recipe-card';
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong style="font-size: 1.2rem;">${recipe.name}</strong>
+                    <span class="style-tag">${recipe.style}</span>
+                </div>
+                <div class="spec-bar">
+                    <div class="spec-item"><label>OG</label><span>${recipe.og}</span></div>
+                    <div class="spec-item"><label>ABV</label><span>${recipe.abv}%</span></div>
+                    <div class="spec-item"><label>IBU</label><span>${recipe.ibu}</span></div>
+                    <div class="spec-item"><label>BBL</label><span>${recipe.batchSize}</span></div>
+                </div>
+                <button class="btn-save" style="padding: 10px; font-size: 0.9rem; margin-top: 10px; background: var(--accent-orange);" 
+                        onclick="openEditor('EDIT', '${recipe.name.replace(/'/g, "\\'")}', ${JSON.stringify(recipe).replace(/"/g, '&quot;')})">Edit Master Recipe</button>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
     async function saveRecipe() {
         const fullData = gatherAllSectionData();
-        if (!fullData.name) return Swal.fire('Error', 'Recipe Name is required', 'error');
+        const payload = {
+            action: 'syncMaster',
+            data: fullData
+        };
 
-        Swal.fire({ title: 'Syncing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        if (!payload.data.name) {
+            Swal.fire('Error', 'Recipe Name is required', 'error');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Syncing to Brewery Master...',
+            text: 'Sending data to Google Sheets...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
 
         try {
             await fetch(WEB_APP_URL, {
                 method: 'POST',
-                mode: 'no-cors',
+                mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'syncMaster', data: fullData })
+                body: JSON.stringify(payload)
             });
 
-            Swal.fire({ icon: 'success', title: 'Recipe Synced', timer: 1500 });
-            await loadRecipeCards();
+            Swal.fire({
+                icon: 'success',
+                title: 'Master Sync Sent',
+                timer: 1500
+            });
+
+            await loadRecipeCards(); 
             setTimeout(closeEditor, 1000);
-        } catch (err) {
-            Swal.fire('Sync Failed', 'Check connection or GAS deployment.', 'error');
+
+        } catch (error) {
+            console.error('Fetch Error:', error);
+            Swal.fire('Sync Failed', 'Connection error. Check GAS deployment.', 'error');
         }
     }
 </script>
