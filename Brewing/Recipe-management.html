@@ -376,7 +376,10 @@ data.salts = Array.from(document.querySelectorAll('#salt-container .ingredient-e
     }
 
     async function saveRecipe() {
-    // Collect exactly what the backend updateMasterRecipeAnchor function expects
+    // 1. Your Deployment URL
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+
+    // 2. Gather only the Tab 1 (Master) data
     const payload = {
         action: 'syncMaster',
         data: {
@@ -392,49 +395,40 @@ data.salts = Array.from(document.querySelectorAll('#salt-container .ingredient-e
         }
     };
 
-    // Basic UI Validation
     if (!payload.data.name) {
-        Swal.fire('Error', 'Recipe Name is required to anchor the data.', 'error');
+        Swal.fire('Error', 'Recipe Name is required', 'error');
         return;
     }
 
-    // Loading State
     Swal.fire({
-        title: 'Syncing to Suburban Master...',
-        text: 'Establishing connection to Google Sheets...',
+        title: 'Syncing to Brewery Master...',
+        text: 'Sending data to Google Sheets...',
         allowOutsideClick: false,
         didOpen: () => { Swal.showLoading(); }
     });
 
     try {
-        // The Fetch Request (GitHub -> Google Apps Script)
-        const response = await fetch(WEB_APP_URL, {
+        // 3. Use fetch instead of google.script.run
+        await fetch(WEB_APP_URL, {
             method: 'POST',
-            mode: 'no-cors', // Essential for Cross-Origin to GAS
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            mode: 'no-cors', // Required for GitHub -> Google Apps Script
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        /* Note: In 'no-cors' mode, we cannot read the response body, 
-           but the fact that the catch block didn't trigger means the 
-           request was successfully dispatched.
-        */
-        
+        // Since no-cors doesn't return a readable response, we assume success if no error is thrown
         Swal.fire({
             icon: 'success',
             title: 'Master Sync Sent',
-            text: 'The brand "' + payload.data.name + '" has been sent to the !Master_Recipes sheet.',
+            text: 'Check your Google Sheet! The brand should appear in !Master_Recipes.',
             timer: 3000
         });
 
-        // Close editor and return to list
         setTimeout(closeEditor, 2000);
 
     } catch (error) {
-        console.error('Sync Error:', error);
-        Swal.fire('Sync Failed', 'Could not reach the Brewery API. Check your internet or deployment settings.', 'error');
+        console.error('Fetch Error:', error);
+        Swal.fire('Sync Failed', 'Connection error. Make sure your GAS Web App is deployed to "Anyone".', 'error');
     }
 }
 </script>
