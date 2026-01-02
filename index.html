@@ -487,6 +487,8 @@
    */
   async function refreshCellarTanks() {
     const tankGrid = document.getElementById('tank-grid');
+    if (!tankGrid) return;
+
     try {
       const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, {
         method: "GET",
@@ -494,22 +496,33 @@
       });
       const tanks = await res.json();
 
-      if (tankGrid && tanks) {
+      if (Array.isArray(tanks) && tanks.length > 0) {
         tankGrid.innerHTML = ""; 
         tanks.forEach(tank => {
-          let color = "var(--fermenting)"; 
-          if (tank.status.includes("Condition") || tank.status.includes("Crash")) color = "var(--crashing)";
-          if (tank.status.includes("Ready")) color = "var(--ready)";
+          // Color Logic
+          let color = "var(--text-muted)"; // Default for Empty/Clean
+          let opacity = "0.3"; 
+          
+          if (tank.isActive) {
+            opacity = "1";
+            if (tank.status.includes("Condition") || tank.status.includes("Crash")) color = "var(--crashing)";
+            else if (tank.status.includes("Ready")) color = "var(--ready)";
+            else color = "var(--fermenting)";
+          }
 
           tankGrid.innerHTML += `
-            <div class="tank-card">
-                <span class="status-badge" style="background: ${color}22; color: ${color};">${tank.status}</span>
-                <div class="tank-vessel">
-                    <div class="tank-fill" style="height: ${tank.fill}%; background: ${color};"></div>
+            <div class="tank-card" style="opacity: ${tank.isActive ? '1' : '0.6'}; border-style: ${tank.isActive ? 'solid' : 'dashed'};">
+                <span class="status-badge" style="background: ${tank.isActive ? color + '22' : '#f1f5f9'}; color: ${color};">
+                    ${tank.status}
+                </span>
+                <div class="tank-vessel" style="background: ${tank.isActive ? '#f1f5f9' : '#f8fafc'};">
+                    <div class="tank-fill" style="height: ${tank.fill}%; background: ${color}; transition: height 1s ease;"></div>
                 </div>
                 <div style="font-weight:700; font-size: 14px;">${tank.vessel}</div>
                 <div style="font-size: 11px; color: var(--text-muted);">${tank.brand}</div>
-                <div style="font-size: 9px; margin-top: 5px; color: var(--accent); font-weight: bold;">Batch: ${tank.batchId}</div>
+                <div style="font-size: 9px; margin-top: 5px; color: ${tank.isActive ? 'var(--accent)' : 'transparent'}; font-weight: bold;">
+                    Batch: ${tank.batchId}
+                </div>
             </div>`;
         });
       }
