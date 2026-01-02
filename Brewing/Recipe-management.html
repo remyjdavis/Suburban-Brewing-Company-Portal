@@ -336,6 +336,14 @@
                 document.getElementById('water-sparge').value,
                 document.getElementById('mash-ph').value
             ],
+            // Add this inside your gatherAllSectionData() function
+data.salts = Array.from(document.querySelectorAll('#salt-container .ingredient-entry')).map(row => {
+    const sel = row.querySelector('.salt-name').value;
+    const mash = row.querySelector('.salt-mash').value;
+    const sparge = row.querySelector('.salt-sparge').value;
+    const notes = row.querySelector('.salt-notes').value;
+    return [sel, mash, sparge, notes];
+}).filter(r => r[0] !== "");
             grains: Array.from(document.querySelectorAll('#grain-container .ingredient-entry')).map(row => {
                 const inputs = row.querySelectorAll('input');
                 return [inputs[0].value, inputs[1].value, inputs[2].value]; // Name, Lbs, %
