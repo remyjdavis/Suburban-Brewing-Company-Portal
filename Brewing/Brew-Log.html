@@ -1121,10 +1121,10 @@ function loadRecipeToLog() {
     // ---------------------------------------------------------
     // 5. DATA SCRAPER (Full explicit mapping - NO CONSOLIDATION)
     // ---------------------------------------------------------
-    /**
- * DATA SCRAPER
- * Preserves all original lines while adding Machine Learning data points.
- * Captures mash efficiency, lauter extraction, and boil utilization data.
+   /**
+ * DATA SCRAPER - ML ENHANCED
+ * Preserves all original lines while adding Machine Learning "Features."
+ * Captures mash temp, pH, and volumes for the predictive engine.
  */
 function scrapeBrewData() {
     // --- MACHINE LEARNING FEATURE ACCUMULATION ---
@@ -1133,59 +1133,58 @@ function scrapeBrewData() {
         const val = parseFloat(row.querySelectorAll('input')[0]?.value) || 0;
         return sum + val;
     }, 0);
-
+    
     const mashTempML = parseFloat(document.querySelector('#mash-content input[placeholder="°F"]')?.value) || 0;
     const mashPhML = parseFloat(document.querySelector('#mash-content input[placeholder="5.xx"]')?.value) || 0;
-    const preBoilGravML = parseFloat(document.querySelector('#lauter-content input[placeholder="1.xxx"]')?.value) || 0;
-    const postBoilGravML = parseFloat(document.querySelectorAll('#boil-content input[step="0.001"]')[1]?.value) || 0;
-    const batchSizeML = parseFloat(document.getElementById('setup-batch-size')?.value) || 0;
+    const preBoilGML = parseFloat(document.querySelector('#lauter-content input[placeholder="1.xxx"]')?.value) || 0;
+    const postBoilGML = parseFloat(document.querySelectorAll('#boil-content input[step="0.001"]')[1]?.value) || 0;
 
+    // --- FULL DATA OBJECT RETURN ---
     return {
-        // 1. ORIGINAL META BLOCK (Preserved)
+        // 1. ORIGINAL META BLOCK
         meta: {
             batchId: document.getElementById('batchId').value,
             date: document.getElementById('brewDate').value,
             recipeName: document.getElementById('header-beer-name').innerText
         },
 
-        // 2. NEW MACHINE LEARNING METRICS (Added logic)
-        mlEfficiencyMetrics: {
-            totalGrainLbs: totalActualGrainWeight,
-            recordedMashTemp: mashTempML,
-            recordedMashPh: mashPhML,
-            preBoilGravity: preBoilGravML,
-            postBoilGravity: postBoilGravML,
-            predictedEfficiency: (preBoilGravML > 0) ? "Pending Analysis" : "Insufficient Data",
-            timestamp: new Date().toISOString()
+        // 2. NEW MACHINE LEARNING METRICS (Added Logic)
+        mlFeatures: {
+            totalGrainWeight: totalActualGrainWeight,
+            mashTemperature: mashTempML,
+            mashPh: mashPhML,
+            preBoilGravity: preBoilGML,
+            postBoilGravity: postBoilGML,
+            strikeWaterVol: parseFloat(document.querySelectorAll('#grain-content .actual-input')[1]?.value) || 0
         },
 
-        // 3. ORIGINAL WATER BLOCK (Preserved)
+        // 3. ORIGINAL WATER BLOCK
         water: {
             foundation: document.querySelector('#grain-content .actual-input')?.value || "",
             mashIn: document.querySelectorAll('#grain-content .actual-input')[1]?.value || ""
         },
 
-        // 4. ORIGINAL GRAINS BLOCK (Preserved)
-        grains: Array.from(document.querySelectorAll('#grain-body tr')).map(row => ({
+        // 4. ORIGINAL GRAINS BLOCK
+        grains: grainTableRows.map(row => ({
             name: row.cells[0].innerText,
             actual: row.querySelectorAll('input')[0]?.value || "",
             lot: row.querySelectorAll('input')[1]?.value || ""
         })),
 
-        // 5. ORIGINAL SALTS BLOCK (Preserved)
+        // 5. ORIGINAL SALTS BLOCK
         salts: Array.from(document.querySelectorAll('#salt-body tr')).map(row => ({
             name: row.cells[0].innerText,
             mashActual: row.querySelectorAll('input')[0]?.value || "",
             spargeActual: row.querySelectorAll('input')[1]?.value || ""
         })),
 
-        // 6. ORIGINAL MASH BLOCK (Preserved)
-        mash: {
-            temp: document.querySelector('#mash-content input[placeholder="°F"]')?.value || "",
-            ph: document.querySelector('#mash-content input[placeholder="5.xx"]')?.value || ""
+        // 6. ORIGINAL MASH BLOCK
+        mash: { 
+            temp: mashTempML, 
+            ph: mashPhML 
         },
 
-        // 7. ORIGINAL LAUTER BLOCK (Preserved)
+        // 7. ORIGINAL LAUTER BLOCK
         lauter: {
             firstWort: { 
                 start: document.getElementById('fw-start')?.value || "", 
@@ -1203,10 +1202,10 @@ function scrapeBrewData() {
             }
         },
 
-        // 8. ORIGINAL BOIL BLOCK (Preserved)
+        // 8. ORIGINAL BOIL BLOCK
         boil: {
-            actualPreBoilG: document.querySelectorAll('#boil-content input[step="0.001"]')[0]?.value || "",
-            actualPostG: document.querySelectorAll('#boil-content input[step="0.001"]')[1]?.value || "",
+            actualPreBoilG: preBoilGML,
+            actualPostG: postBoilGML,
             additions: Array.from(document.querySelectorAll('#boil-body tr')).map(row => ({
                 name: row.cells[0].innerText,
                 time: row.getAttribute('data-time'),
@@ -1215,7 +1214,7 @@ function scrapeBrewData() {
             }))
         },
 
-        // 9. ORIGINAL YEAST BLOCK (Preserved)
+        // 9. ORIGINAL YEAST BLOCK
         yeast: {
             strain: document.getElementById('t-yeast')?.innerText || "",
             source: document.getElementById('yeast-source')?.value || "",
