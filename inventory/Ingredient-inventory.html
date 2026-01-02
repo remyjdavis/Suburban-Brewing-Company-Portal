@@ -50,17 +50,19 @@
         .qty-low { color: #e74c3c !important; background: #fdedec; padding: 2px 6px; border-radius: 4px; border: 1px solid #fadbd8; animation: pulse 2s infinite; font-weight: bold; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-        /* --- EXISTING GRID & FORM STYLES --- */
+        /* --- GRID & FORM STYLES --- */
         .inventory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .section-card { background: white; border-radius: 16px; border: 1px solid #e2e8er; padding: 20px; cursor: pointer; transition: 0.2s; border: 1px solid #e2e8f0; }
+        .section-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px; cursor: pointer; transition: 0.2s; }
         .section-card:hover { border-color: var(--accent); transform: translateY(-2px); }
         .section-header { font-weight: 800; font-size: 12px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
         .item-list { padding: 0; margin: 0; list-style: none; }
         .item-row { padding: 8px 0; border-bottom: 1px dotted #eee; display: flex; justify-content: space-between; font-size: 13px; }
+        
         .add-card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 32px; border: 1px solid #e2e8f0; border-top: 4px solid var(--accent); }
         .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
         .form-group label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+        
         .btn-scan { background: var(--sidebar); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
         .btn-save { background: var(--accent-green); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: 700; }
         
@@ -71,6 +73,7 @@
         .inventory-table { width: 100%; border-collapse: collapse; }
         .inventory-table th { text-align: left; padding: 12px; background: #f8fafc; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
         .inventory-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        .close-btn { font-size: 28px; cursor: pointer; color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -81,22 +84,13 @@
         <a href="../!Main.html" class="nav-link"><span>Command Center</span></a>
         <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
         <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-        <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-        <div class="nav-section-title">Sales & Outreach</div>
-        <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-        <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-        <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-        <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
         <div class="nav-section-title">Inventory</div>
         <a href="Ingredient-inventory.html" class="nav-link active"><span>Ingredient Inventory</span></a>
         <a href="brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-        <a href="wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-        <a href="restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
         <div class="nav-section-title">Brewing</div>
         <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
         <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
         <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-        <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
     </aside>
 
     <main id="main-content">
@@ -105,75 +99,64 @@
             <button class="btn-scan" onclick="toggleScanner()">Toggle QR Scanner</button>
         </div>
 
-        <div class="container">
-            <form id="inventoryForm">
-                <div class="add-card" id="entry-form">
-                    <h3 style="margin-top:0; color: var(--accent-blue);">Inventory Entry Portal</h3>
-                    <div id="reader" style="display:none;"></div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Category</label>
-                            <select id="inv-cat" name="category" onchange="renderDynamicFields()">
-                                <option value="">Select Category...</option>
-                                <option value="Malt">Malt/Grain</option>
-                                <option value="Hops">Hops</option>
-                                <option value="Yeast">Yeast</option>
-                                <option value="Salts">Salts & Water</option>
-                                <option value="Packaging">Packaging</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Item Name</label>
-                            <input type="text" id="inv-name" name="name" placeholder="e.g. Citra">
-                        </div>
-                        <div class="form-group">
-                            <label>Lot Number</label>
-                            <input type="text" id="inv-lot" name="lot" placeholder="Scan or Type Lot">
-                        </div>
-                        <div class="form-group">
-                            <label>Quantity</label>
-                            <input type="number" step="0.01" id="inv-qty" name="qty" placeholder="0.00">
-                        </div>
+        <form id="inventoryForm">
+            <div class="add-card" id="entry-form">
+                <h3 style="margin-top:0; color: var(--accent);">Inventory Entry Portal</h3>
+                <div id="reader" style="display:none; margin-bottom: 15px; border-radius: 12px; overflow: hidden;"></div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="inv-cat" name="category" onchange="renderDynamicFields()" required>
+                            <option value="">Select Category...</option>
+                            <option value="Malt">Malt/Grain</option>
+                            <option value="Hops">Hops</option>
+                            <option value="Yeast">Yeast</option>
+                            <option value="Water">Water Chemistry</option>
+                            <option value="Salts">Salts & Additions</option>
+                            <option value="Packaging">Packaging</option>
+                        </select>
                     </div>
+                    <div class="form-group">
+                        <label>Item Name</label>
+                        <input type="text" id="inv-name" name="name" required placeholder="e.g. Citra">
+                    </div>
+                    <div class="form-group">
+                        <label>Lot Number</label>
+                        <input type="text" id="inv-lot" name="lot" required placeholder="Scan or Type Lot">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" step="0.01" id="inv-qty" name="qty" required placeholder="0.00">
+                    </div>
+                </div>
 
-                    <div id="coa-fields-container" class="form-row"></div>
-                    
-                    <button type="submit" class="btn-save">Update Inventory Levels</button>
-                </div>
-            </form>
+                <div id="coa-fields-container" class="form-row"></div>
+                
+                <button type="submit" class="btn-save">Update Inventory Levels</button>
+            </div>
+        </form>
 
-            <div class="inventory-grid">
-                <div class="section-card" onclick="setCategoryAndOpenModal('Malt')">
-                    <div class="section-header">Malt / Grains</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>View Current Grain Stock</span></li>
-                    </ul>
-                </div>
-                <div class="section-card" onclick="setCategoryAndOpenModal('Hops')">
-                    <div class="section-header">Hops</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>View Current Hop Stock</span></li>
-                    </ul>
-                </div>
-                <div class="section-card" onclick="setCategoryAndOpenModal('Packaging')">
-                    <div class="section-header">Packaging</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>View Packaging Stock</span></li>
-                    </ul>
-                </div>
-                <div class="section-card" onclick="setCategoryAndOpenModal('Yeast')">
-                    <div class="section-header">Yeast</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>View Yeast Pitches</span></li>
-                    </ul>
-                </div>
-                <div class="section-card" onclick="setCategoryAndOpenModal('Salts')">
-                    <div class="section-header">Salts & Water Prep</div>
-                    <ul class="item-list">
-                        <li class="item-row"><span>View Salt Inventory</span></li>
-                    </ul>
-                </div>
+        <div class="inventory-grid">
+            <div class="section-card" onclick="setCategoryAndOpenModal('Malt')">
+                <div class="section-header">Malt / Grains</div>
+                <ul class="item-list"><li class="item-row"><span>View Current Grain Stock</span></li></ul>
+            </div>
+            <div class="section-card" onclick="setCategoryAndOpenModal('Hops')">
+                <div class="section-header">Hops</div>
+                <ul class="item-list"><li class="item-row"><span>View Current Hop Stock</span></li></ul>
+            </div>
+            <div class="section-card" onclick="setCategoryAndOpenModal('Water')">
+                <div class="section-header">Water Chemistry</div>
+                <ul class="item-list"><li class="item-row"><span>View Acids & Salts</span></li></ul>
+            </div>
+            <div class="section-card" onclick="setCategoryAndOpenModal('Yeast')">
+                <div class="section-header">Yeast</div>
+                <ul class="item-list"><li class="item-row"><span>View Yeast Pitches</span></li></ul>
+            </div>
+            <div class="section-card" onclick="setCategoryAndOpenModal('Packaging')">
+                <div class="section-header">Packaging</div>
+                <ul class="item-list"><li class="item-row"><span>View Packaging Stock</span></li></ul>
             </div>
         </div>
     </main>
@@ -205,10 +188,11 @@
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxA6EQy6w8k6VSevKLS9Dis0egMQ--k7mHKy9kBJ5u9XsDhk46jDun46w02rs1hcT5iLQ/exec';
     const form = document.getElementById('inventoryForm');
 
-    // --- SEND DATA (POST) ---
+    // --- 1. SEND DATA (POST) ---
     form.addEventListener('submit', e => {
         e.preventDefault();
         const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerText;
         submitBtn.innerText = "Syncing with Brewery Sheet...";
         submitBtn.disabled = true;
 
@@ -227,12 +211,12 @@
             console.error('Error!', error.message);
         })
         .finally(() => {
-            submitBtn.innerText = "Update Inventory Levels";
+            submitBtn.innerText = originalText;
             submitBtn.disabled = false;
         });
     });
 
-    // --- FETCH DATA (GET) ---
+    // --- 2. FETCH DATA (GET) ---
     function fetchRealData(cat) {
         const tbody = document.getElementById('inventory-details-rows');
         tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Loading from Google Sheets...</td></tr>";
@@ -256,7 +240,6 @@
         }
 
         tbody.innerHTML = items.map((item) => {
-            // Build spec tags
             const specsHtml = Object.entries(item.specs || {})
                 .map(([key, val]) => `
                     <span style="display:inline-block; background:#f1f5f9; border:1px solid #e2e8f0; 
@@ -266,7 +249,6 @@
                 `).join('');
 
             const lowStockClass = item.isLow ? 'qty-low' : '';
-            const warningLabel = item.isLow ? '<br><small style="color:#ef4444; font-weight:800;">⚠️ REORDER</small>' : '';
 
             return `
                 <tr>
@@ -276,7 +258,7 @@
                     </td>
                     <td style="font-family:monospace; font-size:12px;">${item.lot}</td>
                     <td class="${lowStockClass}" style="font-weight:700;">
-                        ${item.qty} ${warningLabel}
+                        ${item.qty} ${item.unit || ''}
                     </td>
                     <td>
                         <div style="display:flex; flex-wrap:wrap; max-width:300px;">
@@ -291,45 +273,7 @@
         }).join('');
     }
 
-    // --- UTILITIES ---
-    let html5QrCode;
-
-    function toggleScanner() {
-        const readerDiv = document.getElementById('reader');
-        if (readerDiv.style.display === 'none') {
-            readerDiv.style.display = 'block';
-            startScanner();
-        } else {
-            readerDiv.style.display = 'none';
-            if(html5QrCode) html5QrCode.stop();
-        }
-    }
-
-    function startScanner() {
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-            document.getElementById('inv-lot').value = txt;
-            toggleScanner();
-        });
-    }
-
-    function setCategoryAndOpenModal(cat) {
-        document.getElementById('inv-cat').value = cat;
-        renderDynamicFields();
-        document.getElementById('modal-title').innerText = cat + " Stock";
-        document.getElementById('inventory-modal').style.display = "block";
-        fetchRealData(cat); 
-    }
-
-    function useItemForEntry(name, lot) {
-        document.getElementById('inv-name').value = name;
-        document.getElementById('inv-lot').value = lot;
-        closeModal();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function closeModal() { document.getElementById('inventory-modal').style.display = "none"; }
-
+    // --- 3. DYNAMIC COA FIELD GENERATOR ---
     function renderDynamicFields() {
         const cat = document.getElementById('inv-cat').value;
         const container = document.getElementById('coa-fields-container');
@@ -346,12 +290,59 @@
                 <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
                 <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
                 <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
+        } else if (cat === "Water") {
+            container.innerHTML = `
+                <div class="form-group"><label>Strength/Purity %</label><input type="number" step="0.01" name="strength" placeholder="e.g. 0.88"></div>
+                <div class="form-group">
+                    <label>Unit</label>
+                    <select name="unit">
+                        <option value="gal">Gallons</option>
+                        <option value="lbs">lbs</option>
+                        <option value="kg">kg</option>
+                        <option value="ml">ml</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>COA Notes</label><input type="text" name="notes"></div>`;
         } else if (cat === "Yeast") {
             container.innerHTML = `
                 <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
                 <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
         }
     }
+
+    // --- 4. UTILS (SCANNER, MODAL, SELECTION) ---
+    let html5QrCode;
+    function toggleScanner() {
+        const readerDiv = document.getElementById('reader');
+        if (readerDiv.style.display === 'none') {
+            readerDiv.style.display = 'block';
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                document.getElementById('inv-lot').value = txt;
+                toggleScanner();
+            });
+        } else {
+            readerDiv.style.display = 'none';
+            if(html5QrCode) html5QrCode.stop();
+        }
+    }
+
+    function setCategoryAndOpenModal(cat) {
+        document.getElementById('inv-cat').value = cat;
+        renderDynamicFields();
+        document.getElementById('modal-title').innerText = cat + " Stock Control";
+        document.getElementById('inventory-modal').style.display = "block";
+        fetchRealData(cat); 
+    }
+
+    function useItemForEntry(name, lot) {
+        document.getElementById('inv-name').value = name;
+        document.getElementById('inv-lot').value = lot;
+        closeModal();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function closeModal() { document.getElementById('inventory-modal').style.display = "none"; }
 </script>
 </body>
 </html>
