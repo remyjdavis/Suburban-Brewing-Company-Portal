@@ -1310,12 +1310,56 @@ function scrapeBrewData() {
             header.querySelector('.toggle-indicator').innerText="+"; 
         } 
     }
-
-    function completeBrewLog() { 
-        if(confirm("Finish this brew?")) {
-            saveAndAdvance('ko-yeast-content', null); 
-        }
+/**
+ * HANDOFF TO CELLAR
+ * Triggered when Brew Log is finalized. Sends data to the Cellar Management API.
+ */
+async function handoffToCellar(brewData) {
+  // Use your actual Cellar Executive URL
+  const CELLAR_EXEC_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
+  
+  const payload = {
+    action: "startBatch",
+    data: {
+      recipeId: brewData.recipeId || "N/A",
+      brandName: brewData.meta.recipeName,
+      vessel: brewData.yeast.vessel, // Ensure your UI has a vessel selector
+      og: brewData.boil.actualPostG,
+      yeastGen: document.getElementById('inv-gen-display')?.innerText || "1",
+      dryHopDays: [3, 7] // Optional: Default offsets
     }
+  };
+
+  try {
+    // We use 'no-cors' for the POST to Google Apps Script
+    await fetch(CELLAR_EXEC_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(payload)
+    });
+    console.log("Cellar Handoff Initialized");
+  } catch (e) {
+    console.error("Handoff Failed: " + e.toString());
+  }
+}
+    async function completeBrewLog() { 
+    if(confirm("Finish this brew and start fermentation tracking?")) {
+        // 1. Scrape the data
+        const brewData = scrapeBrewData();
+
+        // 2. Add the Vessel selection (Ensure you have an input for this in your KO section)
+        brewData.yeast.vessel = document.getElementById('ko-vessel-select')?.value || "FV 1";
+
+        // 3. Save to Production Sheet
+        await saveAndAdvance('ko-yeast-content', null); 
+
+        // 4. Trigger the Handshake to the Cellar
+        await handoffToCellar(brewData);
+
+        Swal.fire('Brew Complete', 'Data synced and Fermentation started!', 'success');
+    }
+}
 </script>
 </body>
 </html>
