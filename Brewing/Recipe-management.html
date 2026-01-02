@@ -263,9 +263,10 @@
                       <button class="btn-save" style="padding: 10px; font-size: 0.9rem; margin-top: 10px; background: var(--accent-orange);" 
                                 onclick="openEditor('EDIT', 'Suburban IPA')">Edit Master Recipe</button>
                     </div> </div> </div> </div> </div> 
-    <script>
-        // 1. Your Unique Bridge URL
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+   <script>
+    // 1. Your Unique Bridge URL
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+
     function toggleSection(sectionId) {
         const section = document.getElementById(sectionId);
         const isActive = section.classList.contains('active');
@@ -298,13 +299,11 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl6
         
         if(mode === 'NEW') {
             document.getElementById('editor-heading').innerText = "Create New Recipe";
-            // Clear all inputs
             document.querySelectorAll('#master-editor input').forEach(i => i.value = '');
             document.getElementById('has-dry-hop').checked = false;
             toggleDryHopUI();
         } else {
             document.getElementById('editor-heading').innerText = "Editing: " + name;
-            // If data is passed from the card, populate the main targets
             if(data) {
                 document.getElementById('edit-name').value = name;
                 document.getElementById('target-preboil').value = data.preBoil || '';
@@ -338,27 +337,28 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl6
                 document.getElementById('water-sparge').value,
                 document.getElementById('mash-ph').value
             ],
-            // Add this inside your gatherAllSectionData() function
-data.salts = Array.from(document.querySelectorAll('#salt-container .ingredient-entry')).map(row => {
-    const sel = row.querySelector('.salt-name').value;
-    const mash = row.querySelector('.salt-mash').value;
-    const sparge = row.querySelector('.salt-sparge').value;
-    const notes = row.querySelector('.salt-notes').value;
-    return [sel, mash, sparge, notes];
-}).filter(r => r[0] !== "");
+            // FIXED: Salts logic now properly integrated into the return object
+            salts: Array.from(document.querySelectorAll('#salt-container .ingredient-entry')).map(row => {
+                const sel = row.querySelector('.salt-name').value;
+                const mash = row.querySelector('.salt-mash').value;
+                const sparge = row.querySelector('.salt-sparge').value;
+                const notes = row.querySelector('.salt-notes').value;
+                return [sel, mash, sparge, notes];
+            }).filter(r => r[0] !== ""),
+            
             grains: Array.from(document.querySelectorAll('#grain-container .ingredient-entry')).map(row => {
                 const inputs = row.querySelectorAll('input');
-                return [inputs[0].value, inputs[1].value, inputs[2].value]; // Name, Lbs, %
+                return [inputs[0].value, inputs[1].value, inputs[2].value]; 
             }).filter(r => r[0] !== ""),
             
             mash: Array.from(document.querySelectorAll('#mash-container .ingredient-entry')).map(row => {
                 const inputs = row.querySelectorAll('input');
-                return [inputs[0].value, inputs[1].value, inputs[2].value]; // Step, Temp, Time
+                return [inputs[0].value, inputs[1].value, inputs[2].value];
             }).filter(r => r[0] !== ""),
 
             boil: Array.from(document.querySelectorAll('#boil-container .ingredient-entry')).map(row => {
                 const inputs = row.querySelectorAll('input');
-                return [inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value]; // Name, AA, Weight, Time, Type
+                return [inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value];
             }).filter(r => r[0] !== ""),
 
             yeast: [
@@ -376,61 +376,55 @@ data.salts = Array.from(document.querySelectorAll('#salt-container .ingredient-e
     }
 
     async function saveRecipe() {
-    // 1. Your Deployment URL
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+        const payload = {
+            action: 'syncMaster',
+            data: {
+                name: document.getElementById('edit-name').value,
+                style: document.getElementById('edit-style').value,
+                targetPreboil: document.getElementById('target-preboil').value,
+                targetPostboil: document.getElementById('target-postboil').value,
+                og: document.getElementById('edit-og').value,
+                fg: document.getElementById('edit-fg').value,
+                abv: document.getElementById('edit-abv').value,
+                ibu: document.getElementById('edit-ibu').value,
+                batchSize: document.getElementById('edit-batch-size').value
+            }
+        };
 
-    // 2. Gather only the Tab 1 (Master) data
-    const payload = {
-        action: 'syncMaster',
-        data: {
-            name: document.getElementById('edit-name').value,
-            style: document.getElementById('edit-style').value,
-            targetPreboil: document.getElementById('target-preboil').value,
-            targetPostboil: document.getElementById('target-postboil').value,
-            og: document.getElementById('edit-og').value,
-            fg: document.getElementById('edit-fg').value,
-            abv: document.getElementById('edit-abv').value,
-            ibu: document.getElementById('edit-ibu').value,
-            batchSize: document.getElementById('edit-batch-size').value
+        if (!payload.data.name) {
+            Swal.fire('Error', 'Recipe Name is required', 'error');
+            return;
         }
-    };
 
-    if (!payload.data.name) {
-        Swal.fire('Error', 'Recipe Name is required', 'error');
-        return;
-    }
-
-    Swal.fire({
-        title: 'Syncing to Brewery Master...',
-        text: 'Sending data to Google Sheets...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
-
-    try {
-        // 3. Use fetch instead of google.script.run
-        await fetch(WEB_APP_URL, {
-            method: 'POST',
-            mode: 'no-cors', // Required for GitHub -> Google Apps Script
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        // Since no-cors doesn't return a readable response, we assume success if no error is thrown
         Swal.fire({
-            icon: 'success',
-            title: 'Master Sync Sent',
-            text: 'Check your Google Sheet! The brand should appear in !Master_Recipes.',
-            timer: 3000
+            title: 'Syncing to Brewery Master...',
+            text: 'Sending data to Google Sheets...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
         });
 
-        setTimeout(closeEditor, 2000);
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-    } catch (error) {
-        console.error('Fetch Error:', error);
-        Swal.fire('Sync Failed', 'Connection error. Make sure your GAS Web App is deployed to "Anyone".', 'error');
+            Swal.fire({
+                icon: 'success',
+                title: 'Master Sync Sent',
+                text: 'Check your Google Sheet! The brand should appear in !Master_Recipes.',
+                timer: 3000
+            });
+
+            setTimeout(closeEditor, 2000);
+
+        } catch (error) {
+            console.error('Fetch Error:', error);
+            Swal.fire('Sync Failed', 'Connection error. Make sure your GAS Web App is deployed to "Anyone".', 'error');
+        }
     }
-}
 </script>
 </body>
 </html>
