@@ -26,7 +26,7 @@
             min-height: 100vh;
         }
 
-        /* --- SIDEBAR --- */
+        /* --- SIDEBAR STYLING --- */
         .sidebar {
             width: 260px;
             background: var(--header-bg);
@@ -41,7 +41,13 @@
 
         .sidebar-header { margin-bottom: 20px; font-weight: 800; font-size: 1.2rem; letter-spacing: 1px; border-bottom: 1px solid #34495e; padding-bottom: 15px; }
 
-        .nav-section-title { font-size: 0.75rem; text-transform: uppercase; color: var(--accent-gray); margin: 20px 0 10px 10px; letter-spacing: 1px; }
+        .nav-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--accent-gray);
+            margin: 20px 0 10px 10px;
+            letter-spacing: 1px;
+        }
 
         .nav-link {
             display: block;
@@ -54,10 +60,18 @@
             font-size: 0.9rem;
         }
 
-        .nav-link:hover, .nav-link.active { background: rgba(255, 255, 255, 0.1); color: white; }
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
 
-        /* --- MAIN --- */
-        .main { flex-grow: 1; padding: 20px; background-color: #f4f7f6; overflow-y: auto; }
+        /* --- MAIN CONTENT AREA --- */
+        .main {
+            flex-grow: 1;
+            padding: 20px;
+            background-color: #f4f7f6;
+            overflow-y: auto;
+        }
 
         .sticky-header {
             position: sticky;
@@ -75,37 +89,104 @@
             margin-bottom: 20px;
         }
 
-        /* --- STAGES --- */
-        .brew-stage { background: white; margin-bottom: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #ddd; }
-        .stage-header { background-color: var(--section-bg); padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        /* --- STAGE STYLING --- */
+        .brew-stage {
+            background: white;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+
+        .stage-header {
+            background-color: var(--section-bg);
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .stage-title { font-size: 1.1rem; font-weight: 700; color: var(--header-bg); margin: 0; }
         .stage-content { padding: 20px; display: block; }
         .stage-content.collapsed { display: none; }
         .stage-content.locked { pointer-events: none; opacity: 0.7; background: #f9f9f9; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .input-group { display: flex; flex-direction: column; }
-        label { font-size: 0.75rem; font-weight: 700; color: var(--accent-gray); margin-bottom: 5px; text-transform: uppercase; }
-        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
-        .target-display { background: #eef2ff; color: #4b5563; font-weight: bold; border: 1px solid #c7d2fe; padding: 10px; border-radius: 4px; display: block; min-height: 20px; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
 
+        .input-group { display: flex; flex-direction: column; }
+        label { font-size: 0.7rem; font-weight: 700; color: var(--accent-gray); margin-bottom: 5px; text-transform: uppercase; }
+        
+        input, select, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
+        
+        /* TARGETS (LOCKED) */
+        .target-display { 
+            background: #eef2ff; color: #4b5563; font-weight: bold; border: 1px solid #c7d2fe; 
+            padding: 10px; border-radius: 4px; display: block; min-height: 20px; cursor: not-allowed;
+        }
+
+        /* ACTUALS (EDITABLE) */
+        input.actual-input { background: #fff; border: 1px solid #999; color: #000; font-weight: 600; }
+
+        /* TABLES */
         .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9rem; }
-        .data-table th { text-align: left; background: #f8f9fa; padding: 10px; color: #6b7280; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid #eee; }
-        .data-table td { padding: 10px; border-bottom: 1px solid #eee; transition: background 0.3s; }
+        .data-table th { text-align: left; background: #f8f9fa; padding: 10px; color: #6b7280; font-size: 0.7rem; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        .data-table td { padding: 10px; border-bottom: 1px solid #eee; }
         .data-table tr.active-addition { background-color: var(--highlight); font-weight: bold; }
 
-        .btn-save-section { background-color: var(--active-green); color: white; border: none; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; }
-        
-        /* TIMER SPECIFIC */
+        /* BUTTONS */
+        .btn-save-section {
+            background-color: var(--active-green);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .btn-now {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            padding: 0 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .time-wrapper { display: flex; align-items: stretch; }
+        .time-wrapper input { border-radius: 4px 0 0 4px; }
+
+        /* TIMER */
         .timer-box { 
-            background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; 
-            display: flex; justify-content: center; align-items: center; gap: 20px;
+            background: #2c3e50; color: white; padding: 20px; border-radius: 8px; 
+            text-align: center; margin-bottom: 20px; 
+            display: flex; justify-content: center; align-items: center; gap: 20px; 
         }
         .timer-display { font-size: 3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
         .btn-timer { padding: 10px 20px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; }
         .btn-start { background: #27ae60; color: white; }
-        .btn-pause { background: #f39c12; color: white; }
         .btn-reset { background: #c0392b; color: white; }
+
+        /* SUB-HEADERS IN LAUTER */
+        .lauter-header {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #2c3e50;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
 
         @media screen and (max-width: 1024px) {
             body { flex-direction: column; }
@@ -178,9 +259,9 @@
                         <option value="">-- Load Master Recipe --</option>
                     </select>
                 </div>
-                <div class="input-group"><label>Batch ID</label><input type="text" id="batchId" placeholder="B-XXXX"></div>
-                <div class="input-group"><label>Brew Date</label><input type="date" id="brewDate"></div>
-                <div class="input-group"><label>Beer Name</label><input type="text" id="beerName" placeholder="Auto-Populates"></div>
+                <div class="input-group"><label>Batch ID</label><input type="text" id="batchId" class="actual-input" placeholder="B-XXXX"></div>
+                <div class="input-group"><label>Brew Date</label><input type="date" id="brewDate" class="actual-input"></div>
+                <div class="input-group"><label>Beer Name</label><span class="target-display" id="beerName">-</span></div>
                 <div class="input-group"><label>Vessel</label><select id="vessel-select"><option>FV-1</option><option>FV-2</option><option>FV-3</option></select></div>
             </div>
             <button class="btn-save-section" onclick="saveAndAdvance('setup-content', 'grain-content')">Save & Lock Batch Setup</button>
@@ -193,15 +274,26 @@
             <span class="toggle-indicator">+</span>
         </div>
         <div id="grain-content" class="stage-content collapsed">
+            
             <div class="form-grid">
-                <div class="input-group"><label>Foundation (Gal)</label><span class="target-display" id="t-foundation">-</span></div>
-                <div class="input-group"><label>Mash In (Gal)</label><span class="target-display" id="t-mash">-</span></div>
-                <div class="input-group"><label>Sparge (Gal)</label><span class="target-display" id="t-sparge">-</span></div>
+                <div class="input-group"><label>Foundation Target (Gal)</label><span class="target-display" id="t-foundation">-</span></div>
+                <div class="input-group"><label>Foundation Actual</label><input type="number" class="actual-input"></div>
+                <div class="input-group"><label>Mash In Target (Gal)</label><span class="target-display" id="t-mash">-</span></div>
+                <div class="input-group"><label>Mash In Actual</label><input type="number" class="actual-input"></div>
             </div>
+
             <h4 style="margin-top:0;">Salts / Acids</h4>
-            <table class="data-table"><thead><tr><th>Salt</th><th>Mash Target (g)</th><th>Actual</th><th>Sparge Target (g)</th><th>Actual</th></tr></thead><tbody id="salt-body"></tbody></table>
+            <table class="data-table">
+                <thead><tr><th>Salt</th><th>Mash Target (g)</th><th>Actual</th><th>Sparge Target (g)</th><th>Actual</th></tr></thead>
+                <tbody id="salt-body"></tbody>
+            </table>
+
             <h4>Grain Bill</h4>
-            <table class="data-table"><thead><tr><th>Malt</th><th>Target (lbs)</th><th>Actual (lbs)</th><th>Lot #</th></tr></thead><tbody id="grain-body"></tbody></table>
+            <table class="data-table">
+                <thead><tr><th>Malt</th><th>Target (lbs)</th><th>Actual (lbs)</th><th>Lot #</th></tr></thead>
+                <tbody id="grain-body"></tbody>
+            </table>
+
             <button class="btn-save-section" onclick="saveAndAdvance('grain-content', 'mash-content')">Save & Lock Grain Bill</button>
         </div>
     </div>
@@ -214,9 +306,9 @@
         <div id="mash-content" class="stage-content collapsed">
             <div class="form-grid">
                 <div class="input-group"><label>Target Mash Temp</label><span class="target-display" id="t-mash-temp">-</span></div>
-                <div class="input-group"><label>Actual Mash Temp</label><input type="number" placeholder="°F"></div>
+                <div class="input-group"><label>Actual Mash Temp</label><input type="number" class="actual-input" placeholder="°F"></div>
                 <div class="input-group"><label>Target pH</label><span class="target-display" id="t-ph">-</span></div>
-                <div class="input-group"><label>Actual pH</label><input type="number" step="0.01" placeholder="5.xx"></div>
+                <div class="input-group"><label>Actual pH</label><input type="number" step="0.01" class="actual-input" placeholder="5.xx"></div>
             </div>
             <button class="btn-save-section" onclick="saveAndAdvance('mash-content', 'lauter-content')">Save & Lock Mash</button>
         </div>
@@ -228,11 +320,41 @@
             <span class="toggle-indicator">+</span>
         </div>
         <div id="lauter-content" class="stage-content collapsed">
-            <div class="form-grid">
-                <div class="input-group"><label>Target Pre-Boil Gravity</label><span class="target-display" id="t-pre-g">-</span></div>
-                <div class="input-group"><label>Actual Pre-Boil Gravity</label><input type="number" step="0.001"></div>
-                <div class="input-group"><label>Pre-Boil Vol (Gal)</label><input type="number"></div>
+            
+            <div class="form-grid" style="background:#f8f9fa; padding:15px; border-radius:6px; border:1px solid #eee;">
+                <div class="input-group"><label>Target Sparge Vol (Gal)</label><span class="target-display" id="t-sparge">-</span></div>
+                <div class="input-group"><label>Actual Sparge Vol</label><input type="number" class="actual-input"></div>
             </div>
+
+            <div class="lauter-header">First Wort</div>
+            <div class="form-grid">
+                <div class="input-group"><label>Start Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="fw-start"><button class="btn-now" onclick="setNow('fw-start')">🕒</button></div></div>
+                <div class="input-group"><label>End Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="fw-end"><button class="btn-now" onclick="setNow('fw-end')">🕒</button></div></div>
+                <div class="input-group"><label>Deep Cut (Log Time)</label><div class="time-wrapper"><input type="time" class="actual-input" id="fw-cut"><button class="btn-now" onclick="setNow('fw-cut')">🕒</button></div></div>
+                <div class="input-group"><label>First Wort Gravity</label><input type="number" step="0.001" class="actual-input" placeholder="1.xxx"></div>
+            </div>
+
+            <div class="lauter-header">First Sparge</div>
+            <div class="form-grid">
+                <div class="input-group"><label>Start Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp1-start"><button class="btn-now" onclick="setNow('sp1-start')">🕒</button></div></div>
+                <div class="input-group"><label>End Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp1-end"><button class="btn-now" onclick="setNow('sp1-end')">🕒</button></div></div>
+                <div class="input-group"><label>Deep Cut (Log Time)</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp1-cut"><button class="btn-now" onclick="setNow('sp1-cut')">🕒</button></div></div>
+            </div>
+
+            <div class="lauter-header">Second Sparge</div>
+            <div class="form-grid">
+                <div class="input-group"><label>Start Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp2-start"><button class="btn-now" onclick="setNow('sp2-start')">🕒</button></div></div>
+                <div class="input-group"><label>End Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp2-end"><button class="btn-now" onclick="setNow('sp2-end')">🕒</button></div></div>
+                <div class="input-group"><label>Deep Cut (Log Time)</label><div class="time-wrapper"><input type="time" class="actual-input" id="sp2-cut"><button class="btn-now" onclick="setNow('sp2-cut')">🕒</button></div></div>
+            </div>
+
+            <div class="lauter-header">Final Runnings</div>
+            <div class="form-grid">
+                <div class="input-group"><label>Start Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="fr-start"><button class="btn-now" onclick="setNow('fr-start')">🕒</button></div></div>
+                <div class="input-group"><label>End Time</label><div class="time-wrapper"><input type="time" class="actual-input" id="fr-end"><button class="btn-now" onclick="setNow('fr-end')">🕒</button></div></div>
+                <div class="input-group"><label>Final Runnings Gravity</label><input type="number" step="0.001" class="actual-input" placeholder="1.xxx"></div>
+            </div>
+
             <button class="btn-save-section" onclick="saveAndAdvance('lauter-content', 'boil-content')">Save & Lock Lauter</button>
         </div>
     </div>
@@ -244,6 +366,13 @@
         </div>
         <div id="boil-content" class="stage-content collapsed">
             
+            <div class="form-grid">
+                <div class="input-group"><label>Target Pre-Boil Gravity</label><span class="target-display" id="t-pre-g">-</span></div>
+                <div class="input-group"><label>Actual Pre-Boil Gravity</label><input type="number" step="0.001" class="actual-input"></div>
+                <div class="input-group"><label>Target Post-Boil Gravity</label><span class="target-display" id="t-post-g">-</span></div>
+                <div class="input-group"><label>Actual Post-Boil Gravity</label><input type="number" step="0.001" class="actual-input"></div>
+            </div>
+
             <div class="timer-box">
                 <div>
                     <label style="color:#bdc3c7;">BOIL CLOCK</label>
@@ -272,14 +401,15 @@
         <div id="ko-yeast-content" class="stage-content collapsed">
             <div class="form-grid">
                 <div class="input-group"><label>Target OG</label><span class="target-display" id="t-og">-</span></div>
-                <div class="input-group"><label>Actual OG</label><input type="number" step="0.001"></div>
-                <div class="input-group"><label>KO Volume (BBL)</label><input type="number" id="ko-volume"></div>
-                <div class="input-group"><label>KO Temp (°F)</label><input type="number"></div>
+                <div class="input-group"><label>Actual OG</label><input type="number" step="0.001" class="actual-input"></div>
+                <div class="input-group"><label>KO Volume (BBL)</label><input type="number" id="ko-volume" class="actual-input"></div>
+                <div class="input-group"><label>KO Temp (°F)</label><input type="number" class="actual-input"></div>
+                <div class="input-group"><label>Oxygen (LPM)</label><input type="number" class="actual-input"></div>
             </div>
             <div class="form-grid">
                 <div class="input-group"><label>Yeast Strain</label><span class="target-display" id="t-yeast">-</span></div>
-                <div class="input-group"><label>Pitch Rate</label><span class="target-display" id="t-pitch">-</span></div>
-                <div class="input-group"><label>Generation / Lot</label><input type="text"></div>
+                <div class="input-group"><label>Pitch Rate Target</label><span class="target-display" id="t-pitch">-</span></div>
+                <div class="input-group"><label>Generation / Lot</label><input type="text" class="actual-input"></div>
             </div>
             <button class="btn-save-section" onclick="completeBrewLog()">Complete Brew & Sync</button>
         </div>
@@ -288,6 +418,7 @@
 </main>
 
 <script>
+    // --- PASTE YOUR API URL HERE ---
     const API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
     
     let allRecipes = [];
@@ -299,21 +430,27 @@
         document.getElementById('brewDate').valueAsDate = new Date();
         const batchInput = document.getElementById('batchId');
         const headerBatch = document.getElementById('header-batch-id');
+        
         if (batchInput) {
             batchInput.addEventListener('input', () => { headerBatch.innerText = batchInput.value || "---"; });
         }
 
+        // Fetch Recipes
         try {
             const res = await fetch(API_URL);
             const data = await res.json();
+            
             if (Array.isArray(data)) { allRecipes = data; } 
             else { allRecipes = data.recipes || []; }
 
             const select = document.getElementById('recipe-select');
             allRecipes.sort((a, b) => a.name.localeCompare(b.name));
+            
             allRecipes.forEach(r => {
                 const opt = document.createElement('option');
-                opt.value = r.name; opt.text = r.name; select.appendChild(opt);
+                opt.value = r.name;
+                opt.text = r.name;
+                select.appendChild(opt);
             });
         } catch (err) { console.error("Error loading recipes", err); }
     };
@@ -323,53 +460,106 @@
         const r = allRecipes.find(x => x.name === name);
         if(!r) return;
 
-        document.getElementById('beerName').value = r.name;
+        // Header Update
         document.getElementById('header-beer-name').innerText = r.name;
+        document.getElementById('beerName').innerText = r.name;
 
-        // Populate Targets
+        // 1. Water
         if(r.waterProfile) {
             document.getElementById('t-foundation').innerText = r.waterProfile.foundation || '-';
             document.getElementById('t-mash').innerText = r.waterProfile.mash || '-';
-            document.getElementById('t-sparge').innerText = r.waterProfile.sparge || '-';
+            document.getElementById('t-sparge').innerText = r.waterProfile.sparge || '-'; // This is in Section 4 now
             document.getElementById('t-ph').innerText = r.waterProfile.mashPh || '-';
         }
 
-        // Salts
+        // 2. Salts
         const saltBody = document.getElementById('salt-body');
         saltBody.innerHTML = '';
         if(r.salts) {
             r.salts.forEach(s => {
-                saltBody.innerHTML += `<tr><td>${s[0]}</td><td><span class="target-display">${s[1]||0}</span></td><td><input type="number"></td><td><span class="target-display">${s[2]||0}</span></td><td><input type="number"></td></tr>`;
+                saltBody.innerHTML += `<tr><td>${s[0]}</td><td><span class="target-display">${s[1]||0}</span></td><td><input type="number" class="actual-input"></td><td><span class="target-display">${s[2]||0}</span></td><td><input type="number" class="actual-input"></td></tr>`;
             });
         }
 
-        // Grains
+        // 3. Grains
         const grainBody = document.getElementById('grain-body');
         grainBody.innerHTML = '';
         if(r.grains) {
             r.grains.forEach(g => {
-                grainBody.innerHTML += `<tr><td>${g[0]}</td><td><span class="target-display">${g[1]}</span></td><td><input type="number" placeholder="${g[1]}"></td><td><input type="text"></td></tr>`;
+                grainBody.innerHTML += `<tr><td>${g[0]}</td><td><span class="target-display">${g[1]}</span></td><td><input type="number" class="actual-input" placeholder="${g[1]}"></td><td><input type="text" class="actual-input"></td></tr>`;
             });
         }
 
-        if(r.mash && r.mash.length > 0) document.getElementById('t-mash-temp').innerText = r.mash[0][1] + "°F" || '-'; 
+        // 4. Mash Temp
+        if(r.mash && r.mash.length > 0) {
+            document.getElementById('t-mash-temp').innerText = r.mash[0][1] + "°F" || '-'; 
+        }
+
+        // 5. Gravity Targets
         document.getElementById('t-pre-g').innerText = r.preBoil || '-';
         document.getElementById('t-og').innerText = r.og || '-';
+        document.getElementById('t-post-g').innerText = r.postBoil || '-';
 
-        // Boil with Time Data for Timer
+        // 6. Boil
         const boilBody = document.getElementById('boil-body');
         boilBody.innerHTML = '';
         if(r.boil) {
             r.boil.forEach(b => {
-                // b[3] is Time Min
-                boilBody.innerHTML += `<tr data-time="${b[3]}"><td>${b[0]}</td><td>${b[3]} min</td><td><span class="target-display">${b[2]}</span></td><td><input type="number" placeholder="${b[2]}"></td><td><input type="text"></td></tr>`;
+                // b[3] is Time Min, b[2] is Oz
+                boilBody.innerHTML += `<tr data-time="${b[3]}"><td>${b[0]}</td><td>${b[3]} min</td><td><span class="target-display">${b[2]}</span></td><td><input type="number" class="actual-input" placeholder="${b[2]}"></td><td><input type="text" class="actual-input"></td></tr>`;
             });
         }
 
+        // 7. Yeast
         if(r.yeast) {
             document.getElementById('t-yeast').innerText = r.yeast.strain || '-';
             document.getElementById('t-pitch').innerText = r.yeast.pitch || '-';
         }
+    }
+
+    function toggleSection(id, header) {
+        const content = document.getElementById(id);
+        const indicator = header.querySelector('.toggle-indicator');
+        const isCollapsed = content.classList.contains('collapsed');
+        
+        if(isCollapsed) {
+            content.classList.remove('collapsed');
+            indicator.innerText = "-";
+        } else {
+            content.classList.add('collapsed');
+            indicator.innerText = "+";
+        }
+    }
+
+    function saveAndAdvance(currentId, nextId) {
+        const current = document.getElementById(currentId);
+        current.classList.add('locked');
+        
+        const saveBtn = current.querySelector('.btn-save-section');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerText = "✓ LOCKED";
+            saveBtn.style.backgroundColor = "#7f8c8d";
+        }
+
+        if (nextId) {
+            const next = document.getElementById(nextId);
+            next.classList.remove('collapsed');
+            
+            // Update Header Stage
+            const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
+            document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
+            
+            next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    // --- UTILS ---
+    function setNow(id) {
+        const now = new Date();
+        // Format to HH:MM for time input
+        const timeString = now.toTimeString().split(' ')[0].substring(0,5);
+        document.getElementById(id).value = timeString;
     }
 
     // --- TIMER LOGIC ---
@@ -386,7 +576,7 @@
     function resetTimer() {
         clearInterval(timerInterval);
         isRunning = false;
-        totalTime = 3600;
+        totalTime = 3600; // Reset to 60 min (can be made dynamic based on recipe later)
         updateDisplay();
         document.querySelectorAll('#boil-body tr').forEach(r => r.classList.remove('active-addition'));
     }
@@ -416,47 +606,13 @@
             if(time === currentMin) {
                 if(!row.classList.contains('active-addition')) {
                     row.classList.add('active-addition');
-                    // Play simple beep (optional)
-                    // new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play();
+                    // Play simple beep (optional, browser policy dependent)
+                    // new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play().catch(e=>{});
                 }
             } else {
                 row.classList.remove('active-addition');
             }
         });
-    }
-
-    // --- UTILS ---
-    function toggleSection(id, header) {
-        const content = document.getElementById(id);
-        const indicator = header.querySelector('.toggle-indicator');
-        const isCollapsed = content.classList.contains('collapsed');
-        if(isCollapsed) {
-            content.classList.remove('collapsed');
-            indicator.innerText = "-";
-        } else {
-            content.classList.add('collapsed');
-            indicator.innerText = "+";
-        }
-    }
-
-    function saveAndAdvance(currentId, nextId) {
-        const current = document.getElementById(currentId);
-        current.classList.add('locked');
-        
-        const saveBtn = current.querySelector('.btn-save-section');
-        if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.innerText = "✓ LOCKED";
-            saveBtn.style.backgroundColor = "#7f8c8d";
-        }
-
-        if (nextId) {
-            const next = document.getElementById(nextId);
-            next.classList.remove('collapsed');
-            const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
-            document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
-            next.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
     }
 
     function completeBrewLog() {
