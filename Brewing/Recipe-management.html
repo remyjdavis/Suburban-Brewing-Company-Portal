@@ -13,7 +13,6 @@
         .sidebar { width: var(--sidebar-width); background: var(--primary-dark); height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
         .sidebar-header { padding: 25px 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid #1f2937; }
         
-        /* Section Titles in Sidebar */
         .nav-section-title { 
             font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; 
             color: #9ca3af; margin: 20px 20px 10px 20px; font-weight: 700; 
@@ -63,7 +62,6 @@
         .btn-cancel { background: #6b7280; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
         .btn-delete { color: #ef4444; background: none; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
         
-        /* Dry Hop Toggle Visibility */
         #dry-hop-wrapper { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; }
 
         @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; width: 100%; } }
@@ -131,7 +129,7 @@
                     <div class="form-row">
                         <input type="hidden" id="edit-id"> 
                         <div><label>Recipe Name</label><input type="text" id="edit-name"></div>
-                        <div><label>Style</label><input type="text" id="edit-style"></div>
+                        <div><label>Style</label><input type="text" id="edit-style" list="style-list"></div>
                         <div><label>Category</label><select id="edit-category"><option value="Core">Core</option><option value="Rotating">Rotating</option><option value="Seasonal">Seasonal</option></select></div>
                         <div><label>Batch Size (BBL)</label><input type="number" step="0.1" id="edit-batch-size" onchange="calculateStats()"></div>
                     </div>
@@ -183,6 +181,7 @@
                     <div style="font-weight:bold; margin-bottom:5px;">Boil Additions</div>
                     <div id="boil-container"></div>
                     <button class="btn-add-line" onclick="addBoilLine()">+ Add Boil Addition</button>
+                    <datalist id="hop-list"></datalist>
                 </div>
 
                 <div class="collapsible-header" onclick="toggleSection('ko-section')">4. KO, Yeast & Dry Hops ▾</div>
@@ -221,6 +220,8 @@
                         <div><label>Target IBU</label><input type="number" id="edit-ibu"></div>
                     </div>
                 </div>
+                
+                <datalist id="style-list"></datalist>
 
                 <button class="btn-save" onclick="saveRecipe()">Save Master Recipe</button>
             </div>
@@ -235,9 +236,13 @@
 <script>
     // --- API & DATA STORAGE ---
     const RECIPE_API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+    
+    // Global Reference Storage
     let refYeast = [];
     let refGrains = []; 
     let refWaterAdditions = [];
+    let refHops = [];   // NEW
+    let refStyles = []; // NEW
 
     // --- 1. INITIAL LOAD LOGIC ---
     async function loadPageData() {
@@ -249,9 +254,12 @@
             if (Array.isArray(data)) { recipes = data; } 
             else {
                 recipes = data.recipes || [];
+                // LOADING ALL REFERENCES
                 refGrains = data.refGrains || [];
                 refWaterAdditions = data.refWaterAdditions || [];
-                refYeast = data.refYeast || []; // LOADING YEAST DATA
+                refYeast = data.refYeast || [];
+                refHops = data.refHops || [];     // NEW
+                refStyles = data.refStyles || []; // NEW
             }
 
             // Populate Grains Datalist
@@ -272,7 +280,25 @@
                 saltList.appendChild(opt);
             });
 
-            // Populate Yeast Dropdown (INTEGRATED YEAST LOGIC)
+            // Populate Hops Datalist (NEW)
+            const hopList = document.getElementById('hop-list');
+            hopList.innerHTML = '';
+            refHops.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h.name;
+                hopList.appendChild(opt);
+            });
+            
+            // Populate Styles Datalist (NEW)
+            const styleList = document.getElementById('style-list');
+            styleList.innerHTML = '';
+            refStyles.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.name; // Assuming backend sends {name: "IPA"}
+                styleList.appendChild(opt);
+            });
+
+            // Populate Yeast Dropdown
             const yeastSelect = document.getElementById('yeast-strain');
             yeastSelect.innerHTML = '<option value="">Select Yeast</option>';
             refYeast.forEach(y => {
@@ -282,7 +308,6 @@
                 yeastSelect.appendChild(opt);
             });
 
-            // Auto-fill yeast parameters when changed
             document.getElementById('yeast-strain').addEventListener('change', e => {
                 const y = refYeast.find(r => r.strain === e.target.value);
                 if (!y) return;
@@ -298,7 +323,6 @@
 
     // --- 2. LOGIC TO ADD ROWS ---
     
-    // Grains
     function addGrainLine(name='', lbs='', pct='') {
         const div = document.createElement('div');
         div.className = 'ingredient-entry';
@@ -307,7 +331,6 @@
         document.getElementById('grain-container').appendChild(div);
     }
     
-    // Salts
     function addSaltLine(name='', mash='', sparge='', notes='') {
         const div = document.createElement('div');
         div.className = 'ingredient-entry';
@@ -316,7 +339,6 @@
         document.getElementById('salt-container').appendChild(div);
     }
     
-    // Mash
     function addMashLine(step='', temp='', time='', ratio='') {
         const div = document.createElement('div');
         div.className = 'ingredient-entry';
@@ -325,25 +347,24 @@
         document.getElementById('mash-container').appendChild(div);
     }
     
-    // Kettle Hops (Boil)
+    // Kettle Hops (Using hop-list)
     function addBoilLine(name='', aa='', oz='', min='', type='') {
         const div = document.createElement('div');
         div.className = 'ingredient-entry';
         div.style.gridTemplateColumns = "2fr 1fr 1fr 1fr 1fr 30px";
-        div.innerHTML = `<input class="boil-name" placeholder="Hop" value="${name}"><input class="boil-aa" type="number" placeholder="AA%" value="${aa}"><input class="boil-oz" type="number" placeholder="Oz" value="${oz}"><input class="boil-min" type="number" placeholder="Min" value="${min}"><input class="boil-type" placeholder="Type" value="${type}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
+        div.innerHTML = `<input list="hop-list" class="boil-name" placeholder="Hop" value="${name}"><input class="boil-aa" type="number" placeholder="AA%" value="${aa}"><input class="boil-oz" type="number" placeholder="Oz" value="${oz}"><input class="boil-min" type="number" placeholder="Min" value="${min}"><input class="boil-type" placeholder="Type" value="${type}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
         document.getElementById('boil-container').appendChild(div);
     }
 
-    // Dry Hops (INTEGRATED LOGIC)
+    // Dry Hops (Using hop-list)
     function addDryHopLine(step='', variety='', aa='', lbs='', day='', temp='') {
         const div = document.createElement('div');
         div.className = 'ingredient-entry';
         div.style.gridTemplateColumns = "1fr 2fr 1fr 1fr 1fr 1fr 30px";
-        div.innerHTML = `<input class="dh-step" placeholder="Step" value="${step}"><input class="dh-var" placeholder="Variety" value="${variety}"><input class="dh-aa" type="number" placeholder="AA%" value="${aa}"><input class="dh-lbs" type="number" placeholder="Lbs" value="${lbs}"><input class="dh-day" placeholder="Day" value="${day}"><input class="dh-temp" type="number" placeholder="Temp F" value="${temp}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
+        div.innerHTML = `<input class="dh-step" placeholder="Step" value="${step}"><input list="hop-list" class="dh-var" placeholder="Variety" value="${variety}"><input class="dh-aa" type="number" placeholder="AA%" value="${aa}"><input class="dh-lbs" type="number" placeholder="Lbs" value="${lbs}"><input class="dh-day" placeholder="Day" value="${day}"><input class="dh-temp" type="number" placeholder="Temp F" value="${temp}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
         document.getElementById('dry-hop-container').appendChild(div);
     }
 
-    // Toggle Dry Hop Logic (You were missing this function!)
     function toggleDryHop() {
         const isChecked = document.getElementById('has-dry-hop').checked;
         const wrapper = document.getElementById('dry-hop-wrapper');
@@ -351,7 +372,7 @@
         if (isChecked) {
             wrapper.style.display = 'block';
             if(document.getElementById('dry-hop-container').children.length === 0) {
-                addDryHopLine('DH 1'); // Add default row
+                addDryHopLine('DH 1'); 
             }
         } else {
             wrapper.style.display = 'none';
@@ -364,7 +385,6 @@
         document.getElementById('recipe-list-view').style.display = 'none';
         document.getElementById('master-editor').style.display = 'block';
         
-        // Clear Lists
         document.getElementById('grain-container').innerHTML = ''; 
         document.getElementById('salt-container').innerHTML = '';
         document.getElementById('mash-container').innerHTML = '';
@@ -377,7 +397,6 @@
             document.getElementById('has-dry-hop').checked = false;
             toggleDryHop();
         } else if(data) {
-            // Populate Basic Data
             document.getElementById('edit-id').value = data.id || '';
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-style').value = data.style || '';
@@ -390,7 +409,6 @@
             document.getElementById('target-preboil').value = data.preBoil || '';
             document.getElementById('target-postboil').value = data.postBoil || '';
             
-            // Populate Water
             if(data.waterProfile) {
                 document.getElementById('water-foundation').value = data.waterProfile.foundation || '';
                 document.getElementById('water-mash').value = data.waterProfile.mash || '';
@@ -404,7 +422,6 @@
                 document.getElementById('target-hco3').value = data.waterProfile.hco3 || '';
             }
 
-            // Populate Yeast (INTEGRATED)
             if(data.yeast) {
                 document.getElementById('yeast-strain').value = data.yeast.strain || '';
                 document.getElementById('pitch-rate').value = data.yeast.pitch || '';
@@ -414,13 +431,11 @@
                 document.getElementById('yeast-notes').value = data.yeast.notes || '';
             }
 
-            // Populate Lists
             if(data.grains) data.grains.forEach(g => addGrainLine(g[0], g[1], g[2]));
             if(data.salts) data.salts.forEach(s => addSaltLine(s[0], s[1], s[2], s[3]));
             if(data.mash) data.mash.forEach(m => addMashLine(m[0], m[1], m[2], m[3]));
             if(data.boil) data.boil.forEach(b => addBoilLine(b[0], b[1], b[2], b[3], b[4]));
             
-            // Populate Dry Hops (INTEGRATED)
             if(data.dryHops && data.dryHops.length > 0) {
                 document.getElementById('has-dry-hop').checked = true;
                 data.dryHops.forEach(d => addDryHopLine(d[0], d[1], d[2], d[3], d[4], d[5]));
@@ -441,14 +456,12 @@
 
     // --- 4. SAVING LOGIC ---
     async function saveRecipe() {
-        // Scrape Grains
         const grains = Array.from(document.querySelectorAll('#grain-container .ingredient-entry')).map(row => [
             row.querySelector('.grain-search').value,
             row.querySelector('.grain-weight').value,
             row.querySelector('.grain-pct').value
         ]).filter(x => x[0]);
 
-        // Scrape Salts
         const salts = Array.from(document.querySelectorAll('#salt-container .ingredient-entry')).map(row => [
             row.querySelector('.salt-name').value,
             row.querySelector('.salt-mash').value,
@@ -456,7 +469,6 @@
             row.querySelector('.salt-notes').value
         ]).filter(x => x[0]);
 
-        // Scrape Mash
         const mash = Array.from(document.querySelectorAll('#mash-container .ingredient-entry')).map(row => [
             row.querySelector('.mash-step').value,
             row.querySelector('.mash-temp').value,
@@ -464,7 +476,6 @@
             row.querySelector('.mash-ratio').value
         ]).filter(x => x[0]);
 
-        // Scrape Boil
         const boil = Array.from(document.querySelectorAll('#boil-container .ingredient-entry')).map(row => [
             row.querySelector('.boil-name').value,
             row.querySelector('.boil-aa').value,
@@ -473,7 +484,6 @@
             row.querySelector('.boil-type').value
         ]).filter(x => x[0]);
 
-        // Scrape Dry Hops (INTEGRATED)
         const dryHops = Array.from(document.querySelectorAll('#dry-hop-container .ingredient-entry')).map(row => [
             row.querySelector('.dh-step').value,
             row.querySelector('.dh-var').value,
@@ -481,7 +491,7 @@
             row.querySelector('.dh-lbs').value,
             row.querySelector('.dh-day').value,
             row.querySelector('.dh-temp').value
-        ]).filter(x => x[1]); // Filter by variety name
+        ]).filter(x => x[1]); 
 
         const data = {
             id: document.getElementById('edit-id').value,
@@ -509,7 +519,6 @@
                 hco3: document.getElementById('target-hco3').value
             },
             
-            // YEAST OBJECT (INTEGRATED)
             yeast: {
                 strain: document.getElementById('yeast-strain').value,
                 pitch: document.getElementById('pitch-rate').value,
@@ -523,7 +532,7 @@
             salts: salts,
             mash: mash,
             boil: boil,
-            dryHops: dryHops // Include in payload
+            dryHops: dryHops 
         };
 
         try {
