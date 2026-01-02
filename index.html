@@ -281,96 +281,126 @@
   /**
    * REFRESH ML ENGINE, RENDER CHART & CALCULATE SAVINGS
    */
-  async function refreshMLEngine() {
+  /**
+ * REFRESH ML ENGINE
+ * Fetches batch history, learned efficiency, and malt costs.
+ * Updates the trend chart and calculates financial savings.
+ */
+async function refreshMLEngine() {
     const effDisplay = document.getElementById('ml-efficiency-display');
     const ogDisplay = document.getElementById('ml-og-display');
     const advice = document.getElementById('ml-advice');
     const lbsSavedDisplay = document.getElementById('cost-lbs-saved');
     const cashSavedDisplay = document.getElementById('cost-dollars-saved');
 
+    // Constants for Math
+    const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; // Update with your URL
+    const BASELINE_EFFICIENCY = 0.70; // Our un-optimized benchmark
+    const AVG_MONTHLY_GRAIN_USAGE = 4000; // Estimated total lbs moved per month
+
     try {
-      // Fetch the Learned Efficiency and History from the Backend
-      const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`);
-      const data = await res.json();
-      
-      const learnedEff = data.brewhousePredictiveEfficiency;
-      const history = data.batchHistory || [0.72, 0.74, 0.75, 0.73, 0.76, 0.77, 0.75, 0.78, 0.79, 0.80];
-      
-      // 1. Update Core Stats
-      effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%";
-      effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
+        // 1. Fetch learned data from the Middleman Backend
+        const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, {
+            method: "GET",
+            redirect: "follow"
+        });
+        const data = await res.json();
 
-      const predictedPoints = (100 * 37 * learnedEff) / 31;
-      ogDisplay.innerText = (1 + (predictedPoints / 1000)).toFixed(3);
+        const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
+        const history = data.batchHistory || [0.75];
+        const avgCost = data.avgMaltCost || 0.65;
 
-      // 2. Calculate Financial Impact
-      // We compare current learned efficiency vs. a standard 70% baseline
-      const baselineEff = 0.70;
-      if (learnedEff > baselineEff) {
-          // Estimate: Avg grain bill 1000lbs. Savings = Total Grain * (1 - (Baseline/Learned))
-          const avgMonthlyGrain = 4000; // Example: 4 batches a month
-          const lbsSaved = Math.round(avgMonthlyGrain * (1 - (baselineEff / learnedEff)));
-          const avgCostPerLb = 0.65; // This will eventually be pulled from your inventory API
-          
-          lbsSavedDisplay.innerText = lbsSaved + " lbs";
-          cashSavedDisplay.innerText = "$" + (lbsSaved * avgCostPerLb).toFixed(2);
-      }
+        // 2. Update Core Efficiency Display
+        const effPercent = (learnedEff * 100).toFixed(1);
+        effDisplay.innerText = effPercent + "%";
+        effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
 
-      // 3. Render Trend Chart
-      const ctx = document.getElementById('efficiencyChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: history.map((_, i) => `B${i + 1}`),
-          datasets: [{
-            label: 'Learned Efficiency',
-            data: history.map(v => v * 100),
-            borderColor: '#3498db',
-            backgroundColor: 'rgba(52, 152, 219, 0.1)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3,
-            pointRadius: 4,
-            pointBackgroundColor: '#3498db'
-          }, {
-            label: 'Baseline (75%)',
-            data: Array(history.length).fill(75),
-            borderColor: '#e2e8f0',
-            borderDash: [5, 5],
-            fill: false,
-            pointRadius: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { 
-              min: 65, 
-              max: 85,
-              ticks: { callback: value => value + "%" },
-              grid: { color: '#f1f5f9' }
-            },
-            x: { grid: { display: false } }
-          }
+        // 3. Update Predictive OG (Based on a 100lb sample bill in 31gal)
+        // Formula: (Lbs * 37 ppg * Efficiency) / Volume
+        const predictedPoints = (100 * 37 * learnedEff) / 31;
+        const predictedOG = 1 + (predictedPoints / 1000);
+        ogDisplay.innerText = predictedOG.toFixed(3);
+
+        // 4. Calculate Financial Impact (Waste Reduction)
+        if (learnedEff > BASELINE_EFFICIENCY) {
+            // Formula: Potential Savings = Usage * (1 - (Baseline / Current))
+            const lbsSaved = Math.round(AVG_MONTHLY_GRAIN_USAGE * (1 - (BASELINE_EFFICIENCY / learnedEff)));
+            const dollarsSaved = lbsSaved * avgCost;
+
+            lbsSavedDisplay.innerText = lbsSaved + " lbs";
+            cashSavedDisplay.innerText = "$" + dollarsSaved.toFixed(2);
+            cashSavedDisplay.style.color = "#10b981";
+        } else {
+            lbsSavedDisplay.innerText = "0 lbs";
+            cashSavedDisplay.innerText = "$0.00";
+            cashSavedDisplay.style.color = "var(--text-muted)";
         }
-      });
 
-      // 4. Update Advice
-      if (learnedEff >= 0.78) {
-          advice.innerText = "System optimized. Extraction yields are at maximum theoretical capacity.";
-      } else {
-          advice.innerText = "Trending upward. Continue monitoring sparge temperature for further yield gains.";
-      }
+        // 5. Render Trend Chart (Last 10 Batches)
+        const ctx = document.getElementById('efficiencyChart').getContext('2d');
+        
+        // Destroy existing chart instance if it exists to prevent overlap on refresh
+        if (window.mlChart instanceof Chart) {
+            window.mlChart.destroy();
+        }
+
+        window.mlChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: history.map((_, i) => `Batch ${i + 1}`),
+                datasets: [{
+                    label: 'Learned Efficiency',
+                    data: history.map(v => v * 100),
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#3498db'
+                }, {
+                    label: 'Target (75%)',
+                    data: Array(history.length).fill(75),
+                    borderColor: '#e2e8f0',
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { 
+                        min: 60, 
+                        max: 90, 
+                        ticks: { callback: v => v + "%" },
+                        grid: { color: '#f1f5f9' } 
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 6. Update Smart Advice
+        if (learnedEff >= 0.78) {
+            advice.innerText = "Brewhouse is peak optimized. All extraction signals are normal.";
+        } else if (learnedEff < 0.72) {
+            advice.innerText = "Yield dip detected. AI suggests checking mill gap or sparge flow rates.";
+        } else {
+            advice.innerText = "Performance is stable and matching recipe baselines.";
+        }
 
     } catch (err) {
-      console.error("ML Sync Error:", err);
-      advice.innerText = "ML Engine Offline. Check Production API URL.";
+        console.error("ML Engine Error:", err);
+        advice.innerText = "Connection to ML Engine lost. Check backend deployment.";
+        effDisplay.innerText = "ERR";
     }
-  }
+}
 
-  window.addEventListener('DOMContentLoaded', refreshMLEngine);
+// Ensure the dashboard initializes on load
+window.addEventListener('DOMContentLoaded', refreshMLEngine);
 </script>
 </body>
 </html>
