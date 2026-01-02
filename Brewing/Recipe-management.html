@@ -9,39 +9,40 @@
         :root { --sidebar-width: 240px; --primary-dark: #111827; --accent: #2563eb; --accent-green: #27ae60; --accent-orange: #f39c12; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f3f4f6; margin: 0; display: flex; color: #1f2937; height: 100vh; overflow: hidden; }
         
-        .sidebar { width: var(--sidebar-width); background: var(--primary-dark); height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; overflow-y: auto; }
+        /* --- LAYOUT & SIDEBAR --- */
+        .sidebar { width: var(--sidebar-width); background: var(--primary-dark); height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
         .sidebar-header { padding: 25px 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid #1f2937; }
         .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
         .nav-link:hover { background: #1f2937; color: #fff; }
         .nav-link.active { background: var(--accent); color: #fff; font-weight: 600; }
         
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; height: 100vh; display: flex; flex-direction: column; }
-        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; }
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; height: 100vh; display: flex; flex-direction: column; width: calc(100% - var(--sidebar-width)); }
+        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
         .container { padding: 30px; flex-grow: 1; overflow-y: auto; }
         
-        /* --- HORIZONTAL SCROLLING --- */
+        /* --- HORIZONTAL SCROLLING (PURE CSS) --- */
         .category-group { margin-bottom: 30px; }
         .category-header { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 15px; border-left: 5px solid var(--accent); padding-left: 10px; text-transform: uppercase; }
         
         .horizontal-scroll-container { 
             display: flex; 
             gap: 20px; 
-            overflow-x: auto; 
+            overflow-x: auto; /* Enables native scroll */
             padding: 10px 5px 25px 5px;
-            cursor: grab; 
-            /* Critical for Trackpads */
-            -webkit-overflow-scrolling: touch;
-            /* Hides Scrollbar */
-            scrollbar-width: none; 
-            -ms-overflow-style: none;
+            /* Smooth scrolling */
+            scroll-behavior: smooth; 
+            -webkit-overflow-scrolling: touch; /* Critical for iOS/Mac momentum */
         }
-        .horizontal-scroll-container::-webkit-scrollbar { display: none; }
-        .horizontal-scroll-container.active { cursor: grabbing; cursor: -webkit-grabbing; }
+        
+        /* Styling the scrollbar so it's visible but subtle */
+        .horizontal-scroll-container::-webkit-scrollbar { height: 8px; }
+        .horizontal-scroll-container::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 4px; }
+        .horizontal-scroll-container::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        .horizontal-scroll-container::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
         .recipe-card { 
             background: white; border-radius: 15px; border: 1px solid #ddd; padding: 25px; 
             min-width: 320px; max-width: 320px; flex-shrink: 0; transition: 0.2s; position: relative; 
-            user-select: none; /* Prevents text selection during drag */
         }
         .recipe-card:hover { transform: translateY(-3px); border-color: var(--accent); }
 
@@ -55,7 +56,6 @@
         input, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
         .calc-bar { background: #eef2ff; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 20px; align-items: center; justify-content: space-around; }
         .color-swatch { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #e5e7eb; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
         .btn-add-line { background: #f3f4f6; border: 1px solid #d1d5db; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
         .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 25px; }
         .btn-edit { background: var(--accent-orange); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
@@ -195,37 +195,6 @@
     
     let refGrains = []; 
     let refWaterAdditions = [];
-
-    // --- MOUSE DRAG SCROLLING ONLY (Trackpad handles natively) ---
-    function enableMouseDragScrolling() {
-        const sliders = document.querySelectorAll('.horizontal-scroll-container');
-        sliders.forEach(slider => {
-            let isDown = false;
-            let startX;
-            let scrollLeft;
-
-            slider.addEventListener('mousedown', (e) => {
-                // Ignore button clicks so you can still click Edit
-                if(e.target.tagName === 'BUTTON') return;
-                
-                isDown = true;
-                slider.classList.add('active');
-                startX = e.pageX - slider.offsetLeft;
-                scrollLeft = slider.scrollLeft;
-            });
-
-            slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('active'); });
-            slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('active'); });
-
-            slider.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault(); 
-                const x = e.pageX - slider.offsetLeft;
-                const walk = (x - startX) * 2; 
-                slider.scrollLeft = scrollLeft - walk;
-            });
-        });
-    }
 
     // --- PAGE LOGIC ---
     function toggleSection(id) {
@@ -370,7 +339,7 @@
         document.getElementById('dry-hop-container').appendChild(div);
     }
 
-    // --- EDITOR LOGIC ---
+    // --- EDITOR ---
     function openEditor(mode, name = '', data = null) {
         document.getElementById('recipe-list-view').style.display = 'none';
         document.getElementById('master-editor').style.display = 'block';
@@ -420,6 +389,7 @@
             if(data.mash) data.mash.forEach(m => addMashLine(m[0], m[1], m[2], m[3]));
             if(data.boil) data.boil.forEach(b => addBoilLine(b[0], b[1], b[2], b[3], b[4]));
             if(data.dryHops) data.dryHops.forEach(d => addDryHopLine(d[0], d[1], d[2], d[3], d[4], d[5]));
+            
             calculateStats();
         }
     }
@@ -543,7 +513,7 @@
                 const card = document.createElement('div');
                 card.className = 'recipe-card';
                 card.innerHTML = `
-                    <div style="pointer-events: none;"> 
+                    <div> 
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <div class="color-swatch" style="background:${srmColor}; width:30px; height:30px;" title="Calc Color"></div>
@@ -560,15 +530,13 @@
                             <div class="spec-item"><label>BBL</label><span>${r.batchSize || '10'}</span></div>
                         </div>
                     </div>
-                    <button class="btn-edit" style="pointer-events: auto;" onclick='openEditor("EDIT", "${r.name.replace(/'/g, "\\'")}", ${JSON.stringify(r)})'>Edit Master Recipe</button>
+                    <button class="btn-edit" onclick='openEditor("EDIT", "${r.name.replace(/'/g, "\\'")}", ${JSON.stringify(r)})'>Edit Master Recipe</button>
                 `;
                 scrollRow.appendChild(card);
             });
             section.appendChild(scrollRow);
             container.appendChild(section);
         });
-        
-        enableMouseDragScrolling();
     }
 </script>
 </body>
