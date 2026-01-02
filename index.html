@@ -271,27 +271,22 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  // Configuration
+  // Configuration - USING YOUR ACTUAL DEPLOYED URL
   const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; 
 
   // Set Current Date
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  document.getElementById('current-date').textContent = new Date().toLocaleDateString(undefined, options);
+  const dateEl = document.getElementById('current-date');
+  if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString(undefined, options);
+  }
 
   /**
-   * REFRESH ML ENGINE, RENDER CHART & CALCULATE SAVINGS
+   * FULL REFRESH ML ENGINE
+   * Fetches batch history, learned efficiency, and malt costs from the Backend.
+   * Updates the trend chart and calculates financial savings in real-time.
    */
-  /**
- * REFRESH ML ENGINE
- * Fetches batch history, learned efficiency, and malt costs.
- * Updates the trend chart and calculates financial savings.
- */
-/**
- * FULL REFRESH ML ENGINE
- * Fetches batch history, learned efficiency, and malt costs.
- * Updates the trend chart and calculates financial savings.
- */
-async function refreshMLEngine() {
+  async function refreshMLEngine() {
     // 1. DOM Element References
     const effDisplay = document.getElementById('ml-efficiency-display');
     const ogDisplay = document.getElementById('ml-og-display');
@@ -299,16 +294,13 @@ async function refreshMLEngine() {
     const lbsSavedDisplay = document.getElementById('cost-lbs-saved');
     const cashSavedDisplay = document.getElementById('cost-dollars-saved');
 
-    // 2. Configuration (PASTE YOUR ACTUAL EXEC URL HERE)
-    const PRODUCTION_API_URL = "https://script.google.com/macros/s/YOUR_PRODUCTION_SCRIPT_ID/exec"; 
-    
-    // 3. Calculation Constants
+    // 2. Calculation Constants
     const BASELINE_EFFICIENCY = 0.70; 
     const AVG_MONTHLY_GRAIN_USAGE = 4000; 
 
     try {
-        // 4. Fetch learned data from the Middleman Backend
-        // Added 'redirect: follow' to prevent "Load Failed" errors
+        // 3. Fetch learned data from the Middleman Backend
+        // 'redirect: follow' is essential for Google Apps Script Web Apps
         const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, {
             method: "GET",
             redirect: "follow"
@@ -320,31 +312,33 @@ async function refreshMLEngine() {
 
         const data = await res.json();
 
-        // 5. Data Extraction with Fallbacks
+        // 4. Data Extraction with Fallbacks
         const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
         const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
         const avgCost = data.avgMaltCost || 0.65;
 
-        // 6. Update Efficiency Display
+        // 5. Update Efficiency Display
         const effPercent = (learnedEff * 100).toFixed(1);
         if (effDisplay) {
             effDisplay.innerText = effPercent + "%";
             effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
         }
 
-        // 7. Update Predictive OG (Based on a 100lb sample bill in 31gal)
+        // 6. Update Predictive OG (Based on a 100lb sample bill in 31gal)
         if (ogDisplay) {
             const predictedPoints = (100 * 37 * learnedEff) / 31;
             const predictedOG = 1 + (predictedPoints / 1000);
             ogDisplay.innerText = predictedOG.toFixed(3);
         }
 
-        // 8. Financial Impact Math
+        // 7. Financial Impact Math
         if (learnedEff > BASELINE_EFFICIENCY) {
             const lbsSaved = Math.round(AVG_MONTHLY_GRAIN_USAGE * (1 - (BASELINE_EFFICIENCY / learnedEff)));
             const dollarsSaved = lbsSaved * avgCost;
 
-            if (lbsSavedDisplay) lbsSavedDisplay.innerText = lbsSaved + " lbs";
+            if (lbsSavedDisplay) {
+                lbsSavedDisplay.innerText = lbsSaved + " lbs";
+            }
             if (cashSavedDisplay) {
                 cashSavedDisplay.innerText = "$" + dollarsSaved.toFixed(2);
                 cashSavedDisplay.style.color = "#10b981";
@@ -354,12 +348,12 @@ async function refreshMLEngine() {
             if (cashSavedDisplay) cashSavedDisplay.innerText = "$0.00";
         }
 
-        // 9. Render Trend Chart
+        // 8. Render Trend Chart
         const chartCanvas = document.getElementById('efficiencyChart');
         if (chartCanvas) {
             const ctx = chartCanvas.getContext('2d');
             
-            // Destroy existing instance to prevent "Canvas already in use" errors
+            // Explicitly destroy existing instance to prevent "Canvas already in use" errors
             if (window.mlChart instanceof Chart) {
                 window.mlChart.destroy();
             }
@@ -379,7 +373,7 @@ async function refreshMLEngine() {
                         pointRadius: 4,
                         pointBackgroundColor: '#3498db'
                     }, {
-                        label: 'Baseline',
+                        label: 'Baseline (75%)',
                         data: Array(history.length).fill(75),
                         borderColor: '#e2e8f0',
                         borderDash: [5, 5],
@@ -404,7 +398,7 @@ async function refreshMLEngine() {
             });
         }
 
-        // 10. Logic-Based Advice
+        // 9. Logic-Based Advice
         if (advice) {
             if (learnedEff >= 0.78) {
                 advice.innerText = "Efficiency Peak: All systems optimized.";
@@ -417,13 +411,17 @@ async function refreshMLEngine() {
 
     } catch (err) {
         console.error("ML Engine Error:", err);
-        if (advice) advice.innerText = "Engine Error: Check API connection.";
-        if (effDisplay) effDisplay.innerText = "OFFLINE";
+        if (advice) {
+            advice.innerText = "Engine Error: Check API connection.";
+        }
+        if (effDisplay) {
+            effDisplay.innerText = "OFFLINE";
+        }
     }
-}
+  }
 
-// Initial load call
-window.addEventListener('DOMContentLoaded', refreshMLEngine);
+  // Initial load call once DOM is ready
+  window.addEventListener('DOMContentLoaded', refreshMLEngine);
 </script>
 </body>
 </html>
