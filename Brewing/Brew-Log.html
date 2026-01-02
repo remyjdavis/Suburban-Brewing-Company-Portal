@@ -799,7 +799,7 @@
     // SAVES Brew Log data TO Production & Brew Log Sheet
     const LOG_SAVE_URL = "https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec"; 
 
-    let allData = {}; // Contains Recipes + Hydrated Inventory Data
+    let allData = {}; // Stores Hydrated object from Backend
     let allRecipes = [];
     let timerInterval = null;
     let totalTime = 3600; 
@@ -818,7 +818,6 @@
         }
 
         try {
-            // GET request using standard redirect following to prevent CORS blocks
             const res = await fetch(RECIPE_PULL_URL, {
                 method: "GET",
                 redirect: "follow"
@@ -836,7 +835,7 @@
             });
         } catch (err) { 
             console.error("Pull Error:", err); 
-            Swal.fire('Connection Error', 'Check Recipe Script deployment. Ensure "Who has access" is set to "Anyone".', 'error');
+            Swal.fire('Connection Error', 'Check Recipe Script deployment.', 'error');
         }
         addDeepCut('fw-cuts-container');
         addDeepCut('sp1-cuts-container');
@@ -844,7 +843,7 @@
     };
 
     // ---------------------------------------------------------
-    // 3. RECIPE LOADING LOGIC (RESTORED FULL ENGINE)
+    // 3. RECIPE LOADING LOGIC (RESTORED FULL ENGINE + QC MATH)
     // ---------------------------------------------------------
     function loadRecipeToLog() {
         const name = document.getElementById('recipe-select').value;
@@ -864,43 +863,51 @@
             document.getElementById('t-ph').innerText = r.waterProfile.mashPh || '-';
         }
 
-        // --- QC SECTION 1: SALTS & ACIDS (Water Inventory) ---
+        // --- QC SECTION 1: SALTS & ACIDS ---
         const saltBody = document.getElementById('salt-body');
         saltBody.innerHTML = (r.salts || []).map(s => {
             const saltName = s[0];
-            const targetMash = parseFloat(s[1]) || 0;
-            const targetSparge = parseFloat(s[2]) || 0;
+            const targetM = parseFloat(s[1]) || 0;
+            const targetS = parseFloat(s[2]) || 0;
             const invMatch = inventory.water.find(i => i.name.toLowerCase() === saltName.toLowerCase());
+            
+            let suggestM = targetM;
+            let suggestS = targetS;
 
-            let suggestedMash = targetMash;
-            let suggestedSparge = targetSparge;
-
+            /**
+             * AUTOMATED ACID ADJUSTMENT
+             * Normalized to 88% Lactic Acid baseline
+             */
             if (invMatch && invMatch.specs.strength) {
-                const actualStr = parseFloat(invMatch.specs.strength);
-                if (actualStr > 0) {
-                    suggestedMash = (targetMash * 0.88) / actualStr;
-                    suggestedSparge = (targetSparge * 0.88) / actualStr;
+                const actualStrength = parseFloat(invMatch.specs.strength);
+                if (actualStrength > 0) {
+                    suggestM = (targetM * 0.88) / actualStrength;
+                    suggestS = (targetS * 0.88) / actualStrength;
                 }
             }
 
             return `<tr>
                 <td>${saltName}<br><small>Lot: ${invMatch ? invMatch.lot : 'N/A'}</small></td>
-                <td><span class="target-display">${targetMash}</span></td>
-                <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestedMash.toFixed(2)}</span></td>
+                <td><span class="target-display">${targetM}</span></td>
+                <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestM.toFixed(2)}</span></td>
                 <td><input type="number" class="actual-input"></td>
-                <td><span class="target-display">${targetSparge}</span></td>
-                <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestedSparge.toFixed(2)}</span></td>
+                <td><span class="target-display">${targetS}</span></td>
+                <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestS.toFixed(2)}</span></td>
                 <td><input type="number" class="actual-input"></td>
             </tr>`;
         }).join('');
 
-        // --- QC SECTION 2: GRAIN BILL (Grain Inventory) ---
+        // --- QC SECTION 2: GRAIN BILL ---
         const grainBody = document.getElementById('grain-body');
         grainBody.innerHTML = (r.grains || []).map(g => {
             const maltName = g[0];
             const targetQty = parseFloat(g[1]);
             const invMatch = inventory.grains.find(i => i.name.toLowerCase() === maltName.toLowerCase());
             
+            /**
+             * AUTOMATED EXTRACT ADJUSTMENT
+             * Based on Extract FGDB % (Normalized to 37.0 baseline)
+             */
             let suggested = targetQty;
             if (invMatch && invMatch.specs.extract) {
                 const actualExtract = parseFloat(invMatch.specs.extract);
@@ -926,28 +933,32 @@
         document.getElementById('t-pre-g').innerText = r.og || '-';
         document.getElementById('t-post-g').innerText = r.og || '-';
         
-        // --- QC SECTION 3: BOIL ADDITIONS (Hop Inventory) ---
+        // --- QC SECTION 3: BOIL ADDITIONS (HOP ALPHA ACID SCALING) ---
         const boilBody = document.getElementById('boil-body');
         boilBody.innerHTML = '';
         if(r.boil) {
             r.boil.sort((a, b) => b[3] - a[3]).forEach(b => {
                 const addName = b[0];
-                const targetWeight = parseFloat(b[2]);
-                const recipeAA = parseFloat(b[3]); 
+                const targetW = parseFloat(b[2]);
+                const recipeAA = parseFloat(b[3]); // Target AA% defined in recipe
                 const invMatch = inventory.hops.find(i => i.name.toLowerCase() === addName.toLowerCase());
 
-                let suggestedHop = targetWeight;
+                /**
+                 * AUTOMATED BITTERNESS NORMALIZATION
+                 * (Recipe Weight * Recipe AA) / Actual Lot AA
+                 */
+                let suggestedHop = targetW;
                 if (invMatch && invMatch.specs.alpha) {
                     const actualAA = parseFloat(invMatch.specs.alpha);
                     if (actualAA > 0) {
-                        suggestedHop = (targetWeight * recipeAA) / actualAA;
+                        suggestedHop = (targetW * recipeAA) / actualAA;
                     }
                 }
 
                 boilBody.innerHTML += `<tr data-time="${b[3]}">
                     <td>${addName}<br><small>Lot: ${invMatch ? invMatch.lot : 'N/A'}</small></td>
                     <td>${b[3]} min</td>
-                    <td><span class="target-display">${targetWeight}</span></td>
+                    <td><span class="target-display">${targetW}</span></td>
                     <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestedHop.toFixed(2)}</span></td>
                     <td><input type="number" class="actual-input" placeholder="${suggestedHop.toFixed(2)}"></td>
                     <td>${invMatch ? invMatch.specs.alpha : '??'}% AA</td>
@@ -955,23 +966,33 @@
             });
         }
 
-        // --- QC SECTION 4: YEAST HEALTH CHECK ---
+        // --- QC SECTION 4: YEAST HEALTH CHECKS ---
         if(r.yeast) {
-            const yeastInv = inventory.yeast.find(y => y.name.toLowerCase() === r.yeast.strain.toLowerCase());
             document.getElementById('t-yeast').innerText = r.yeast.strain || '-';
             document.getElementById('t-pitch').innerText = r.yeast.pitch || '-';
+            const yeastInv = inventory.yeast.find(y => y.name.toLowerCase() === r.yeast.strain.toLowerCase());
+            
             if (yeastInv) {
                 document.getElementById('inv-gen-display').innerText = yeastInv.specs.gen || '--';
+                
+                /**
+                 * DYNAMIC QC ALERT BOX
+                 * Displays viability and generation warnings automatically
+                 */
                 document.getElementById('yeast-info').innerHTML = `
-                    <div class="alert alert-info" style="background:#eef2ff; border: 1px solid #c7d2fe; padding:15px; border-radius:8px; margin-bottom:20px;">
-                        <strong>Yeast Health Check:</strong> Lot ${yeastInv.lot} | Generation: ${yeastInv.specs.gen} | Viability: ${yeastInv.specs.viability}%
+                    <div style="background:#eef2ff; border: 1px solid #c7d2fe; padding:15px; border-radius:8px; margin-bottom:20px;">
+                        <strong>Yeast Health Profile:</strong> 
+                        Lot: ${yeastInv.lot} | 
+                        Generation: ${yeastInv.specs.gen} | 
+                        Viability: ${yeastInv.specs.viability}% | 
+                        Stock: ${yeastInv.qty} ${yeastInv.unit}
                     </div>`;
             }
         }
     }
 
     /**
-     * PERFORMS QUALITY CONTROL ADJUSTMENTS (Internal Math Engine)
+     * PERFORMS QUALITY CONTROL ADJUSTMENTS (Internal Logic Engine)
      */
     function calculateQCAdjustment(ingredientName, recipeValue, category) {
         const inventory = allData.inventory;
@@ -994,23 +1015,20 @@
 
         if (category === "Hops") {
             const actualAA = parseFloat(match.specs.alpha);
-            const targetAA = 12.0; 
             if (actualAA) {
-                suggestedValue = (recipeValue * targetAA) / actualAA;
+                suggestedValue = (recipeValue * 12.0) / actualAA;
             }
         } 
         else if (category === "Malt") {
             const actualExtract = parseFloat(match.specs.extract);
-            const targetExtract = 37.0; 
             if (actualExtract) {
-                suggestedValue = (recipeValue * targetExtract) / actualExtract;
+                suggestedValue = (recipeValue * 37.0) / actualExtract;
             }
         }
         else if (category === "Water") {
             const actualStr = parseFloat(match.specs.strength);
-            const targetStr = 0.88; 
             if (actualStr) {
-                suggestedValue = (recipeValue * targetStr) / actualStr;
+                suggestedValue = (recipeValue * 0.88) / actualStr;
             }
         }
 
@@ -1080,7 +1098,7 @@
     }
 
     // ---------------------------------------------------------
-    // 5. DATA SCRAPER (Full explicit mapping)
+    // 5. DATA SCRAPER (Full explicit mapping - NO CONSOLIDATION)
     // ---------------------------------------------------------
     function scrapeBrewData() {
         const dataObject = {
