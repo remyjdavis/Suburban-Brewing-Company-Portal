@@ -21,6 +21,48 @@
       --ml-blue: #3498db;
     }
 
+    /* --- COLLAPSIBLE ML CARD STYLING --- */
+    .ml-card {
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: pointer;
+        max-height: 120px; /* Closed State height */
+        overflow: hidden;
+        background: #fff; 
+        padding: 24px; 
+        border-radius: 16px; 
+        border: 1px solid #e2e8f0;
+        border-top: 6px solid var(--ml-blue);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        margin-bottom: 10px;
+    }
+    
+    .ml-card.expanded {
+        max-height: 600px; /* Open State height */
+    }
+
+    .chart-container {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+        height: 250px;
+        margin-top: 20px;
+    }
+
+    .expanded .chart-container {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .expand-hint {
+        font-size: 10px;
+        color: var(--accent);
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-top: 5px;
+        display: block;
+    }
+
+    /* --- ORIGINAL DASHBOARD STYLING --- */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { 
       margin: 0; 
@@ -31,7 +73,6 @@
       min-height: 100vh;
     }
 
-    /* --- SIDEBAR --- */
     .sidebar { 
       width: 260px; 
       background: var(--sidebar); 
@@ -42,7 +83,6 @@
       height: 100vh; 
       overflow-y: auto; 
       z-index: 1000;
-      transition: all 0.3s ease;
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
     .nav-section-title { 
@@ -66,8 +106,7 @@
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-    /* --- MAIN CONTENT --- */
-    .main { flex: 1; margin-left: 260px; padding: 40px; transition: all 0.3s ease; }
+    .main { flex: 1; margin-left: 260px; padding: 40px; }
     .header-bar { margin-bottom: 32px; }
     .header-bar h1 { font-size: 28px; font-weight: 800; margin: 0; }
     
@@ -83,7 +122,6 @@
     }
     .section-heading::after { content: ""; flex: 1; height: 1px; background: #e2e8f0; }
 
-    /* --- CARDS & GRIDS --- */
     .tier-1 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
     .card { 
       background: var(--card-bg); 
@@ -92,7 +130,6 @@
       border: 1px solid #e2e8f0;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
       position: relative;
-      overflow: hidden;
     }
     .card.alert-active { border: 1px solid var(--danger); }
     .card.alert-active::before {
@@ -102,7 +139,6 @@
     .card .val { font-size: 32px; font-weight: 800; margin: 12px 0 4px; color: var(--text-main); }
     .card p { margin: 0; font-size: 13px; color: var(--text-muted); }
 
-    /* --- TANK GALLERY --- */
     .tier-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
     .tank-card { background: #fff; border-radius: 20px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; }
     .tank-vessel { 
@@ -112,34 +148,19 @@
     .tank-fill { position: absolute; bottom: 0; width: 100%; transition: height 1s ease; }
     .status-badge { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; }
 
-    /* --- MACHINE LEARNING SECTION --- */
-    .tier-3 { display: grid; grid-template-columns: 1fr; gap: 24px; }
-    .ml-card { 
-        background: #fff; 
-        padding: 30px; 
-        border-radius: 16px; 
-        border: 1px solid #e2e8f0; 
-        border-top: 6px solid var(--ml-blue);
-        text-align: center;
-    }
     .ml-stats-grid { display: flex; justify-content: space-around; margin-top: 20px; flex-wrap: wrap; gap: 20px; }
     .ml-stat-box { flex: 1; min-width: 150px; }
     .ml-stat-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; }
     .ml-stat-val { font-size: 24px; font-weight: 800; color: var(--text-main); }
 
     @media (max-width: 768px) {
-      .sidebar {
-        position: fixed; bottom: 0; top: auto; left: 0; right: 0;
-        height: 60px; width: 100%; display: flex; flex-direction: row;
-        padding: 0; background: var(--sidebar); overflow-x: auto;
-      }
+      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; background: var(--sidebar); overflow-x: auto; }
       .sidebar h2, .sidebar .nav-section-title { display: none; }
       .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; font-size: 12px; font-weight: 700; }
       .nav-link.active { border-top: 4px solid var(--accent); background: #1e293b; }
       .main { margin-left: 0; padding: 20px 20px 90px; }
-      .tier-2 { display: flex; overflow-x: auto; gap: 16px; scrollbar-width: none; }
+      .tier-2 { display: flex; overflow-x: auto; gap: 16px; }
       .tank-card { min-width: 180px; }
-      .tier-1, .tier-3 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -152,25 +173,10 @@
     <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
     <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
     <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-    <div class="nav-section-title">Sales & Outreach</div>
-    <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-    <a href="sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-    <a href="sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-    <a href="sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
-    <div class="nav-section-title">Inventory</div>
-    <a href="inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-    <a href="inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-    <a href="inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-    <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    
     <div class="nav-section-title">Brewing</div>
     <a href="Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
     <a href="Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-    <a href="Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-    <a href="Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
-    <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-    <a href="Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-    <a href="Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
   </aside>
 
   <main class="main">
@@ -181,17 +187,12 @@
     
     <div class="section-heading">Operational Overview</div>
     <div class="tier-1">
-      <div class="card" onclick="location.href='Samplings/sampling-calendar.html'" style="cursor:pointer;">
-        <h3>Next Sampling</h3>
-        <div class="val" style="font-size: 20px; margin-top: 15px;">The Beer Spot</div>
-        <p>Today @ 5:00 PM</p>
-      </div>
-      <div class="card" onclick="location.href='sales/leads.html'" style="cursor:pointer;">
+      <div class="card">
         <h3>Sales Outreach</h3>
         <div class="val" id="followUpCount">12</div>
         <p>AI Follow-ups Due Today</p>
       </div>
-      <div class="card alert-active" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
+      <div class="card alert-active">
         <h3>Inventory Alerts</h3>
         <div class="val" id="alertCount" style="color: var(--danger);">4</div>
         <p>Low Stock Master SKUs</p>
@@ -206,63 +207,48 @@
         <div style="font-weight:700; font-size: 14px;">FV 1</div>
         <div style="font-size: 11px; color: var(--text-muted);">IPA #402</div>
       </div>
-      <div class="tank-card">
-        <span class="status-badge" style="background:#d1fae5; color:#065f46;">Ready</span>
-        <div class="tank-vessel"><div class="tank-fill" style="height: 45%; background: var(--ready);"></div></div>
-        <div style="font-weight:700; font-size: 14px;">BT 1</div>
-        <div style="font-size: 11px; color: var(--text-muted);">Pilsner</div>
-      </div>
-      <div class="tank-card">
-        <span class="status-badge" style="background:#dbeafe; color:#1e40af;">Crashing</span>
-        <div class="tank-vessel"><div class="tank-fill" style="height: 90%; background: var(--crashing);"></div></div>
-        <div style="font-weight:700; font-size: 14px;">FV 2</div>
-        <div style="font-size: 11px; color: var(--text-muted);">Stout #403</div>
-      </div>
     </div>
 
-    <div class="section-heading">Machine Learning | Brewhouse Intelligence</div>
+    <div class="section-heading">Machine Learning Intelligence (Click to Expand)</div>
     <div class="tier-3">
-        <div class="ml-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div class="ml-card" id="perfCard" onclick="this.classList.toggle('expanded')">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="text-align: left;">
-                    <h3 style="margin: 0; color: var(--ml-blue); font-size: 14px;">Learned Performance Trend</h3>
-                    <p style="font-size: 12px; color: var(--text-muted);">Efficiency tracking over last 10 batches</p>
+                    <h3 style="margin: 0; color: var(--ml-blue); font-size: 14px;">Learned Performance</h3>
+                    <span class="expand-hint">Click for Trend Chart</span>
                 </div>
-                <div id="ml-status-badge" style="background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800;">ACTIVE ENGINE</div>
+                <div id="ml-efficiency-display" class="ml-stat-val" style="font-size: 2.2rem; color: var(--text-main);">--%</div>
             </div>
 
-            <div style="height: 250px; width: 100%; margin-bottom: 20px;">
+            <div class="chart-container">
                 <canvas id="efficiencyChart"></canvas>
             </div>
 
-            <div class="ml-stats-grid">
-                <div class="ml-stat-box">
-                    <div class="ml-stat-label">Historical Efficiency</div>
-                    <div id="ml-efficiency-display" class="ml-stat-val">--%</div>
-                </div>
-                <div class="ml-stat-box">
-                    <div class="ml-stat-label">Predictive OG (100lb)</div>
-                    <div id="ml-og-display" class="ml-stat-val">1.---</div>
-                </div>
+            <div style="margin-top: 15px; background: #f8fafc; padding: 10px; border-radius: 8px;">
+                <p id="ml-advice" style="margin: 0; font-size: 12px; color: #475569; font-style: italic;">Connecting to ML Engine...</p>
             </div>
-<div class="ml-card" style="border-top-color: #10b981; margin-top: 20px;">
-    <h3 style="margin: 0; color: #10b981; font-size: 14px; text-align: left;">Financial Impact</h3>
-    <div class="ml-stats-grid">
-        <div class="ml-stat-box">
-            <div class="ml-stat-label">Grain Waste Reduced</div>
-            <div id="cost-lbs-saved" class="ml-stat-val">-- lbs</div>
         </div>
-        <div class="ml-stat-box">
-            <div class="ml-stat-label">Estimated Savings</div>
-            <div id="cost-dollars-saved" class="ml-stat-val" style="color: #10b981;">$ --</div>
-        </div>
-    </div>
-    <p style="font-size: 11px; color: var(--text-muted); margin-top: 10px;">*Savings calculated via ML-optimized grain weight vs. 75% baseline.</p>
-</div>
-            <div style="margin-top: 25px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1;">
-                <p id="ml-advice" style="margin: 0; font-size: 13px; color: #475569; font-style: italic;">
-                    Waiting for data connection...
-                </p>
+
+        <div class="ml-card" id="costCard" onclick="this.classList.toggle('expanded')" style="border-top-color: #10b981;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="text-align: left;">
+                    <h3 style="margin: 0; color: #10b981; font-size: 14px;">Estimated Savings</h3>
+                    <span class="expand-hint">Click for Cost Breakdown</span>
+                </div>
+                <div id="cost-dollars-saved" class="ml-stat-val" style="font-size: 2.2rem; color: #10b981;">$ --</div>
+            </div>
+
+            <div class="chart-container" style="display: flex; align-items: center; justify-content: center;">
+                <div class="ml-stats-grid" style="width: 100%;">
+                    <div class="ml-stat-box" style="text-align: center;">
+                        <div class="ml-stat-label">Grain Waste Reduced</div>
+                        <div id="cost-lbs-saved" class="ml-stat-val">-- lbs</div>
+                    </div>
+                    <div class="ml-stat-box" style="text-align: center;">
+                        <div class="ml-stat-label">Predictive OG (100lb)</div>
+                        <div id="ml-og-display" class="ml-stat-val">1.---</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -270,158 +256,109 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script>
-  // Configuration - USING YOUR ACTUAL DEPLOYED URL
-  const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; 
+  <script>
+    const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; 
 
-  // Set Current Date
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  const dateEl = document.getElementById('current-date');
-  if (dateEl) {
-      dateEl.textContent = new Date().toLocaleDateString(undefined, options);
-  }
+    // Date Logic
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateEl = document.getElementById('current-date');
+    if (dateEl) dateEl.textContent = new Date().toLocaleDateString(undefined, options);
 
-  /**
-   * FULL REFRESH ML ENGINE
-   * Fetches batch history, learned efficiency, and malt costs from the Backend.
-   * Updates the trend chart and calculates financial savings in real-time.
-   */
-  async function refreshMLEngine() {
-    // 1. DOM Element References
-    const effDisplay = document.getElementById('ml-efficiency-display');
-    const ogDisplay = document.getElementById('ml-og-display');
-    const advice = document.getElementById('ml-advice');
-    const lbsSavedDisplay = document.getElementById('cost-lbs-saved');
-    const cashSavedDisplay = document.getElementById('cost-dollars-saved');
+    async function refreshMLEngine() {
+      const effDisplay = document.getElementById('ml-efficiency-display');
+      const ogDisplay = document.getElementById('ml-og-display');
+      const advice = document.getElementById('ml-advice');
+      const lbsSavedDisplay = document.getElementById('cost-lbs-saved');
+      const cashSavedDisplay = document.getElementById('cost-dollars-saved');
 
-    // 2. Calculation Constants
-    const BASELINE_EFFICIENCY = 0.70; 
-    const AVG_MONTHLY_GRAIN_USAGE = 4000; 
+      const BASELINE_EFFICIENCY = 0.70; 
+      const AVG_MONTHLY_GRAIN_USAGE = 4000; 
 
-    try {
-        // 3. Fetch learned data from the Middleman Backend
-        // 'redirect: follow' is essential for Google Apps Script Web Apps
-        const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, {
-            method: "GET",
-            redirect: "follow"
-        });
+      try {
+          const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, {
+              method: "GET",
+              redirect: "follow"
+          });
+          const data = await res.json();
 
-        if (!res.ok) {
-            throw new Error('Network response was not ok');
-        }
+          const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
+          const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
+          const avgCost = data.avgMaltCost || 0.65;
 
-        const data = await res.json();
+          if (effDisplay) {
+              effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%";
+              effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
+          }
 
-        // 4. Data Extraction with Fallbacks
-        const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
-        const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
-        const avgCost = data.avgMaltCost || 0.65;
+          if (ogDisplay) {
+              const predictedPoints = (100 * 37 * learnedEff) / 31;
+              ogDisplay.innerText = (1 + (predictedPoints / 1000)).toFixed(3);
+          }
 
-        // 5. Update Efficiency Display
-        const effPercent = (learnedEff * 100).toFixed(1);
-        if (effDisplay) {
-            effDisplay.innerText = effPercent + "%";
-            effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
-        }
+          if (learnedEff > BASELINE_EFFICIENCY) {
+              const lbsSaved = Math.round(AVG_MONTHLY_GRAIN_USAGE * (1 - (BASELINE_EFFICIENCY / learnedEff)));
+              const dollarsSaved = lbsSaved * avgCost;
+              if (lbsSavedDisplay) lbsSavedDisplay.innerText = lbsSaved + " lbs";
+              if (cashSavedDisplay) cashSavedDisplay.innerText = "$" + dollarsSaved.toFixed(2);
+          }
 
-        // 6. Update Predictive OG (Based on a 100lb sample bill in 31gal)
-        if (ogDisplay) {
-            const predictedPoints = (100 * 37 * learnedEff) / 31;
-            const predictedOG = 1 + (predictedPoints / 1000);
-            ogDisplay.innerText = predictedOG.toFixed(3);
-        }
+          // RENDER CHART
+          const ctx = document.getElementById('efficiencyChart').getContext('2d');
+          if (window.mlChart instanceof Chart) window.mlChart.destroy();
+          window.mlChart = new Chart(ctx, {
+              type: 'line',
+              data: {
+                  labels: history.map((_, i) => `B${i + 1}`),
+                  datasets: [{
+                      label: 'Learned Efficiency',
+                      data: history.map(v => v * 100),
+                      borderColor: '#3498db',
+                      backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                      fill: true,
+                      tension: 0.4,
+                      borderWidth: 3,
+                      pointRadius: 4
+                  }, {
+                      label: 'Baseline',
+                      data: Array(history.length).fill(75),
+                      borderColor: '#e2e8f0',
+                      borderDash: [5, 5],
+                      fill: false,
+                      pointRadius: 0
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: {
+                      y: { min: 60, max: 90, ticks: { callback: v => v + "%" } },
+                      x: { grid: { display: false } }
+                  }
+              }
+          });
 
-        // 7. Financial Impact Math
-        if (learnedEff > BASELINE_EFFICIENCY) {
-            const lbsSaved = Math.round(AVG_MONTHLY_GRAIN_USAGE * (1 - (BASELINE_EFFICIENCY / learnedEff)));
-            const dollarsSaved = lbsSaved * avgCost;
+          if (advice) {
+              advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
+          }
 
-            if (lbsSavedDisplay) {
-                lbsSavedDisplay.innerText = lbsSaved + " lbs";
-            }
-            if (cashSavedDisplay) {
-                cashSavedDisplay.innerText = "$" + dollarsSaved.toFixed(2);
-                cashSavedDisplay.style.color = "#10b981";
-            }
-        } else {
-            if (lbsSavedDisplay) lbsSavedDisplay.innerText = "0 lbs";
-            if (cashSavedDisplay) cashSavedDisplay.innerText = "$0.00";
-        }
-
-        // 8. Render Trend Chart
-        const chartCanvas = document.getElementById('efficiencyChart');
-        if (chartCanvas) {
-            const ctx = chartCanvas.getContext('2d');
-            
-            // Explicitly destroy existing instance to prevent "Canvas already in use" errors
-            if (window.mlChart instanceof Chart) {
-                window.mlChart.destroy();
-            }
-
-            window.mlChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: history.map((_, i) => `B${i + 1}`),
-                    datasets: [{
-                        label: 'Learned Efficiency',
-                        data: history.map(v => v * 100),
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        borderWidth: 3,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#3498db'
-                    }, {
-                        label: 'Baseline (75%)',
-                        data: Array(history.length).fill(75),
-                        borderColor: '#e2e8f0',
-                        borderDash: [5, 5],
-                        fill: false,
-                        pointRadius: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { 
-                            min: 60, 
-                            max: 90, 
-                            ticks: { callback: (v) => v + "%" },
-                            grid: { color: '#f1f5f9' } 
-                        },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        // 9. Logic-Based Advice
-        if (advice) {
-            if (learnedEff >= 0.78) {
-                advice.innerText = "Efficiency Peak: All systems optimized.";
-            } else if (learnedEff < 0.72) {
-                advice.innerText = "Yield Alert: Check mill gap or sparge rates.";
-            } else {
-                advice.innerText = "Stability Detected: Matching recipe baselines.";
-            }
-        }
-
-    } catch (err) {
-        console.error("ML Engine Error:", err);
-        if (advice) {
-            advice.innerText = "Engine Error: Check API connection.";
-        }
-        if (effDisplay) {
-            effDisplay.innerText = "OFFLINE";
-        }
+      } catch (err) {
+          console.error("ML Engine Error:", err);
+          if (effDisplay) effDisplay.innerText = "OFFLINE";
+      }
     }
-  }
 
-  // Initial load call once DOM is ready
-  window.addEventListener('DOMContentLoaded', refreshMLEngine);
-</script>
+    // Initialize Page
+    window.addEventListener('DOMContentLoaded', () => {
+        refreshMLEngine();
+        
+        // Handle Chart Resize on Card Expansion
+        document.getElementById('perfCard').addEventListener('click', () => {
+            if (window.mlChart) {
+                setTimeout(() => window.mlChart.resize(), 450);
+            }
+        });
+    });
+  </script>
 </body>
 </html>
