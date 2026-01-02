@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brewery Master Log Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root {
             --header-bg: #2c3e50;
@@ -13,6 +14,7 @@
             --white: #ffffff;
             --input-bg: #fdfdfd;
             --accent-gray: #7f8c8d;
+            --highlight: #f1c40f;
         }
 
         body {
@@ -20,11 +22,11 @@
             background-color: #f4f7f6;
             margin: 0; padding: 0;
             color: var(--text-dark);
-            display: flex; /* Fixes the sidebar to the left */
+            display: flex;
             min-height: 100vh;
         }
 
-        /* --- SIDEBAR STYLING --- */
+        /* --- SIDEBAR --- */
         .sidebar {
             width: 260px;
             background: var(--header-bg);
@@ -37,15 +39,9 @@
             overflow-y: auto;
         }
 
-        .sidebar h2 { margin-left: 10px; font-size: 1.5rem; }
+        .sidebar-header { margin-bottom: 20px; font-weight: 800; font-size: 1.2rem; letter-spacing: 1px; border-bottom: 1px solid #34495e; padding-bottom: 15px; }
 
-        .nav-section-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: var(--accent-gray);
-            margin: 20px 0 10px 10px;
-            letter-spacing: 1px;
-        }
+        .nav-section-title { font-size: 0.75rem; text-transform: uppercase; color: var(--accent-gray); margin: 20px 0 10px 10px; letter-spacing: 1px; }
 
         .nav-link {
             display: block;
@@ -55,19 +51,13 @@
             margin-bottom: 5px;
             border-radius: 4px;
             transition: 0.3s;
+            font-size: 0.9rem;
         }
 
-        .nav-link:hover, .nav-link.active {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
+        .nav-link:hover, .nav-link.active { background: rgba(255, 255, 255, 0.1); color: white; }
 
-        /* --- MAIN CONTENT AREA --- */
-        .main {
-            flex-grow: 1;
-            padding: 20px;
-            background-color: #f4f7f6;
-        }
+        /* --- MAIN --- */
+        .main { flex-grow: 1; padding: 20px; background-color: #f4f7f6; overflow-y: auto; }
 
         .sticky-header {
             position: sticky;
@@ -85,54 +75,37 @@
             margin-bottom: 20px;
         }
 
-        /* --- !MAIN SCREEN VISIBILITY --- */
-        #main-screen { display: block !important; }
-        #follow-up-sheet { display: none !important; }
-
-        /* --- STAGE STYLING --- */
-        .brew-stage {
-            background: white;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            overflow: hidden;
-            border: 1px solid #ddd;
-        }
-
-        .stage-header {
-            background-color: var(--section-bg);
-            padding: 15px 20px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .stage-title { font-size: 1.2rem; font-weight: 700; color: var(--header-bg); margin: 0; }
+        /* --- STAGES --- */
+        .brew-stage { background: white; margin-bottom: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #ddd; }
+        .stage-header { background-color: var(--section-bg); padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .stage-title { font-size: 1.1rem; font-weight: 700; color: var(--header-bg); margin: 0; }
         .stage-content { padding: 20px; display: block; }
         .stage-content.collapsed { display: none; }
         .stage-content.locked { pointer-events: none; opacity: 0.7; background: #f9f9f9; }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .input-group { display: flex; flex-direction: column; }
-        label { font-size: 0.85rem; font-weight: 600; color: var(--accent-gray); margin-bottom: 5px; text-transform: uppercase; }
-        input, select, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        label { font-size: 0.75rem; font-weight: 700; color: var(--accent-gray); margin-bottom: 5px; text-transform: uppercase; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
+        .target-display { background: #eef2ff; color: #4b5563; font-weight: bold; border: 1px solid #c7d2fe; padding: 10px; border-radius: 4px; display: block; min-height: 20px; }
 
-        .btn-save-section {
-            background-color: var(--active-green);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
+        .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9rem; }
+        .data-table th { text-align: left; background: #f8f9fa; padding: 10px; color: #6b7280; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        .data-table td { padding: 10px; border-bottom: 1px solid #eee; transition: background 0.3s; }
+        .data-table tr.active-addition { background-color: var(--highlight); font-weight: bold; }
+
+        .btn-save-section { background-color: var(--active-green); color: white; border: none; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; }
+        
+        /* TIMER SPECIFIC */
+        .timer-box { 
+            background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; 
+            display: flex; justify-content: center; align-items: center; gap: 20px;
         }
+        .timer-display { font-size: 3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .btn-timer { padding: 10px 20px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-start { background: #27ae60; color: white; }
+        .btn-pause { background: #f39c12; color: white; }
+        .btn-reset { background: #c0392b; color: white; }
 
         @media screen and (max-width: 1024px) {
             body { flex-direction: column; }
@@ -152,6 +125,7 @@
         <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
         <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
         <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+        
         <div class="nav-section-title">Sales & Outreach</div>
         <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
         <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
@@ -159,21 +133,21 @@
         <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
 
         <div class="nav-section-title">Inventory</div>
-    <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-    <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-    <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-    <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+        <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+        <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+        <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+        <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
     
-    <div class="nav-section-title">Brewing</div>
-    <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-    <a href="Brew-Log.html" class="nav-link active"><span>New Brew Log</span></a>
-    <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
-    <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
+        <div class="nav-section-title">Brewing</div>
+        <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+        <a href="Brew-Log.html" class="nav-link active"><span>New Brew Log</span></a>
+        <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
+        <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
     
-    <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-    <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-    <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
+        <div class="nav-section-title">Reporting & Analytics</div>
+        <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+        <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+        <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
   </aside>
 
   <main class="main">
@@ -190,6 +164,7 @@
     </div>
 
     <div id="main-screen">
+    
     <div class="brew-stage">
         <div class="stage-header" onclick="toggleSection('setup-content', this)">
             <h3 class="stage-title">1. Batch Setup</h3>
@@ -197,13 +172,16 @@
         </div>
         <div id="setup-content" class="stage-content">
             <div class="form-grid">
-                <div class="input-group"><label>Batch ID</label><input type="text" id="batchId" placeholder="B-XXXX"></div>
-                <div class="input-group"><label>Brew Date</label><input type="date" id="brewDate" value="2026-01-01"></div>
-                <div class="input-group"><label>Beer Name</label><input type="text" id="beerName" placeholder="Style/Brand"></div>
                 <div class="input-group">
-                    <label>Batch Size</label>
-                    <select id="batchSize"><option>1 BBL</option><option>5 BBL</option><option>10 BBL</option></select>
+                    <label>Select Recipe</label>
+                    <select id="recipe-select" onchange="loadRecipeToLog()" style="background:#eef2ff; border-color:#c7d2fe; font-weight:bold;">
+                        <option value="">-- Load Master Recipe --</option>
+                    </select>
                 </div>
+                <div class="input-group"><label>Batch ID</label><input type="text" id="batchId" placeholder="B-XXXX"></div>
+                <div class="input-group"><label>Brew Date</label><input type="date" id="brewDate"></div>
+                <div class="input-group"><label>Beer Name</label><input type="text" id="beerName" placeholder="Auto-Populates"></div>
+                <div class="input-group"><label>Vessel</label><select id="vessel-select"><option>FV-1</option><option>FV-2</option><option>FV-3</option></select></div>
             </div>
             <button class="btn-save-section" onclick="saveAndAdvance('setup-content', 'grain-content')">Save & Lock Batch Setup</button>
         </div>
@@ -211,10 +189,19 @@
 
     <div class="brew-stage">
         <div class="stage-header" onclick="toggleSection('grain-content', this)">
-            <h3 class="stage-title">2. Grain Bill & Mash-In</h3>
+            <h3 class="stage-title">2. Water, Salts & Grain Bill</h3>
             <span class="toggle-indicator">+</span>
         </div>
         <div id="grain-content" class="stage-content collapsed">
+            <div class="form-grid">
+                <div class="input-group"><label>Foundation (Gal)</label><span class="target-display" id="t-foundation">-</span></div>
+                <div class="input-group"><label>Mash In (Gal)</label><span class="target-display" id="t-mash">-</span></div>
+                <div class="input-group"><label>Sparge (Gal)</label><span class="target-display" id="t-sparge">-</span></div>
+            </div>
+            <h4 style="margin-top:0;">Salts / Acids</h4>
+            <table class="data-table"><thead><tr><th>Salt</th><th>Mash Target (g)</th><th>Actual</th><th>Sparge Target (g)</th><th>Actual</th></tr></thead><tbody id="salt-body"></tbody></table>
+            <h4>Grain Bill</h4>
+            <table class="data-table"><thead><tr><th>Malt</th><th>Target (lbs)</th><th>Actual (lbs)</th><th>Lot #</th></tr></thead><tbody id="grain-body"></tbody></table>
             <button class="btn-save-section" onclick="saveAndAdvance('grain-content', 'mash-content')">Save & Lock Grain Bill</button>
         </div>
     </div>
@@ -226,7 +213,10 @@
         </div>
         <div id="mash-content" class="stage-content collapsed">
             <div class="form-grid">
-                <div class="input-group"><label>Mash pH</label><input type="number" step="0.01" placeholder="5.2"></div>
+                <div class="input-group"><label>Target Mash Temp</label><span class="target-display" id="t-mash-temp">-</span></div>
+                <div class="input-group"><label>Actual Mash Temp</label><input type="number" placeholder="°F"></div>
+                <div class="input-group"><label>Target pH</label><span class="target-display" id="t-ph">-</span></div>
+                <div class="input-group"><label>Actual pH</label><input type="number" step="0.01" placeholder="5.xx"></div>
             </div>
             <button class="btn-save-section" onclick="saveAndAdvance('mash-content', 'lauter-content')">Save & Lock Mash</button>
         </div>
@@ -239,8 +229,9 @@
         </div>
         <div id="lauter-content" class="stage-content collapsed">
             <div class="form-grid">
-                <div class="input-group"><label>Pre-Boil Vol</label><input type="number"></div>
-                <div class="input-group"><label>Pre-Boil Gravity</label><input type="number" step="0.001"></div>
+                <div class="input-group"><label>Target Pre-Boil Gravity</label><span class="target-display" id="t-pre-g">-</span></div>
+                <div class="input-group"><label>Actual Pre-Boil Gravity</label><input type="number" step="0.001"></div>
+                <div class="input-group"><label>Pre-Boil Vol (Gal)</label><input type="number"></div>
             </div>
             <button class="btn-save-section" onclick="saveAndAdvance('lauter-content', 'boil-content')">Save & Lock Lauter</button>
         </div>
@@ -252,6 +243,23 @@
             <span class="toggle-indicator">+</span>
         </div>
         <div id="boil-content" class="stage-content collapsed">
+            
+            <div class="timer-box">
+                <div>
+                    <label style="color:#bdc3c7;">BOIL CLOCK</label>
+                    <div class="timer-display" id="timer-val">60:00</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button class="btn-timer btn-start" onclick="toggleTimer()">START / PAUSE</button>
+                    <button class="btn-timer btn-reset" onclick="resetTimer()">RESET</button>
+                </div>
+            </div>
+
+            <table class="data-table" id="boil-table">
+                <thead><tr><th>Addition</th><th>Time (Min)</th><th>Target (oz)</th><th>Actual (oz)</th><th>Lot #</th></tr></thead>
+                <tbody id="boil-body"></tbody>
+            </table>
+            
             <button class="btn-save-section" onclick="saveAndAdvance('boil-content', 'ko-yeast-content')">Save & Lock Boil</button>
         </div>
     </div>
@@ -262,216 +270,201 @@
             <span class="toggle-indicator">+</span>
         </div>
         <div id="ko-yeast-content" class="stage-content collapsed">
+            <div class="form-grid">
+                <div class="input-group"><label>Target OG</label><span class="target-display" id="t-og">-</span></div>
+                <div class="input-group"><label>Actual OG</label><input type="number" step="0.001"></div>
+                <div class="input-group"><label>KO Volume (BBL)</label><input type="number" id="ko-volume"></div>
+                <div class="input-group"><label>KO Temp (°F)</label><input type="number"></div>
+            </div>
+            <div class="form-grid">
+                <div class="input-group"><label>Yeast Strain</label><span class="target-display" id="t-yeast">-</span></div>
+                <div class="input-group"><label>Pitch Rate</label><span class="target-display" id="t-pitch">-</span></div>
+                <div class="input-group"><label>Generation / Lot</label><input type="text"></div>
+            </div>
             <button class="btn-save-section" onclick="completeBrewLog()">Complete Brew & Sync</button>
         </div>
     </div>
 </div>
-  </main>
+</main>
+
 <script>
-    /* --- GLOBALS --- */
-    let boilStartTime = null;
-    let boilInterval = null;
+    const API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
+    
+    let allRecipes = [];
+    let timerInterval = null;
+    let totalTime = 3600; // 60 mins in seconds
+    let isRunning = false;
 
-    /**
-     * 1. CORE UI SYNC & INITIALIZATION
-     */
-    function initializePortal() {
+    window.onload = async function() {
+        document.getElementById('brewDate').valueAsDate = new Date();
         const batchInput = document.getElementById('batchId');
-        const nameInput = document.getElementById('beerName');
         const headerBatch = document.getElementById('header-batch-id');
-        const headerName = document.getElementById('header-beer-name');
+        if (batchInput) {
+            batchInput.addEventListener('input', () => { headerBatch.innerText = batchInput.value || "---"; });
+        }
 
-        if (batchInput && headerBatch) {
-            batchInput.addEventListener('input', () => {
-                headerBatch.innerText = batchInput.value || "---";
+        try {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            if (Array.isArray(data)) { allRecipes = data; } 
+            else { allRecipes = data.recipes || []; }
+
+            const select = document.getElementById('recipe-select');
+            allRecipes.sort((a, b) => a.name.localeCompare(b.name));
+            allRecipes.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.name; opt.text = r.name; select.appendChild(opt);
+            });
+        } catch (err) { console.error("Error loading recipes", err); }
+    };
+
+    function loadRecipeToLog() {
+        const name = document.getElementById('recipe-select').value;
+        const r = allRecipes.find(x => x.name === name);
+        if(!r) return;
+
+        document.getElementById('beerName').value = r.name;
+        document.getElementById('header-beer-name').innerText = r.name;
+
+        // Populate Targets
+        if(r.waterProfile) {
+            document.getElementById('t-foundation').innerText = r.waterProfile.foundation || '-';
+            document.getElementById('t-mash').innerText = r.waterProfile.mash || '-';
+            document.getElementById('t-sparge').innerText = r.waterProfile.sparge || '-';
+            document.getElementById('t-ph').innerText = r.waterProfile.mashPh || '-';
+        }
+
+        // Salts
+        const saltBody = document.getElementById('salt-body');
+        saltBody.innerHTML = '';
+        if(r.salts) {
+            r.salts.forEach(s => {
+                saltBody.innerHTML += `<tr><td>${s[0]}</td><td><span class="target-display">${s[1]||0}</span></td><td><input type="number"></td><td><span class="target-display">${s[2]||0}</span></td><td><input type="number"></td></tr>`;
             });
         }
 
-        if (nameInput && headerName) {
-            nameInput.addEventListener('input', () => {
-                headerName.innerText = nameInput.value || "New Entry";
+        // Grains
+        const grainBody = document.getElementById('grain-body');
+        grainBody.innerHTML = '';
+        if(r.grains) {
+            r.grains.forEach(g => {
+                grainBody.innerHTML += `<tr><td>${g[0]}</td><td><span class="target-display">${g[1]}</span></td><td><input type="number" placeholder="${g[1]}"></td><td><input type="text"></td></tr>`;
             });
+        }
+
+        if(r.mash && r.mash.length > 0) document.getElementById('t-mash-temp').innerText = r.mash[0][1] + "°F" || '-'; 
+        document.getElementById('t-pre-g').innerText = r.preBoil || '-';
+        document.getElementById('t-og').innerText = r.og || '-';
+
+        // Boil with Time Data for Timer
+        const boilBody = document.getElementById('boil-body');
+        boilBody.innerHTML = '';
+        if(r.boil) {
+            r.boil.forEach(b => {
+                // b[3] is Time Min
+                boilBody.innerHTML += `<tr data-time="${b[3]}"><td>${b[0]}</td><td>${b[3]} min</td><td><span class="target-display">${b[2]}</span></td><td><input type="number" placeholder="${b[2]}"></td><td><input type="text"></td></tr>`;
+            });
+        }
+
+        if(r.yeast) {
+            document.getElementById('t-yeast').innerText = r.yeast.strain || '-';
+            document.getElementById('t-pitch').innerText = r.yeast.pitch || '-';
         }
     }
 
-    window.onload = initializePortal;
-
-    /**
-     * 2. BOIL TIMER LOGIC
-     */
-    function startBoilTimer() {
-        boilStartTime = new Date();
-        const timerDisplay = document.getElementById('boil-timer-display');
-        if (timerDisplay) timerDisplay.style.display = 'block';
-        
-        if (boilInterval) clearInterval(boilInterval);
-        boilInterval = setInterval(updateBoilCountdown, 1000);
+    // --- TIMER LOGIC ---
+    function toggleTimer() {
+        if(isRunning) {
+            clearInterval(timerInterval);
+            isRunning = false;
+        } else {
+            isRunning = true;
+            timerInterval = setInterval(updateTimer, 1000);
+        }
     }
 
-    function updateBoilCountdown() {
-        if (!boilStartTime) return;
+    function resetTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        totalTime = 3600;
+        updateDisplay();
+        document.querySelectorAll('#boil-body tr').forEach(r => r.classList.remove('active-addition'));
+    }
 
-        const now = new Date();
-        const elapsedMinutes = Math.floor((now - boilStartTime) / 60000);
-        const totalBoilTime = 60; 
-        const minutesLeftInBoil = totalBoilTime - elapsedMinutes;
+    function updateTimer() {
+        if(totalTime > 0) {
+            totalTime--;
+            updateDisplay();
+            checkAdditions();
+        } else {
+            clearInterval(timerInterval);
+            alert("BOIL COMPLETE!");
+        }
+    }
 
-        const rows = document.querySelectorAll('#boil-table tbody tr');
-        let nextAddition = null;
+    function updateDisplay() {
+        const m = Math.floor(totalTime / 60).toString().padStart(2, '0');
+        const s = (totalTime % 60).toString().padStart(2, '0');
+        document.getElementById('timer-val').innerText = `${m}:${s}`;
+    }
 
+    function checkAdditions() {
+        const currentMin = Math.ceil(totalTime / 60);
+        const rows = document.querySelectorAll('#boil-body tr');
         rows.forEach(row => {
-            const minInput = row.cells[0].querySelector('input');
-            const ingredientInput = row.cells[2].querySelector('input');
-            const amountInput = row.cells[3].querySelector('input');
-            const checkbox = row.cells[4].querySelector('input');
-
-            if (minInput && !checkbox.checked) {
-                const minLeft = parseInt(minInput.value);
-                if (minLeft <= minutesLeftInBoil) {
-                    if (!nextAddition || minLeft > nextAddition.minLeft) {
-                        nextAddition = { 
-                            minLeft, 
-                            ingredient: ingredientInput.value, 
-                            amount: amountInput.value, 
-                            row 
-                        };
-                    }
+            const time = parseInt(row.getAttribute('data-time'));
+            if(time === currentMin) {
+                if(!row.classList.contains('active-addition')) {
+                    row.classList.add('active-addition');
+                    // Play simple beep (optional)
+                    // new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play();
                 }
-            }
-        });
-
-        const display = document.getElementById('boil-timer-display');
-        if (nextAddition) {
-            const timeUntilAddition = minutesLeftInBoil - nextAddition.minLeft;
-            display.innerText = `NEXT: ${nextAddition.amount} ${nextAddition.ingredient} in ${timeUntilAddition}m`;
-
-            if (timeUntilAddition <= 0) {
-                alert(`TIME FOR ADDITION: ${nextAddition.amount} of ${nextAddition.ingredient}!`);
-                nextAddition.row.style.backgroundColor = "#fff3cd"; 
-            }
-        } else {
-            display.innerText = minutesLeftInBoil <= 0 ? "BOIL COMPLETE" : "BOIL IN PROGRESS";
-        }
-    }
-
-    /**
-     * 3. CALCULATIONS (Grist & Pitching)
-     */
-    function calculateGristPercentages() {
-        const weightInputs = document.querySelectorAll('.grain-weight');
-        const percentInputs = document.querySelectorAll('.grain-percent');
-        const totalDisplay = document.getElementById('total-grain-weight');
-        
-        let totalWeight = 0;
-        weightInputs.forEach(input => totalWeight += parseFloat(input.value) || 0);
-
-        if (totalDisplay) totalDisplay.innerText = totalWeight.toFixed(1);
-
-        weightInputs.forEach((input, index) => {
-            let weight = parseFloat(input.value) || 0;
-            if (percentInputs[index]) {
-                percentInputs[index].value = totalWeight > 0 ? 
-                    ((weight / totalWeight) * 100).toFixed(1) + "%" : "0%";
+            } else {
+                row.classList.remove('active-addition');
             }
         });
     }
 
-    function calculatePitchRate() {
-        const volumeBBL = parseFloat(document.getElementById('ko-volume').value) || 0;
-        const targetRate = parseFloat(document.getElementById('target-pitch-rate').value) || 0;
-        const cellCount = parseFloat(document.getElementById('cell-count').value) || 0; 
-        const plato = 13; // Placeholder for Gravity
-        const volumeLiters = volumeBBL * 117.34;
-
-        const output = document.getElementById('calculated-pitch');
-        if (volumeBBL > 0 && targetRate > 0 && cellCount > 0) {
-            const needed = (targetRate * volumeLiters * plato) / cellCount;
-            output.value = (needed / 1000).toFixed(2) + " kg/L";
-        } else {
-            output.value = "Waiting for data...";
-        }
-    }
-
-    /**
-     * 4. SECTION & FORM MANAGEMENT
-     */
+    // --- UTILS ---
     function toggleSection(id, header) {
         const content = document.getElementById(id);
         const indicator = header.querySelector('.toggle-indicator');
-        content.classList.toggle('collapsed');
-        indicator.textContent = content.classList.contains('collapsed') ? "+" : "-";
-    }
-
-    function addRow(tableId) {
-        const tbody = document.getElementById(tableId).querySelector('tbody');
-        const newRow = tbody.rows[0].cloneNode(true);
-        newRow.querySelectorAll('input').forEach(i => { i.value = ""; i.checked = false; i.style.backgroundColor = ""; });
-        tbody.appendChild(newRow);
-    }
-
-   /* --- SAVE AND ADVANCE LOGIC --- */
-function saveAndAdvance(currentId, nextId) {
-    const current = document.getElementById(currentId);
-    
-    // 1. Lock the current section
-    current.classList.add('locked');
-    const saveBtn = current.querySelector('.btn-save-section');
-    if (saveBtn) {
-        saveBtn.disabled = true;
-        saveBtn.innerText = "✓ SECTION LOCKED";
-        saveBtn.style.backgroundColor = "#7f8c8d";
-    }
-
-    // 2. Open the next section
-    if (nextId) {
-        const next = document.getElementById(nextId);
-        next.classList.remove('collapsed');
-        
-        // Update the Green Stage Display in Sticky Header
-        const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
-        document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
-        
-        // Scroll to the new section
-        next.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-        // Trigger Boil Timer if moving into Section 5
-        if (nextId === 'boil-content') {
-            startBoilTimer();
+        const isCollapsed = content.classList.contains('collapsed');
+        if(isCollapsed) {
+            content.classList.remove('collapsed');
+            indicator.innerText = "-";
+        } else {
+            content.classList.add('collapsed');
+            indicator.innerText = "+";
         }
     }
-}
 
-/* --- SAVE BREW LOG FUNCTION --- */
-function completeBrewLog() {
-    // 1. Gather the "Summary" data for the Master Log
-    const brewData = {
-        batchId: document.getElementById('batchId').value,
-        beerName: document.getElementById('beerName').value,
-        vessel: document.getElementById('vessel-select').value,
-        og: document.querySelector('input[placeholder="e.g. 1.054"]').value,
-        volume: document.getElementById('ko-volume').value,
-        yeast: document.getElementById('yeast-strain').value
-    };
+    function saveAndAdvance(currentId, nextId) {
+        const current = document.getElementById(currentId);
+        current.classList.add('locked');
+        
+        const saveBtn = current.querySelector('.btn-save-section');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerText = "✓ LOCKED";
+            saveBtn.style.backgroundColor = "#7f8c8d";
+        }
 
-    // Validation
-    if (!brewData.vessel) {
-        alert("Please select a Fermenter/Vessel before completing the brew.");
-        return;
+        if (nextId) {
+            const next = document.getElementById(nextId);
+            next.classList.remove('collapsed');
+            const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
+            document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
+            next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     }
 
-    // 2. Stop the Boil Timer
-    if (boilInterval) clearInterval(boilInterval);
-    document.getElementById('boil-timer-display').innerText = "BREW COMPLETE";
-
-    // 3. Final Lock
-    saveAndAdvance('ko-yeast-content', null);
-    
-    // Success feedback
-    alert("Brew Log Successfully Saved to Master Log!");
-    
-    // If using Google Apps Script, uncomment the line below:
-    // google.script.run.appendBrewToMasterLog(brewData);
-}
+    function completeBrewLog() {
+        if(confirm("Are you sure you want to finish this brew?")) {
+            Swal.fire('Brew Complete', 'Data ready for sync!', 'success');
+            saveAndAdvance('ko-yeast-content', null);
+        }
+    }
 </script>
 
 </body>
