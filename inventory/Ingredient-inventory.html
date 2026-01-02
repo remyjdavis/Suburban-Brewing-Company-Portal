@@ -220,33 +220,33 @@
     // --- UPDATED GET HANDLER (Handles Google Redirects) ---
 function fetchRealData(cat) {
     const tbody = document.getElementById('inventory-details-rows');
-    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Connecting to Suburban API...</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Syncing with Suburban API...</td></tr>";
 
-    // encodeURIComponent ensures category names like "Salts & Additions" don't break the URL
     const url = `${scriptURL}?category=${encodeURIComponent(cat)}`;
 
+    // 'follow' is mandatory to handle the Google 302 redirect.
+    // 'cors' mode with NO custom headers ensures a 'Simple Request'.
     fetch(url, {
         method: "GET",
-        // 'follow' is the critical setting for Google Apps Script redirects
-        redirect: "follow", 
-        // We use no headers here to keep the request "simple" and avoid CORS pre-flight blocks
+        mode: "cors", 
+        redirect: "follow"
     })
     .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!response.ok) throw new Error('API returned status ' + response.status);
         return response.json();
     })
     .then(items => {
         renderInventoryRows(items);
     })
     .catch(err => {
-        console.error("Fetch Error:", err);
+        console.error("Critical Fetch Error:", err);
         tbody.innerHTML = `<tr><td colspan='5' style='color:red; text-align:center;'>
-            Fetch Failed: ${err.message}. <br>
-            Check that the Script is deployed to 'Anyone'.
+            <strong>SYNC FAILED</strong><br>
+            ${err.message}<br>
+            <small>Check if script is deployed as 'Anyone'.</small>
         </td></tr>`;
     });
 }
-
     function renderInventoryRows(items) {
         const tbody = document.getElementById('inventory-details-rows');
         if (!items || items.length === 0) {
