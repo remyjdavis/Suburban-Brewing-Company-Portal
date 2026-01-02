@@ -29,10 +29,9 @@
             overflow-x: auto; 
             padding: 10px 5px 25px 5px;
             cursor: grab; 
-            /* Essential for native trackpad scrolling */
-            -webkit-overflow-scrolling: touch; 
-            
-            /* Hides Scrollbar but keeps functionality */
+            /* Critical for Trackpads */
+            -webkit-overflow-scrolling: touch;
+            /* Hides Scrollbar */
             scrollbar-width: none; 
             -ms-overflow-style: none;
         }
@@ -42,11 +41,11 @@
         .recipe-card { 
             background: white; border-radius: 15px; border: 1px solid #ddd; padding: 25px; 
             min-width: 320px; max-width: 320px; flex-shrink: 0; transition: 0.2s; position: relative; 
-            user-select: none; /* Prevents text highlighting while dragging */
+            user-select: none; /* Prevents text selection during drag */
         }
         .recipe-card:hover { transform: translateY(-3px); border-color: var(--accent); }
 
-        /* Editor Styles */
+        /* --- EDITOR STYLES --- */
         .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent); }
         .collapsible-header { background: #f8f9fa; padding: 12px 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: #374151; }
         .collapsible-content { padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; display: none; background: white; }
@@ -56,11 +55,13 @@
         input, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
         .calc-bar { background: #eef2ff; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 20px; align-items: center; justify-content: space-around; }
         .color-swatch { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #e5e7eb; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
         .btn-add-line { background: #f3f4f6; border: 1px solid #d1d5db; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
         .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 25px; }
         .btn-edit { background: var(--accent-orange); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
         .btn-cancel { background: #6b7280; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
         .btn-delete { color: #ef4444; background: none; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
+        
         @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; width: 100%; } }
     </style>
 </head>
@@ -195,8 +196,8 @@
     let refGrains = []; 
     let refWaterAdditions = [];
 
-    // --- DRAG SCROLL ONLY (Trackpad works natively) ---
-    function enableDragScrolling() {
+    // --- MOUSE DRAG SCROLLING ONLY (Trackpad handles natively) ---
+    function enableMouseDragScrolling() {
         const sliders = document.querySelectorAll('.horizontal-scroll-container');
         sliders.forEach(slider => {
             let isDown = false;
@@ -204,17 +205,21 @@
             let scrollLeft;
 
             slider.addEventListener('mousedown', (e) => {
-                if(e.target.tagName === 'BUTTON') return; 
+                // Ignore button clicks so you can still click Edit
+                if(e.target.tagName === 'BUTTON') return;
+                
                 isDown = true;
                 slider.classList.add('active');
                 startX = e.pageX - slider.offsetLeft;
                 scrollLeft = slider.scrollLeft;
             });
+
             slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('active'); });
             slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('active'); });
+
             slider.addEventListener('mousemove', (e) => {
-                if(!isDown) return;
-                e.preventDefault();
+                if (!isDown) return;
+                e.preventDefault(); 
                 const x = e.pageX - slider.offsetLeft;
                 const walk = (x - startX) * 2; 
                 slider.scrollLeft = scrollLeft - walk;
@@ -264,7 +269,7 @@
         } catch (err) { console.error("API Error:", err); }
     }
 
-    // ... (Keep calculators: calculateStats, getSRMColor, srmToHex - unchanged) ...
+    // --- CALCULATORS ---
     function calculateStats() {
         const batchBBL = parseFloat(document.getElementById('edit-batch-size').value) || 0;
         const eff = parseFloat(document.getElementById('efficiency').value) || 85;
@@ -328,7 +333,7 @@
         if (srm <= 24) return "#261716"; if (srm <= 30) return "#16100F"; return "#030403"; 
     }
 
-    // ... (Keep row adding functions - unchanged) ...
+    // --- ADD ROWS ---
     function addGrainLine(name='', lbs='', pct='') {
         const div = document.createElement('div');
         div.className = 'ingredient-entry';
@@ -365,7 +370,7 @@
         document.getElementById('dry-hop-container').appendChild(div);
     }
 
-    // ... (Keep openEditor, closeEditor, saveRecipe logic - unchanged) ...
+    // --- EDITOR LOGIC ---
     function openEditor(mode, name = '', data = null) {
         document.getElementById('recipe-list-view').style.display = 'none';
         document.getElementById('master-editor').style.display = 'block';
@@ -415,7 +420,6 @@
             if(data.mash) data.mash.forEach(m => addMashLine(m[0], m[1], m[2], m[3]));
             if(data.boil) data.boil.forEach(b => addBoilLine(b[0], b[1], b[2], b[3], b[4]));
             if(data.dryHops) data.dryHops.forEach(d => addDryHopLine(d[0], d[1], d[2], d[3], d[4], d[5]));
-            
             calculateStats();
         }
     }
@@ -564,7 +568,7 @@
             container.appendChild(section);
         });
         
-        enableDragScrolling();
+        enableMouseDragScrolling();
     }
 </script>
 </body>
