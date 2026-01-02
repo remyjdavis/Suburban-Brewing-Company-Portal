@@ -272,75 +272,63 @@ function toggleDryHopUI() {
         document.querySelectorAll('#dry-hop-container input').forEach(i => i.value = '');
     }
 }
-        function openEditor(mode, name='') {
-            // This switches the view: Hides Portfolio, Shows Editor
-            document.getElementById('recipe-list-view').style.display = 'none';
-            document.getElementById('master-editor').style.display = 'block';
-            
-            if(mode === 'NEW') {
-                document.getElementById('editor-heading').innerText = "Create New Recipe";
-            } else {
-                document.getElementById('editor-heading').innerText = "Editing: " + name;
+    function openEditor(mode, name = '', data = null) {
+        document.getElementById('recipe-list-view').style.display = 'none';
+        document.getElementById('master-editor').style.display = 'block';
+        
+        if(mode === 'NEW') {
+            document.getElementById('editor-heading').innerText = "Create New Recipe";
+            document.getElementById('master-form').reset(); // Clear form for new entry
+        } else {
+            document.getElementById('editor-heading').innerText = "Editing: " + name;
+            // Populate Target Pre/Post Boil if data is passed from the row click
+            if(data) {
+                document.getElementById('target-preboil').value = data.preBoil;
+                document.getElementById('target-postboil').value = data.postBoil;
             }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
-        function closeEditor() {
-            // This switches back: Hides Editor, Shows Portfolio (!Main screen)
-            document.getElementById('master-editor').style.display = 'none';
-            document.getElementById('recipe-list-view').style.display = 'block';
-        }
-
-        function addLine(containerId) {
-            const container = document.getElementById(containerId);
-            const newLine = container.children[0].cloneNode(true);
-            newLine.querySelectorAll('input').forEach(i => i.value = '');
-            container.appendChild(newLine);
-        }
-
-        function saveRecipe() {
-    const hasDryHop = document.getElementById('has-dry-hop').checked;
-    
-    // 1. Gather Basic Recipe Data
-    const recipeData = {
-        name: document.getElementById('edit-name').value,
-        style: document.getElementById('edit-style').value,
-        og: document.getElementById('edit-og').value,
-        fg: document.getElementById('edit-fg').value,
-        mashPh: document.getElementById('mash-ph').value,
-        koVol: document.getElementById('ko-vol').value,
-        hasDryHop: hasDryHop
-    };
-
-    // 2. Gather Dry Hop Data ONLY if toggle is ON
-    let dryHopRows = [];
-    if (hasDryHop) {
-        const container = document.getElementById('dry-hop-container');
-        const rows = container.querySelectorAll('.ingredient-entry');
-        rows.forEach(row => {
-            dryHopRows.push({
-                step: row.querySelector('.dh-step').value,
-                variety: row.querySelector('.dh-variety').value,
-                aa: row.querySelector('.dh-aa').value,
-                lbs: row.querySelector('.dh-lbs').value,
-                timing: row.querySelector('.dh-timing').value
-            });
-        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // 3. Send to Google Apps Script
-    Swal.fire({ title: 'Saving Master Recipe...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+    function saveRecipe() {
+        const hasDryHop = document.getElementById('has-dry-hop').checked;
+        
+        // 1. Gather Basic Recipe Data (Now including Kettle Targets)
+        const recipeData = {
+            name: document.getElementById('edit-name').value,
+            style: document.getElementById('edit-style').value,
+            targetPreboil: document.getElementById('target-preboil').value, // NEW
+            targetPostboil: document.getElementById('target-postboil').value, // NEW
+            og: document.getElementById('edit-og').value,
+            fg: document.getElementById('edit-fg').value,
+            abv: document.getElementById('edit-abv').value,
+            ibu: document.getElementById('edit-ibu').value,
+            batchSize: document.getElementById('edit-batch-size').value,
+            hasDryHop: hasDryHop
+        };
 
-    google.script.run
-        .withSuccessHandler(() => {
-            Swal.fire('Success!', 'Recipe and Inventory targets updated.', 'success');
-            closeEditor();
-        })
-        .withFailureHandler(err => {
-            Swal.fire('Error', 'Update failed: ' + err, 'error');
-        })
-        .updateMasterRecipeBackend(recipeData, dryHopRows);
-}
-    </script>
+        // 2. Gather Section Data (Grains, Water, etc.)
+        // This assumes you've gathered these into an object called 'sectionData'
+        let sectionData = gatherAllSectionData(); 
+
+        // 3. Send to Google Apps Script
+        Swal.fire({ 
+            title: 'Saving Master Recipe...', 
+            allowOutsideClick: false, 
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        google.script.run
+            .withSuccessHandler(() => {
+                Swal.fire('Success!', 'Technical Recipe and Kettle Targets updated.', 'success');
+                closeEditor();
+                // Optional: refresh portfolio list
+            })
+            .withFailureHandler(err => {
+                Swal.fire('Error', 'Update failed: ' + err, 'error');
+            })
+            .updateMasterRecipeBackend(recipeData, sectionData);
+    }
+</script>
 </body>
 </html>
