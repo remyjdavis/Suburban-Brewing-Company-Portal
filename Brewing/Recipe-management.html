@@ -12,57 +12,51 @@
         /* --- SIDEBAR --- */
         .sidebar { width: var(--sidebar-width); background: var(--primary-dark); height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
         .sidebar-header { padding: 25px 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid #1f2937; }
-        
-        .nav-section-title { 
-            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; 
-            color: #9ca3af; margin: 20px 20px 10px 20px; font-weight: 700; 
-        }
-
+        .nav-section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; margin: 20px 20px 10px 20px; font-weight: 700; }
         .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
         .nav-link:hover { background: #1f2937; color: #fff; }
         .nav-link.active { background: var(--accent); color: #fff; font-weight: 600; }
         
+        /* --- MAIN LAYOUT --- */
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; height: 100vh; display: flex; flex-direction: column; width: calc(100% - var(--sidebar-width)); }
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
         .container { padding: 30px; flex-grow: 1; overflow-y: auto; }
         
-        /* --- HORIZONTAL SCROLLING --- */
-        .category-group { margin-bottom: 30px; }
-        .category-header { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 15px; border-left: 5px solid var(--accent); padding-left: 10px; text-transform: uppercase; }
-        
-        .horizontal-scroll-container { 
-            display: flex; gap: 20px; overflow-x: auto; padding: 10px 5px 25px 5px;
-            cursor: grab; -webkit-overflow-scrolling: touch; 
-            scrollbar-width: none; -ms-overflow-style: none;
-        }
-        .horizontal-scroll-container::-webkit-scrollbar { display: none; }
-        .horizontal-scroll-container.active { cursor: grabbing; cursor: -webkit-grabbing; }
-
-        .recipe-card { 
-            background: white; border-radius: 15px; border: 1px solid #ddd; padding: 25px; 
-            min-width: 320px; max-width: 320px; flex-shrink: 0; transition: 0.2s; position: relative; 
-            user-select: none; 
-        }
-        .recipe-card:hover { transform: translateY(-3px); border-color: var(--accent); }
-
-        /* --- EDITOR --- */
+        /* --- EDITOR STYLES --- */
         .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent); }
+        
         .collapsible-header { background: #f8f9fa; padding: 12px 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: #374151; }
         .collapsible-content { padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; display: none; background: white; }
         .collapsible-content.active { display: block; }
+        
         .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px; }
         .ingredient-entry { display: grid; gap: 10px; margin-bottom: 8px; align-items: center; }
         input, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+        
+        /* Calc Bar */
         .calc-bar { background: #eef2ff; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 20px; align-items: center; justify-content: space-around; }
         .color-swatch { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #e5e7eb; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
+        /* Buttons */
         .btn-add-line { background: #f3f4f6; border: 1px solid #d1d5db; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
         .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 25px; }
         .btn-edit { background: var(--accent-orange); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
         .btn-cancel { background: #6b7280; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
         .btn-delete { color: #ef4444; background: none; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
         
+        /* DRY HOP SECTION VISUAL FIX */
         #dry-hop-wrapper { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; }
+        .dh-toggle-label { display: flex; align-items: center; gap: 10px; font-weight: bold; color: #374151; cursor: pointer; width: auto; }
+        .dh-toggle-label input { width: auto; margin: 0; }
+
+        /* PORTFOLIO LIST */
+        .category-group { margin-bottom: 30px; }
+        .category-header { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 15px; border-left: 5px solid var(--accent); padding-left: 10px; text-transform: uppercase; }
+        .horizontal-scroll-container { display: flex; gap: 20px; overflow-x: auto; padding: 10px 5px 25px 5px; scrollbar-width: none; cursor: grab; }
+        .horizontal-scroll-container::-webkit-scrollbar { display: none; }
+        .horizontal-scroll-container.active { cursor: grabbing; }
+        .recipe-card { background: white; border-radius: 15px; border: 1px solid #ddd; padding: 25px; min-width: 320px; max-width: 320px; flex-shrink: 0; transition: 0.2s; user-select: none; }
+        .recipe-card:hover { transform: translateY(-3px); border-color: var(--accent); }
 
         @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; width: 100%; } }
     </style>
@@ -129,7 +123,7 @@
                     <div class="form-row">
                         <input type="hidden" id="edit-id"> 
                         <div><label>Recipe Name</label><input type="text" id="edit-name"></div>
-                        <div><label>Style</label><input type="text" id="edit-style" list="style-list"></div>
+                        <div><label>Style</label><input type="text" id="edit-style"></div>
                         <div><label>Category</label><select id="edit-category"><option value="Core">Core</option><option value="Rotating">Rotating</option><option value="Seasonal">Seasonal</option></select></div>
                         <div><label>Batch Size (BBL)</label><input type="number" step="0.1" id="edit-batch-size" onchange="calculateStats()"></div>
                     </div>
@@ -183,7 +177,8 @@
                     <div style="font-weight:bold; margin-bottom:5px;">Boil Additions</div>
                     <div id="boil-container"></div>
                     <button class="btn-add-line" onclick="addBoilLine()">+ Add Boil Addition</button>
-                    <datalist id="hop-list"></datalist>
+                    
+                    <datalist id="boil-ingredients-list"></datalist>
                 </div>
 
                 <div class="collapsible-header" onclick="toggleSection('ko-section')">5. KO & Yeast ▾</div>
@@ -199,19 +194,21 @@
                 </div>
 
                 <div class="collapsible-header" onclick="toggleSection('dry-hop-section')">6. Dry Hops ▾</div>
-<div id="dry-hop-section" class="collapsible-content">
-    <div style="margin-bottom: 15px;">
-        <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: bold; color: #374151; cursor: pointer; user-select: none;">
-            <input type="checkbox" id="has-dry-hop" onchange="toggleDryHop()" style="width: auto; margin: 0;">
-            <span>This beer is dry hopped</span>
-        </label>
-    </div>
+                <div id="dry-hop-section" class="collapsible-content">
+                    <div style="margin-bottom: 15px;">
+                        <label class="dh-toggle-label">
+                            <input type="checkbox" id="has-dry-hop" onchange="toggleDryHop()">
+                            <span>This beer is dry hopped</span>
+                        </label>
+                    </div>
 
-    <div id="dry-hop-wrapper">
-        <div id="dry-hop-container"></div>
-        <button class="btn-add-line" onclick="addDryHopLine()">+ Add Dry Hop</button>
-    </div>
-</div>
+                    <div id="dry-hop-wrapper">
+                        <div id="dry-hop-container"></div>
+                        <button class="btn-add-line" onclick="addDryHopLine()">+ Add Dry Hop</button>
+                    </div>
+                    
+                    <datalist id="hop-list"></datalist>
+                </div>
 
                 <div style="margin-top:20px;">
                     <div class="form-row">
@@ -221,8 +218,6 @@
                         <div><label>Target IBU</label><input type="number" id="edit-ibu"></div>
                     </div>
                 </div>
-                
-                <datalist id="style-list"></datalist>
 
                 <button class="btn-save" onclick="saveRecipe()">Save Master Recipe</button>
             </div>
@@ -243,7 +238,7 @@
     let refGrains = []; 
     let refWaterAdditions = [];
     let refHops = [];   
-    let refStyles = []; 
+    let refBoilMisc = []; // NEW: For things like Whirlfloc, Sugar
 
     // --- 1. INITIAL LOAD LOGIC ---
     async function loadPageData() {
@@ -255,12 +250,13 @@
             if (Array.isArray(data)) { recipes = data; } 
             else {
                 recipes = data.recipes || [];
+                
                 // LOADING ALL REFERENCES
                 refGrains = data.refGrains || [];
                 refWaterAdditions = data.refWaterAdditions || [];
                 refYeast = data.refYeast || [];
                 refHops = data.refHops || [];     
-                refStyles = data.refStyles || []; 
+                refBoilMisc = data.refBoilMisc || []; // Getting Boil Additions
             }
 
             // Populate Grains Datalist
@@ -281,7 +277,7 @@
                 saltList.appendChild(opt);
             });
 
-            // Populate Hops Datalist
+            // Populate Hops Datalist (For Dry Hops)
             const hopList = document.getElementById('hop-list');
             hopList.innerHTML = '';
             refHops.forEach(h => {
@@ -290,13 +286,22 @@
                 hopList.appendChild(opt);
             });
             
-            // Populate Styles Datalist
-            const styleList = document.getElementById('style-list');
-            styleList.innerHTML = '';
-            refStyles.forEach(s => {
+            // Populate Combined Boil Ingredients (Hops + Misc)
+            const boilList = document.getElementById('boil-ingredients-list');
+            boilList.innerHTML = '';
+            
+            // Add Hops to Boil List
+            refHops.forEach(h => {
                 const opt = document.createElement('option');
-                opt.value = s.name;
-                styleList.appendChild(opt);
+                opt.value = h.name;
+                boilList.appendChild(opt);
+            });
+            
+            // Add Misc Additions to Boil List (Whirlfloc, etc.)
+            refBoilMisc.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.name;
+                boilList.appendChild(opt);
             });
 
             // Populate Yeast Dropdown
@@ -348,12 +353,12 @@
         document.getElementById('mash-container').appendChild(div);
     }
     
-    // Kettle Hops (Using hop-list)
+    // Kettle Hops & Additions (Using COMBINED boil-ingredients-list)
     function addBoilLine(name='', aa='', oz='', min='', type='') {
         const div = document.createElement('div');
         div.className = 'ingredient-entry';
         div.style.gridTemplateColumns = "2fr 1fr 1fr 1fr 1fr 30px";
-        div.innerHTML = `<input list="hop-list" class="boil-name" placeholder="Hop" value="${name}"><input class="boil-aa" type="number" placeholder="AA%" value="${aa}"><input class="boil-oz" type="number" placeholder="Oz" value="${oz}"><input class="boil-min" type="number" placeholder="Min" value="${min}"><input class="boil-type" placeholder="Type" value="${type}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
+        div.innerHTML = `<input list="boil-ingredients-list" class="boil-name" placeholder="Item Name" value="${name}"><input class="boil-aa" type="number" placeholder="AA%" value="${aa}"><input class="boil-oz" type="number" placeholder="Amount" value="${oz}"><input class="boil-min" type="number" placeholder="Min" value="${min}"><input class="boil-type" placeholder="Type" value="${type}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
         document.getElementById('boil-container').appendChild(div);
     }
 
@@ -381,11 +386,12 @@
     }
 
 
-    // --- 3. EDITOR HANDLING ---
+    // --- 3. EDITOR HANDLING (EDIT & LOAD LOGIC) ---
     function openEditor(mode, name = '', data = null) {
         document.getElementById('recipe-list-view').style.display = 'none';
         document.getElementById('master-editor').style.display = 'block';
         
+        // Clear all containers
         document.getElementById('grain-container').innerHTML = ''; 
         document.getElementById('salt-container').innerHTML = '';
         document.getElementById('mash-container').innerHTML = '';
@@ -398,6 +404,7 @@
             document.getElementById('has-dry-hop').checked = false;
             toggleDryHop();
         } else if(data) {
+            // LOAD SAVED DATA INTO FORM
             document.getElementById('edit-id').value = data.id || '';
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-style').value = data.style || '';
@@ -432,6 +439,7 @@
                 document.getElementById('yeast-notes').value = data.yeast.notes || '';
             }
 
+            // Populate Tables
             if(data.grains) data.grains.forEach(g => addGrainLine(g[0], g[1], g[2]));
             if(data.salts) data.salts.forEach(s => addSaltLine(s[0], s[1], s[2], s[3]));
             if(data.mash) data.mash.forEach(m => addMashLine(m[0], m[1], m[2], m[3]));
@@ -455,7 +463,7 @@
     }
 
 
-    // --- 4. SAVING LOGIC ---
+    // --- 4. SAVING LOGIC (SCRAPE & SEND) ---
     async function saveRecipe() {
         const grains = Array.from(document.querySelectorAll('#grain-container .ingredient-entry')).map(row => [
             row.querySelector('.grain-search').value,
