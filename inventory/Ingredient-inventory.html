@@ -217,20 +217,35 @@
     });
 
     // --- 2. FETCH DATA (GET) ---
-    function fetchRealData(cat) {
-        const tbody = document.getElementById('inventory-details-rows');
-        tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Loading from Google Sheets...</td></tr>";
+    // --- UPDATED GET HANDLER (Handles Google Redirects) ---
+function fetchRealData(cat) {
+    const tbody = document.getElementById('inventory-details-rows');
+    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Loading from Google Sheets...</td></tr>";
 
-        fetch(`${scriptURL}?category=${cat}`)
-            .then(response => response.json())
-            .then(items => {
-                renderInventoryRows(items);
-            })
-            .catch(err => {
-                console.error("Fetch Error:", err);
-                tbody.innerHTML = "<tr><td colspan='5' style='color:red; text-align:center;'>Error connecting to Google Sheets.</td></tr>";
-            });
-    }
+    // Standard fetch parameters to bypass common CORS redirect blocks
+    fetch(`${scriptURL}?category=${encodeURIComponent(cat)}`, {
+        method: "GET",
+        mode: "cors", // Explicitly request CORS
+        redirect: "follow", // CRITICAL: Tells browser to follow Google's redirect
+        headers: {
+            "Content-Type": "text/plain;charset=utf-8" // Helps avoid complex pre-flight checks
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+    })
+    .then(items => {
+        renderInventoryRows(items);
+    })
+    .catch(err => {
+        console.error("Fetch Error:", err);
+        tbody.innerHTML = `<tr><td colspan='5' style='color:red; text-align:center;'>
+            Connection Error: ${err.message}. <br>
+            Check if the Script is deployed as "Anyone".
+        </td></tr>`;
+    });
+}
 
     function renderInventoryRows(items) {
         const tbody = document.getElementById('inventory-details-rows');
