@@ -93,7 +93,7 @@
         
         .container { padding: 30px; }
 
-        /* --- DASHBOARD STATS --- */
+        /* --- ANALYTICS DASHBOARD --- */
         .dashboard-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -154,9 +154,10 @@
             color: #854d0e;
             font-size: 10px;
             font-weight: 800;
-            padding: 4px 8px;
+            padding: 4px 12px;
             border-radius: 20px;
             border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .tank-name { font-size: 1.2rem; font-weight: bold; margin: 0; color: #111827; }
@@ -190,7 +191,7 @@
             padding: 0; 
             border-radius: 15px; 
             z-index: 1000; 
-            width: 90%; max-width: 950px;
+            width: 90%; max-width: 1000px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
             overflow: hidden;
         }
@@ -261,6 +262,15 @@
         .btn-blue { background: var(--accent); }
         .btn-orange { background: var(--accent-orange); }
 
+        .qc-section-title {
+            font-size: 10px;
+            color: var(--accent);
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            display: block;
+        }
+
         @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; } }
     </style>
 </head>
@@ -294,7 +304,7 @@
                     <div class="stat-value" id="stat-active-count">--</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Vessels Awaiting QC</div>
+                    <div class="stat-label">Batches Awaiting QC</div>
                     <div class="stat-value" id="stat-qc-pending" style="color: var(--accent-orange);">--</div>
                 </div>
             </div>
@@ -330,31 +340,31 @@
 
         <div class="modal-content-area">
             <div id="tab-daily" class="tab-content active">
-                <div style="display: flex; gap: 20px;">
-                    <div style="flex: 1; border-right: 1px solid #e5e7eb; padding-right: 20px;">
+                <div style="display: flex; gap: 30px;">
+                    <div style="flex: 1; border-right: 1px solid #e5e7eb; padding-right: 25px;">
                         <div class="form-group"><label>Gravity (SG)</label><input type="number" step="0.001" id="log-sg"></div>
                         <div class="form-group"><label>Temp (°F)</label><input type="number" id="log-temp"></div>
                         <div class="form-group"><label>pH</label><input type="number" step="0.01" id="log-ph"></div>
                         
-                        <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 15px;">
-                            <label style="font-size: 10px; color: var(--accent); font-weight: 800;">QUALITY CONTROL GATES</label>
-                            <div class="form-group" style="margin-top: 10px;">
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 20px;">
+                            <span class="qc-section-title">QUALITY CONTROL GATES</span>
+                            <div class="form-group">
                                 <label>VDK Test Result</label>
                                 <select id="log-vdk">
-                                    <option value="">-- No Test Performed --</option>
-                                    <option value="PASS">PASS (No Diacetyl Detected)</option>
-                                    <option value="FAIL">FAIL (Keep Warm)</option>
+                                    <option value="">-- No Test --</option>
+                                    <option value="PASS">PASS (Diacetyl Clean)</option>
+                                    <option value="FAIL">FAIL (Keep Warming)</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>CO2 Volumes (Carb Check)</label>
-                                <input type="number" step="0.01" id="log-carb" placeholder="Target 2.4 - 2.6">
+                                <label>Carbonation (CO2 Vol)</label>
+                                <input type="number" step="0.01" id="log-carb" placeholder="e.g. 2.55">
                             </div>
                         </div>
                         
-                        <button class="btn-action btn-green" onclick="submitDailyLog()">Save Log & QC Entry</button>
+                        <button class="btn-action btn-green" onclick="submitDailyLog()">Save Log & QC Gates</button>
                     </div>
-                    <div style="flex: 1.5; height: 350px;">
+                    <div style="flex: 1.5; height: 380px;">
                         <canvas id="fermChart"></canvas>
                     </div>
                 </div>
@@ -412,10 +422,10 @@
                         <option value="Clean">Clean / Available</option>
                     </select>
                 </div>
-                <div id="qc-alert-box" style="display:none; padding: 12px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; margin-bottom: 15px; color: #92400e; font-size: 13px;">
-                    ⚠️ <b>Verification Required:</b> This batch needs a passing VDK or Carb check before moving to the next stage.
+                <div id="qc-alert-box" style="display:none; padding: 15px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; margin-bottom: 20px; color: #92400e; font-size: 13px; line-height: 1.5;">
+                    ⚠️ <b>Verification Required:</b> This stage change requires a <b>VDK PASS</b> or <b>Carbonation Check</b> to be logged in the Daily Log before advancing.
                 </div>
-                <button class="btn-action btn-blue" onclick="updateStatus()">Update Status</button>
+                <button class="btn-action btn-blue" onclick="updateStatus()">Apply Stage Transition</button>
             </div>
 
             <div id="tab-drops" class="tab-content">
@@ -429,7 +439,7 @@
                 </div>
                 <div class="form-group"><label>Est. Volume Removed (Gal)</label><input type="number" id="drop-vol"></div>
                 <div class="form-group"><label>Notes / Generation #</label><textarea id="drop-notes" rows="3"></textarea></div>
-                <button class="btn-action btn-green" onclick="logDrop()">Log Drop</button>
+                <button class="btn-action btn-green" onclick="logDrop()">Log Drop / Harvest</button>
             </div>
         </div>
     </div>
@@ -473,12 +483,13 @@
                         // DASHBOARD AGGREGATION
                         if(active) {
                             activeCount++;
-                            totalBBL += (gridId.includes('production') || gridId.includes('brite')) ? 10 : 1;
+                            const isPilot = gridId.includes('pilot');
+                            totalBBL += isPilot ? 1 : 10;
                             
-                            // Check for QC pending
-                            const needsVDK = status === "Diacetyl Rest";
-                            const needsCarb = status === "Conditioning" && gridId.includes('brite');
-                            if(needsVDK || needsCarb) qcPendingCount++;
+                            // Batches waiting for a gate (D-Rest needs VDK, Conditioning/Brite needs Carb)
+                            if(status === "Diacetyl Rest" || (status === "Conditioning" && gridId.includes('brite'))) {
+                                qcPendingCount++;
+                            }
                         }
 
                         let cardClass = active ? "active" : "clean";
@@ -517,7 +528,7 @@
             document.getElementById('overlay').style.display = 'block';
             document.getElementById('modal-title').innerText = vessel;
             
-            // Toggle QC visibility in actions tab
+            // Logic for Quality Gate Warning Box
             const qcBox = document.getElementById('qc-alert-box');
             if(status === "Diacetyl Rest" || status === "Conditioning") {
                 qcBox.style.display = 'block';
@@ -530,8 +541,8 @@
                 fetchRecipeHops(beerName); 
                 initChart(batchId);
             } else {
-                document.getElementById('modal-subtitle').innerText = "Vessel is " + status;
-                document.getElementById('recipe-dh-list').innerHTML = "No active batch.";
+                document.getElementById('modal-subtitle').innerText = "Vessel Status: " + status;
+                document.getElementById('recipe-dh-list').innerHTML = "No active production batch.";
             }
         }
 
@@ -548,9 +559,9 @@
                         </div>`
                     ).join('');
                 } else {
-                    listDiv.innerHTML = "No dry hops specified in recipe.";
+                    listDiv.innerHTML = "No dry hop schedule in master recipe.";
                 }
-            } catch (e) { listDiv.innerHTML = "Instruction data not found."; }
+            } catch (e) { listDiv.innerHTML = "Recipe data retrieval error."; }
         }
 
         // --- ADDITION TOGGLE LOGIC ---
@@ -574,7 +585,7 @@
                 items.forEach(i => {
                     select.innerHTML += `<option value="${i.name}" data-lot="${i.lot}">${i.name} (Lot: ${i.lot})</option>`;
                 });
-            } catch (e) { console.error("Inventory Fetch Error", e); }
+            } catch (e) { console.error("Inventory Load Error", e); }
         }
 
         function syncInvLot() {
@@ -593,26 +604,25 @@
                     item: type === 'Dry Hop' ? document.getElementById('recipe-dh-list').innerText : document.getElementById('inv-item-select').value,
                     qty: type === 'Dry Hop' ? document.getElementById('dh-actual-weight').value : document.getElementById('ing-qty').value,
                     lot: type === 'Dry Hop' ? document.getElementById('dh-actual-lot').value : document.getElementById('ing-lot-read').value,
-                    notes: type === 'Ingredient' ? document.getElementById('ing-purpose').value : "Standard Recipe"
+                    notes: type === 'Ingredient' ? document.getElementById('ing-purpose').value : "Manual Addition"
                 }
             };
 
             await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            Swal.fire("Logged", `${type} recorded successfully.`, "success");
+            Swal.fire("Success", `${type} addition logged.`, "success");
             closeModal();
             refreshGrid();
         }
 
         async function updateStatus() {
             const stage = document.getElementById('status-select').value;
-            const res = await fetch(CELLAR_API_URL, {
+            await fetch(CELLAR_API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 body: JSON.stringify({ action: 'updateStage', data: { batchId: currentBatchId, stage: stage } })
             });
             
-            // Backend will handle the gatekeeping (VDK/Carb) and return error if needed
-            Swal.fire('Updated', `Stage set to: ${stage}`, 'success').then(() => { closeModal(); refreshGrid(); });
+            Swal.fire('Updated', `Tank status moved to: ${stage}`, 'success').then(() => { closeModal(); refreshGrid(); });
         }
 
         async function submitDailyLog() {
@@ -621,12 +631,13 @@
                 gravity: document.getElementById('log-sg').value,
                 temp: document.getElementById('log-temp').value,
                 ph: document.getElementById('log-ph').value,
-                psi: document.getElementById('log-psi').value,
-                vdkResult: document.getElementById('log-vdk').value, // NEW
-                co2Vol: document.getElementById('log-carb').value   // NEW
+                vdkResult: document.getElementById('log-vdk').value,
+                co2Vol: document.getElementById('log-carb').value
             };
             await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDaily', data: payload }) });
-            Swal.fire("Logged", "Daily readings and QC saved.", "success");
+            Swal.fire("Logged", "Daily fermentation data saved.", "success");
+            closeModal();
+            refreshGrid();
         }
 
         async function logDrop() {
@@ -638,7 +649,7 @@
                 notes: document.getElementById('drop-notes').value
             };
             await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDrop', data: payload }) });
-            Swal.fire("Logged", "Vessel drop recorded.", "success");
+            Swal.fire("Logged", "Vessel drop/harvest recorded.", "success");
         }
 
         // --- UTILS & UI ---
@@ -660,14 +671,14 @@
             window.fermChartObj = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Day 0', 'Day 1', 'Day 2', 'Day 3'],
+                    labels: ['Log 1', 'Log 2', 'Log 3', 'Log 4'],
                     datasets: [{
-                        label: 'Gravity Progress',
-                        data: [1.060, 1.052, 1.044, 1.036],
+                        label: 'Specific Gravity',
+                        data: [1.065, 1.050, 1.035, 1.012],
                         borderColor: '#2563eb',
                         tension: 0.3,
                         fill: true,
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)'
+                        backgroundColor: 'rgba(37, 99, 235, 0.05)'
                     }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
