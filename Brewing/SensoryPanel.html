@@ -2,229 +2,279 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Suburban Brewing | Sensory Panel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Sensory Lab | Suburban Brewing</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
-    :root { --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --accent: #2563eb; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
-    
-    .container { max-width: 800px; margin: 0 auto; }
-    
-    /* Header */
-    .header { text-align: center; margin-bottom: 30px; }
-    .header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
-    .header p { color: #64748b; margin-top: 5px; }
-
-    /* Cards */
-    .card { background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    
-    /* Form Elements */
-    label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: #475569; }
-    input[type="text"], select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-    
-    /* Sliders */
-    .slider-group { margin-bottom: 20px; }
-    .slider-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
-    input[type="range"] { width: 100%; margin: 10px 0; accent-color: var(--accent); cursor: pointer; }
-    
-    /* Off Flavor Chips */
-    .chip-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-    .chip-check { display: none; }
-    .chip-label { 
-      padding: 8px 16px; background: #f1f5f9; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: 0.2s; border: 1px solid transparent; 
+    :root { 
+      --bg: #f1f5f9; 
+      --card: #ffffff; 
+      --text: #0f172a; 
+      --accent: #0f172a; /* Professional Black/Slate */
+      --highlight: #2563eb;
+      --border: #e2e8f0;
     }
-    .chip-check:checked + .chip-label { background: #fee2e2; color: #ef4444; border-color: #ef4444; font-weight: 600; }
+    
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: var(--bg); color: var(--text); 
+      padding: 20px; margin: 0; 
+      max-width: 600px; margin: 0 auto;
+    }
 
-    /* Button */
-    .btn-submit { width: 100%; padding: 16px; background: #0f172a; color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 20px; }
-    .btn-submit:hover { background: #1e293b; }
+    /* HEADER */
+    .header { 
+      text-align: center; margin-bottom: 25px; 
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 20px;
+    }
+    .header h1 { 
+      font-size: 1.2rem; margin: 0; 
+      text-transform: uppercase; letter-spacing: 2px;
+      color: #64748b; font-weight: 800;
+    }
+    .header .lab-id {
+      font-family: 'Roboto Mono', monospace;
+      color: var(--highlight); font-weight: 700;
+      font-size: 0.9rem; margin-top: 5px;
+    }
 
-    /* Chart Container */
-    .chart-box { position: relative; height: 300px; width: 100%; margin: 20px 0; }
+    /* CARDS */
+    .card { 
+      background: var(--card); 
+      padding: 24px; 
+      border-radius: 8px; /* Sharper corners for pro look */
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+      margin-bottom: 20px; 
+      border: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 0.8rem; text-transform: uppercase; 
+      color: #94a3b8; font-weight: 700; letter-spacing: 1px;
+      margin-bottom: 15px; display: block;
+    }
+
+    /* FORM INPUTS */
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+    
+    label { 
+      display: block; font-weight: 600; font-size: 0.8rem; 
+      margin-bottom: 6px; color: #475569; 
+    }
+    
+    select, input[type="text"], input[type="number"], textarea { 
+      width: 100%; padding: 12px; 
+      border: 1px solid #cbd5e1; border-radius: 6px; 
+      font-size: 1rem; background: #fff; appearance: none;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    input[type="text"]:focus, select:focus {
+      border-color: var(--highlight); outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    /* SAMPLE ID (The "Blind" Field) */
+    .blind-input {
+      font-family: 'Roboto Mono', monospace;
+      letter-spacing: 2px;
+      font-weight: 700;
+      color: var(--highlight);
+    }
+
+    /* PROFESSIONAL SLIDERS */
+    .slider-container { margin-bottom: 25px; }
+    .slider-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
+    .slider-label { font-weight: 700; font-size: 0.95rem; }
+    .slider-val { font-family: 'Roboto Mono', monospace; font-weight: 700; color: var(--highlight); }
+    
+    input[type="range"] { 
+      width: 100%; height: 4px; background: #e2e8f0; 
+      border-radius: 2px; outline: none; -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 20px; height: 20px; 
+      background: var(--text); border: 2px solid #fff; border-radius: 50%; cursor: pointer; 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    /* OFF FLAVOR BUTTONS */
+    .defect-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .defect-check { display: none; }
+    .defect-label { 
+      padding: 10px; background: #f8fafc; text-align: center;
+      border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+      color: #64748b; border: 1px solid #e2e8f0; 
+      cursor: pointer; transition: 0.1s;
+    }
+    .defect-check:checked + .defect-label { 
+      background: #fee2e2; color: #b91c1c; border-color: #ef4444; 
+    }
+
+    /* SUBMIT */
+    .btn-submit { 
+      width: 100%; padding: 16px; 
+      background: var(--highlight); color: white; 
+      border: none; border-radius: 6px; 
+      font-size: 1rem; font-weight: 600; 
+      margin-top: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .btn-submit:active { opacity: 0.9; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="header">
-      <h1>Sensory Analysis</h1>
-      <p>Quality Control Panel | Suburban Brewing Co.</p>
-    </div>
-
-    <div class="card">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <div>
-          <label>Taster Name</label>
-          <input type="text" id="taster" placeholder="Your Name">
-        </div>
-        <div>
-          <label>Role</label>
-          <select id="role">
-            <option value="Staff">Brewery Staff</option>
-            <option value="Guest">Guest / Public</option>
-          </select>
-        </div>
-      </div>
-      <div style="margin-top: 15px;">
-        <label>Beer / Batch</label>
-        <select id="beerSelect">
-          <option value="">Select Beer...</option>
-          <option value="Suburban IPA">Suburban IPA</option>
-          <option value="Main St. Stout">Main St. Stout</option>
-          <option value="Honey Brook Helles">Honey Brook Helles</option>
-          <option value="Seasonal Sour">Seasonal Sour</option>
-        </select>
-      </div>
-      <div style="margin-top: 15px;">
-        <label>Batch Number (Optional)</label>
-        <input type="text" id="batch" placeholder="e.g. B-2026-004">
-      </div>
-    </div>
-
-    <div class="card">
-      <h3 style="margin-top:0;">Profile Intensity</h3>
-      
-      <div class="chart-box">
-        <canvas id="sensoryChart"></canvas>
-      </div>
-
-      <div class="slider-group">
-        <div class="slider-row"><label>Maltiness</label> <span id="val-malt">3</span></div>
-        <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateChart('malt', this.value)">
-      </div>
-
-      <div class="slider-group">
-        <div class="slider-row"><label>Hop Aroma</label> <span id="val-hops">3</span></div>
-        <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateChart('hops', this.value)">
-      </div>
-
-      <div class="slider-group">
-        <div class="slider-row"><label>Bitterness</label> <span id="val-bitterness">3</span></div>
-        <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateChart('bitterness', this.value)">
-      </div>
-
-      <div class="slider-group">
-        <div class="slider-row"><label>Esters (Fruity)</label> <span id="val-esters">1</span></div>
-        <input type="range" min="0" max="5" step="0.5" value="1" oninput="updateChart('esters', this.value)">
-      </div>
-
-      <div class="slider-group">
-        <div class="slider-row"><label>Body / Mouthfeel</label> <span id="val-body">3</span></div>
-        <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateChart('body', this.value)">
-      </div>
-    </div>
-
-    <div class="card">
-      <label>Off-Flavor Detection</label>
-      <div class="chip-grid">
-        <input type="checkbox" id="off1" class="chip-check" value="Diacetyl"><label for="off1" class="chip-label">Diacetyl (Butter)</label>
-        <input type="checkbox" id="off2" class="chip-check" value="DMS"><label for="off2" class="chip-label">DMS (Corn)</label>
-        <input type="checkbox" id="off3" class="chip-check" value="Oxidation"><label for="off3" class="chip-label">Oxidation (Cardboard)</label>
-        <input type="checkbox" id="off4" class="chip-check" value="Acetaldehyde"><label for="off4" class="chip-label">Acetaldehyde (Green Apple)</label>
-        <input type="checkbox" id="off5" class="chip-check" value="Phenolic"><label for="off5" class="chip-label">Phenolic (Medicinal)</label>
-        <input type="checkbox" id="off6" class="chip-check" value="Sour/Acidic"><label for="off6" class="chip-label">Unintended Sour</label>
-      </div>
-
-      <div style="margin-top: 25px;">
-        <label>Overall Score (1-10)</label>
-        <input type="range" min="1" max="10" step="0.1" value="8" oninput="document.getElementById('score-disp').innerText=this.value" style="accent-color: #10b981;">
-        <div style="text-align: center; font-size: 2rem; font-weight: 800; color: #10b981;" id="score-disp">8</div>
-      </div>
-
-      <div style="margin-top: 15px;">
-        <label>Notes</label>
-        <textarea id="notes" rows="3" placeholder="Additional comments on appearance, head retention, etc."></textarea>
-      </div>
-
-      <button class="btn-submit" onclick="submitSensory()">Submit Analysis</button>
-    </div>
-
+  <div class="header">
+    <h1>Sensory Analysis</h1>
+    <div class="lab-id">QC PANEL // BLIND</div>
   </div>
 
+  <div class="card">
+    <span class="card-title">Sample Identification</span>
+    
+    <div class="input-row">
+      <div>
+        <label>Taster Initials</label>
+        <input type="text" id="taster" placeholder="e.g. RD" style="text-transform: uppercase;">
+      </div>
+      <div>
+        <label>Sample ID / Code</label>
+        <input type="text" id="sampleId" class="blind-input" placeholder="# ---">
+      </div>
+    </div>
+
+    <div>
+      <label>Product (If Known)</label>
+      <select id="beerSelect">
+        <option value="Blind">-- Blind Sample --</option>
+        <option value="Suburban IPA">Suburban IPA</option>
+        <option value="Main St. Stout">Main St. Stout</option>
+        <option value="Honey Brook Helles">Honey Brook Helles</option>
+        <option value="Railway Red">Railway Red</option>
+        <option value="Seasonal Sour">Seasonal Sour</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="card-title">Attribute Intensity (0-5)</span>
+    <p style="font-size: 0.8rem; color: #64748b; margin-top: -10px; margin-bottom: 20px;">
+      Rate intensity relative to style guidelines.
+    </p>
+
+    <div class="slider-container">
+      <div class="slider-header"><span class="slider-label">Malt</span> <span id="val-malt" class="slider-val">3.0</span></div>
+      <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateVal('malt', this.value)">
+    </div>
+
+    <div class="slider-container">
+      <div class="slider-header"><span class="slider-label">Hops (Aroma/Flavor)</span> <span id="val-hops" class="slider-val">3.0</span></div>
+      <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateVal('hops', this.value)">
+    </div>
+
+    <div class="slider-container">
+      <div class="slider-header"><span class="slider-label">Bitterness</span> <span id="val-bitterness" class="slider-val">3.0</span></div>
+      <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateVal('bitterness', this.value)">
+    </div>
+
+    <div class="slider-container">
+      <div class="slider-header"><span class="slider-label">Esters</span> <span id="val-esters" class="slider-val">1.0</span></div>
+      <input type="range" min="0" max="5" step="0.5" value="1" oninput="updateVal('esters', this.value)">
+    </div>
+    
+    <div class="slider-container">
+      <div class="slider-header"><span class="slider-label">Body / Mouthfeel</span> <span id="val-body" class="slider-val">3.0</span></div>
+      <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateVal('body', this.value)">
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="card-title">Defect Check</span>
+    <div class="defect-grid">
+      <input type="checkbox" id="def1" class="defect-check" value="Diacetyl"><label for="def1" class="defect-label">Diacetyl</label>
+      <input type="checkbox" id="def2" class="defect-check" value="DMS"><label for="def2" class="defect-label">DMS</label>
+      <input type="checkbox" id="def3" class="defect-check" value="Oxidation"><label for="def3" class="defect-label">Oxidation</label>
+      <input type="checkbox" id="def4" class="defect-check" value="Acetaldehyde"><label for="def4" class="defect-label">Acetaldehyde</label>
+      <input type="checkbox" id="def5" class="defect-check" value="Phenolic"><label for="def5" class="defect-label">Phenolic</label>
+      <input type="checkbox" id="def6" class="defect-check" value="Isovaleric"><label for="def6" class="defect-label">Isovaleric</label>
+    </div>
+
+    <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+      <span class="card-title">Overall Impression</span>
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <label style="margin:0;">True-to-Brand Score (1-10)</label>
+        <span id="score-disp" style="font-size: 1.5rem; font-weight: 800; color: var(--highlight);">8.0</span>
+      </div>
+      <input type="range" min="1" max="10" step="0.1" value="8" 
+             oninput="document.getElementById('score-disp').innerText=this.value" 
+             style="margin-top: 10px;">
+    </div>
+
+    <div style="margin-top: 20px;">
+      <label>Notes</label>
+      <textarea id="notes" rows="3" placeholder="Brief sensory comments..."></textarea>
+    </div>
+  </div>
+
+  <button class="btn-submit" onclick="submitSensory()">Submit Evaluation</button>
+
   <script>
-    // 🔴 UPDATE URL 🔴
-    const API_URL = "https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec";
+    // 🔴 UPDATE WITH YOUR NEW SENSORY BACKEND URL 🔴
+    const API_URL = "https://script.google.com/macros/s/AKfycbw_YOUR_NEW_ID_HERE/exec";
 
-    // --- CHART CONFIG ---
-    const ctx = document.getElementById('sensoryChart').getContext('2d');
-    const sensoryChart = new Chart(ctx, {
-      type: 'radar',
-      data: {
-        labels: ['Malt', 'Hops', 'Bitterness', 'Esters', 'Body'],
-        datasets: [{
-          label: 'Flavor Profile',
-          data: [3, 3, 3, 1, 3],
-          backgroundColor: 'rgba(37, 99, 235, 0.2)',
-          borderColor: 'rgba(37, 99, 235, 1)',
-          borderWidth: 2,
-          pointBackgroundColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          r: {
-            angleLines: { color: '#e2e8f0' },
-            grid: { color: '#e2e8f0' },
-            suggestedMin: 0,
-            suggestedMax: 5,
-            ticks: { display: false } // Hide numbers on chart for cleaner look
-          }
-        },
-        plugins: { legend: { display: false } }
-      }
-    });
-
-    // --- UPDATE CHART ON SLIDER MOVE ---
-    function updateChart(metric, val) {
-      document.getElementById('val-' + metric).innerText = val; // Update text number
-      
-      const map = { 'malt':0, 'hops':1, 'bitterness':2, 'esters':3, 'body':4 }; // Map metric name to array index
-      sensoryChart.data.datasets[0].data[map[metric]] = parseFloat(val);
-      
-      // Dynamic Phenol (If user drags esters high, maybe hint at phenol? Just kidding, keeping it simple)
-      sensoryChart.update();
+    function updateVal(id, val) {
+      document.getElementById('val-' + id).innerText = parseFloat(val).toFixed(1);
     }
 
-    // --- SUBMIT FUNCTION ---
     async function submitSensory() {
       const taster = document.getElementById('taster').value;
+      const sampleId = document.getElementById('sampleId').value;
       const beer = document.getElementById('beerSelect').value;
-      
-      if(!taster || !beer) {
-        Swal.fire('Missing Info', 'Please enter your name and select a beer.', 'warning');
+
+      if(!taster) {
+        Swal.fire({ icon: 'error', title: 'Missing Initials', text: 'Please enter who you are.', confirmButtonColor: '#0f172a' });
         return;
       }
 
-      // Collect Off Flavors
-      const offFlavors = [];
-      document.querySelectorAll('.chip-check:checked').forEach(c => offFlavors.push(c.value));
-      if(offFlavors.length === 0) offFlavors.push("None Detected");
+      // Collect Defects
+      const defects = [];
+      document.querySelectorAll('.defect-check:checked').forEach(c => defects.push(c.value));
+      if(defects.length === 0) defects.push("None");
+
+      // Build "Blind" Batch Name
+      // If they entered a Sample ID, use that. If not, use "N/A"
+      const finalBatch = sampleId ? `SAMPLE #${sampleId}` : "Standard QC";
 
       const payload = {
+        sessionType: "Production", // Defaulting to Prod for this view
         taster: taster,
-        role: document.getElementById('role').value,
+        role: "Panelist",
         beer: beer,
-        batch: document.getElementById('batch').value || "N/A",
+        batch: finalBatch,
+        spikeAgent: "", // No spiking field in Blind view (Admin handles that)
         score: document.getElementById('score-disp').innerText,
         profile: {
-          malt: sensoryChart.data.datasets[0].data[0],
-          hops: sensoryChart.data.datasets[0].data[1],
-          bitterness: sensoryChart.data.datasets[0].data[2],
-          esters: sensoryChart.data.datasets[0].data[3],
-          phenols: 0, // Placeholder if you add phenol slider later
-          body: sensoryChart.data.datasets[0].data[4]
+          malt: document.getElementById('val-malt').innerText,
+          hops: document.getElementById('val-hops').innerText,
+          bitterness: document.getElementById('val-bitterness').innerText,
+          esters: document.getElementById('val-esters').innerText,
+          body: document.getElementById('val-body').innerText
         },
-        offFlavors: offFlavors,
+        offFlavors: defects,
         notes: document.getElementById('notes').value
       };
 
-      Swal.fire({ title: 'Submitting...', didOpen: () => Swal.showLoading() });
+      Swal.fire({ 
+        title: 'Submitting...', 
+        text: 'Uploading data to QC Database',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading() 
+      });
 
       try {
         await fetch(API_URL, {
@@ -235,11 +285,31 @@
           })
         });
 
-        Swal.fire('Success', 'Sensory analysis logged.', 'success').then(() => {
-          location.reload(); // Refresh for next taster
+        Swal.fire({
+            icon: 'success',
+            title: 'Evaluation Saved',
+            text: 'Ready for next sample.',
+            timer: 1500,
+            showConfirmButton: false
+        }).then(() => {
+            // Soft reset (keep taster name, clear ratings)
+            document.getElementById('sampleId').value = "";
+            document.getElementById('notes').value = "";
+            document.querySelectorAll('.defect-check').forEach(c => c.checked = false);
+            // Reset sliders to 3
+            ['malt','hops','bitterness','body'].forEach(id => {
+                document.getElementById('val-'+id).innerText = "3.0";
+                document.querySelector(`input[oninput="updateVal('${id}', this.value)"]`).value = 3;
+            });
+            // Reset esters to 1
+             document.getElementById('val-esters').innerText = "1.0";
+             document.querySelector(`input[oninput="updateVal('esters', this.value)"]`).value = 1;
+             
+             window.scrollTo(0,0);
         });
+        
       } catch(e) {
-        Swal.fire('Error', e.toString(), 'error');
+        Swal.fire('Error', 'Connection failed.', 'error');
       }
     }
   </script>
