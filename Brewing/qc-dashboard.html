@@ -3,211 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QC Lab Dashboard | Suburban Brewing Co.</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Suburban Brewing | Vessel QR Generator (Avery 3x3)</title>
     <style>
-        :root {
-            --primary-dark: #111827;
-            --accent: #2563eb;
-            --danger: #ef4444;
-            --warning: #facc15;
-            --success: #10b981;
+        /* --- SCREEN STYLES (Interactive View) --- */
+        body {
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f3f4f6;
+            padding: 20px;
+            text-align: center;
         }
-        body { font-family: -apple-system, sans-serif; background: #f3f4f6; margin: 0; display: flex; height: 100vh; }
-        
-        /* Sidebar */
-        .sidebar { width: 240px; background: var(--primary-dark); color: white; padding: 25px; display: flex; flex-direction: column; }
-        .sidebar h2 { font-size: 1.2rem; letter-spacing: 1px; margin-bottom: 30px; color: var(--accent); }
-        .nav-link { color: #d1d5db; text-decoration: none; padding: 12px 0; display: block; font-size: 14px; border-bottom: 1px solid #1f2937; }
-        .nav-link:hover { color: white; }
 
-        /* Main Content */
-        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
-        .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* QC Grid */
-        .qc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; }
-        .qc-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid #e5e7eb; }
-        .qc-card.vdk { border-top-color: var(--warning); }
-        .qc-card.carb { border-top-color: var(--accent); }
-        
-        .card-title { font-weight: 800; text-transform: uppercase; font-size: 12px; color: #6b7280; margin-bottom: 20px; display: flex; justify-content: space-between; }
-        
-        .batch-row { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 15px; 
-            background: #f9fafb; 
-            border-radius: 8px; 
-            margin-bottom: 12px;
-            border: 1px solid #f1f5f9;
+        h1 { color: #111827; margin-bottom: 5px; }
+        p { color: #6b7280; margin-bottom: 20px; }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-        .batch-details b { font-size: 1rem; display: block; color: var(--primary-dark); }
-        .batch-details span { font-size: 0.8rem; color: #6b7280; }
-        
-        /* NEW: Age Indicator Styling */
-        .age-badge {
+
+        .controls input {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover { background: #1d4ed8; }
+
+        /* --- STICKER PREVIEW (Screen) --- */
+        #sticker-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .sticker {
+            background: white;
+            border: 1px solid #ddd;
+            width: 3in;  /* Physical Width on Screen Preview */
+            height: 3in; /* Physical Height on Screen Preview */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .sticker img {
+            width: 1.8in; /* Adjusted for 3 inch square */
+            height: 1.8in;
+        }
+
+        .sticker-label {
+            font-size: 24px;
+            font-weight: 900;
+            margin-top: 10px;
+            text-transform: uppercase;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .sticker-sub {
             font-size: 10px;
-            font-weight: 800;
-            padding: 2px 8px;
-            border-radius: 4px;
-            background: #e5e7eb;
-            color: #374151;
-            margin-bottom: 5px;
-            display: inline-block;
+            color: #555;
+            margin-top: 5px;
+            letter-spacing: 1px;
         }
 
-        .btn-verify { 
-            background: var(--primary-dark); 
-            color: white; 
-            border: none; 
-            padding: 8px 16px; 
-            border-radius: 6px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: 0.2s;
-        }
-        .btn-verify:hover { background: var(--accent); }
+        /* --- AVERY 6-UP PRINT LAYOUT --- */
+        @media print {
+            @page {
+                size: letter; /* 8.5in x 11in */
+                margin: 0.5in; /* Standard Avery Top/Bottom Margin */
+            }
+            
+            body { 
+                background: white; 
+                padding: 0; 
+                margin: 0; 
+            }
 
-        .empty-state { color: #9ca3af; font-style: italic; text-align: center; padding: 20px; }
+            .controls, h1, p { 
+                display: none !important; 
+            }
+            
+            #sticker-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr; /* 2 Columns */
+                grid-template-rows: repeat(3, 1fr); /* 3 Rows */
+                gap: 0.125in; /* Gap between stickers */
+                width: 100%;
+                margin: 0;
+            }
+
+            .sticker {
+                width: 3in;
+                height: 3in;
+                border: none; /* No border for final print */
+                /* Optional: Add 'border: 1px dashed #eee' if you need cutting guides on plain paper */
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                page-break-inside: avoid;
+                margin: 0 auto; /* Center in grid cell */
+            }
+
+            /* Ensure image is high contrast for printing */
+            .sticker img {
+                width: 2in;
+                height: 2in;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <h2>SUBURBAN QC</h2>
-        <p style="font-size: 10px; opacity: 0.5; text-transform: uppercase; font-weight: bold; margin-bottom: 10px;">Navigation</p>
-        <a href="cellar.html" class="nav-link">Main Cellar Grid</a>
-        <a href="#" onclick="location.reload()" class="nav-link">Refresh Lab Queue</a>
-        <div style="margin-top: auto; font-size: 10px; opacity: 0.3;">QC Portal v2.0</div>
-    </aside>
+    <h1>Avery 3x3 Label Generator</h1>
+    <p>Paste your hosted Cellar Page URL below. Prints 6 labels per sheet.</p>
 
-    <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1 style="margin:0;">Lab Verification Queue</h1>
-                <p style="color: #6b7280; margin-top: 5px;">Authorize stage transitions via quality passing.</p>
-            </div>
-        </div>
+    <div class="controls">
+        <label><b>Your Web App URL:</b></label>
+        <input type="text" id="base-url" placeholder="Paste your Google Script URL here..." value="">
+        <button onclick="generateStickers()">Generate & Print</button>
+    </div>
 
-        <div class="qc-grid">
-            <div class="qc-card vdk">
-                <div class="card-title">
-                    <span>Diacetyl / VDK Verification</span>
-                    <span id="vdk-count" style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px;">0</span>
-                </div>
-                <div id="vdk-queue"></div>
-            </div>
-
-            <div class="qc-card carb">
-                <div class="card-title">
-                    <span>Carbonation & Stability Check</span>
-                    <span id="carb-count" style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 10px;">0</span>
-                </div>
-                <div id="carb-queue"></div>
-            </div>
-        </div>
-    </main>
+    <div id="sticker-container"></div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
+        // Updated Vessel List
+        const vessels = [
+            "FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6",
+            "Pilot 1", "Pilot 2",
+            "BT 1", "BT 2"
+        ];
 
-        window.onload = fetchQCQueue;
+        function generateStickers() {
+            const baseUrl = document.getElementById('base-url').value;
+            const container = document.getElementById('sticker-container');
+            container.innerHTML = "";
 
-        async function fetchQCQueue() {
-            try {
-                // Fetch status and occupancy simultaneously for accurate age tracking
-                const [statusRes, occupancyRes] = await Promise.all([
-                    fetch(`${API_URL}?action=getTankStatus`),
-                    fetch(`${API_URL}?action=getOccupancy`)
-                ]);
-
-                const data = await statusRes.json();
-                const occupancy = await occupancyRes.json();
-                
-                const vdkBox = document.getElementById('vdk-queue');
-                const carbBox = document.getElementById('carb-queue');
-                
-                vdkBox.innerHTML = "";
-                carbBox.innerHTML = "";
-                
-                let vCount = 0;
-                let cCount = 0;
-
-                data.forEach(item => {
-                    if (!item.isActive) return;
-
-                    // Match batch with its calculated tank age
-                    const ageData = occupancy.find(o => o.batchId === item.batchId);
-                    const daysLabel = ageData ? `${ageData.daysInTank} Days in Tank` : "Day 0";
-
-                    // Logic: Tanks in Diacetyl Rest need VDK
-                    if (item.status === "Diacetyl Rest") {
-                        vCount++;
-                        vdkBox.innerHTML += renderBatch(item, daysLabel, "VDK Result");
-                    }
-                    
-                    // Logic: Tanks in Conditioning/Ready need Carb
-                    if (item.status === "Conditioning" || item.status === "Ready to Package") {
-                        cCount++;
-                        carbBox.innerHTML += renderBatch(item, daysLabel, "CO2 Volumes");
-                    }
-                });
-
-                document.getElementById('vdk-count').innerText = vCount;
-                document.getElementById('carb-count').innerText = cCount;
-
-                if (vCount === 0) vdkBox.innerHTML = '<div class="empty-state">No batches awaiting VDK.</div>';
-                if (cCount === 0) carbBox.innerHTML = '<div class="empty-state">No batches awaiting carbonation check.</div>';
-
-            } catch (e) { 
-                Swal.fire("Connection Error", "Could not fetch lab queue.", "error");
+            if (!baseUrl) {
+                alert("Please paste your URL first.");
+                return;
             }
-        }
 
-        function renderBatch(b, age, label) {
-            return `
-                <div class="batch-row">
-                    <div class="batch-details">
-                        <span class="age-badge">${age}</span>
-                        <b>${b.brand}</b>
-                        <span>Vessel: ${b.vessel} | Batch: #${b.batchId}</span>
-                    </div>
-                    <button class="btn-verify" onclick="submitQC('${b.batchId}', '${label}')">Enter ${label}</button>
-                </div>
-            `;
-        }
+            vessels.forEach(vessel => {
+                // 1. Clean URL logic
+                const separator = baseUrl.includes('?') ? '&' : '?';
+                const trackUrl = `${baseUrl}${separator}vessel=${encodeURIComponent(vessel)}`;
+                
+                // 2. Generate QR
+                const qrSrc = `https://quickchart.io/qr?size=300&margin=1&text=${encodeURIComponent(trackUrl)}`;
 
-        async function submitQC(batchId, label) {
-            const { value: result } = await Swal.fire({
-                title: `Enter ${label}`,
-                input: label.includes('VDK') ? 'select' : 'text',
-                inputOptions: label.includes('VDK') ? { 'PASS': 'PASS', 'FAIL': 'FAIL' } : null,
-                inputPlaceholder: label.includes('CO2') ? 'e.g., 2.55' : 'Select Result',
-                showCancelButton: true,
-                confirmButtonColor: '#111827'
+                // 3. Render Sticker (3x3 Size)
+                const sticker = document.createElement('div');
+                sticker.className = 'sticker';
+                sticker.innerHTML = `
+                    <div class="sticker-label">${vessel}</div>
+                    <img src="${qrSrc}" alt="${vessel} QR">
+                    <div class="sticker-sub">SCAN TO LOG</div>
+                `;
+                container.appendChild(sticker);
             });
 
-            if (result) {
-                const action = label.includes('VDK') ? 'verifyVDK' : 'verifyCarb';
-                const payload = {
-                    batchId: batchId,
-                    result: result, // for VDK
-                    vol: result      // for Carb
-                };
-
-                Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-                await fetch(API_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    body: JSON.stringify({ action: action, data: payload }) 
-                });
-
-                Swal.fire("Success", "Quality record updated.", "success").then(fetchQCQueue);
-            }
+            // 4. Print with delay for images
+            setTimeout(() => { window.print(); }, 800);
         }
     </script>
+
 </body>
 </html>
