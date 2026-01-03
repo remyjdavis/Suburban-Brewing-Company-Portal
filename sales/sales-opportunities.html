@@ -166,7 +166,7 @@
     <div class="header-container">
         <div class="header-title">
             <h1>Sales Intelligence</h1>
-            <p>AI-Driven Gap Analysis & Lead Generation</p>
+            <p id="route-status">AI-Driven Gap Analysis & Lead Generation</p>
         </div>
         <div class="route-selector">
             <label style="font-weight:600; color:#4b5563;">Where are you today?</label>
@@ -215,8 +215,35 @@
                 // 1. Populate Route Dropdown
                 populateRouteFilter(data.leads);
                 
-                // 2. Render Initial View
-                renderLeads(allLeads);
+                // 2. CHECK ROUTE CONTEXT (ADDED LOGIC)
+                const todayArea = data.today ? data.today.area : null;
+                const select = document.getElementById('route-select');
+
+                if (todayArea && todayArea !== "All Areas") {
+                    // Try to auto-select the area if it exists in our list
+                    let found = false;
+                    for (let i = 0; i < select.options.length; i++) {
+                        if (select.options[i].value === todayArea) {
+                            select.selectedIndex = i;
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    if (found) {
+                        // Update Header Text
+                        document.getElementById('route-status').innerHTML = 
+                            `📅 <b>It's ${data.today.day}.</b> Focusing on <u>${todayArea}</u> route.`;
+                        // Filter leads immediately
+                        filterByRoute();
+                    } else {
+                        // Area not found in dropdown (maybe no leads there), show all
+                        renderLeads(allLeads);
+                    }
+                } else {
+                    // No specific route, show all
+                    renderLeads(allLeads);
+                }
                 
                 // 3. Render Trends
                 renderTrends(data.trends);
