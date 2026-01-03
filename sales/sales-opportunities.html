@@ -1,172 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Sales Target List | Suburban Brewing</title>
+  <meta charset="UTF-8">
+  <title>Suburban Brewing | Sales Intelligence</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* --- CORE THEME (From Command Center) --- */
+    :root {
+      --bg: #f8fafc;
+      --sidebar: #0f172a;
+      --accent: #2563eb;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --card-bg: #ffffff;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    body { 
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text-main); 
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      display: flex; 
+      min-height: 100vh;
+    }
 
-    <style>
-        :root {
-            --primary: #111827;
-            --accent: #2563eb;
-            --bg: #f3f4f6;
-            --card-bg: #ffffff;
-            --text: #1f2937;
-        }
+    /* --- SIDEBAR (Fixed) --- */
+    .sidebar { 
+      width: 260px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
+    
+    .nav-section-title { 
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #475569; 
+      margin: 24px 24px 8px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+    }
+    
+    .nav-link { 
+      display: flex;
+      align-items: center;
+      padding: 10px 24px; 
+      color: #94a3b8; 
+      text-decoration: none; 
+      font-size: 14px; 
+      transition: 0.2s; 
+      border-left: 4px solid transparent;
+    }
+    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
-            margin: 0;
-            padding: 20px;
-            color: var(--text);
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+    /* --- MAIN CONTENT AREA --- */
+    .main { 
+      flex: 1; 
+      margin-left: 260px; 
+      padding: 40px; 
+      transition: all 0.3s ease; 
+      max-width: 1400px;
+    }
 
-        /* --- HEADER & CONTROLS --- */
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
+    /* --- HEADER BAR (Adaptive) --- */
+    .header-bar { 
+      margin-bottom: 32px; 
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      padding: 20px 24px;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .header-content h1 { font-size: 24px; font-weight: 800; margin: 0; color: var(--text-main); }
+    .header-content p { margin: 4px 0 0; color: var(--text-muted); font-size: 14px; }
 
-        .header-title h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
-        .header-title p { margin: 5px 0 0; color: #6b7280; font-size: 0.9rem; }
+    /* --- CONTROLS --- */
+    .route-selector { display: flex; align-items: center; gap: 12px; }
+    .route-selector label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+    select {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      background: #fff;
+      min-width: 220px;
+      cursor: pointer;
+    }
 
-        .route-selector {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    /* --- DASHBOARD GRID --- */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 25px;
+    }
 
-        select {
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #d1d5db;
-            font-size: 1rem;
-            min-width: 200px;
-        }
+    /* --- CARDS & PANELS --- */
+    .leads-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
 
-        /* --- DASHBOARD LAYOUT --- */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 25px;
-        }
+    .lead-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+      border-left: 5px solid #cbd5e1; /* Default styling */
+      position: relative;
+      transition: transform 0.2s;
+    }
+    .lead-card:hover { transform: translateY(-2px); }
 
-        /* --- OPPORTUNITY CARDS (LEFT) --- */
-        .leads-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-        }
+    /* Priority Colors */
+    .priority-high { border-left-color: var(--danger); }
+    .priority-med { border-left-color: var(--warning); }
 
-        .lead-card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border-left: 5px solid #d1d5db; /* Default border */
-            position: relative;
-        }
-        
-        /* Priority Colors */
-        .priority-high { border-left-color: #ef4444; }
-        .priority-med { border-left-color: #f59e0b; }
+    .client-header { margin-bottom: 15px; }
+    .client-name { font-weight: 800; font-size: 18px; color: var(--text-main); }
+    .client-loc { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 4px; font-weight: 500; }
 
-        .client-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 10px;
-        }
+    .pitch-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 15px;
+    }
 
-        .client-name { font-weight: 800; font-size: 1.1rem; color: var(--primary); }
-        .client-loc { font-size: 0.8rem; color: #6b7280; display: flex; align-items: center; gap: 4px; }
+    .pitch-label { font-size: 11px; text-transform: uppercase; color: var(--accent); font-weight: 800; letter-spacing: 0.5px; }
+    .pitch-product { font-size: 18px; font-weight: 800; color: #1e3a8a; margin: 6px 0; }
+    .pitch-reason { font-size: 14px; color: #475569; font-style: italic; line-height: 1.4; }
 
-        .pitch-box {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 6px;
-            padding: 12px;
-            margin-top: 10px;
-        }
+    .stock-badge {
+      display: inline-block;
+      background: #dcfce7; color: #166534;
+      font-size: 11px; font-weight: 700;
+      padding: 4px 10px; border-radius: 20px;
+      margin-top: 10px; text-transform: uppercase;
+    }
 
-        .pitch-label { font-size: 0.7rem; text-transform: uppercase; color: #1e40af; font-weight: 700; }
-        .pitch-product { font-size: 1rem; font-weight: 800; color: #1e3a8a; margin: 4px 0; }
-        .pitch-reason { font-size: 0.85rem; color: #4b5563; font-style: italic; }
+    /* --- TRENDS SIDEBAR --- */
+    .trends-panel {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 24px;
+      height: fit-content;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .trend-title { font-weight: 800; color: var(--text-main); margin-bottom: 20px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .trend-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+    }
+    .trend-city { font-weight: 600; color: var(--text-main); }
+    .trend-brand { color: var(--accent); font-weight: 700; }
 
-        .stock-badge {
-            display: inline-block;
-            background: #dcfce7; color: #166534;
-            font-size: 0.7rem; font-weight: 700;
-            padding: 2px 8px; border-radius: 12px;
-            margin-top: 5px;
-        }
+    /* --- MOBILE RESPONSIVE --- */
+    @media (max-width: 900px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .header-bar { flex-direction: column; align-items: flex-start; gap: 20px; }
+      .route-selector { width: 100%; }
+      select { width: 100%; }
+    }
 
-        /* --- TRENDS SIDEBAR (RIGHT) --- */
-        .trends-panel {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            height: fit-content;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .trend-title { font-weight: 800; color: var(--primary); margin-bottom: 15px; font-size: 1.1rem; }
-        
-        .trend-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .trend-city { font-weight: 600; color: #374151; }
-        .trend-brand { color: var(--accent); font-weight: 700; }
-
-        @media (max-width: 900px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .header-container { flex-direction: column; align-items: start; gap: 15px; }
-        }
-    </style>
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; background: var(--sidebar); overflow-x: auto; }
+      .sidebar h2, .sidebar .nav-section-title { display: none; }
+      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; font-size: 12px; font-weight: 700; white-space: nowrap; }
+      .nav-link.active { border-top: 4px solid var(--accent); border-left: none; background: #1e293b; }
+      .main { margin-left: 0; padding: 20px 20px 90px; }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <div class="header-title">
-            <h1>Sales Intelligence</h1>
-            <p id="route-status">AI-Driven Gap Analysis</p>
-        </div>
-        <div class="route-selector">
-            <label style="font-weight:600; color:#4b5563;">Area:</label>
-            <select id="route-select" onchange="filterByRoute()">
-                <option value="All">Show All Areas</option>
-                </select>
-        </div>
-    </div>
+  <aside class="sidebar">
+    <h2>SUBURBAN Brewing</h2>
+    
+    <div class="nav-section-title">Main Menu</div>
+    <a href="index.html" class="nav-link"><span>Command Center</span></a>
+    
+    <div class="nav-section-title">Samplings</div>
+    <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+    <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+    <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    
+    <div class="nav-section-title">Sales</div>
+    <a href="sales/sales-opportunities.html" class="nav-link active"><span>Sales Opportunities</span></a>
+    <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+    <a href="sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+    <a href="sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+    <a href="sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+
+    <div class="nav-section-title">Inventory</div>
+    <a href="inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+    <a href="inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+    <a href="inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+    <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    
+    <div class="nav-section-title">Brewing</div>
+    <a href="Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
+    <a href="Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+    <a href="Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+    <a href="Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+    <a href="Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    
+    <div class="nav-section-title">Reporting & Analytics</div>
+    <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+    <a href="Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+  </aside>
+
+  <main class="main">
+    
+    <header class="header-bar">
+      <div class="header-content">
+        <h1>Sales Intelligence</h1>
+        <p id="route-status">AI-Driven Gap Analysis & Targeting</p>
+      </div>
+      
+      <div class="route-selector">
+        <label>Filter By Area:</label>
+        <select id="route-select" onchange="filterByRoute()">
+            <option value="All">Show All Areas</option>
+        </select>
+      </div>
+    </header>
 
     <div class="dashboard-grid">
         
         <div>
-            <div id="loading-state" style="text-align:center; padding:40px; color:#6b7280;">
-                <div style="font-size:2rem; margin-bottom:10px;">🤖</div>
-                Analyzing sales history and inventory levels...
+            <div id="loading-state" style="text-align:center; padding:60px; color:#94a3b8;">
+                <div style="font-size:2.5rem; margin-bottom:15px; animation: pulse 1.5s infinite;">🤖</div>
+                <div style="font-weight:600;">Analyzing sales history...</div>
+                <div style="font-size:13px; margin-top:5px;">Checking regional trends vs. client inventory</div>
             </div>
             <div id="leads-grid" class="leads-container"></div>
         </div>
 
         <div class="trends-panel">
-            <div class="trend-title">📈 Local Favorites</div>
+            <div class="trend-title">📈 Regional Favorites</div>
             <div id="trends-list">
-                <p style="color:#9ca3af; font-size:0.9rem;">Loading trends...</p>
+                <p style="color:#94a3b8; font-size:13px;">Loading trends...</p>
             </div>
             <div style="margin-top:30px;">
                 <canvas id="trendChart"></canvas>
@@ -174,7 +277,6 @@
         </div>
 
     </div>
-
     <script>
         // 🔴 UPDATE WITH YOUR DEPLOYED SCRIPT URL 🔴
         const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
