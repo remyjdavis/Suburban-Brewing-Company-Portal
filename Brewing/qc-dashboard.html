@@ -46,6 +46,18 @@
         .batch-details b { font-size: 1rem; display: block; color: var(--primary-dark); }
         .batch-details span { font-size: 0.8rem; color: #6b7280; }
         
+        /* NEW: Age Indicator Styling */
+        .age-badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            color: #374151;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+
         .btn-verify { 
             background: var(--primary-dark); 
             color: white; 
@@ -105,8 +117,14 @@
 
         async function fetchQCQueue() {
             try {
-                const res = await fetch(`${API_URL}?action=getTankStatus`);
-                const data = await res.json();
+                // Fetch status and occupancy simultaneously for accurate age tracking
+                const [statusRes, occupancyRes] = await Promise.all([
+                    fetch(`${API_URL}?action=getTankStatus`),
+                    fetch(`${API_URL}?action=getOccupancy`)
+                ]);
+
+                const data = await statusRes.json();
+                const occupancy = await occupancyRes.json();
                 
                 const vdkBox = document.getElementById('vdk-queue');
                 const carbBox = document.getElementById('carb-queue');
@@ -120,16 +138,20 @@
                 data.forEach(item => {
                     if (!item.isActive) return;
 
+                    // Match batch with its calculated tank age
+                    const ageData = occupancy.find(o => o.batchId === item.batchId);
+                    const daysLabel = ageData ? `${ageData.daysInTank} Days in Tank` : "Day 0";
+
                     // Logic: Tanks in Diacetyl Rest need VDK
                     if (item.status === "Diacetyl Rest") {
                         vCount++;
-                        vdkBox.innerHTML += renderBatch(item, "VDK Result");
+                        vdkBox.innerHTML += renderBatch(item, daysLabel, "VDK Result");
                     }
                     
                     // Logic: Tanks in Conditioning/Ready need Carb
                     if (item.status === "Conditioning" || item.status === "Ready to Package") {
                         cCount++;
-                        carbBox.innerHTML += renderBatch(item, "CO2 Volumes");
+                        carbBox.innerHTML += renderBatch(item, daysLabel, "CO2 Volumes");
                     }
                 });
 
@@ -144,10 +166,11 @@
             }
         }
 
-        function renderBatch(b, label) {
+        function renderBatch(b, age, label) {
             return `
                 <div class="batch-row">
                     <div class="batch-details">
+                        <span class="age-badge">${age}</span>
                         <b>${b.brand}</b>
                         <span>Vessel: ${b.vessel} | Batch: #${b.batchId}</span>
                     </div>
