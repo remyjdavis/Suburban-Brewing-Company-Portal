@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Sales Target List | Suburban Brewing</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -76,11 +75,8 @@
             padding: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             border-left: 5px solid #d1d5db; /* Default border */
-            transition: transform 0.2s;
             position: relative;
         }
-        
-        .lead-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
         /* Priority Colors */
         .priority-high { border-left-color: #ef4444; }
@@ -116,25 +112,6 @@
             margin-top: 5px;
         }
 
-        .actions {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
-        .btn-pitch { background: var(--accent); color: white; }
-        .btn-pitch:hover { background: #1d4ed8; }
-        .btn-snooze { background: #f3f4f6; color: #4b5563; }
-
         /* --- TRENDS SIDEBAR (RIGHT) --- */
         .trends-panel {
             background: white;
@@ -166,10 +143,10 @@
     <div class="header-container">
         <div class="header-title">
             <h1>Sales Intelligence</h1>
-            <p id="route-status">AI-Driven Gap Analysis & Lead Generation</p>
+            <p id="route-status">AI-Driven Gap Analysis</p>
         </div>
         <div class="route-selector">
-            <label style="font-weight:600; color:#4b5563;">Where are you today?</label>
+            <label style="font-weight:600; color:#4b5563;">Area:</label>
             <select id="route-select" onchange="filterByRoute()">
                 <option value="All">Show All Areas</option>
                 </select>
@@ -199,10 +176,10 @@
     </div>
 
     <script>
-        // 🔴 UPDATE WITH YOUR CELLAR SCRIPT URL 🔴
+        // 🔴 UPDATE WITH YOUR DEPLOYED SCRIPT URL 🔴
         const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
 
-        let allLeads = []; // Store raw data for filtering
+        let allLeads = []; 
 
         window.onload = async function() {
             try {
@@ -215,12 +192,11 @@
                 // 1. Populate Route Dropdown
                 populateRouteFilter(data.leads);
                 
-                // 2. CHECK ROUTE CONTEXT (ADDED LOGIC)
+                // 2. CHECK ROUTE CONTEXT
                 const todayArea = data.today ? data.today.area : null;
                 const select = document.getElementById('route-select');
 
                 if (todayArea && todayArea !== "All Areas") {
-                    // Try to auto-select the area if it exists in our list
                     let found = false;
                     for (let i = 0; i < select.options.length; i++) {
                         if (select.options[i].value === todayArea) {
@@ -231,17 +207,13 @@
                     }
                     
                     if (found) {
-                        // Update Header Text
                         document.getElementById('route-status').innerHTML = 
                             `📅 <b>It's ${data.today.day}.</b> Focusing on <u>${todayArea}</u> route.`;
-                        // Filter leads immediately
                         filterByRoute();
                     } else {
-                        // Area not found in dropdown (maybe no leads there), show all
                         renderLeads(allLeads);
                     }
                 } else {
-                    // No specific route, show all
                     renderLeads(allLeads);
                 }
                 
@@ -286,7 +258,7 @@
             container.innerHTML = "";
 
             if (leads.length === 0) {
-                container.innerHTML = "<div style='grid-column:1/-1; text-align:center; color:#6b7280; padding:20px;'>No new opportunities found for this area. Good job!</div>";
+                container.innerHTML = "<div style='grid-column:1/-1; text-align:center; color:#6b7280; padding:20px;'>No high-priority gaps found. Good job!</div>";
                 return;
             }
 
@@ -308,11 +280,6 @@
                         <div class="pitch-product">🍺 ${lead.product}</div>
                         <div class="pitch-reason">${lead.reason}</div>
                         <div class="stock-badge">✅ In Stock</div>
-                    </div>
-
-                    <div class="actions">
-                        <button class="btn btn-pitch" onclick="logPitch('${lead.customer}', '${lead.product}')">Log Pitch</button>
-                        <button class="btn btn-snooze" onclick="this.closest('.lead-card').remove()">Snooze</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -349,18 +316,6 @@
                     plugins: { legend: { display: false }, title: { display: true, text: 'Top Regional Movers' } }
                 }
             });
-        }
-
-        // --- ACTIONS ---
-        function logPitch(customer, product) {
-            Swal.fire({
-                title: 'Success!',
-                text: `Logged pitch of ${product} to ${customer}.`,
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false
-            });
-            // Here you would add a fetch() call to send this data back to your Sales Log in Google Sheets
         }
     </script>
 
