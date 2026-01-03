@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suburban Brewing | Vessel QR Generator</title>
+    <title>Suburban Brewing | Vessel QR Generator (Avery 3x3)</title>
     <style>
-        /* --- SCREEN STYLES (What you see on the computer) --- */
+        /* --- SCREEN STYLES (Interactive View) --- */
         body {
             font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: #f3f4f6;
@@ -51,35 +51,35 @@
 
         button:hover { background: #1d4ed8; }
 
-        /* --- STICKER GRID --- */
+        /* --- STICKER PREVIEW (Screen) --- */
         #sticker-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            max-width: 1000px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
         .sticker {
             background: white;
-            border: 2px solid #000;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
+            border: 1px solid #ddd;
+            width: 3in;  /* Physical Width on Screen Preview */
+            height: 3in; /* Physical Height on Screen Preview */
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            page-break-inside: avoid; /* Prevents cutting a QR in half */
+            margin: 0 auto;
         }
 
         .sticker img {
-            width: 150px;
-            height: 150px;
+            width: 1.8in; /* Adjusted for 3 inch square */
+            height: 1.8in;
         }
 
         .sticker-label {
-            font-size: 1.5rem;
+            font-size: 24px;
             font-weight: 900;
             margin-top: 10px;
             text-transform: uppercase;
@@ -87,52 +87,74 @@
         }
 
         .sticker-sub {
-            font-size: 0.7rem;
+            font-size: 10px;
             color: #555;
             margin-top: 5px;
+            letter-spacing: 1px;
         }
 
-        /* --- PRINT LAYOUT (CSS for the Printer) --- */
+        /* --- AVERY 6-UP PRINT LAYOUT --- */
         @media print {
+            @page {
+                size: letter; /* 8.5in x 11in */
+                margin: 0.5in; /* Standard Avery Top/Bottom Margin */
+            }
+            
             body { 
                 background: white; 
                 padding: 0; 
                 margin: 0; 
             }
+
             .controls, h1, p { 
-                display: none !important; /* Hides the menu buttons */
+                display: none !important; 
             }
+            
             #sticker-container {
                 display: grid;
-                grid-template-columns: 1fr 1fr 1fr; /* 3 stickers per row */
-                gap: 20px;
+                grid-template-columns: 1fr 1fr; /* 2 Columns */
+                grid-template-rows: repeat(3, 1fr); /* 3 Rows */
+                gap: 0.125in; /* Gap between stickers */
                 width: 100%;
                 margin: 0;
             }
+
             .sticker {
-                border: 1px dashed #999; /* Light border for cutting guide */
-                box-shadow: none;
-                break-inside: avoid;
+                width: 3in;
+                height: 3in;
+                border: none; /* No border for final print */
+                /* Optional: Add 'border: 1px dashed #eee' if you need cutting guides on plain paper */
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                page-break-inside: avoid;
+                margin: 0 auto; /* Center in grid cell */
+            }
+
+            /* Ensure image is high contrast for printing */
+            .sticker img {
+                width: 2in;
+                height: 2in;
             }
         }
     </style>
 </head>
 <body>
 
-    <h1>QR Code Label Generator</h1>
-    <p>Enter your hosted Cellar Page URL below to generate stickers.</p>
+    <h1>Avery 3x3 Label Generator</h1>
+    <p>Paste your hosted Cellar Page URL below. Prints 6 labels per sheet.</p>
 
     <div class="controls">
         <label><b>Your Web App URL:</b></label>
-        <input type="text" id="base-url" placeholder="https://script.google.com/macros/s/..." value="https://your-website.com/cellar.html">
+        <input type="text" id="base-url" placeholder="Paste your Google Script URL here..." value="">
         <button onclick="generateStickers()">Generate & Print</button>
     </div>
 
-    <div id="sticker-container">
-        </div>
+    <div id="sticker-container"></div>
 
     <script>
-        // Define your tank list here
+        // Updated Vessel List
         const vessels = [
             "FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6",
             "Pilot 1", "Pilot 2",
@@ -142,21 +164,22 @@
         function generateStickers() {
             const baseUrl = document.getElementById('base-url').value;
             const container = document.getElementById('sticker-container');
-            container.innerHTML = ""; // Clear existing
+            container.innerHTML = "";
 
-            if (!baseUrl || baseUrl.includes("your-website")) {
-                alert("Please paste your actual Cellar Page URL first.");
+            if (!baseUrl) {
+                alert("Please paste your URL first.");
                 return;
             }
 
             vessels.forEach(vessel => {
-                // 1. Build the Tracking URL
-                const trackUrl = `${baseUrl}?vessel=${encodeURIComponent(vessel)}`;
+                // 1. Clean URL logic
+                const separator = baseUrl.includes('?') ? '&' : '?';
+                const trackUrl = `${baseUrl}${separator}vessel=${encodeURIComponent(vessel)}`;
                 
-                // 2. Build the QR Image Source (using QuickChart API)
+                // 2. Generate QR
                 const qrSrc = `https://quickchart.io/qr?size=300&margin=1&text=${encodeURIComponent(trackUrl)}`;
 
-                // 3. Create the Sticker HTML
+                // 3. Render Sticker (3x3 Size)
                 const sticker = document.createElement('div');
                 sticker.className = 'sticker';
                 sticker.innerHTML = `
@@ -167,10 +190,8 @@
                 container.appendChild(sticker);
             });
 
-            // 4. Trigger Print Dialog
-            setTimeout(() => {
-                window.print();
-            }, 1000); // Small delay to let images load
+            // 4. Print with delay for images
+            setTimeout(() => { window.print(); }, 800);
         }
     </script>
 
