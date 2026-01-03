@@ -271,7 +271,6 @@
             display: block;
         }
 
-        /* --- ADDED: Style for the calculator result box --- */
         .aa-calculator-box {
             background: #fffbeb;
             border: 1px solid #fef3c7;
@@ -408,6 +407,25 @@
                 </div>
             </div>
 
+            <div id="tab-actions" class="tab-content">
+                <div class="form-group">
+                    <label>Update Tank Status</label>
+                    <select id="status-select">
+                        <option value="Primary Fermentation">Primary Fermentation</option>
+                        <option value="Diacetyl Rest">Diacetyl Rest</option>
+                        <option value="Cold Crash">Cold Crash</option>
+                        <option value="Conditioning">Conditioning</option>
+                        <option value="Ready to Package">Ready to Package</option>
+                        <option value="Dirty">Dirty</option>
+                        <option value="Clean">Clean / Available</option>
+                    </select>
+                </div>
+                <div id="qc-alert-box" style="display:none; padding: 15px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; margin-bottom: 20px; color: #92400e; font-size: 13px; line-height: 1.5;">
+                    ⚠️ <b>Verification Required:</b> This stage change requires a <b>VDK PASS</b> or <b>Carbonation Check</b> to be logged in the Daily Log before advancing.
+                </div>
+                <button class="btn-action btn-blue" onclick="updateStatus()">Apply Stage Transition</button>
+            </div>
+
             <div id="tab-additions" class="tab-content">
                 <div style="display: flex; background: #f1f5f9; padding: 5px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
                     <button id="toggle-dh" class="tab-btn active" style="flex:1; padding: 8px; font-size: 11px; border-radius: 6px; border:none;" onclick="setAdditionMode('DH')">Dry Hop (Recipe Driven)</button>
@@ -456,25 +474,6 @@
                     </div>
                     <button class="btn-action btn-green" onclick="submitAddition('Ingredient')">Log Ingredient Addition</button>
                 </div>
-            </div>
-
-            <div id="tab-actions" class="tab-content">
-                <div class="form-group">
-                    <label>Update Tank Status</label>
-                    <select id="status-select">
-                        <option value="Primary Fermentation">Primary Fermentation</option>
-                        <option value="Diacetyl Rest">Diacetyl Rest</option>
-                        <option value="Cold Crash">Cold Crash</option>
-                        <option value="Conditioning">Conditioning</option>
-                        <option value="Ready to Package">Ready to Package</option>
-                        <option value="Dirty">Dirty</option>
-                        <option value="Clean">Clean / Available</option>
-                    </select>
-                </div>
-                <div id="qc-alert-box" style="display:none; padding: 15px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; margin-bottom: 20px; color: #92400e; font-size: 13px; line-height: 1.5;">
-                    ⚠️ <b>Verification Required:</b> This stage change requires a <b>VDK PASS</b> or <b>Carbonation Check</b> to be logged in the Daily Log before advancing.
-                </div>
-                <button class="btn-action btn-blue" onclick="updateStatus()">Apply Stage Transition</button>
             </div>
 
             <div id="tab-drops" class="tab-content">
@@ -537,361 +536,371 @@
     </div>
 
     <script>
-    // --- MASTER CONFIGURATION ---
-    const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
-    
-    let currentBatchId = null;
-    let currentVessel = null;
-    let currentBrand = null;
-    let currentAdditionMode = 'DH';
-
-    // --- 1. INITIALIZATION (THIS WAS THE MISSING LINK) ---
-    window.onload = async function() {
-        // First, build the visual grid
-        await refreshGrid();
-        // THEN, check if a QR code triggered this page load
-        checkForQRContext();
-    };
-
-    // --- 2. QR CODE LISTENER ---
-    async function checkForQRContext() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const qrVessel = urlParams.get('vessel');
+        // --- MASTER CONFIGURATION ---
+        const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
         
-        if (qrVessel) {
-            console.log("QR Scan Detected for: " + qrVessel);
-            
-            // We need to fetch the specific status of this tank to know if we should open the log
-            // or prompt to start a new batch.
-            try {
-                const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`);
-                const allTanks = await res.json();
-                // Decode the URI component to handle spaces (e.g. "FV%201" -> "FV 1")
-                const targetName = decodeURIComponent(qrVessel);
-                const target = allTanks.find(t => t.vessel === targetName);
+        let currentBatchId = null;
+        let currentVessel = null;
+        let currentBrand = null;
+        let currentAdditionMode = 'DH';
 
-                if (target && target.isActive) {
-                    // Tank is full -> Open the Daily Log
-                    openModal(target.vessel, target.batchId, target.brand, target.status);
-                } else {
-                    // Tank is empty -> Prompt for Action
+        // --- GRID INITIALIZATION & QR LOGIC ---
+        window.onload = async function() {
+            await refreshGrid();
+            checkForQRContext();
+        };
+
+        // --- QR CODE SCAN LOGIC (FUZZY MATCH) ---
+        async function checkForQRContext() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const qrVessel = urlParams.get('vessel');
+            
+            if (qrVessel) {
+                console.log("QR Scan Detected for: " + qrVessel);
+                
+                try {
                     Swal.fire({
-                        title: `${targetName} is Empty`,
-                        text: "Scan detected. What would you like to do?",
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonText: 'Start New Brew',
-                        confirmButtonColor: '#2563eb',
-                        cancelButtonText: 'Receive Transfer',
-                        cancelButtonColor: '#10b981'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.href = "Brew-Log.html"; // Redirect to Brew Log
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            Swal.fire("Ready to Receive", "Go to the Source Tank's QR code to initiate transfer.", "info");
-                        }
+                        title: 'Scanning...',
+                        text: `Checking status for ${qrVessel}`,
+                        didOpen: () => { Swal.showLoading() },
+                        timer: 1000,
+                        timerProgressBar: true
                     });
+
+                    const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`);
+                    const allTanks = await res.json();
+                    
+                    // FUZZY MATCHING LOGIC
+                    // Normalize: Remove spaces, convert to uppercase (e.g. "FV 1" -> "FV1")
+                    const normalize = (str) => str.replace(/[-\s]/g, '').toUpperCase();
+                    const targetScan = normalize(decodeURIComponent(qrVessel));
+                    
+                    const target = allTanks.find(t => normalize(t.vessel) === targetScan);
+
+                    if (target && target.isActive) {
+                        // Tank found and active -> Open Modal
+                        Swal.close();
+                        openModal(target.vessel, target.batchId, target.brand, target.status);
+                    } else {
+                        // Tank empty or not found -> Prompt
+                        Swal.fire({
+                            title: `${qrVessel} Available`,
+                            text: "Vessel is empty or inactive. Choose action:",
+                            icon: 'info',
+                            showCancelButton: true,
+                            confirmButtonText: 'Start New Brew',
+                            confirmButtonColor: '#2563eb',
+                            cancelButtonText: 'Receive Transfer',
+                            cancelButtonColor: '#10b981'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = "Brew-Log.html"; 
+                            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                                Swal.fire("Transfer Mode", "Scan Source Tank QR to begin transfer.", "info");
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error("QR Error:", e);
+                    Swal.fire("Scan Error", "Could not connect to database.", "error");
+                }
+            }
+        }
+
+        async function refreshGrid() {
+            const categories = {
+                'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"],
+                'grid-pilot': ["Pilot 1", "Pilot 2"],
+                'grid-brite': ["BT 1", "BT 2"]
+            };
+
+            try {
+                const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { redirect: "follow" });
+                const live = await res.json();
+
+                let totalBBL = 0;
+                let activeCount = 0;
+                let qcPendingCount = 0;
+
+                Object.keys(categories).forEach(gridId => {
+                    const container = document.getElementById(gridId);
+                    if (!container) return;
+                    container.innerHTML = "";
+                    
+                    categories[gridId].forEach(name => {
+                        const data = Array.isArray(live) ? live.find(b => b.vessel === name) : null;
+                        const active = !!data && data.isActive;
+                        const status = active ? data.status : "Available";
+                        
+                        if(active) {
+                            activeCount++;
+                            totalBBL += gridId.includes('pilot') ? 1 : 10;
+                            if(status === "Diacetyl Rest" || status === "Conditioning") qcPendingCount++;
+                        }
+
+                        let cardClass = active ? "active" : "clean";
+                        if (status === "Dirty") cardClass = "dirty";
+                        
+                        let qcBadge = "";
+                        if(active && status === "Diacetyl Rest") {
+                            qcBadge = `<div class="qc-badge">VDK REQ</div>`;
+                            cardClass += " waiting-qc";
+                        }
+
+                        container.innerHTML += `
+                            <div class="vessel-card ${cardClass}" onclick="openModal('${name}', '${active ? data.batchId : ''}', '${active ? data.brand : ''}', '${status}')">
+                                ${qcBadge}
+                                <p class="tank-name">${name}</p>
+                                <span class="status-tag">${status}</span>
+                                <br><small>${active ? data.brand : '---'}</small>
+                            </div>`;
+                    });
+                });
+
+                document.getElementById('stat-total-bbl').innerText = totalBBL + " BBL";
+                document.getElementById('stat-active-count').innerText = activeCount;
+                document.getElementById('stat-qc-pending').innerText = qcPendingCount;
+
+            } catch (e) { console.error("Grid Load Error:", e); }
+        }
+
+        async function openModal(vessel, batchId, beerName, status) {
+            currentVessel = vessel;
+            currentBatchId = batchId;
+            currentBrand = beerName;
+            
+            document.getElementById('vessel-modal').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('modal-title').innerText = vessel;
+            
+            const qcBox = document.getElementById('qc-alert-box');
+            qcBox.style.display = (status === "Diacetyl Rest" || status === "Conditioning") ? 'block' : 'none';
+
+            if (batchId && batchId !== "") {
+                document.getElementById('modal-subtitle').innerText = `${beerName} (Batch #${batchId})`;
+                fetchRecipeHops(beerName); 
+                loadInventoryLots(); 
+                initChart(batchId, beerName); 
+            } else {
+                document.getElementById('modal-subtitle').innerText = "Vessel Status: " + status;
+            }
+        }
+
+        async function loadInventoryLots() {
+            const select = document.getElementById('dh-lot-select');
+            try {
+                const res = await fetch(`${CELLAR_API_URL}?action=getHopAlphaData`);
+                const items = await res.json();
+                select.innerHTML = '<option value="">-- Choose Inventory Lot --</option>';
+                items.forEach(i => {
+                    select.innerHTML += `<option value="${i.lot}" data-aa="${i.aa}">${i.variety} (Lot: ${i.lot} | ${i.aa}%)</option>`;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        function calculateAAAdjustment() {
+            const recipeWeight = parseFloat(document.getElementById('dh-recipe-weight').value);
+            const targetAA = parseFloat(document.getElementById('dh-target-aa').value);
+            const select = document.getElementById('dh-lot-select');
+            const actualAA = parseFloat(select.options[select.selectedIndex].getAttribute('data-aa'));
+
+            if (!recipeWeight || !targetAA || !actualAA) return;
+
+            const adjusted = (recipeWeight * targetAA) / actualAA;
+            document.getElementById('dh-adjusted-val').innerText = adjusted.toFixed(2);
+            document.getElementById('aa-calc-display').style.display = 'block';
+        }
+
+        async function fetchRecipeHops(recipeName) {
+            const listDiv = document.getElementById('recipe-dh-list');
+            try {
+                const res = await fetch(`${CELLAR_API_URL}?action=getRecipePlan&name=${encodeURIComponent(recipeName)}`);
+                const plan = await res.json();
+                if (plan && plan.hops && plan.hops.length > 0) {
+                    listDiv.innerHTML = plan.hops.map(h => 
+                        `<div style="padding: 4px 0; border-bottom: 1px solid #dbeafe;">
+                            <span style="color: #1e40af;">${h.variety}</span>: ${h.amount} lbs (Target: ${h.targetAA}%)
+                        </div>`
+                    ).join('');
+                    document.getElementById('dh-recipe-weight').value = plan.hops[0].amount;
+                    document.getElementById('dh-target-aa').value = plan.hops[0].targetAA;
+                }
+            } catch (e) { listDiv.innerHTML = "Recipe data retrieval error."; }
+        }
+
+        async function initChart(batchId, brand) {
+            const ctx = document.getElementById('fermChart').getContext('2d');
+            if(window.fermChartObj) window.fermChartObj.destroy();
+
+            try {
+                const res = await fetch(`${CELLAR_API_URL}?action=getFermAnalysis&batchId=${batchId}&brand=${encodeURIComponent(brand)}`);
+                const comparison = await res.json();
+
+                window.fermChartObj = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: comparison.benchmark.map(b => 'Day ' + b.day),
+                        datasets: [
+                            {
+                                label: 'Current Gravity',
+                                data: comparison.current.map(c => c.gravity),
+                                borderColor: '#2563eb',
+                                backgroundColor: 'rgba(37, 99, 235, 0.05)',
+                                fill: true,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Historical Benchmark',
+                                data: comparison.benchmark.map(b => b.benchmarkGravity),
+                                borderColor: '#94a3b8',
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            } catch (e) { console.warn("Chart Load Error", e); }
+        }
+
+        async function runMLAnalysis() {
+            document.getElementById('ml-health-status').innerText = "Computing...";
+            try {
+                const res = await fetch(`${CELLAR_API_URL}?action=runMLPrediction&batchId=${currentBatchId}`);
+                const mlData = await res.json();
+                
+                document.getElementById('ml-finish-date').innerText = mlData.prediction || "Unknown";
+                
+                if (mlData.anomaly) {
+                    document.getElementById('ml-health-status').innerText = "Deviation Detected";
+                    document.getElementById('ml-health-status').style.color = "#ef4444";
+                    document.getElementById('ml-anomaly-box').style.display = "block";
+                } else {
+                    document.getElementById('ml-health-status').innerText = "Healthy Curve";
+                    document.getElementById('ml-health-status').style.color = "#10b981";
+                    document.getElementById('ml-anomaly-box').style.display = "none";
                 }
             } catch (e) {
-                console.error("QR Error:", e);
+                console.error("ML Error", e);
+                document.getElementById('ml-health-status').innerText = "Data Error";
             }
         }
-    }
 
-    // --- 3. GRID & DATA FUNCTIONS ---
-    async function refreshGrid() {
-        const categories = {
-            'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"],
-            'grid-pilot': ["Pilot 1", "Pilot 2"],
-            'grid-brite': ["BT 1", "BT 2"]
-        };
-
-        try {
-            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { redirect: "follow" });
-            const live = await res.json();
-
-            let totalBBL = 0;
-            let activeCount = 0;
-            let qcPendingCount = 0;
-
-            Object.keys(categories).forEach(gridId => {
-                const container = document.getElementById(gridId);
-                if (!container) return;
-                container.innerHTML = "";
-                
-                categories[gridId].forEach(name => {
-                    const data = Array.isArray(live) ? live.find(b => b.vessel === name) : null;
-                    const active = !!data && data.isActive;
-                    const status = active ? data.status : "Available";
-                    
-                    if(active) {
-                        activeCount++;
-                        totalBBL += gridId.includes('pilot') ? 1 : 10;
-                        if(status === "Diacetyl Rest" || status === "Conditioning") qcPendingCount++;
-                    }
-
-                    let cardClass = active ? "active" : "clean";
-                    if (status === "Dirty") cardClass = "dirty";
-                    
-                    let qcBadge = "";
-                    if(active && status === "Diacetyl Rest") {
-                        qcBadge = `<div class="qc-badge">VDK REQ</div>`;
-                        cardClass += " waiting-qc";
-                    }
-
-                    container.innerHTML += `
-                        <div class="vessel-card ${cardClass}" onclick="openModal('${name}', '${active ? data.batchId : ''}', '${active ? data.brand : ''}', '${status}')">
-                            ${qcBadge}
-                            <p class="tank-name">${name}</p>
-                            <span class="status-tag">${status}</span>
-                            <br><small>${active ? data.brand : '---'}</small>
-                        </div>`;
-                });
-            });
-
-            document.getElementById('stat-total-bbl').innerText = totalBBL + " BBL";
-            document.getElementById('stat-active-count').innerText = activeCount;
-            document.getElementById('stat-qc-pending').innerText = qcPendingCount;
-
-        } catch (e) { console.error("Grid Load Error:", e); }
-    }
-
-    async function openModal(vessel, batchId, beerName, status) {
-        currentVessel = vessel;
-        currentBatchId = batchId;
-        currentBrand = beerName;
-        
-        document.getElementById('vessel-modal').style.display = 'block';
-        document.getElementById('overlay').style.display = 'block';
-        document.getElementById('modal-title').innerText = vessel;
-        
-        const qcBox = document.getElementById('qc-alert-box');
-        qcBox.style.display = (status === "Diacetyl Rest" || status === "Conditioning") ? 'block' : 'none';
-
-        if (batchId && batchId !== "") {
-            document.getElementById('modal-subtitle').innerText = `${beerName} (Batch #${batchId})`;
-            fetchRecipeHops(beerName); 
-            loadInventoryLots(); 
-            initChart(batchId, beerName); 
-        } else {
-            document.getElementById('modal-subtitle').innerText = "Vessel Status: " + status;
-        }
-    }
-
-    async function loadInventoryLots() {
-        const select = document.getElementById('dh-lot-select');
-        try {
-            const res = await fetch(`${CELLAR_API_URL}?action=getHopAlphaData`);
-            const items = await res.json();
-            select.innerHTML = '<option value="">-- Choose Inventory Lot --</option>';
-            items.forEach(i => {
-                select.innerHTML += `<option value="${i.lot}" data-aa="${i.aa}">${i.variety} (Lot: ${i.lot} | ${i.aa}%)</option>`;
-            });
-        } catch (e) { console.error(e); }
-    }
-
-    function calculateAAAdjustment() {
-        const recipeWeight = parseFloat(document.getElementById('dh-recipe-weight').value);
-        const targetAA = parseFloat(document.getElementById('dh-target-aa').value);
-        const select = document.getElementById('dh-lot-select');
-        const actualAA = parseFloat(select.options[select.selectedIndex].getAttribute('data-aa'));
-
-        if (!recipeWeight || !targetAA || !actualAA) return;
-
-        const adjusted = (recipeWeight * targetAA) / actualAA;
-        document.getElementById('dh-adjusted-val').innerText = adjusted.toFixed(2);
-        document.getElementById('aa-calc-display').style.display = 'block';
-    }
-
-    async function fetchRecipeHops(recipeName) {
-        const listDiv = document.getElementById('recipe-dh-list');
-        try {
-            const res = await fetch(`${CELLAR_API_URL}?action=getRecipePlan&name=${encodeURIComponent(recipeName)}`);
-            const plan = await res.json();
-            if (plan && plan.hops && plan.hops.length > 0) {
-                listDiv.innerHTML = plan.hops.map(h => 
-                    `<div style="padding: 4px 0; border-bottom: 1px solid #dbeafe;">
-                        <span style="color: #1e40af;">${h.variety}</span>: ${h.amount} lbs (Target: ${h.targetAA}%)
-                    </div>`
-                ).join('');
-                document.getElementById('dh-recipe-weight').value = plan.hops[0].amount;
-                document.getElementById('dh-target-aa').value = plan.hops[0].targetAA;
-            }
-        } catch (e) { listDiv.innerHTML = "Recipe data retrieval error."; }
-    }
-
-    async function initChart(batchId, brand) {
-        const ctx = document.getElementById('fermChart').getContext('2d');
-        if(window.fermChartObj) window.fermChartObj.destroy();
-
-        try {
-            const res = await fetch(`${CELLAR_API_URL}?action=getFermAnalysis&batchId=${batchId}&brand=${encodeURIComponent(brand)}`);
-            const comparison = await res.json();
-
-            window.fermChartObj = new Chart(ctx, {
-                type: 'line',
+        async function submitTransfer() {
+            if(!confirm("Are you sure? This will empty the current vessel.")) return;
+            
+            const payload = {
+                action: 'transferVolume',
                 data: {
-                    labels: comparison.benchmark.map(b => 'Day ' + b.day),
-                    datasets: [
-                        {
-                            label: 'Current Gravity',
-                            data: comparison.current.map(c => c.gravity),
-                            borderColor: '#2563eb',
-                            backgroundColor: 'rgba(37, 99, 235, 0.05)',
-                            fill: true,
-                            tension: 0.3
-                        },
-                        {
-                            label: 'Historical Benchmark',
-                            data: comparison.benchmark.map(b => b.benchmarkGravity),
-                            borderColor: '#94a3b8',
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0.3
-                        }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        } catch (e) { console.warn("Chart Load Error", e); }
-    }
+                    batchId: currentBatchId,
+                    sourceVessel: currentVessel,
+                    destVessel: document.getElementById('transfer-dest').value,
+                    volume: document.getElementById('transfer-vol').value,
+                    gravity: document.getElementById('transfer-fg').value,
+                    carb: document.getElementById('transfer-psi').value,
+                    brandName: currentBrand
+                }
+            };
 
-    async function runMLAnalysis() {
-        document.getElementById('ml-health-status').innerText = "Computing...";
-        try {
-            const res = await fetch(`${CELLAR_API_URL}?action=runMLPrediction&batchId=${currentBatchId}`);
-            const mlData = await res.json();
+            Swal.fire({title: 'Transferring...', didOpen: () => Swal.showLoading()});
             
-            document.getElementById('ml-finish-date').innerText = mlData.prediction || "Unknown";
+            await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
             
-            if (mlData.anomaly) {
-                document.getElementById('ml-health-status').innerText = "Deviation Detected";
-                document.getElementById('ml-health-status').style.color = "#ef4444";
-                document.getElementById('ml-anomaly-box').style.display = "block";
-            } else {
-                document.getElementById('ml-health-status').innerText = "Healthy Curve";
-                document.getElementById('ml-health-status').style.color = "#10b981";
-                document.getElementById('ml-anomaly-box').style.display = "none";
-            }
-        } catch (e) {
-            console.error("ML Error", e);
-            document.getElementById('ml-health-status').innerText = "Data Error";
+            Swal.fire("Success", "Volume transferred. Source tank marked Empty/Dirty.", "success")
+                .then(() => { location.reload(); });
         }
-    }
 
-    async function submitTransfer() {
-        if(!confirm("Are you sure? This will empty the current vessel.")) return;
-        
-        const payload = {
-            action: 'transferVolume',
-            data: {
+        async function submitAddition(type) {
+            const isDH = type === 'Dry Hop';
+            const payload = {
+                action: isDH ? 'logDryHop' : 'logIngredient',
+                data: {
+                    batchId: currentBatchId,
+                    vessel: currentVessel,
+                    item: isDH ? document.getElementById('dh-lot-select').options[document.getElementById('dh-lot-select').selectedIndex].text.split(' (')[0] : document.getElementById('inv-item-select').value,
+                    qty: isDH ? document.getElementById('dh-recipe-weight').value : document.getElementById('ing-qty').value,
+                    recipeTargetAA: isDH ? document.getElementById('dh-target-aa').value : 0,
+                    lot: isDH ? document.getElementById('dh-lot-select').value : document.getElementById('ing-lot-read').value,
+                    notes: isDH ? "AA% Adjusted" : document.getElementById('ing-purpose').value
+                }
+            };
+            await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            Swal.fire("Success", `${type} logged.`, "success").then(() => { closeModal(); refreshGrid(); });
+        }
+
+        async function updateStatus() {
+            const stage = document.getElementById('status-select').value;
+            await fetch(CELLAR_API_URL, {
+                method: 'POST', mode: 'no-cors',
+                body: JSON.stringify({ action: 'updateStage', data: { batchId: currentBatchId, stage: stage } })
+            });
+            Swal.fire('Updated', `Stage: ${stage}`, 'success').then(() => { closeModal(); refreshGrid(); });
+        }
+
+        async function submitDailyLog() {
+            const payload = {
                 batchId: currentBatchId,
-                sourceVessel: currentVessel,
-                destVessel: document.getElementById('transfer-dest').value,
-                volume: document.getElementById('transfer-vol').value,
-                gravity: document.getElementById('transfer-fg').value,
-                carb: document.getElementById('transfer-psi').value,
-                brandName: currentBrand
-            }
-        };
+                gravity: document.getElementById('log-sg').value,
+                temp: document.getElementById('log-temp').value,
+                ph: document.getElementById('log-ph').value,
+                vdkResult: document.getElementById('log-vdk').value,
+                co2Check: document.getElementById('log-carb').value
+            };
+            await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDaily', data: payload }) });
+            Swal.fire("Logged", "Data saved.", "success").then(() => { closeModal(); refreshGrid(); });
+        }
 
-        Swal.fire({title: 'Transferring...', didOpen: () => Swal.showLoading()});
-        
-        await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-        
-        Swal.fire("Success", "Volume transferred.", "success").then(() => { location.reload(); });
-    }
-
-    async function submitAddition(type) {
-        const isDH = type === 'Dry Hop';
-        const payload = {
-            action: isDH ? 'logDryHop' : 'logIngredient',
-            data: {
+        async function logDrop() {
+            const payload = {
                 batchId: currentBatchId,
                 vessel: currentVessel,
-                item: isDH ? document.getElementById('dh-lot-select').options[document.getElementById('dh-lot-select').selectedIndex].text.split(' (')[0] : document.getElementById('inv-item-select').value,
-                qty: isDH ? document.getElementById('dh-recipe-weight').value : document.getElementById('ing-qty').value,
-                recipeTargetAA: isDH ? document.getElementById('dh-target-aa').value : 0,
-                lot: isDH ? document.getElementById('dh-lot-select').value : document.getElementById('ing-lot-read').value,
-                notes: isDH ? "AA% Adjusted" : document.getElementById('ing-purpose').value
-            }
-        };
-        await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-        Swal.fire("Success", `${type} logged.`, "success").then(() => { closeModal(); refreshGrid(); });
-    }
+                type: document.getElementById('drop-type').value,
+                volume: document.getElementById('drop-vol').value,
+                notes: document.getElementById('drop-notes').value
+            };
+            await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDrop', data: payload }) });
+            Swal.fire("Logged", "Entry saved.", "success");
+        }
 
-    async function updateStatus() {
-        const stage = document.getElementById('status-select').value;
-        await fetch(CELLAR_API_URL, {
-            method: 'POST', mode: 'no-cors',
-            body: JSON.stringify({ action: 'updateStage', data: { batchId: currentBatchId, stage: stage } })
-        });
-        Swal.fire('Updated', `Stage: ${stage}`, 'success').then(() => { closeModal(); refreshGrid(); });
-    }
+        function setAdditionMode(mode) {
+            currentAdditionMode = mode;
+            document.getElementById('mode-dryhop').style.display = mode === 'DH' ? 'block' : 'none';
+            document.getElementById('mode-ingredient').style.display = mode === 'ING' ? 'block' : 'none';
+            document.getElementById('toggle-dh').classList.toggle('active', mode === 'DH');
+            document.getElementById('toggle-ing').classList.toggle('active', mode === 'ING');
+            if (mode === 'ING') loadInventoryDropdown();
+        }
 
-    async function submitDailyLog() {
-        const payload = {
-            batchId: currentBatchId,
-            gravity: document.getElementById('log-sg').value,
-            temp: document.getElementById('log-temp').value,
-            ph: document.getElementById('log-ph').value,
-            vdkResult: document.getElementById('log-vdk').value,
-            co2Check: document.getElementById('log-carb').value
-        };
-        await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDaily', data: payload }) });
-        Swal.fire("Logged", "Data saved.", "success").then(() => { closeModal(); refreshGrid(); });
-    }
+        async function loadInventoryDropdown() {
+            const select = document.getElementById('inv-item-select');
+            try {
+                const res = await fetch(`${CELLAR_API_URL}?action=getInventoryItems`);
+                const items = await res.json();
+                select.innerHTML = '<option value="">-- Select In-Stock Ingredient --</option>';
+                items.forEach(i => {
+                    select.innerHTML += `<option value="${i.name}" data-lot="${i.lot}">${i.name} (Lot: ${i.lot})</option>`;
+                });
+            } catch (e) { console.error(e); }
+        }
 
-    async function logDrop() {
-        const payload = {
-            batchId: currentBatchId,
-            vessel: currentVessel,
-            type: document.getElementById('drop-type').value,
-            volume: document.getElementById('drop-vol').value,
-            notes: document.getElementById('drop-notes').value
-        };
-        await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDrop', data: payload }) });
-        Swal.fire("Logged", "Entry saved.", "success");
-    }
+        function syncInvLot() {
+            const select = document.getElementById('inv-item-select');
+            const opt = select.options[select.selectedIndex];
+            document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
+        }
 
-    function setAdditionMode(mode) {
-        currentAdditionMode = mode;
-        document.getElementById('mode-dryhop').style.display = mode === 'DH' ? 'block' : 'none';
-        document.getElementById('mode-ingredient').style.display = mode === 'ING' ? 'block' : 'none';
-        document.getElementById('toggle-dh').classList.toggle('active', mode === 'DH');
-        document.getElementById('toggle-ing').classList.toggle('active', mode === 'ING');
-        if (mode === 'ING') loadInventoryDropdown();
-    }
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
 
-    async function loadInventoryDropdown() {
-        const select = document.getElementById('inv-item-select');
-        try {
-            const res = await fetch(`${CELLAR_API_URL}?action=getInventoryItems`);
-            const items = await res.json();
-            select.innerHTML = '<option value="">-- Select In-Stock Ingredient --</option>';
-            items.forEach(i => {
-                select.innerHTML += `<option value="${i.name}" data-lot="${i.lot}">${i.name} (Lot: ${i.lot})</option>`;
-            });
-        } catch (e) { console.error(e); }
-    }
-
-    function syncInvLot() {
-        const select = document.getElementById('inv-item-select');
-        const opt = select.options[select.selectedIndex];
-        document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
-    }
-
-    function switchTab(tabId, btn) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        btn.classList.add('active');
-    }
-
-    function closeModal() { 
-        document.getElementById('vessel-modal').style.display = 'none'; 
-        document.getElementById('overlay').style.display = 'none'; 
-    }
-</script>
+        function closeModal() { 
+            document.getElementById('vessel-modal').style.display = 'none'; 
+            document.getElementById('overlay').style.display = 'none'; 
+        }
+    </script>
 </body>
 </html>
