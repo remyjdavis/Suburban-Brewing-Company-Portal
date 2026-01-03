@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suburban Brewing | Vessel QR Generator</title>
+    <style>
+        /* --- SCREEN STYLES (What you see on the computer) --- */
+        body {
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f3f4f6;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 { color: #111827; margin-bottom: 5px; }
+        p { color: #6b7280; margin-bottom: 20px; }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .controls input {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover { background: #1d4ed8; }
+
+        /* --- STICKER GRID --- */
+        #sticker-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .sticker {
+            background: white;
+            border: 2px solid #000;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            page-break-inside: avoid; /* Prevents cutting a QR in half */
+        }
+
+        .sticker img {
+            width: 150px;
+            height: 150px;
+        }
+
+        .sticker-label {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-top: 10px;
+            text-transform: uppercase;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .sticker-sub {
+            font-size: 0.7rem;
+            color: #555;
+            margin-top: 5px;
+        }
+
+        /* --- PRINT LAYOUT (CSS for the Printer) --- */
+        @media print {
+            body { 
+                background: white; 
+                padding: 0; 
+                margin: 0; 
+            }
+            .controls, h1, p { 
+                display: none !important; /* Hides the menu buttons */
+            }
+            #sticker-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr; /* 3 stickers per row */
+                gap: 20px;
+                width: 100%;
+                margin: 0;
+            }
+            .sticker {
+                border: 1px dashed #999; /* Light border for cutting guide */
+                box-shadow: none;
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>QR Code Label Generator</h1>
+    <p>Enter your hosted Cellar Page URL below to generate stickers.</p>
+
+    <div class="controls">
+        <label><b>Your Web App URL:</b></label>
+        <input type="text" id="base-url" placeholder="https://script.google.com/macros/s/..." value="https://your-website.com/cellar.html">
+        <button onclick="generateStickers()">Generate & Print</button>
+    </div>
+
+    <div id="sticker-container">
+        </div>
+
+    <script>
+        // Define your tank list here
+        const vessels = [
+            "FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6",
+            "Pilot 1", "Pilot 2",
+            "BT 1", "BT 2"
+        ];
+
+        function generateStickers() {
+            const baseUrl = document.getElementById('base-url').value;
+            const container = document.getElementById('sticker-container');
+            container.innerHTML = ""; // Clear existing
+
+            if (!baseUrl || baseUrl.includes("your-website")) {
+                alert("Please paste your actual Cellar Page URL first.");
+                return;
+            }
+
+            vessels.forEach(vessel => {
+                // 1. Build the Tracking URL
+                const trackUrl = `${baseUrl}?vessel=${encodeURIComponent(vessel)}`;
+                
+                // 2. Build the QR Image Source (using QuickChart API)
+                const qrSrc = `https://quickchart.io/qr?size=300&margin=1&text=${encodeURIComponent(trackUrl)}`;
+
+                // 3. Create the Sticker HTML
+                const sticker = document.createElement('div');
+                sticker.className = 'sticker';
+                sticker.innerHTML = `
+                    <div class="sticker-label">${vessel}</div>
+                    <img src="${qrSrc}" alt="${vessel} QR">
+                    <div class="sticker-sub">SCAN TO LOG</div>
+                `;
+                container.appendChild(sticker);
+            });
+
+            // 4. Trigger Print Dialog
+            setTimeout(() => {
+                window.print();
+            }, 1000); // Small delay to let images load
+        }
+    </script>
+
+</body>
+</html>
