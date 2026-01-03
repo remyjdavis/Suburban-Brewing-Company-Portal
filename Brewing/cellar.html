@@ -271,6 +271,15 @@
             display: block;
         }
 
+        .aa-calculator-box {
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
         @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; } }
     </style>
 </head>
@@ -408,10 +417,21 @@
                             <span style="color: #64748b; font-weight: 400; font-style: italic;">Loading recipe plan...</span>
                         </div>
                     </div>
+                    
                     <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group"><label>Actual Weight (lbs)</label><input type="number" id="dh-actual-weight"></div>
-                        <div class="form-group"><label>Lot # Used</label><input type="text" id="dh-actual-lot"></div>
+                        <div class="form-group"><label>Recipe Weight (lbs)</label><input type="number" id="dh-recipe-weight"></div>
+                        <div class="form-group"><label>Recipe Target AA%</label><input type="number" step="0.1" id="dh-target-aa"></div>
                     </div>
+                    <div class="form-group">
+                        <label>Choose Inventory Lot (Updates AA%)</label>
+                        <select id="dh-lot-select" onchange="calculateAAAdjustment()">
+                            <option value="">-- Select Inventory Lot --</option>
+                        </select>
+                    </div>
+                    <div id="aa-calc-display" class="aa-calculator-box">
+                        ⚖️ <b>Alpha Adjustment:</b> Scaled weight to <span id="dh-adjusted-val" style="font-weight: 900; color: #2563eb;">0.00</span> lbs.
+                    </div>
+                    
                     <button class="btn-action btn-blue" onclick="submitAddition('Dry Hop')">Complete Dry Hop Task</button>
                 </div>
 
@@ -475,6 +495,7 @@
         
         let currentBatchId = null;
         let currentVessel = null;
+        let currentBrand = null;
         let currentAdditionMode = 'DH';
 
         // --- GRID INITIALIZATION ---
@@ -505,16 +526,10 @@
                         const active = !!data && data.isActive;
                         const status = active ? data.status : "Available";
                         
-                        // DASHBOARD AGGREGATION
                         if(active) {
                             activeCount++;
-                            const isPilot = gridId.includes('pilot');
-                            totalBBL += isPilot ? 1 : 10;
-                            
-                            // Batches waiting for a gate (D-Rest needs VDK, Conditioning/Brite needs Carb)
-                            if(status === "Diacetyl Rest" || (status === "Conditioning" && gridId.includes('brite'))) {
-                                qcPendingCount++;
-                            }
+                            totalBBL += gridId.includes('pilot') ? 1 : 10;
+                            if(status === "Diacetyl Rest" || status === "Conditioning") qcPendingCount++;
                         }
 
                         let cardClass = active ? "active" : "clean";
@@ -536,7 +551,6 @@
                     });
                 });
 
-                // UPDATE DASHBOARD STATS
                 document.getElementById('stat-total-bbl').innerText = totalBBL + " BBL";
                 document.getElementById('stat-active-count').innerText = activeCount;
                 document.getElementById('stat-qc-pending').innerText = qcPendingCount;
@@ -548,27 +562,51 @@
         async function openModal(vessel, batchId, beerName, status) {
             currentVessel = vessel;
             currentBatchId = batchId;
+            currentBrand = beerName;
             
             document.getElementById('vessel-modal').style.display = 'block';
             document.getElementById('overlay').style.display = 'block';
             document.getElementById('modal-title').innerText = vessel;
             
-            // Logic for Quality Gate Warning Box
             const qcBox = document.getElementById('qc-alert-box');
-            if(status === "Diacetyl Rest" || status === "Conditioning") {
-                qcBox.style.display = 'block';
-            } else {
-                qcBox.style.display = 'none';
-            }
+            qcBox.style.display = (status === "Diacetyl Rest" || status === "Conditioning") ? 'block' : 'none';
 
             if (batchId && batchId !== "") {
                 document.getElementById('modal-subtitle').innerText = `${beerName} (Batch #${batchId})`;
                 fetchRecipeHops(beerName); 
-                initChart(batchId);
+                loadInventoryLots(); // Load lots for AA math
+                initChart(batchId, beerName);
             } else {
                 document.getElementById('modal-subtitle').innerText = "Vessel Status: " + status;
-                document.getElementById('recipe-dh-list').innerHTML = "No active production batch.";
             }
+        }
+
+        // --- NEW: ALPHA ACID ADJUSTMENT UI LOGIC ---
+        async function loadInventoryLots() {
+            const select = document.getElementById('dh-lot-select');
+            try {
+                // Fetch from Backend Section 3/27
+                const res = await fetch(`${CELLAR_API_URL}?action=getHopAlphaData`);
+                const items = await res.json();
+                select.innerHTML = '<option value="">-- Choose Inventory Lot --</option>';
+                items.forEach(i => {
+                    select.innerHTML += `<option value="${i.lot}" data-aa="${i.aa}">${i.variety} (Lot: ${i.lot} | ${i.aa}%)</option>`;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        function calculateAAAdjustment() {
+            const recipeWeight = parseFloat(document.getElementById('dh-recipe-weight').value);
+            const targetAA = parseFloat(document.getElementById('dh-target-aa').value);
+            const select = document.getElementById('dh-lot-select');
+            const actualAA = parseFloat(select.options[select.selectedIndex].getAttribute('data-aa'));
+
+            if (!recipeWeight || !targetAA || !actualAA) return;
+
+            // Math: (Recipe Weight * Target AA) / Actual AA
+            const adjusted = (recipeWeight * targetAA) / actualAA;
+            document.getElementById('dh-adjusted-val').innerText = adjusted.toFixed(2);
+            document.getElementById('aa-calc-display').style.display = 'block';
         }
 
         async function fetchRecipeHops(recipeName) {
@@ -576,28 +614,116 @@
             try {
                 const res = await fetch(`${CELLAR_API_URL}?action=getRecipePlan&name=${encodeURIComponent(recipeName)}`);
                 const plan = await res.json();
-                
                 if (plan && plan.hops && plan.hops.length > 0) {
                     listDiv.innerHTML = plan.hops.map(h => 
                         `<div style="padding: 4px 0; border-bottom: 1px solid #dbeafe;">
-                            <span style="color: #1e40af;">${h.variety}</span>: ${h.amount} lbs
+                            <span style="color: #1e40af;">${h.variety}</span>: ${h.amount} lbs (Target: ${h.targetAA}%)
                         </div>`
                     ).join('');
-                } else {
-                    listDiv.innerHTML = "No dry hop schedule in master recipe.";
+                    // Auto-populate calculation fields
+                    document.getElementById('dh-recipe-weight').value = plan.hops[0].amount;
+                    document.getElementById('dh-target-aa').value = plan.hops[0].targetAA;
                 }
             } catch (e) { listDiv.innerHTML = "Recipe data retrieval error."; }
         }
 
-        // --- ADDITION TOGGLE LOGIC ---
+        async function initChart(batchId, brand) {
+            const ctx = document.getElementById('fermChart').getContext('2d');
+            if(window.fermChartObj) window.fermChartObj.destroy();
+
+            try {
+                // Fetch Historical Comparison from Backend Section 25
+                const res = await fetch(`${CELLAR_API_URL}?action=getFermAnalysis&batchId=${batchId}&brand=${encodeURIComponent(brand)}`);
+                const comparison = await res.json();
+
+                window.fermChartObj = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: comparison.benchmark.map(b => 'Day ' + b.day),
+                        datasets: [
+                            {
+                                label: 'Current Gravity',
+                                data: comparison.current.map(c => c.gravity),
+                                borderColor: '#2563eb',
+                                backgroundColor: 'rgba(37, 99, 235, 0.05)',
+                                fill: true,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Historical Benchmark',
+                                data: comparison.benchmark.map(b => b.benchmarkGravity),
+                                borderColor: '#94a3b8',
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            } catch (e) { console.warn("Chart Load Error", e); }
+        }
+
+        // --- DATA SUBMISSION ---
+        async function submitAddition(type) {
+            const isDH = type === 'Dry Hop';
+            const payload = {
+                action: isDH ? 'logDryHop' : 'logIngredient',
+                data: {
+                    batchId: currentBatchId,
+                    vessel: currentVessel,
+                    item: isDH ? document.getElementById('dh-lot-select').options[document.getElementById('dh-lot-select').selectedIndex].text.split(' (')[0] : document.getElementById('inv-item-select').value,
+                    qty: isDH ? document.getElementById('dh-recipe-weight').value : document.getElementById('ing-qty').value,
+                    recipeTargetAA: isDH ? document.getElementById('dh-target-aa').value : 0,
+                    lot: isDH ? document.getElementById('dh-lot-select').value : document.getElementById('ing-lot-read').value,
+                    notes: isDH ? "AA% Adjusted" : document.getElementById('ing-purpose').value
+                }
+            };
+            await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            Swal.fire("Success", `${type} logged.`, "success").then(() => { closeModal(); refreshGrid(); });
+        }
+
+        async function updateStatus() {
+            const stage = document.getElementById('status-select').value;
+            await fetch(CELLAR_API_URL, {
+                method: 'POST', mode: 'no-cors',
+                body: JSON.stringify({ action: 'updateStage', data: { batchId: currentBatchId, stage: stage } })
+            });
+            Swal.fire('Updated', `Stage: ${stage}`, 'success').then(() => { closeModal(); refreshGrid(); });
+        }
+
+        async function submitDailyLog() {
+            const payload = {
+                batchId: currentBatchId,
+                gravity: document.getElementById('log-sg').value,
+                temp: document.getElementById('log-temp').value,
+                ph: document.getElementById('log-ph').value,
+                vdkResult: document.getElementById('log-vdk').value,
+                co2Check: document.getElementById('log-carb').value
+            };
+            await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDaily', data: payload }) });
+            Swal.fire("Logged", "Data saved.", "success").then(() => { closeModal(); refreshGrid(); });
+        }
+
+        async function logDrop() {
+            const payload = {
+                batchId: currentBatchId,
+                vessel: currentVessel,
+                type: document.getElementById('drop-type').value,
+                volume: document.getElementById('drop-vol').value,
+                notes: document.getElementById('drop-notes').value
+            };
+            await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDrop', data: payload }) });
+            Swal.fire("Logged", "Entry saved.", "success");
+        }
+
+        // --- UTILS & UI ---
         function setAdditionMode(mode) {
             currentAdditionMode = mode;
             document.getElementById('mode-dryhop').style.display = mode === 'DH' ? 'block' : 'none';
             document.getElementById('mode-ingredient').style.display = mode === 'ING' ? 'block' : 'none';
-            
             document.getElementById('toggle-dh').classList.toggle('active', mode === 'DH');
             document.getElementById('toggle-ing').classList.toggle('active', mode === 'ING');
-
             if (mode === 'ING') loadInventoryDropdown();
         }
 
@@ -610,7 +736,7 @@
                 items.forEach(i => {
                     select.innerHTML += `<option value="${i.name}" data-lot="${i.lot}">${i.name} (Lot: ${i.lot})</option>`;
                 });
-            } catch (e) { console.error("Inventory Load Error", e); }
+            } catch (e) { console.error(e); }
         }
 
         function syncInvLot() {
@@ -619,65 +745,6 @@
             document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
         }
 
-        // --- DATA SUBMISSION ---
-        async function submitAddition(type) {
-            const payload = {
-                action: type === 'Dry Hop' ? 'logDryHop' : 'logIngredient',
-                data: {
-                    batchId: currentBatchId,
-                    vessel: currentVessel,
-                    item: type === 'Dry Hop' ? document.getElementById('recipe-dh-list').innerText : document.getElementById('inv-item-select').value,
-                    qty: type === 'Dry Hop' ? document.getElementById('dh-actual-weight').value : document.getElementById('ing-qty').value,
-                    lot: type === 'Dry Hop' ? document.getElementById('dh-actual-lot').value : document.getElementById('ing-lot-read').value,
-                    notes: type === 'Ingredient' ? document.getElementById('ing-purpose').value : "Manual Addition"
-                }
-            };
-
-            await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            Swal.fire("Success", `${type} addition logged.`, "success");
-            closeModal();
-            refreshGrid();
-        }
-
-        async function updateStatus() {
-            const stage = document.getElementById('status-select').value;
-            await fetch(CELLAR_API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ action: 'updateStage', data: { batchId: currentBatchId, stage: stage } })
-            });
-            
-            Swal.fire('Updated', `Tank status moved to: ${stage}`, 'success').then(() => { closeModal(); refreshGrid(); });
-        }
-
-        async function submitDailyLog() {
-            const payload = {
-                batchId: currentBatchId,
-                gravity: document.getElementById('log-sg').value,
-                temp: document.getElementById('log-temp').value,
-                ph: document.getElementById('log-ph').value,
-                vdkResult: document.getElementById('log-vdk').value,
-                co2Vol: document.getElementById('log-carb').value
-            };
-            await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDaily', data: payload }) });
-            Swal.fire("Logged", "Daily fermentation data saved.", "success");
-            closeModal();
-            refreshGrid();
-        }
-
-        async function logDrop() {
-            const payload = {
-                batchId: currentBatchId,
-                vessel: currentVessel,
-                type: document.getElementById('drop-type').value,
-                volume: document.getElementById('drop-vol').value,
-                notes: document.getElementById('drop-notes').value
-            };
-            await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDrop', data: payload }) });
-            Swal.fire("Logged", "Vessel drop/harvest recorded.", "success");
-        }
-
-        // --- UTILS & UI ---
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -688,26 +755,6 @@
         function closeModal() { 
             document.getElementById('vessel-modal').style.display = 'none'; 
             document.getElementById('overlay').style.display = 'none'; 
-        }
-
-        function initChart(batchId) {
-            const ctx = document.getElementById('fermChart').getContext('2d');
-            if(window.fermChartObj) window.fermChartObj.destroy();
-            window.fermChartObj = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Log 1', 'Log 2', 'Log 3', 'Log 4'],
-                    datasets: [{
-                        label: 'Specific Gravity',
-                        data: [1.065, 1.050, 1.035, 1.012],
-                        borderColor: '#2563eb',
-                        tension: 0.3,
-                        fill: true,
-                        backgroundColor: 'rgba(37, 99, 235, 0.05)'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
         }
     </script>
 </body>
