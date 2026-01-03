@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QC Lab Dashboard | Suburban Brewing Co.</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary-dark: #111827;
+            --accent: #2563eb;
+            --danger: #ef4444;
+            --warning: #facc15;
+            --success: #10b981;
+        }
+        body { font-family: -apple-system, sans-serif; background: #f3f4f6; margin: 0; display: flex; height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { width: 240px; background: var(--primary-dark); color: white; padding: 25px; display: flex; flex-direction: column; }
+        .sidebar h2 { font-size: 1.2rem; letter-spacing: 1px; margin-bottom: 30px; color: var(--accent); }
+        .nav-link { color: #d1d5db; text-decoration: none; padding: 12px 0; display: block; font-size: 14px; border-bottom: 1px solid #1f2937; }
+        .nav-link:hover { color: white; }
+
+        /* Main Content */
+        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
+        .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* QC Grid */
+        .qc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; }
+        .qc-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid #e5e7eb; }
+        .qc-card.vdk { border-top-color: var(--warning); }
+        .qc-card.carb { border-top-color: var(--accent); }
+        
+        .card-title { font-weight: 800; text-transform: uppercase; font-size: 12px; color: #6b7280; margin-bottom: 20px; display: flex; justify-content: space-between; }
+        
+        .batch-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 15px; 
+            background: #f9fafb; 
+            border-radius: 8px; 
+            margin-bottom: 12px;
+            border: 1px solid #f1f5f9;
+        }
+        .batch-details b { font-size: 1rem; display: block; color: var(--primary-dark); }
+        .batch-details span { font-size: 0.8rem; color: #6b7280; }
+        
+        .btn-verify { 
+            background: var(--primary-dark); 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        .btn-verify:hover { background: var(--accent); }
+
+        .empty-state { color: #9ca3af; font-style: italic; text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <h2>SUBURBAN QC</h2>
+        <p style="font-size: 10px; opacity: 0.5; text-transform: uppercase; font-weight: bold; margin-bottom: 10px;">Navigation</p>
+        <a href="cellar.html" class="nav-link">Main Cellar Grid</a>
+        <a href="#" onclick="location.reload()" class="nav-link">Refresh Lab Queue</a>
+        <div style="margin-top: auto; font-size: 10px; opacity: 0.3;">QC Portal v2.0</div>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 style="margin:0;">Lab Verification Queue</h1>
+                <p style="color: #6b7280; margin-top: 5px;">Authorize stage transitions via quality passing.</p>
+            </div>
+        </div>
+
+        <div class="qc-grid">
+            <div class="qc-card vdk">
+                <div class="card-title">
+                    <span>Diacetyl / VDK Verification</span>
+                    <span id="vdk-count" style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px;">0</span>
+                </div>
+                <div id="vdk-queue"></div>
+            </div>
+
+            <div class="qc-card carb">
+                <div class="card-title">
+                    <span>Carbonation & Stability Check</span>
+                    <span id="carb-count" style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 10px;">0</span>
+                </div>
+                <div id="carb-queue"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
+
+        window.onload = fetchQCQueue;
+
+        async function fetchQCQueue() {
+            try {
+                const res = await fetch(`${API_URL}?action=getTankStatus`);
+                const data = await res.json();
+                
+                const vdkBox = document.getElementById('vdk-queue');
+                const carbBox = document.getElementById('carb-queue');
+                
+                vdkBox.innerHTML = "";
+                carbBox.innerHTML = "";
+                
+                let vCount = 0;
+                let cCount = 0;
+
+                data.forEach(item => {
+                    if (!item.isActive) return;
+
+                    // Logic: Tanks in Diacetyl Rest need VDK
+                    if (item.status === "Diacetyl Rest") {
+                        vCount++;
+                        vdkBox.innerHTML += renderBatch(item, "VDK Result");
+                    }
+                    
+                    // Logic: Tanks in Conditioning/Ready need Carb
+                    if (item.status === "Conditioning" || item.status === "Ready to Package") {
+                        cCount++;
+                        carbBox.innerHTML += renderBatch(item, "CO2 Volumes");
+                    }
+                });
+
+                document.getElementById('vdk-count').innerText = vCount;
+                document.getElementById('carb-count').innerText = cCount;
+
+                if (vCount === 0) vdkBox.innerHTML = '<div class="empty-state">No batches awaiting VDK.</div>';
+                if (cCount === 0) carbBox.innerHTML = '<div class="empty-state">No batches awaiting carbonation check.</div>';
+
+            } catch (e) { 
+                Swal.fire("Connection Error", "Could not fetch lab queue.", "error");
+            }
+        }
+
+        function renderBatch(b, label) {
+            return `
+                <div class="batch-row">
+                    <div class="batch-details">
+                        <b>${b.brand}</b>
+                        <span>Vessel: ${b.vessel} | Batch: #${b.batchId}</span>
+                    </div>
+                    <button class="btn-verify" onclick="submitQC('${b.batchId}', '${label}')">Enter ${label}</button>
+                </div>
+            `;
+        }
+
+        async function submitQC(batchId, label) {
+            const { value: result } = await Swal.fire({
+                title: `Enter ${label}`,
+                input: label.includes('VDK') ? 'select' : 'text',
+                inputOptions: label.includes('VDK') ? { 'PASS': 'PASS', 'FAIL': 'FAIL' } : null,
+                inputPlaceholder: label.includes('CO2') ? 'e.g., 2.55' : 'Select Result',
+                showCancelButton: true,
+                confirmButtonColor: '#111827'
+            });
+
+            if (result) {
+                const action = label.includes('VDK') ? 'verifyVDK' : 'verifyCarb';
+                const payload = {
+                    batchId: batchId,
+                    result: result, // for VDK
+                    vol: result      // for Carb
+                };
+
+                Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                await fetch(API_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ action: action, data: payload }) 
+                });
+
+                Swal.fire("Success", "Quality record updated.", "success").then(fetchQCQueue);
+            }
+        }
+    </script>
+</body>
+</html>
