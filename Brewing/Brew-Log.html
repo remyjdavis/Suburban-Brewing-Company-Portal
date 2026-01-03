@@ -339,6 +339,33 @@
             background: #c0392b; 
             color: white; 
         }
+        
+        /* NEW: COST SUMMARY BOX STYLE */
+        .cost-summary-box {
+            background: #111827;
+            color: #10b981;
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 30px;
+            border: 2px solid #374151;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .cost-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .cost-total {
+            font-size: 1.5rem;
+            font-weight: 800;
+            border-top: 1px solid #374151;
+            padding-top: 15px;
+            margin-top: 15px;
+            color: #ffffff;
+        }
 
         /* SUB-HEADERS IN LAUTER */
         .lauter-header {
@@ -771,7 +798,7 @@
             <div class="form-grid">
                 <div class="input-group">
                     <label>Actual Pitch Vol (Liters/Gal)</label>
-                    <input type="number" id="ko-actual-pitch" class="actual-input">
+                    <input type="number" id="ko-actual-pitch" class="actual-input" onchange="calculateLiveBatchCost()">
                 </div>
                 <div class="input-group">
                     <label>KO Volume (BBL)</label>
@@ -784,36 +811,51 @@
                 <div class="input-group">
                     <label>Oxygen (LPM)</label>
                     <input type="number" class="actual-input">
-                    <div class="input-group" style="margin-bottom: 20px; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; background: #f5f3ff;">
-    <label style="display: block; font-weight: 700; color: #4338ca; margin-bottom: 8px; font-size: 0.85rem; text-transform: uppercase;">
-        Destination Vessel (Cellar Handoff)
-    </label>
-    <select id="ko-vessel-select" class="actual-input" style="width: 100%; height: 45px; font-weight: 700;">
-        <optgroup label="10 BBL Fermenters">
-            <option value="FV 1">FV 1 (10 BBL)</option>
-            <option value="FV 2">FV 2 (10 BBL)</option>
-            <option value="FV 3">FV 3 (10 BBL)</option>
-            <option value="FV 4">FV 4 (10 BBL)</option>
-            <option value="FV 5">FV 5 (10 BBL)</option>
-            <option value="FV 6">FV 6 (10 BBL)</option>
-        </optgroup>
-        <optgroup label="Pilot System">
-            <option value="Pilot 1">Pilot 1 (1 BBL)</option>
-            <option value="Pilot 2">Pilot 2 (1 BBL)</option>
-        </optgroup>
-        <optgroup label="Brite Tanks">
-            <option value="BT 1">BT 1 (10 BBL)</option>
-            <option value="BT 2">BT 2 (10 BBL)</option>
-        </optgroup>
-    </select>
-    <small style="color: #6366f1; font-style: italic; margin-top: 5px; display: block;">
-        Selecting a vessel will automatically start fermentation tracking on the Command Center.
-    </small>
-</div>
                 </div>
             </div>
+
+            <div class="input-group" style="margin-bottom: 20px; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; background: #f5f3ff;">
+                <label style="display: block; font-weight: 700; color: #4338ca; margin-bottom: 8px; font-size: 0.85rem; text-transform: uppercase;">
+                    Destination Vessel (Cellar Handoff)
+                </label>
+                <select id="ko-vessel-select" class="actual-input" style="width: 100%; height: 45px; font-weight: 700;">
+                    <optgroup label="10 BBL Fermenters">
+                        <option value="FV 1">FV 1 (10 BBL)</option>
+                        <option value="FV 2">FV 2 (10 BBL)</option>
+                        <option value="FV 3">FV 3 (10 BBL)</option>
+                        <option value="FV 4">FV 4 (10 BBL)</option>
+                        <option value="FV 5">FV 5 (10 BBL)</option>
+                        <option value="FV 6">FV 6 (10 BBL)</option>
+                    </optgroup>
+                    <optgroup label="Pilot System">
+                        <option value="Pilot 1">Pilot 1 (1 BBL)</option>
+                        <option value="Pilot 2">Pilot 2 (1 BBL)</option>
+                    </optgroup>
+                    <optgroup label="Brite Tanks">
+                        <option value="BT 1">BT 1 (10 BBL)</option>
+                        <option value="BT 2">BT 2 (10 BBL)</option>
+                    </optgroup>
+                </select>
+                <small style="color: #6366f1; font-style: italic; margin-top: 5px; display: block;">
+                    Selecting a vessel will automatically start fermentation tracking on the Command Center.
+                </small>
+            </div>
+
+            <div class="cost-summary-box">
+                <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 15px; color: #fff;">LIVE BATCH COST ANALYSIS</div>
+                <div id="cost-details">
+                    <div class="cost-row"><span>Grain Bill Total:</span><span id="cost-grain">$0.00</span></div>
+                    <div class="cost-row"><span>Boil Additions:</span><span id="cost-boil">$0.00</span></div>
+                    <div class="cost-row"><span>Yeast Pitch:</span><span id="cost-yeast">$0.00</span></div>
+                </div>
+                <div class="cost-row cost-total">
+                    <span>ESTIMATED TOTAL:</span>
+                    <span id="cost-total">$0.00</span>
+                </div>
+                <div style="font-size: 0.7rem; color: #4ade80; margin-top: 5px;">*Values based on unit pricing from Ingredient Inventory</div>
+            </div>
             
-            <button class="btn-save-section" onclick="completeBrewLog()">Complete Brew & Sync</button>
+            <button class="btn-save-section" onclick="completeBrewLog()" style="margin-top: 20px;">Complete Brew & Sync</button>
         </div>
     </div>
 </div>
@@ -962,7 +1004,7 @@ function loadRecipeToLog() {
             <td>${maltName}</td>
             <td><span class="target-display">${targetQty}</span></td>
             <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggested.toFixed(2)}</span></td>
-            <td><input type="number" class="actual-input ing-qty" placeholder="${suggested.toFixed(2)}"></td>
+            <td><input type="number" class="actual-input ing-qty" value="${suggested.toFixed(2)}" data-unitprice="${invMatch ? invMatch.specs.cost : 0}" onchange="calculateLiveBatchCost()"></td>
             <td>
                 <input type="text" class="actual-input ing-lot" value="${invMatch ? invMatch.lot : ''}" placeholder="Lot #">
                 <br>
@@ -1007,7 +1049,7 @@ function loadRecipeToLog() {
                 <td><span class="target-display">${targetW}</span></td>
                 <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestedHop.toFixed(2)}</span></td>
                 <td>
-                    <input type="number" class="actual-input ing-qty" placeholder="${suggestedHop.toFixed(2)}">
+                    <input type="number" class="actual-input ing-qty" placeholder="${suggestedHop.toFixed(2)}" data-unitprice="${invMatch ? invMatch.specs.cost : 0}" onchange="calculateLiveBatchCost()">
                     <input type="hidden" class="ing-target-aa" value="${recipeAA}">
                 </td>
                 <td><input type="text" class="actual-input ing-lot" value="${invMatch ? invMatch.lot : ''}" placeholder="Lot #"></td>
@@ -1023,6 +1065,7 @@ function loadRecipeToLog() {
         
         if (yeastInv) {
             document.getElementById('yeast-lot-input').value = yeastInv.lot;
+            document.getElementById('ko-actual-pitch').setAttribute('data-unitprice', yeastInv.specs.cost || 0);
             
             /**
              * DYNAMIC QC ALERT BOX
@@ -1041,9 +1084,14 @@ function loadRecipeToLog() {
 
     /**
      * MACHINE LEARNING: PREDICTIVE BREWHOUSE EFFICIENCY
+     * This logic calculates the Theoretical Maximum Yield based on the COA.
+     * The scraper will later compare this to Actual OG to train the ML model.
      */
     const theoreticalMaxPoints = totalPotentialPoints / (r.batchSize * 31); 
     console.log("ML Prep: Theoretical Max Yield for this lot configuration: " + theoreticalMaxPoints.toFixed(4));
+    
+    // Initial cost calculation on load
+    calculateLiveBatchCost();
 }
 
     /**
@@ -1091,7 +1139,7 @@ function loadRecipeToLog() {
     }
 
     // ---------------------------------------------------------
-    // 4. SAVE AND ADVANCE LOGIC (INTEGRATED INVENTORY DEDUCTION)
+    // 4. SAVE AND ADVANCE LOGIC (Bypassing CORS for Production)
     // ---------------------------------------------------------
     async function saveAndAdvance(currentId, nextId) {
         if(!document.getElementById('batchId').value) {
@@ -1106,7 +1154,7 @@ function loadRecipeToLog() {
         saveBtn.disabled = true;
 
         try {
-            // 1. SCAPE AND SEND TO BREW LOG SHEET
+            // Sends data to the Production Sheet
             await fetch(LOG_SAVE_URL, {
                 method: "POST",
                 mode: "no-cors", 
@@ -1116,31 +1164,38 @@ function loadRecipeToLog() {
                     data: scrapeBrewData() 
                 })
             });
-
-            // 2. NEW: TRIGGER SECTION-SPECIFIC INVENTORY DEDUCTION
-            await triggerInventoryDeduction(currentId);
             
-            // 3. UI LOCKING AND ADVANCEMENT
+            // --- ADDED: INVENTORY TRIGGER ---
+            await triggerInventoryDeduction(currentId);
+            // -------------------------------
+            
+            // 1. Mark as locked
             current.classList.add('locked');
             saveBtn.innerText = "✓ SYNCED";
             saveBtn.style.backgroundColor = "#7f8c8d";
 
+            // 2. CLOSE the current section
             current.classList.add('collapsed');
+            // Find the header to update the "+" indicator
             const currentHeader = current.parentElement.querySelector('.toggle-indicator');
             if (currentHeader) currentHeader.innerText = "+";
 
+            // 3. OPEN and scroll to the next section
             if (nextId) {
                 const next = document.getElementById(nextId);
                 next.classList.remove('collapsed');
+                // Update the header indicator for the next section
                 const nextHeader = next.parentElement.querySelector('.toggle-indicator');
                 if (nextHeader) nextHeader.innerText = "-";
 
+                // Update the sticky stage display
                 const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
                 document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
                 
+                // Smooth scroll
                 next.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
-                Swal.fire('Brew Log Complete', 'All data has been synced and inventory adjusted.', 'success');
+                Swal.fire('Brew Log Complete', 'All data has been synced to the production sheet.', 'success');
             }
         } catch(err) {
             Swal.fire('Sync Error', 'Check Production Script permissions.', 'error');
@@ -1150,7 +1205,43 @@ function loadRecipeToLog() {
     }
 
     /**
-     * NEW HELPER: SCANS THE DOM FOR INGREDIENTS IN THE ACTIVE SECTION
+     * ADDED: LIVE BATCH COSTING LOGIC
+     */
+    function calculateLiveBatchCost() {
+        let grainTotal = 0;
+        let boilTotal = 0;
+        let yeastTotal = 0;
+
+        // Sum Grains
+        document.querySelectorAll('tr[data-type="grain"]').forEach(row => {
+            const qty = parseFloat(row.querySelector('.ing-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.ing-qty').getAttribute('data-unitprice')) || 0;
+            grainTotal += (qty * price);
+        });
+
+        // Sum Hops
+        document.querySelectorAll('tr[data-type="hop"]').forEach(row => {
+            const qty = parseFloat(row.querySelector('.ing-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.ing-qty').getAttribute('data-unitprice')) || 0;
+            boilTotal += (qty * price);
+        });
+
+        // Sum Yeast
+        const yQty = parseFloat(document.getElementById('ko-actual-pitch').value) || 0;
+        const yPrice = parseFloat(document.getElementById('ko-actual-pitch').getAttribute('data-unitprice')) || 0;
+        yeastTotal = (yQty * yPrice);
+
+        const grandTotal = grainTotal + boilTotal + yeastTotal;
+
+        // UI Update
+        document.getElementById('cost-grain').innerText = `$${grainTotal.toFixed(2)}`;
+        document.getElementById('cost-boil').innerText = `$${boilTotal.toFixed(2)}`;
+        document.getElementById('cost-yeast').innerText = `$${yeastTotal.toFixed(2)}`;
+        document.getElementById('cost-total').innerText = `$${grandTotal.toFixed(2)}`;
+    }
+
+    /**
+     * ADDED: INVENTORY DEDUCTION TRIGGER
      */
     async function triggerInventoryDeduction(sectionId) {
         let stage = "";
@@ -1210,10 +1301,16 @@ function loadRecipeToLog() {
     // ---------------------------------------------------------
     // 5. DATA SCRAPER (Full explicit mapping - NO CONSOLIDATION)
     // ---------------------------------------------------------
+    /**
+ * DATA SCRAPER - ML ENHANCED
+ * Preserves all original lines while adding Machine Learning "Features."
+ * Captures mash temp, pH, and volumes for the predictive engine.
+ */
 function scrapeBrewData() {
+    // --- MACHINE LEARNING FEATURE ACCUMULATION ---
     const grainTableRows = Array.from(document.querySelectorAll('#grain-body tr'));
     const totalActualGrainWeight = grainTableRows.reduce((sum, row) => {
-        const val = parseFloat(row.querySelector('.ing-qty')?.value) || 0;
+        const val = parseFloat(row.querySelectorAll('input')[0]?.value) || 0;
         return sum + val;
     }, 0);
     
@@ -1222,12 +1319,16 @@ function scrapeBrewData() {
     const preBoilGML = parseFloat(document.querySelector('#lauter-content input[placeholder="1.xxx"]')?.value) || 0;
     const postBoilGML = parseFloat(document.querySelectorAll('#boil-content input[step="0.001"]')[1]?.value) || 0;
 
+    // --- FULL DATA OBJECT RETURN ---
     return {
+        // 1. ORIGINAL META BLOCK
         meta: {
             batchId: document.getElementById('batchId').value,
             date: document.getElementById('brewDate').value,
             recipeName: document.getElementById('header-beer-name').innerText
         },
+
+        // 2. NEW MACHINE LEARNING METRICS (Added Logic)
         mlFeatures: {
             totalGrainWeight: totalActualGrainWeight,
             mashTemperature: mashTempML,
@@ -1236,41 +1337,68 @@ function scrapeBrewData() {
             postBoilGravity: postBoilGML,
             strikeWaterVol: parseFloat(document.querySelectorAll('#grain-content .actual-input')[1]?.value) || 0
         },
+
+        // 3. ORIGINAL WATER BLOCK
         water: {
             foundation: document.querySelector('#grain-content .actual-input')?.value || "",
             mashIn: document.querySelectorAll('#grain-content .actual-input')[1]?.value || ""
         },
+
+        // 4. ORIGINAL GRAINS BLOCK
         grains: grainTableRows.map(row => ({
             name: row.cells[0].innerText,
-            actual: row.querySelector('.ing-qty')?.value || "",
-            lot: row.querySelector('.ing-lot')?.value || ""
+            actual: row.querySelectorAll('input')[0]?.value || "",
+            lot: row.querySelectorAll('input')[1]?.value || ""
         })),
+
+        // 5. ORIGINAL SALTS BLOCK
         salts: Array.from(document.querySelectorAll('#salt-body tr')).map(row => ({
             name: row.cells[0].innerText,
             mashActual: row.querySelectorAll('input')[0]?.value || "",
             spargeActual: row.querySelectorAll('input')[1]?.value || ""
         })),
-        mash: { temp: mashTempML, ph: mashPhML },
-        lauter: {
-            firstWort: { start: document.getElementById('fw-start')?.value || "", gravity: preBoilGML },
-            sparge1: { start: document.getElementById('sp1-start')?.value || "" },
-            sparge2: { start: document.getElementById('sp2-start')?.value || "" },
-            finalRunnings: { start: document.getElementById('fr-start')?.value || "", gravity: document.querySelectorAll('#lauter-content input[placeholder="1.xxx"]')[1]?.value || "" }
+
+        // 6. ORIGINAL MASH BLOCK
+        mash: { 
+            temp: mashTempML, 
+            ph: mashPhML 
         },
+
+        // 7. ORIGINAL LAUTER BLOCK
+        lauter: {
+            firstWort: { 
+                start: document.getElementById('fw-start')?.value || "", 
+                gravity: document.querySelector('#lauter-content input[placeholder="1.xxx"]')?.value || "" 
+            },
+            sparge1: { 
+                start: document.getElementById('sp1-start')?.value || "" 
+            },
+            sparge2: { 
+                start: document.getElementById('sp2-start')?.value || "" 
+            },
+            finalRunnings: { 
+                start: document.getElementById('fr-start')?.value || "", 
+                gravity: document.querySelectorAll('#lauter-content input[placeholder="1.xxx"]')[1]?.value || "" 
+            }
+        },
+
+        // 8. ORIGINAL BOIL BLOCK
         boil: {
             actualPreBoilG: preBoilGML,
             actualPostG: postBoilGML,
             additions: Array.from(document.querySelectorAll('#boil-body tr')).map(row => ({
-                name: row.cells[0].innerText.split('\n')[0],
+                name: row.cells[0].innerText,
                 time: row.getAttribute('data-time'),
-                actual: row.querySelector('.ing-qty')?.value || "",
-                lot: row.querySelector('.ing-lot')?.value || ""
+                actual: row.querySelectorAll('input')[0]?.value || "",
+                lot: row.querySelectorAll('input')[1]?.value || ""
             }))
         },
+
+        // 9. ORIGINAL YEAST BLOCK
         yeast: {
             strain: document.getElementById('t-yeast')?.innerText || "",
             source: document.getElementById('yeast-source')?.value || "",
-            actualPitch: document.getElementById('ko-actual-pitch')?.value || "",
+            actualPitch: document.querySelector('#ko-yeast-content .actual-input')?.value || "",
             koVol: document.getElementById('ko-volume')?.value || ""
         }
     };
@@ -1285,9 +1413,12 @@ function scrapeBrewData() {
         } else {
             field.style.display = 'none';
         }
+        calculateLiveBatchCost();
     }
 
-    function calcYeast() {}
+    function calcYeast() { 
+        // Hook for brewery-specific pitch rate math
+    }
 
     function addDeepCut(c) { 
         const container = document.getElementById(c); 
@@ -1360,8 +1491,12 @@ function scrapeBrewData() {
             header.querySelector('.toggle-indicator').innerText="+"; 
         } 
     }
-
+/**
+ * HANDOFF TO CELLAR
+ * Triggered when Brew Log is finalized. Sends data to the Cellar Management API.
+ */
 async function handoffToCellar(brewData) {
+  // Use your actual Cellar Executive URL
   const CELLAR_EXEC_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
   
   const payload = {
@@ -1369,14 +1504,15 @@ async function handoffToCellar(brewData) {
     data: {
       recipeId: brewData.recipeId || "N/A",
       brandName: brewData.meta.recipeName,
-      vessel: brewData.yeast.vessel,
+      vessel: brewData.yeast.vessel, // Ensure your UI has a vessel selector
       og: brewData.boil.actualPostG,
       yeastGen: document.getElementById('inv-gen-display')?.innerText || "1",
-      dryHopDays: [3, 7]
+      dryHopDays: [3, 7] // Optional: Default offsets
     }
   };
 
   try {
+    // We use 'no-cors' for the POST to Google Apps Script
     await fetch(CELLAR_EXEC_URL, {
       method: "POST",
       mode: "no-cors",
@@ -1388,19 +1524,25 @@ async function handoffToCellar(brewData) {
     console.error("Handoff Failed: " + e.toString());
   }
 }
-
-async function completeBrewLog() { 
+    async function completeBrewLog() { 
     if(confirm("Finish this brew and start fermentation tracking?")) {
+        // 1. Scrape all the brewhouse data
         const brewData = scrapeBrewData();
+
+        // 2. Capture the selected destination tank
         const selectedVessel = document.getElementById('ko-vessel-select').value;
         brewData.yeast.vessel = selectedVessel;
 
+        // 3. Save to the Brew Log Sheet (Production API)
         await saveAndAdvance('ko-yeast-content', null); 
+
+        // 4. Send the batch data to the Cellar Management Sheet
+        // This will wake up the specific tank on your Command Center
         await handoffToCellar(brewData);
 
         Swal.fire({
             title: 'Brew Log Complete',
-            text: `Batch ${brewData.meta.batchId} moved to ${selectedVessel}. Inventory adjusted.`,
+            text: `Batch ${brewData.meta.batchId} has been moved to ${selectedVessel}.`,
             icon: 'success',
             confirmButtonColor: '#2563eb'
         });
