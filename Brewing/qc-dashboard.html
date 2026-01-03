@@ -3,197 +3,365 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suburban Brewing | Vessel QR Generator (Avery 3x3)</title>
+    <title>QC Dashboard | Suburban Brewing Co.</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <style>
-        /* --- SCREEN STYLES (Interactive View) --- */
+        :root {
+            --sidebar-width: 240px;
+            --primary-dark: #111827;
+            --accent: #2563eb;
+            --bg-light: #f3f4f6;
+            --text-main: #1f2937;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
         body {
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f3f4f6;
-            padding: 20px;
-            text-align: center;
-        }
-
-        h1 { color: #111827; margin-bottom: 5px; }
-        p { color: #6b7280; margin-bottom: 20px; }
-
-        .controls {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            max-width: 600px;
-            margin: 0 auto 30px auto;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-light);
+            margin: 0;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text-main);
         }
 
-        .controls input {
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 14px;
-            width: 90%;
-            margin: 0 auto;
-        }
-
-        button {
-            background: #2563eb;
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--primary-dark);
+            height: 100vh;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-
-        button:hover { background: #1d4ed8; }
-
-        /* --- STICKER PREVIEW (Screen) --- */
-        #sticker-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .sticker {
-            background: white;
-            border: 1px solid #ddd;
-            width: 3in;  /* Physical Width on Screen Preview */
-            height: 3in; /* Physical Height on Screen Preview */
-            box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
+            overflow-y: auto;
+            flex-shrink: 0;
         }
-
-        .sticker img {
-            width: 1.8in; /* Adjusted for 3 inch square */
-            height: 1.8in;
-        }
-
-        .sticker-label {
-            font-size: 24px;
-            font-weight: 900;
-            margin-top: 10px;
-            text-transform: uppercase;
-            font-family: 'Courier New', Courier, monospace;
-        }
-
-        .sticker-sub {
-            font-size: 10px;
-            color: #555;
-            margin-top: 5px;
+        
+        .sidebar-header {
+            padding: 25px 20px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #374151;
             letter-spacing: 1px;
         }
 
-        /* --- AVERY 6-UP PRINT LAYOUT --- */
-        @media print {
-            @page {
-                size: letter; /* 8.5in x 11in */
-                margin: 0.5in; /* Standard Avery Top/Bottom Margin */
-            }
-            
-            body { 
-                background: white; 
-                padding: 0; 
-                margin: 0; 
-            }
+        .nav-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            opacity: 0.5;
+            margin: 20px 20px 8px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
 
-            .controls, h1, p { 
-                display: none !important; 
-            }
-            
-            #sticker-container {
-                display: grid;
-                grid-template-columns: 1fr 1fr; /* 2 Columns */
-                grid-template-rows: repeat(3, 1fr); /* 3 Rows */
-                gap: 0.125in; /* Gap between stickers */
-                width: 100%;
-                margin: 0;
-            }
+        .nav-link {
+            display: block;
+            padding: 10px 24px;
+            color: #d1d5db;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        
+        .nav-link:hover { background: #1f2937; color: white; }
+        .nav-link.active { background: var(--accent); color: white; font-weight: 600; }
 
-            .sticker {
-                width: 3in;
-                height: 3in;
-                border: none; /* No border for final print */
-                /* Optional: Add 'border: 1px dashed #eee' if you need cutting guides on plain paper */
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                page-break-inside: avoid;
-                margin: 0 auto; /* Center in grid cell */
-            }
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
 
-            /* Ensure image is high contrast for printing */
-            .sticker img {
-                width: 2in;
-                height: 2in;
-            }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { margin: 0; font-size: 1.8rem; color: var(--primary-dark); }
+        .header small { color: #6b7280; font-weight: 600; font-size: 0.9rem; }
+
+        /* --- METRIC CARDS --- */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .metric-label { font-size: 0.75rem; text-transform: uppercase; color: #6b7280; font-weight: 700; }
+        .metric-value { font-size: 2rem; font-weight: 800; color: var(--primary-dark); margin-top: 5px; }
+        .metric-sub { font-size: 0.8rem; color: #10b981; font-weight: 600; }
+
+        /* --- CHART SECTION --- */
+        .chart-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            height: 400px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title { font-weight: 700; color: #374151; margin-bottom: 15px; font-size: 1rem; }
+
+        /* --- DATA TABLE --- */
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f9fafb; text-align: left; padding: 15px 20px; font-size: 0.75rem; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+        td { padding: 15px 20px; font-size: 0.9rem; border-bottom: 1px solid #f3f4f6; color: #374151; }
+        tr:last-child td { border-bottom: none; }
+        
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-pass { background: #d1fae5; color: #065f46; }
+        .badge-fail { background: #fee2e2; color: #991b1b; }
+        .badge-warn { background: #fef3c7; color: #92400e; }
+
+        @media (max-width: 1024px) {
+            .chart-row { grid-template-columns: 1fr; height: auto; }
+            .sidebar { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <h1>Avery 3x3 Label Generator</h1>
-    <p>Paste your hosted Cellar Page URL below. Prints 6 labels per sheet.</p>
+    <aside class="sidebar">
+        <div class="sidebar-header">SUBURBAN BREWING</div>
+        
+        <div class="nav-section-title">Main Menu</div> 
+        <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+        
+        <div class="nav-section-title">Brewing</div>
+        <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+        <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+        <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
+        <a href="qc-dashboard.html" class="nav-link active"><span>QC Dashboard</span></a>
+    </aside>
 
-    <div class="controls">
-        <label><b>Your Web App URL:</b></label>
-        <input type="text" id="base-url" placeholder="Paste your Google Script URL here..." value="">
-        <button onclick="generateStickers()">Generate & Print</button>
-    </div>
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>Quality Control</h1>
+                <small>Batch Consistency & Lab Metrics</small>
+            </div>
+            <div>
+                <button onclick="loadQCData()" style="padding: 8px 16px; background: white; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151;">Refresh Data</button>
+            </div>
+        </div>
 
-    <div id="sticker-container"></div>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Avg. Attenuation</div>
+                <div class="metric-value" id="stat-attenuation">--%</div>
+                <div class="metric-sub">Target: 78-82%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">VDK Pass Rate</div>
+                <div class="metric-value" id="stat-vdk">--%</div>
+                <div class="metric-sub">Last 10 Batches</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Avg. Turnaround</div>
+                <div class="metric-value" id="stat-turnaround">-- Days</div>
+                <div class="metric-sub">Grain to Glass</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Carb Consistency</div>
+                <div class="metric-value" id="stat-carb">--</div>
+                <div class="metric-sub">Standard Deviation</div>
+            </div>
+        </div>
+
+        <div class="chart-row">
+            <div class="chart-card">
+                <div class="card-title">Fermentation Consistency (Last 5 Batches)</div>
+                <div style="flex-grow: 1; position: relative;">
+                    <canvas id="fermCurveChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="card-title">Carbonation Accuracy</div>
+                <div style="flex-grow: 1; position: relative;">
+                    <canvas id="carbScatterChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; font-weight: 700;">Completed Batch History</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Batch ID</th>
+                        <th>Brand</th>
+                        <th>Brew Date</th>
+                        <th>Packaging Date</th>
+                        <th>Final Gravity</th>
+                        <th>VDK Status</th>
+                        <th>Carb (Vol)</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <tr><td colspan="7" style="text-align:center; color:#9ca3af;">Loading history...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
 
     <script>
-        // Updated Vessel List
-        const vessels = [
-            "FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6",
-            "Pilot 1", "Pilot 2",
-            "BT 1", "BT 2"
-        ];
+        // 🔴 CRITICAL: UPDATE THIS URL TO MATCH YOUR GOOGLE SCRIPT DEPLOYMENT 🔴
+        const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
 
-        function generateStickers() {
-            const baseUrl = document.getElementById('base-url').value;
-            const container = document.getElementById('sticker-container');
-            container.innerHTML = "";
+        window.onload = loadQCData;
 
-            if (!baseUrl) {
-                alert("Please paste your URL first.");
-                return;
-            }
-
-            vessels.forEach(vessel => {
-                // 1. Clean URL logic
-                const separator = baseUrl.includes('?') ? '&' : '?';
-                const trackUrl = `${baseUrl}${separator}vessel=${encodeURIComponent(vessel)}`;
+        async function loadQCData() {
+            try {
+                // Fetch Batch History (Using Section 23 of Backend)
+                // Note: We might need to update the backend getBatchHistory to return a bit more data for the charts
+                // For now, we simulate the chart data structure based on typical API returns
                 
-                // 2. Generate QR
-                const qrSrc = `https://quickchart.io/qr?size=300&margin=1&text=${encodeURIComponent(trackUrl)}`;
+                // 1. Fetch History List
+                // The backend currently has a helper 'getBatchHistory'. We access it via action parameters.
+                // NOTE: If 'getBatchHistory' isn't exposed in doGet, we might need to rely on 'getTankStatus' or add it.
+                // Assuming we use the existing structure, let's fetch active tanks for now or add a history endpoint.
+                // *Self-Correction*: The backend provided in the previous turn DOES NOT explicitly expose 'getBatchHistory' in the doGet router.
+                // We will use 'getTankStatus' for live data and mock history for the visual demo until the backend router is updated.
+                
+                // Ideally, you would add `if (action === 'getHistory') return getBatchHistory();` to your doGet() in Code.gs
+                
+                const res = await fetch(`${API_URL}?action=getTankStatus`); // Using available endpoint
+                const liveData = await res.json(); 
+                
+                // MOCK DATA GENERATOR (To demonstrate UI until History Endpoint is live)
+                // This simulates what the database WOULD return for completed batches
+                const mockHistory = [
+                    { id: "24-001", brand: "Pilsner", start: "2024-01-02", end: "2024-01-28", fg: 1.008, vdk: "PASS", carb: 2.55 },
+                    { id: "24-002", brand: "Hazy IPA", start: "2024-01-05", end: "2024-01-20", fg: 1.012, vdk: "PASS", carb: 2.60 },
+                    { id: "24-003", brand: "Stout", start: "2024-01-10", end: "2024-01-25", fg: 1.018, vdk: "PASS", carb: 2.40 },
+                    { id: "24-004", brand: "Pilsner", start: "2024-02-01", end: "2024-03-01", fg: 1.009, vdk: "WARN", carb: 2.50 },
+                    { id: "24-005", brand: "Pale Ale", start: "2024-02-15", end: "2024-03-05", fg: 1.010, vdk: "PASS", carb: 2.65 }
+                ];
 
-                // 3. Render Sticker (3x3 Size)
-                const sticker = document.createElement('div');
-                sticker.className = 'sticker';
-                sticker.innerHTML = `
-                    <div class="sticker-label">${vessel}</div>
-                    <img src="${qrSrc}" alt="${vessel} QR">
-                    <div class="sticker-sub">SCAN TO LOG</div>
+                renderMetrics(mockHistory);
+                renderTable(mockHistory);
+                renderCharts(mockHistory);
+
+            } catch (e) {
+                console.error("QC Load Error", e);
+                Swal.fire("Error", "Could not load QC data.", "error");
+            }
+        }
+
+        function renderMetrics(data) {
+            // Calc Averages
+            const avgCarb = data.reduce((acc, curr) => acc + curr.carb, 0) / data.length;
+            const passCount = data.filter(d => d.vdk === "PASS").length;
+            const passRate = (passCount / data.length) * 100;
+
+            document.getElementById('stat-attenuation').innerText = "81%"; // Placeholder calc
+            document.getElementById('stat-vdk').innerText = passRate.toFixed(0) + "%";
+            document.getElementById('stat-turnaround').innerText = "18 Days"; // Placeholder
+            document.getElementById('stat-carb').innerText = "±0.05"; // Placeholder
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = "";
+            
+            data.forEach(row => {
+                let vdkClass = row.vdk === "PASS" ? "badge-pass" : "badge-warn";
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight:700;">${row.id}</td>
+                        <td>${row.brand}</td>
+                        <td>${row.start}</td>
+                        <td>${row.end}</td>
+                        <td>${row.fg}</td>
+                        <td><span class="badge ${vdkClass}">${row.vdk}</span></td>
+                        <td>${row.carb.toFixed(2)}</td>
+                    </tr>
                 `;
-                container.appendChild(sticker);
+            });
+        }
+
+        function renderCharts(data) {
+            // 1. Fermentation Curves (Mocking Curve Data)
+            const ctxCurve = document.getElementById('fermCurveChart').getContext('2d');
+            new Chart(ctxCurve, {
+                type: 'line',
+                data: {
+                    labels: ['Day 1', 'Day 3', 'Day 5', 'Day 7', 'Day 10', 'Day 14'],
+                    datasets: [
+                        { label: 'Batch 24-001 (Pils)', data: [1.048, 1.035, 1.020, 1.012, 1.009, 1.008], borderColor: '#2563eb', tension: 0.3 },
+                        { label: 'Batch 24-004 (Pils)', data: [1.048, 1.038, 1.025, 1.015, 1.010, 1.009], borderColor: '#93c5fd', borderDash: [5,5], tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
-            // 4. Print with delay for images
-            setTimeout(() => { window.print(); }, 800);
+            // 2. Carb Scatter (Target vs Actual)
+            const ctxCarb = document.getElementById('carbScatterChart').getContext('2d');
+            const scatterData = data.map((d, i) => ({ x: i+1, y: d.carb }));
+            
+            new Chart(ctxCarb, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.id),
+                    datasets: [{
+                        label: 'Carbonation Vol',
+                        data: data.map(d => d.carb),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        type: 'bar'
+                    }, {
+                        label: 'Target (2.55)',
+                        data: Array(data.length).fill(2.55),
+                        borderColor: '#ef4444',
+                        borderDash: [5, 5],
+                        type: 'line',
+                        pointRadius: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
         }
     </script>
-
 </body>
 </html>
