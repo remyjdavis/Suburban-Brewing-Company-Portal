@@ -539,88 +539,109 @@
     // --- MASTER CONFIGURATION ---
     const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
     
+    // DEFINE YOUR VALID TANK NAMES HERE
+    // This allows the system to recognize a tank even if it has no history in the sheet.
+    const KNOWN_VESSELS = [
+        "FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6",
+        "Pilot 1", "Pilot 2",
+        "BT 1", "BT 2"
+    ];
+
     let currentBatchId = null;
     let currentVessel = null;
     let currentBrand = null;
     let currentAdditionMode = 'DH';
 
-    // --- 1. INITIALIZATION (FIXED) ---
-    // We remove 'await' so both functions fire immediately and independently
+    // --- 1. HYBRID INITIALIZATION ---
     window.onload = function() {
-        console.log("Page Loaded. initializing...");
-        refreshGrid();       // Draw the visual grid
-        checkForQRContext(); // Check URL for QR data
+        refreshGrid(); // Draw grid
+        
+        // Google Sandbox Check
+        if (typeof google !== 'undefined' && google.script && google.script.url) {
+            google.script.url.getLocation(function(location) {
+                if (location.parameter && location.parameter.vessel) {
+                    processQRContext(location.parameter.vessel);
+                }
+            });
+        } else {
+            // Standard Browser Check
+            const urlParams = new URLSearchParams(window.location.search);
+            const qrVessel = urlParams.get('vessel');
+            if (qrVessel) processQRContext(qrVessel);
+        }
     };
 
-    // --- 2. QR CODE LISTENER (WITH DEBUGGING) ---
-    async function checkForQRContext() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const qrVessel = urlParams.get('vessel');
+    // --- 2. QR PROCESSOR (THE FIX) ---
+    async function processQRContext(qrVessel) {
+        const decodedQR = decodeURIComponent(qrVessel);
         
-        // DEBUG LOG: See if the code actually detects the URL parameter
-        console.log("URL Parameter 'vessel' detected:", qrVessel);
+        const Toast = Swal.mixin({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 2000
+        });
+        Toast.fire({ icon: 'info', title: `Scanning ${decodedQR}...` });
 
-        if (qrVessel) {
-            // Show a "Thinking..." toast so you know it's working
-            const Toast = Swal.mixin({
-                toast: true, position: 'top-end', showConfirmButton: false, timer: 3000
-            });
-            Toast.fire({ icon: 'info', title: `Scanning ${qrVessel}...` });
+        try {
+            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`);
+            const allTanks = await res.json();
+            
+            // Normalize Strings (Remove spaces/dashes, ignore case)
+            const normalize = (str) => String(str).replace(/[-\s]/g, '').toUpperCase();
+            const targetScan = normalize(decodedQR);
+            
+            // Check 1: Is there active data in the Sheet?
+            const dbMatch = allTanks.find(t => t.vessel && normalize(t.vessel) === targetScan && t.isActive);
 
-            try {
-                const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`);
-                const allTanks = await res.json();
+            if (dbMatch) {
+                // CASE A: TANK HAS BEER (Open Log)
+                openModal(dbMatch.vessel, dbMatch.batchId, dbMatch.brand, dbMatch.status);
+            } else {
+                // Check 2: Is it a valid tank name, just empty?
+                const validTankName = KNOWN_VESSELS.find(v => normalize(v) === targetScan);
                 
-                // FUZZY MATCHING: Removes spaces/dashes and ignores case
-                // e.g. "FV-1" matches "FV 1" matches "fv1"
-                const normalize = (str) => String(str).replace(/[-\s]/g, '').toUpperCase();
-                const targetScan = normalize(decodeURIComponent(qrVessel));
-                
-                console.log("Looking for Normalized Tank:", targetScan);
-
-                const target = allTanks.find(t => normalize(t.vessel) === targetScan);
-
-                if (target) {
-                    console.log("Tank Found:", target);
-                    if (target.isActive) {
-                        // SUCCESS: Open the modal
-                        console.log("Opening Modal for Active Tank");
-                        openModal(target.vessel, target.batchId, target.brand, target.status);
-                    } else {
-                        // TANK IS EMPTY: Prompt for new brew
-                        console.log("Tank is Empty/Inactive");
-                        Swal.fire({
-                            title: `${target.vessel} is Available`,
-                            text: "Tank is currently empty. What's next?",
-                            icon: 'info',
-                            showCancelButton: true,
-                            confirmButtonText: 'Start New Brew',
-                            confirmButtonColor: '#2563eb',
-                            cancelButtonText: 'Receive Transfer',
-                            cancelButtonColor: '#10b981'
-                        }).then((result) => {
-                            if (result.isConfirmed) window.location.href = "Brew-Log.html";
-                            else if (result.dismiss === Swal.DismissReason.cancel) Swal.fire("Ready to Receive", "Scan Source Tank QR to start transfer.", "info");
-                        });
-                    }
+                if (validTankName) {
+                    // CASE B: TANK IS EMPTY BUT VALID (Prompt for Action)
+                    Swal.fire({
+                        title: `${validTankName} is Available`,
+                        text: "Tank is empty. Choose an action:",
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Start New Brew',
+                        confirmButtonColor: '#2563eb',
+                        cancelButtonText: 'Receive Transfer',
+                        cancelButtonColor: '#10b981'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = "Brew-Log.html"; // Go to Brew Log
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            // Setup Transfer Receiver
+                            document.getElementById('transfer-dest').value = validTankName;
+                            // Fake the modal open state for a "Receiver" view
+                            currentVessel = validTankName; 
+                            switchTab('tab-transfer', document.querySelectorAll('.tab-btn')[4]);
+                            document.getElementById('vessel-modal').style.display = 'block';
+                            document.getElementById('overlay').style.display = 'block';
+                            document.getElementById('modal-title').innerText = validTankName + " (Receiver)";
+                            Swal.fire("Ready", "Scan the SOURCE tank to push beer here, or enter manually.", "info");
+                        }
+                    });
                 } else {
-                    console.warn("Tank NOT found in database.");
-                    Swal.fire("Unknown Vessel", `Could not find "${qrVessel}" in the system.`, "error");
+                    // CASE C: INVALID QR CODE
+                    Swal.fire("Unknown Vessel", `The code "${decodedQR}" does not match any known tanks.`, "error");
                 }
-            } catch (e) {
-                console.error("QR Lookup Failed:", e);
-                Swal.fire("Connection Error", "Could not talk to the brewery database.", "error");
             }
+        } catch (e) {
+            console.error("QR Error:", e);
+            Swal.fire("Connection Error", "Could not verify status.", "error");
         }
     }
 
-    // --- 3. GRID & DATA FUNCTIONS ---
+    // --- 3. GRID LOADER ---
     async function refreshGrid() {
-        const categories = {
-            'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"],
-            'grid-pilot': ["Pilot 1", "Pilot 2"],
-            'grid-brite': ["BT 1", "BT 2"]
-        };
+        // Use the global KNOWN_VESSELS list to organize the grid
+        // This splits them into rows based on naming convention
+        const productionTanks = KNOWN_VESSELS.filter(n => n.startsWith("FV"));
+        const pilotTanks = KNOWN_VESSELS.filter(n => n.startsWith("Pilot"));
+        const briteTanks = KNOWN_VESSELS.filter(n => n.startsWith("BT"));
 
         try {
             const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { redirect: "follow" });
@@ -630,30 +651,28 @@
             let activeCount = 0;
             let qcPendingCount = 0;
 
-            Object.keys(categories).forEach(gridId => {
-                const container = document.getElementById(gridId);
+            const renderSection = (id, names) => {
+                const container = document.getElementById(id);
                 if (!container) return;
                 container.innerHTML = "";
                 
-                categories[gridId].forEach(name => {
-                    const data = Array.isArray(live) ? live.find(b => b.vessel === name) : null;
-                    const active = !!data && data.isActive;
+                names.forEach(name => {
+                    // Find active batch data if it exists
+                    const data = Array.isArray(live) ? live.find(b => b.vessel === name && b.isActive) : null;
+                    const active = !!data;
                     const status = active ? data.status : "Available";
                     
                     if(active) {
                         activeCount++;
-                        totalBBL += gridId.includes('pilot') ? 1 : 10;
-                        if(status === "Diacetyl Rest" || status === "Conditioning") qcPendingCount++;
+                        // Simple volume estimator based on name
+                        totalBBL += name.includes('Pilot') ? 1 : 10;
+                        if(status.includes("Rest") || status.includes("Condition")) qcPendingCount++;
                     }
 
                     let cardClass = active ? "active" : "clean";
                     if (status === "Dirty") cardClass = "dirty";
-                    
-                    let qcBadge = "";
-                    if(active && status === "Diacetyl Rest") {
-                        qcBadge = `<div class="qc-badge">VDK REQ</div>`;
-                        cardClass += " waiting-qc";
-                    }
+                    let qcBadge = (active && status.includes("Rest")) ? `<div class="qc-badge">VDK REQ</div>` : "";
+                    if(qcBadge) cardClass += " waiting-qc";
 
                     container.innerHTML += `
                         <div class="vessel-card ${cardClass}" onclick="openModal('${name}', '${active ? data.batchId : ''}', '${active ? data.brand : ''}', '${status}')">
@@ -663,7 +682,11 @@
                             <br><small>${active ? data.brand : '---'}</small>
                         </div>`;
                 });
-            });
+            };
+
+            renderSection('grid-production', productionTanks);
+            renderSection('grid-pilot', pilotTanks);
+            renderSection('grid-brite', briteTanks);
 
             document.getElementById('stat-total-bbl').innerText = totalBBL + " BBL";
             document.getElementById('stat-active-count').innerText = activeCount;
@@ -672,6 +695,7 @@
         } catch (e) { console.error("Grid Load Error:", e); }
     }
 
+    // --- 4. MODAL & TABS ---
     async function openModal(vessel, batchId, beerName, status) {
         currentVessel = vessel;
         currentBatchId = batchId;
@@ -681,19 +705,37 @@
         document.getElementById('overlay').style.display = 'block';
         document.getElementById('modal-title').innerText = vessel;
         
+        // QC Alert
         const qcBox = document.getElementById('qc-alert-box');
-        qcBox.style.display = (status === "Diacetyl Rest" || status === "Conditioning") ? 'block' : 'none';
+        qcBox.style.display = (status.includes("Rest") || status.includes("Condition")) ? 'block' : 'none';
 
         if (batchId && batchId !== "") {
             document.getElementById('modal-subtitle').innerText = `${beerName} (Batch #${batchId})`;
+            // Only load data if there is an active batch
             fetchRecipeHops(beerName); 
             loadInventoryLots(); 
             initChart(batchId, beerName); 
         } else {
             document.getElementById('modal-subtitle').innerText = "Vessel Status: " + status;
+            // Clear chart for empty tank
+            const ctx = document.getElementById('fermChart').getContext('2d');
+            if(window.fermChartObj) window.fermChartObj.destroy();
         }
     }
 
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        if(btn) btn.classList.add('active');
+    }
+
+    function closeModal() { 
+        document.getElementById('vessel-modal').style.display = 'none'; 
+        document.getElementById('overlay').style.display = 'none'; 
+    }
+
+    // --- 5. DATA FETCHERS ---
     async function loadInventoryLots() {
         const select = document.getElementById('dh-lot-select');
         try {
@@ -704,19 +746,6 @@
                 select.innerHTML += `<option value="${i.lot}" data-aa="${i.aa}">${i.variety} (Lot: ${i.lot} | ${i.aa}%)</option>`;
             });
         } catch (e) { console.error(e); }
-    }
-
-    function calculateAAAdjustment() {
-        const recipeWeight = parseFloat(document.getElementById('dh-recipe-weight').value);
-        const targetAA = parseFloat(document.getElementById('dh-target-aa').value);
-        const select = document.getElementById('dh-lot-select');
-        const actualAA = parseFloat(select.options[select.selectedIndex].getAttribute('data-aa'));
-
-        if (!recipeWeight || !targetAA || !actualAA) return;
-
-        const adjusted = (recipeWeight * targetAA) / actualAA;
-        document.getElementById('dh-adjusted-val').innerText = adjusted.toFixed(2);
-        document.getElementById('aa-calc-display').style.display = 'block';
     }
 
     async function fetchRecipeHops(recipeName) {
@@ -736,87 +765,32 @@
         } catch (e) { listDiv.innerHTML = "Recipe data retrieval error."; }
     }
 
-    async function initChart(batchId, brand) {
-        const ctx = document.getElementById('fermChart').getContext('2d');
-        if(window.fermChartObj) window.fermChartObj.destroy();
+    // --- 6. CALCULATORS ---
+    function calculateAAAdjustment() {
+        const recipeWeight = parseFloat(document.getElementById('dh-recipe-weight').value);
+        const targetAA = parseFloat(document.getElementById('dh-target-aa').value);
+        const select = document.getElementById('dh-lot-select');
+        const actualAA = parseFloat(select.options[select.selectedIndex].getAttribute('data-aa'));
 
-        try {
-            const res = await fetch(`${CELLAR_API_URL}?action=getFermAnalysis&batchId=${batchId}&brand=${encodeURIComponent(brand)}`);
-            const comparison = await res.json();
+        if (!recipeWeight || !targetAA || !actualAA) return;
 
-            window.fermChartObj = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: comparison.benchmark.map(b => 'Day ' + b.day),
-                    datasets: [
-                        {
-                            label: 'Current Gravity',
-                            data: comparison.current.map(c => c.gravity),
-                            borderColor: '#2563eb',
-                            backgroundColor: 'rgba(37, 99, 235, 0.05)',
-                            fill: true,
-                            tension: 0.3
-                        },
-                        {
-                            label: 'Historical Benchmark',
-                            data: comparison.benchmark.map(b => b.benchmarkGravity),
-                            borderColor: '#94a3b8',
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0.3
-                        }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        } catch (e) { console.warn("Chart Load Error", e); }
+        const adjusted = (recipeWeight * targetAA) / actualAA;
+        document.getElementById('dh-adjusted-val').innerText = adjusted.toFixed(2);
+        document.getElementById('aa-calc-display').style.display = 'block';
     }
 
-    async function runMLAnalysis() {
-        document.getElementById('ml-health-status').innerText = "Computing...";
-        try {
-            const res = await fetch(`${CELLAR_API_URL}?action=runMLPrediction&batchId=${currentBatchId}`);
-            const mlData = await res.json();
-            
-            document.getElementById('ml-finish-date').innerText = mlData.prediction || "Unknown";
-            
-            if (mlData.anomaly) {
-                document.getElementById('ml-health-status').innerText = "Deviation Detected";
-                document.getElementById('ml-health-status').style.color = "#ef4444";
-                document.getElementById('ml-anomaly-box').style.display = "block";
-            } else {
-                document.getElementById('ml-health-status').innerText = "Healthy Curve";
-                document.getElementById('ml-health-status').style.color = "#10b981";
-                document.getElementById('ml-anomaly-box').style.display = "none";
-            }
-        } catch (e) {
-            console.error("ML Error", e);
-            document.getElementById('ml-health-status').innerText = "Data Error";
-        }
-    }
-
-    async function submitTransfer() {
-        if(!confirm("Are you sure? This will empty the current vessel.")) return;
-        
+    // --- 7. ACTIONS (SUBMITS) ---
+    async function submitDailyLog() {
         const payload = {
-            action: 'transferVolume',
-            data: {
-                batchId: currentBatchId,
-                sourceVessel: currentVessel,
-                destVessel: document.getElementById('transfer-dest').value,
-                volume: document.getElementById('transfer-vol').value,
-                gravity: document.getElementById('transfer-fg').value,
-                carb: document.getElementById('transfer-psi').value,
-                brandName: currentBrand
-            }
+            batchId: currentBatchId,
+            gravity: document.getElementById('log-sg').value,
+            temp: document.getElementById('log-temp').value,
+            ph: document.getElementById('log-ph').value,
+            vdkResult: document.getElementById('log-vdk').value,
+            co2Check: document.getElementById('log-carb').value
         };
-
-        Swal.fire({title: 'Transferring...', didOpen: () => Swal.showLoading()});
-        
-        await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-        
-        Swal.fire("Success", "Volume transferred. Source tank marked Empty/Dirty.", "success")
-            .then(() => { location.reload(); });
+        await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDaily', data: payload }) });
+        Swal.fire("Logged", "Data saved.", "success").then(() => { closeModal(); refreshGrid(); });
     }
 
     async function submitAddition(type) {
@@ -846,19 +820,6 @@
         Swal.fire('Updated', `Stage: ${stage}`, 'success').then(() => { closeModal(); refreshGrid(); });
     }
 
-    async function submitDailyLog() {
-        const payload = {
-            batchId: currentBatchId,
-            gravity: document.getElementById('log-sg').value,
-            temp: document.getElementById('log-temp').value,
-            ph: document.getElementById('log-ph').value,
-            vdkResult: document.getElementById('log-vdk').value,
-            co2Check: document.getElementById('log-carb').value
-        };
-        await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDaily', data: payload }) });
-        Swal.fire("Logged", "Data saved.", "success").then(() => { closeModal(); refreshGrid(); });
-    }
-
     async function logDrop() {
         const payload = {
             batchId: currentBatchId,
@@ -871,6 +832,68 @@
         Swal.fire("Logged", "Entry saved.", "success");
     }
 
+    async function submitTransfer() {
+        if(!confirm("Are you sure? This will empty the current vessel.")) return;
+        const payload = {
+            action: 'transferVolume',
+            data: {
+                batchId: currentBatchId,
+                sourceVessel: currentVessel,
+                destVessel: document.getElementById('transfer-dest').value,
+                volume: document.getElementById('transfer-vol').value,
+                gravity: document.getElementById('transfer-fg').value,
+                carb: document.getElementById('transfer-psi').value,
+                brandName: currentBrand
+            }
+        };
+        Swal.fire({title: 'Transferring...', didOpen: () => Swal.showLoading()});
+        await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+        Swal.fire("Success", "Volume transferred.", "success").then(() => { location.reload(); });
+    }
+
+    // --- 8. ML & CHARTING ---
+    async function runMLAnalysis() {
+        document.getElementById('ml-health-status').innerText = "Computing...";
+        try {
+            const res = await fetch(`${CELLAR_API_URL}?action=runMLPrediction&batchId=${currentBatchId}`);
+            const mlData = await res.json();
+            document.getElementById('ml-finish-date').innerText = mlData.prediction || "Unknown";
+            if (mlData.anomaly) {
+                document.getElementById('ml-health-status').innerText = "Deviation Detected";
+                document.getElementById('ml-health-status').style.color = "#ef4444";
+                document.getElementById('ml-anomaly-box').style.display = "block";
+            } else {
+                document.getElementById('ml-health-status').innerText = "Healthy Curve";
+                document.getElementById('ml-health-status').style.color = "#10b981";
+                document.getElementById('ml-anomaly-box').style.display = "none";
+            }
+        } catch (e) {
+            console.error("ML Error", e);
+            document.getElementById('ml-health-status').innerText = "Data Error";
+        }
+    }
+
+    async function initChart(batchId, brand) {
+        const ctx = document.getElementById('fermChart').getContext('2d');
+        if(window.fermChartObj) window.fermChartObj.destroy();
+        try {
+            const res = await fetch(`${CELLAR_API_URL}?action=getFermAnalysis&batchId=${batchId}&brand=${encodeURIComponent(brand)}`);
+            const comparison = await res.json();
+            window.fermChartObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: comparison.benchmark.map(b => 'Day ' + b.day),
+                    datasets: [
+                        { label: 'Current Gravity', data: comparison.current.map(c => c.gravity), borderColor: '#2563eb', fill: true, tension: 0.3 },
+                        { label: 'Historical Benchmark', data: comparison.benchmark.map(b => b.benchmarkGravity), borderColor: '#94a3b8', borderDash: [5, 5], fill: false, tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        } catch (e) { console.warn("Chart Load Error", e); }
+    }
+
+    // --- 9. HELPERS ---
     function setAdditionMode(mode) {
         currentAdditionMode = mode;
         document.getElementById('mode-dryhop').style.display = mode === 'DH' ? 'block' : 'none';
@@ -896,18 +919,6 @@
         const select = document.getElementById('inv-item-select');
         const opt = select.options[select.selectedIndex];
         document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
-    }
-
-    function switchTab(tabId, btn) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        btn.classList.add('active');
-    }
-
-    function closeModal() { 
-        document.getElementById('vessel-modal').style.display = 'none'; 
-        document.getElementById('overlay').style.display = 'none'; 
     }
 </script>
 </body>
