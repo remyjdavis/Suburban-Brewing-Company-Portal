@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sales Target List | Suburban Brewing</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #111827;
+            --accent: #2563eb;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- HEADER & CONTROLS --- */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .header-title h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        .header-title p { margin: 5px 0 0; color: #6b7280; font-size: 0.9rem; }
+
+        .route-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        select {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            font-size: 1rem;
+            min-width: 200px;
+        }
+
+        /* --- DASHBOARD LAYOUT --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+
+        /* --- OPPORTUNITY CARDS (LEFT) --- */
+        .leads-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .lead-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 5px solid #d1d5db; /* Default border */
+            transition: transform 0.2s;
+            position: relative;
+        }
+        
+        .lead-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        /* Priority Colors */
+        .priority-high { border-left-color: #ef4444; }
+        .priority-med { border-left-color: #f59e0b; }
+
+        .client-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .client-name { font-weight: 800; font-size: 1.1rem; color: var(--primary); }
+        .client-loc { font-size: 0.8rem; color: #6b7280; display: flex; align-items: center; gap: 4px; }
+
+        .pitch-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .pitch-label { font-size: 0.7rem; text-transform: uppercase; color: #1e40af; font-weight: 700; }
+        .pitch-product { font-size: 1rem; font-weight: 800; color: #1e3a8a; margin: 4px 0; }
+        .pitch-reason { font-size: 0.85rem; color: #4b5563; font-style: italic; }
+
+        .stock-badge {
+            display: inline-block;
+            background: #dcfce7; color: #166534;
+            font-size: 0.7rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 12px;
+            margin-top: 5px;
+        }
+
+        .actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .btn-pitch { background: var(--accent); color: white; }
+        .btn-pitch:hover { background: #1d4ed8; }
+        .btn-snooze { background: #f3f4f6; color: #4b5563; }
+
+        /* --- TRENDS SIDEBAR (RIGHT) --- */
+        .trends-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            height: fit-content;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .trend-title { font-weight: 800; color: var(--primary); margin-bottom: 15px; font-size: 1.1rem; }
+        
+        .trend-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .trend-city { font-weight: 600; color: #374151; }
+        .trend-brand { color: var(--accent); font-weight: 700; }
+
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .header-container { flex-direction: column; align-items: start; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <div class="header-title">
+            <h1>Sales Intelligence</h1>
+            <p>AI-Driven Gap Analysis & Lead Generation</p>
+        </div>
+        <div class="route-selector">
+            <label style="font-weight:600; color:#4b5563;">Where are you today?</label>
+            <select id="route-select" onchange="filterByRoute()">
+                <option value="All">Show All Areas</option>
+                </select>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        
+        <div>
+            <div id="loading-state" style="text-align:center; padding:40px; color:#6b7280;">
+                <div style="font-size:2rem; margin-bottom:10px;">🤖</div>
+                Analyzing sales history and inventory levels...
+            </div>
+            <div id="leads-grid" class="leads-container"></div>
+        </div>
+
+        <div class="trends-panel">
+            <div class="trend-title">📈 Local Favorites</div>
+            <div id="trends-list">
+                <p style="color:#9ca3af; font-size:0.9rem;">Loading trends...</p>
+            </div>
+            <div style="margin-top:30px;">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 🔴 UPDATE WITH YOUR CELLAR SCRIPT URL 🔴
+        const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
+
+        let allLeads = []; // Store raw data for filtering
+
+        window.onload = async function() {
+            try {
+                // Fetch Intelligence Data
+                const res = await fetch(`${API_URL}?action=getSalesOptimizationData`);
+                const data = await res.json();
+                
+                allLeads = data.leads;
+                
+                // 1. Populate Route Dropdown
+                populateRouteFilter(data.leads);
+                
+                // 2. Render Initial View
+                renderLeads(allLeads);
+                
+                // 3. Render Trends
+                renderTrends(data.trends);
+
+            } catch (e) {
+                console.error("API Error:", e);
+                document.getElementById('loading-state').innerHTML = `<span style="color:#ef4444;">Error loading data. Check console.</span>`;
+            }
+        };
+
+        // --- FILTER LOGIC ---
+        function populateRouteFilter(leads) {
+            const cities = [...new Set(leads.map(l => l.city))].sort();
+            const select = document.getElementById('route-select');
+            
+            cities.forEach(city => {
+                if(city) {
+                    const opt = document.createElement('option');
+                    opt.value = city;
+                    opt.innerText = city;
+                    select.appendChild(opt);
+                }
+            });
+        }
+
+        function filterByRoute() {
+            const selectedCity = document.getElementById('route-select').value;
+            if (selectedCity === "All") {
+                renderLeads(allLeads);
+            } else {
+                const filtered = allLeads.filter(l => l.city === selectedCity);
+                renderLeads(filtered);
+            }
+        }
+
+        // --- RENDER CARDS ---
+        function renderLeads(leads) {
+            const container = document.getElementById('leads-grid');
+            document.getElementById('loading-state').style.display = 'none';
+            container.innerHTML = "";
+
+            if (leads.length === 0) {
+                container.innerHTML = "<div style='grid-column:1/-1; text-align:center; color:#6b7280; padding:20px;'>No new opportunities found for this area. Good job!</div>";
+                return;
+            }
+
+            leads.forEach(lead => {
+                const priorityClass = lead.priority === 'High' ? 'priority-high' : 'priority-med';
+                
+                const card = document.createElement('div');
+                card.className = `lead-card ${priorityClass}`;
+                card.innerHTML = `
+                    <div class="client-header">
+                        <div>
+                            <div class="client-name">${lead.customer}</div>
+                            <div class="client-loc">📍 ${lead.city}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="pitch-box">
+                        <div class="pitch-label">Recommended Pitch</div>
+                        <div class="pitch-product">🍺 ${lead.product}</div>
+                        <div class="pitch-reason">${lead.reason}</div>
+                        <div class="stock-badge">✅ In Stock</div>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn btn-pitch" onclick="logPitch('${lead.customer}', '${lead.product}')">Log Pitch</button>
+                        <button class="btn btn-snooze" onclick="this.closest('.lead-card').remove()">Snooze</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- RENDER TRENDS SIDEBAR ---
+        function renderTrends(trends) {
+            const list = document.getElementById('trends-list');
+            list.innerHTML = "";
+            
+            // Populate List
+            trends.slice(0, 5).forEach(t => {
+                list.innerHTML += `
+                    <div class="trend-item">
+                        <span class="trend-city">${t.city}</span>
+                        <span class="trend-brand">${t.topBrand}</span>
+                    </div>`;
+            });
+
+            // Populate Chart
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: trends.slice(0,5).map(t => t.topBrand),
+                    datasets: [{
+                        data: trends.slice(0,5).map(t => t.volume),
+                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false }, title: { display: true, text: 'Top Regional Movers' } }
+                }
+            });
+        }
+
+        // --- ACTIONS ---
+        function logPitch(customer, product) {
+            Swal.fire({
+                title: 'Success!',
+                text: `Logged pitch of ${product} to ${customer}.`,
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            // Here you would add a fetch() call to send this data back to your Sales Log in Google Sheets
+        }
+    </script>
+
+</body>
+</html>
