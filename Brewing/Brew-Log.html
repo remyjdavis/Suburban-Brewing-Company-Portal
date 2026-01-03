@@ -739,6 +739,10 @@
                         <label>Target OG (Plato)</label>
                         <span class="target-display" id="t-calc-og">-</span>
                     </div>
+                    <div class="input-group">
+                        <label>Yeast Lot #</label>
+                        <input type="text" id="yeast-lot-input" class="actual-input" placeholder="Enter Lot #">
+                    </div>
                 </div>
 
                 <div id="harvest-fields" style="display:none;">
@@ -767,7 +771,7 @@
             <div class="form-grid">
                 <div class="input-group">
                     <label>Actual Pitch Vol (Liters/Gal)</label>
-                    <input type="number" class="actual-input">
+                    <input type="number" id="ko-actual-pitch" class="actual-input">
                 </div>
                 <div class="input-group">
                     <label>KO Volume (BBL)</label>
@@ -954,15 +958,17 @@ function loadRecipeToLog() {
         // ML DATA ACCUMULATION: Summing potential extract for efficiency calc
         totalPotentialPoints += (suggested * actualCOAExtract);
 
-        return `<tr>
+        return `<tr class="deduct-row" data-type="grain">
             <td>${maltName}</td>
             <td><span class="target-display">${targetQty}</span></td>
             <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggested.toFixed(2)}</span></td>
-            <td><input type="number" class="actual-input" placeholder="${suggested.toFixed(2)}"></td>
+            <td><input type="number" class="actual-input ing-qty" placeholder="${suggested.toFixed(2)}"></td>
             <td>
-                <span class="badge" style="padding:5px; color:white; border-radius:4px; font-size:0.7rem; background-color:${invMatch && invMatch.qty < suggested ? '#e74c3c' : '#27ae60'}">
-                    Lot: ${invMatch ? invMatch.lot : 'N/A'} (Stock: ${invMatch ? invMatch.qty : 0})
-                </span>
+                <input type="text" class="actual-input ing-lot" value="${invMatch ? invMatch.lot : ''}" placeholder="Lot #">
+                <br>
+                <small style="color:${invMatch && invMatch.qty < suggested ? '#e74c3c' : '#27ae60'}">
+                    Stock: ${invMatch ? invMatch.qty : 0}
+                </small>
             </td>
         </tr>`;
     }).join('');
@@ -995,13 +1001,16 @@ function loadRecipeToLog() {
                 }
             }
 
-            boilBody.innerHTML += `<tr data-time="${b[3]}">
-                <td>${addName}<br><small>Lot: ${invMatch ? invMatch.lot : 'N/A'}</small></td>
+            boilBody.innerHTML += `<tr class="deduct-row" data-type="hop" data-time="${b[3]}">
+                <td>${addName}<br><small>Target: ${recipeAA}% AA</small></td>
                 <td>${b[3]} min</td>
                 <td><span class="target-display">${targetW}</span></td>
                 <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestedHop.toFixed(2)}</span></td>
-                <td><input type="number" class="actual-input" placeholder="${suggestedHop.toFixed(2)}"></td>
-                <td>${currentLotAA}% AA</td>
+                <td>
+                    <input type="number" class="actual-input ing-qty" placeholder="${suggestedHop.toFixed(2)}">
+                    <input type="hidden" class="ing-target-aa" value="${recipeAA}">
+                </td>
+                <td><input type="text" class="actual-input ing-lot" value="${invMatch ? invMatch.lot : ''}" placeholder="Lot #"></td>
             </tr>`;
         });
     }
@@ -1013,7 +1022,7 @@ function loadRecipeToLog() {
         const yeastInv = inventory.yeast.find(y => y.name.toLowerCase() === r.yeast.strain.toLowerCase());
         
         if (yeastInv) {
-            document.getElementById('inv-gen-display').innerText = yeastInv.specs.gen || '--';
+            document.getElementById('yeast-lot-input').value = yeastInv.lot;
             
             /**
              * DYNAMIC QC ALERT BOX
@@ -1032,8 +1041,6 @@ function loadRecipeToLog() {
 
     /**
      * MACHINE LEARNING: PREDICTIVE BREWHOUSE EFFICIENCY
-     * This logic calculates the Theoretical Maximum Yield based on the COA.
-     * The scraper will later compare this to Actual OG to train the ML model.
      */
     const theoreticalMaxPoints = totalPotentialPoints / (r.batchSize * 31); 
     console.log("ML Prep: Theoretical Max Yield for this lot configuration: " + theoreticalMaxPoints.toFixed(4));
@@ -1084,7 +1091,7 @@ function loadRecipeToLog() {
     }
 
     // ---------------------------------------------------------
-    // 4. SAVE AND ADVANCE LOGIC (Bypassing CORS for Production)
+    // 4. SAVE AND ADVANCE LOGIC (INTEGRATED INVENTORY DEDUCTION)
     // ---------------------------------------------------------
     async function saveAndAdvance(currentId, nextId) {
         if(!document.getElementById('batchId').value) {
@@ -1099,7 +1106,7 @@ function loadRecipeToLog() {
         saveBtn.disabled = true;
 
         try {
-            // Sends data to the Production Sheet
+            // 1. SCAPE AND SEND TO BREW LOG SHEET
             await fetch(LOG_SAVE_URL, {
                 method: "POST",
                 mode: "no-cors", 
@@ -1109,34 +1116,31 @@ function loadRecipeToLog() {
                     data: scrapeBrewData() 
                 })
             });
+
+            // 2. NEW: TRIGGER SECTION-SPECIFIC INVENTORY DEDUCTION
+            await triggerInventoryDeduction(currentId);
             
-            // 1. Mark as locked
+            // 3. UI LOCKING AND ADVANCEMENT
             current.classList.add('locked');
             saveBtn.innerText = "✓ SYNCED";
             saveBtn.style.backgroundColor = "#7f8c8d";
 
-            // 2. CLOSE the current section
             current.classList.add('collapsed');
-            // Find the header to update the "+" indicator
             const currentHeader = current.parentElement.querySelector('.toggle-indicator');
             if (currentHeader) currentHeader.innerText = "+";
 
-            // 3. OPEN and scroll to the next section
             if (nextId) {
                 const next = document.getElementById(nextId);
                 next.classList.remove('collapsed');
-                // Update the header indicator for the next section
                 const nextHeader = next.parentElement.querySelector('.toggle-indicator');
                 if (nextHeader) nextHeader.innerText = "-";
 
-                // Update the sticky stage display
                 const nextTitle = next.parentElement.querySelector('.stage-title').innerText;
                 document.getElementById('active-stage-display').innerText = "STAGE: " + nextTitle.toUpperCase();
                 
-                // Smooth scroll
                 next.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
-                Swal.fire('Brew Log Complete', 'All data has been synced to the production sheet.', 'success');
+                Swal.fire('Brew Log Complete', 'All data has been synced and inventory adjusted.', 'success');
             }
         } catch(err) {
             Swal.fire('Sync Error', 'Check Production Script permissions.', 'error');
@@ -1145,19 +1149,71 @@ function loadRecipeToLog() {
         }
     }
 
+    /**
+     * NEW HELPER: SCANS THE DOM FOR INGREDIENTS IN THE ACTIVE SECTION
+     */
+    async function triggerInventoryDeduction(sectionId) {
+        let stage = "";
+        let ingredients = [];
+
+        // Grain/Mash Section Deduction
+        if (sectionId === 'grain-content') {
+            stage = "mash";
+            document.querySelectorAll('#grain-body tr.deduct-row').forEach(row => {
+                ingredients.push({
+                    type: 'grain',
+                    name: row.cells[0].innerText.split('\n')[0],
+                    qty: row.querySelector('.ing-qty').value,
+                    lot: row.querySelector('.ing-lot').value
+                });
+            });
+        } 
+        // Boil/Hop Section Deduction
+        else if (sectionId === 'boil-content') {
+            stage = "boil";
+            document.querySelectorAll('#boil-body tr.deduct-row').forEach(row => {
+                ingredients.push({
+                    type: 'hop',
+                    name: row.cells[0].innerText.split('\n')[0],
+                    qty: row.querySelector('.ing-qty').value,
+                    lot: row.querySelector('.ing-lot').value,
+                    targetAA: row.querySelector('.ing-target-aa')?.value || 0
+                });
+            });
+        } 
+        // Knockout/Yeast Section Deduction
+        else if (sectionId === 'ko-yeast-content') {
+            stage = "knockout";
+            const yeastSource = document.getElementById('yeast-source').value;
+            if (yeastSource === 'Fresh') {
+                ingredients.push({
+                    type: 'yeast',
+                    name: document.getElementById('t-yeast').innerText,
+                    qty: document.getElementById('ko-actual-pitch').value,
+                    lot: document.getElementById('yeast-lot-input').value
+                });
+            }
+        }
+
+        if (ingredients.length > 0) {
+            await fetch(LOG_SAVE_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({
+                    action: "deductInventory",
+                    data: { stage: stage, ingredients: ingredients }
+                })
+            });
+        }
+    }
+
     // ---------------------------------------------------------
     // 5. DATA SCRAPER (Full explicit mapping - NO CONSOLIDATION)
     // ---------------------------------------------------------
-   /**
- * DATA SCRAPER - ML ENHANCED
- * Preserves all original lines while adding Machine Learning "Features."
- * Captures mash temp, pH, and volumes for the predictive engine.
- */
 function scrapeBrewData() {
-    // --- MACHINE LEARNING FEATURE ACCUMULATION ---
     const grainTableRows = Array.from(document.querySelectorAll('#grain-body tr'));
     const totalActualGrainWeight = grainTableRows.reduce((sum, row) => {
-        const val = parseFloat(row.querySelectorAll('input')[0]?.value) || 0;
+        const val = parseFloat(row.querySelector('.ing-qty')?.value) || 0;
         return sum + val;
     }, 0);
     
@@ -1166,16 +1222,12 @@ function scrapeBrewData() {
     const preBoilGML = parseFloat(document.querySelector('#lauter-content input[placeholder="1.xxx"]')?.value) || 0;
     const postBoilGML = parseFloat(document.querySelectorAll('#boil-content input[step="0.001"]')[1]?.value) || 0;
 
-    // --- FULL DATA OBJECT RETURN ---
     return {
-        // 1. ORIGINAL META BLOCK
         meta: {
             batchId: document.getElementById('batchId').value,
             date: document.getElementById('brewDate').value,
             recipeName: document.getElementById('header-beer-name').innerText
         },
-
-        // 2. NEW MACHINE LEARNING METRICS (Added Logic)
         mlFeatures: {
             totalGrainWeight: totalActualGrainWeight,
             mashTemperature: mashTempML,
@@ -1184,68 +1236,41 @@ function scrapeBrewData() {
             postBoilGravity: postBoilGML,
             strikeWaterVol: parseFloat(document.querySelectorAll('#grain-content .actual-input')[1]?.value) || 0
         },
-
-        // 3. ORIGINAL WATER BLOCK
         water: {
             foundation: document.querySelector('#grain-content .actual-input')?.value || "",
             mashIn: document.querySelectorAll('#grain-content .actual-input')[1]?.value || ""
         },
-
-        // 4. ORIGINAL GRAINS BLOCK
         grains: grainTableRows.map(row => ({
             name: row.cells[0].innerText,
-            actual: row.querySelectorAll('input')[0]?.value || "",
-            lot: row.querySelectorAll('input')[1]?.value || ""
+            actual: row.querySelector('.ing-qty')?.value || "",
+            lot: row.querySelector('.ing-lot')?.value || ""
         })),
-
-        // 5. ORIGINAL SALTS BLOCK
         salts: Array.from(document.querySelectorAll('#salt-body tr')).map(row => ({
             name: row.cells[0].innerText,
             mashActual: row.querySelectorAll('input')[0]?.value || "",
             spargeActual: row.querySelectorAll('input')[1]?.value || ""
         })),
-
-        // 6. ORIGINAL MASH BLOCK
-        mash: { 
-            temp: mashTempML, 
-            ph: mashPhML 
-        },
-
-        // 7. ORIGINAL LAUTER BLOCK
+        mash: { temp: mashTempML, ph: mashPhML },
         lauter: {
-            firstWort: { 
-                start: document.getElementById('fw-start')?.value || "", 
-                gravity: document.querySelector('#lauter-content input[placeholder="1.xxx"]')?.value || "" 
-            },
-            sparge1: { 
-                start: document.getElementById('sp1-start')?.value || "" 
-            },
-            sparge2: { 
-                start: document.getElementById('sp2-start')?.value || "" 
-            },
-            finalRunnings: { 
-                start: document.getElementById('fr-start')?.value || "", 
-                gravity: document.querySelectorAll('#lauter-content input[placeholder="1.xxx"]')[1]?.value || "" 
-            }
+            firstWort: { start: document.getElementById('fw-start')?.value || "", gravity: preBoilGML },
+            sparge1: { start: document.getElementById('sp1-start')?.value || "" },
+            sparge2: { start: document.getElementById('sp2-start')?.value || "" },
+            finalRunnings: { start: document.getElementById('fr-start')?.value || "", gravity: document.querySelectorAll('#lauter-content input[placeholder="1.xxx"]')[1]?.value || "" }
         },
-
-        // 8. ORIGINAL BOIL BLOCK
         boil: {
             actualPreBoilG: preBoilGML,
             actualPostG: postBoilGML,
             additions: Array.from(document.querySelectorAll('#boil-body tr')).map(row => ({
-                name: row.cells[0].innerText,
+                name: row.cells[0].innerText.split('\n')[0],
                 time: row.getAttribute('data-time'),
-                actual: row.querySelectorAll('input')[0]?.value || "",
-                lot: row.querySelectorAll('input')[1]?.value || ""
+                actual: row.querySelector('.ing-qty')?.value || "",
+                lot: row.querySelector('.ing-lot')?.value || ""
             }))
         },
-
-        // 9. ORIGINAL YEAST BLOCK
         yeast: {
             strain: document.getElementById('t-yeast')?.innerText || "",
             source: document.getElementById('yeast-source')?.value || "",
-            actualPitch: document.querySelector('#ko-yeast-content .actual-input')?.value || "",
+            actualPitch: document.getElementById('ko-actual-pitch')?.value || "",
             koVol: document.getElementById('ko-volume')?.value || ""
         }
     };
@@ -1262,9 +1287,7 @@ function scrapeBrewData() {
         }
     }
 
-    function calcYeast() { 
-        // Hook for brewery-specific pitch rate math
-    }
+    function calcYeast() {}
 
     function addDeepCut(c) { 
         const container = document.getElementById(c); 
@@ -1337,12 +1360,8 @@ function scrapeBrewData() {
             header.querySelector('.toggle-indicator').innerText="+"; 
         } 
     }
-/**
- * HANDOFF TO CELLAR
- * Triggered when Brew Log is finalized. Sends data to the Cellar Management API.
- */
+
 async function handoffToCellar(brewData) {
-  // Use your actual Cellar Executive URL
   const CELLAR_EXEC_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
   
   const payload = {
@@ -1350,15 +1369,14 @@ async function handoffToCellar(brewData) {
     data: {
       recipeId: brewData.recipeId || "N/A",
       brandName: brewData.meta.recipeName,
-      vessel: brewData.yeast.vessel, // Ensure your UI has a vessel selector
+      vessel: brewData.yeast.vessel,
       og: brewData.boil.actualPostG,
       yeastGen: document.getElementById('inv-gen-display')?.innerText || "1",
-      dryHopDays: [3, 7] // Optional: Default offsets
+      dryHopDays: [3, 7]
     }
   };
 
   try {
-    // We use 'no-cors' for the POST to Google Apps Script
     await fetch(CELLAR_EXEC_URL, {
       method: "POST",
       mode: "no-cors",
@@ -1370,25 +1388,19 @@ async function handoffToCellar(brewData) {
     console.error("Handoff Failed: " + e.toString());
   }
 }
-    async function completeBrewLog() { 
-    if(confirm("Finish this brew and start fermentation tracking?")) {
-        // 1. Scrape all the brewhouse data
-        const brewData = scrapeBrewData();
 
-        // 2. Capture the selected destination tank
+async function completeBrewLog() { 
+    if(confirm("Finish this brew and start fermentation tracking?")) {
+        const brewData = scrapeBrewData();
         const selectedVessel = document.getElementById('ko-vessel-select').value;
         brewData.yeast.vessel = selectedVessel;
 
-        // 3. Save to the Brew Log Sheet (Production API)
         await saveAndAdvance('ko-yeast-content', null); 
-
-        // 4. Send the batch data to the Cellar Management Sheet
-        // This will wake up the specific tank on your Command Center
         await handoffToCellar(brewData);
 
         Swal.fire({
             title: 'Brew Log Complete',
-            text: `Batch ${brewData.meta.batchId} has been moved to ${selectedVessel}.`,
+            text: `Batch ${brewData.meta.batchId} moved to ${selectedVessel}. Inventory adjusted.`,
             icon: 'success',
             confirmButtonColor: '#2563eb'
         });
