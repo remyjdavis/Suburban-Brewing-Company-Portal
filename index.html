@@ -5,6 +5,9 @@
   <meta charset="UTF-8" />
   <title>Suburban Brewing Co. | Command Center</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     /* --- SHARED THEME VARIABLES --- */
     :root {
@@ -14,6 +17,8 @@
       --text-main: #1e293b;
       --text-muted: #64748b;
       --card-bg: #ffffff;
+      
+      /* Status Colors */
       --fermenting: #f59e0b;
       --crashing: #3b82f6;
       --ready: #10b981;
@@ -39,50 +44,43 @@
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-    /* --- COLLAPSIBLE SYSTEM --- */
-    /* 1. Sidebar Headers */
-    .nav-section-header {
-      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-header, .section-heading, .subsection-heading { 
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
       user-select: none;
     }
+
+    .nav-section-header {
+      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
+      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+    }
     .nav-section-header:hover { color: #fff; }
 
-    /* 2. Main Page - Master Headers */
     .section-heading { 
       font-size: 16px; font-weight: 800; margin: 30px 0 15px; 
       color: var(--text-main); text-transform: uppercase;
       padding-bottom: 8px; border-bottom: 2px solid #e2e8f0;
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      user-select: none;
     }
     .section-heading:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
-    /* 3. Main Page - Sub-Section Headers (Nested) */
     .subsection-heading {
-      font-size: 13px; font-weight: 700; margin: 20px 0 10px 10px; /* Indented */
+      font-size: 13px; font-weight: 700; margin: 20px 0 10px 10px;
       color: var(--text-muted); text-transform: uppercase;
       padding-bottom: 5px; border-bottom: 1px dashed #cbd5e1;
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      user-select: none;
     }
     .subsection-heading:hover { color: var(--accent); }
 
-    /* Animations & Icons */
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
 
-    /* Content Wrapper */
     .collapsible-content {
-      max-height: 2500px; /* Large max-height for nested content */
-      overflow: hidden;
+      max-height: 2500px; overflow: hidden;
       transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    /* --- SIDEBAR LINKS --- */
+    /* LINKS */
     .nav-link { 
       display: flex; align-items: center; padding: 10px 24px; 
       color: #64748b; text-decoration: none; font-size: 14px; 
@@ -96,7 +94,7 @@
     .header-bar { margin-bottom: 32px; }
     .header-bar h1 { font-size: 28px; font-weight: 800; margin: 0; }
     
-    /* --- SWIPEABLE TIERS --- */
+    /* --- CARDS & TIERS --- */
     .tier-1, .tier-2, .tier-3 {
       display: flex !important; overflow-x: auto !important;
       scroll-snap-type: x mandatory; gap: 20px; padding: 10px 5px 25px 5px;
@@ -104,7 +102,6 @@
     }
     .tier-1::-webkit-scrollbar, .tier-2::-webkit-scrollbar, .tier-3::-webkit-scrollbar { display: none; }
 
-    /* --- CARDS --- */
     .card, .ml-card { flex: 0 0 300px; scroll-snap-align: start; }
     .tank-card { flex: 0 0 170px; scroll-snap-align: start; }
 
@@ -223,28 +220,30 @@
           <div class="val" style="font-size: 20px; margin-top: 15px;">The Beer Spot</div>
           <p>Today @ 5:00 PM</p>
         </div>
+        
         <div class="card" onclick="location.href='sales/leads.html'" style="cursor:pointer;">
           <h3>Sales Outreach</h3>
           <div class="val" id="followUpCount">12</div>
           <p>AI Follow-ups Due Today</p>
         </div>
+        
         <div class="card alert-active" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
           <h3>Inventory Alerts</h3>
           <div class="val" id="alertCount" style="color: var(--danger);">4</div>
           <p>Low Stock Master SKUs</p>
         </div>
-        <div class="card" id="sensoryAlertCard" onclick="location.href='Samplings/sampling-calendar.html'" style="cursor:pointer; border-left: 5px solid #8b5cf6;">
-        <h3>Sensory Panel</h3>
-        <div class="val" id="sensoryCount">--</div>
-        <p id="sensoryStatus">Checking active brews...</p>
-      </div>
+
+        <div class="card" id="sensoryAlertCard" style="cursor:pointer; border-left: 5px solid #e2e8f0;">
+          <h3>Sensory Panel</h3>
+          <div class="val" id="sensoryCount">--</div>
+          <p id="sensoryStatus">Checking logs...</p>
+        </div>
       </div>
     </div>
 
     <div class="section-heading" onclick="toggleGroup('grp-all-tanks', this)">
        <span>Active Cellar Overview</span> <span class="chevron">▼</span>
     </div>
-    
     <div id="grp-all-tanks" class="collapsible-content">
       
       <div class="subsection-heading" onclick="toggleGroup('sect-prod', this)">
@@ -267,8 +266,8 @@
       <div id="sect-brite" class="collapsible-content">
         <div class="tier-2" id="grid-brite"></div>
       </div>
-
     </div>
+
     <div class="section-heading" onclick="toggleGroup('sect-ml', this)">
       <span>Machine Learning Intelligence</span><span class="chevron">▼</span>
     </div>
@@ -315,32 +314,30 @@
     </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script>
-    // --- CONFIGURATION ---
-    const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; 
+    // 🔴 CONFIGURATION: ENSURE THESE ARE YOUR LATEST DEPLOYMENTS
     const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
-    const AUTO_REFRESH_MS = 300000; 
-// 🔴 NEW: The URL for your Sensory Web App (The one panelists use)
+    const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec';
     const SENSORY_API_URL = 'https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec';
     
+    const AUTO_REFRESH_MS = 300000; 
+
     // --- ON LOAD ---
     window.addEventListener('DOMContentLoaded', () => {
       const d = new Date();
       document.getElementById('current-date').innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-      runAllSyncs();
-      setInterval(runAllSyncs, 300000); // 5 Minutes
-
-      // Update the Sensory Card Link to open the Panel App
+      // Link for Sensory Card (Opens Sensory App)
       const sensCard = document.getElementById('sensoryAlertCard');
       if(sensCard) {
-        sensCard.onclick = function() {
-            window.open(SENSORY_API_URL, '_blank'); // Opens Sensory App in new tab
-        };
+        sensCard.onclick = function() { window.open(SENSORY_API_URL, '_blank'); };
       }
-// Sidebar active state
+
+      // Initial Sync
+      runAllSyncs();
+      setInterval(runAllSyncs, AUTO_REFRESH_MS);
+
+      // Sidebar Active State
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -351,53 +348,59 @@
         }
       }
     });
-    
-  function runAllSyncs() {
+
+    function runAllSyncs() {
+        console.log("Syncing Dashboard Data...");
         refreshCellarTanks();
         checkSensoryAlerts();
         refreshMLEngine();
     }
-    // --- 1. SENSORY ALERT CHECKER (Points to Sensory Backend) ---
+
+    // --- 1. SENSORY ALERT CHECKER ---
     async function checkSensoryAlerts() {
       try {
         const payload = { action: 'getBlindSamples' };
         
-        // 🔴 NOW FETCHING FROM SENSORY API
+        // Use JSON body + redirect: 'follow'
         const res = await fetch(SENSORY_API_URL, { 
             method: 'POST', 
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            redirect: 'follow'
         });
 
         const json = await res.json();
 
         if(json.status === 'success') {
           const count = json.data.length;
-          // Check if it's just the placeholder reference
+          // Ignore if it's just the reference sample (code 100 or 105)
           const isReferenceOnly = count === 1 && (json.data[0].code === "100" || json.data[0].code === "105");
           
           if (count > 0 && !isReferenceOnly) {
             document.getElementById('sensoryCount').innerText = count;
             document.getElementById('sensoryStatus').innerText = "Samples Approaching Terminal";
-            // Visual Styles for Active Alert
             document.getElementById('sensoryStatus').style.color = "#8b5cf6"; 
             document.getElementById('sensoryStatus').style.fontWeight = "700";
             document.getElementById('sensoryAlertCard').style.borderColor = "#8b5cf6";
             document.getElementById('sensoryAlertCard').style.borderLeftWidth = "6px";
           } else {
-            document.getElementById('sensoryCount').innerText = "0";
-            document.getElementById('sensoryStatus').innerText = "No critical samples due";
-            // Reset Styles
-            document.getElementById('sensoryStatus').style.color = "var(--text-muted)";
-            document.getElementById('sensoryStatus').style.fontWeight = "400";
-            document.getElementById('sensoryAlertCard').style.borderColor = "#e2e8f0";
-            document.getElementById('sensoryAlertCard').style.borderLeftWidth = "1px";
+            resetSensoryCard();
           }
         }
       } catch (e) {
         console.error("Sensory Alert Error:", e);
-        document.getElementById('sensoryStatus').innerText = "Sync Failed";
+        document.getElementById('sensoryStatus').innerText = "Offline";
       }
     }
+
+    function resetSensoryCard() {
+        document.getElementById('sensoryCount').innerText = "0";
+        document.getElementById('sensoryStatus').innerText = "No critical samples due";
+        document.getElementById('sensoryStatus').style.color = "var(--text-muted)";
+        document.getElementById('sensoryStatus').style.fontWeight = "400";
+        document.getElementById('sensoryAlertCard').style.borderColor = "#e2e8f0";
+        document.getElementById('sensoryAlertCard').style.borderLeftWidth = "1px";
+    }
+
     // --- 2. CELLAR TANK SYNC ---
     async function refreshCellarTanks() {
         const categories = {
@@ -407,7 +410,10 @@
         };
 
         try {
-            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { method: "GET" });
+            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { 
+                method: "GET", 
+                redirect: "follow" 
+            });
             const liveBatches = await res.json();
 
             Object.keys(categories).forEach(gridId => {
@@ -452,7 +458,10 @@
         const cashSavedDisplay = document.getElementById('cost-dollars-saved');
 
         try {
-            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { method: "GET" });
+            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { 
+                method: "GET", 
+                redirect: "follow" 
+            });
             const data = await res.json();
 
             const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
