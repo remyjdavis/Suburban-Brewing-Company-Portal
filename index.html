@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Suburban Brewing Co. | Command Center</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <!DOCTYPE html>
-<html lang="en">
-<head>
   <base target="_top">
   <meta charset="UTF-8" />
   <title>Suburban Brewing Co. | Command Center</title>
@@ -20,7 +14,6 @@
       --text-main: #1e293b;
       --text-muted: #64748b;
       --card-bg: #ffffff;
-      /* Tank Status Colors */
       --fermenting: #f59e0b;
       --crashing: #3b82f6;
       --ready: #10b981;
@@ -29,7 +22,7 @@
       --ml-blue: #3498db;
     }
 
-    /* --- LAYOUT & SIDEBAR --- */
+    /* --- GLOBAL RESET & LAYOUT --- */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { 
       margin: 0; background: var(--bg); color: var(--text-main); 
@@ -37,6 +30,7 @@
       display: flex; min-height: 100vh;
     }
 
+    /* --- SIDEBAR STYLES --- */
     .sidebar { 
       width: 260px; background: var(--sidebar); color: #fff; 
       padding: 24px 0; flex-shrink: 0; position: fixed; 
@@ -45,25 +39,42 @@
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-    /* COLLAPSIBLE HEADER STYLES */
-    .nav-section-header { 
-      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+    /* COLLAPSIBLE HEADERS (Sidebar & Main) */
+    .nav-section-header, .section-heading { 
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
       user-select: none;
     }
-    .nav-section-header:hover { color: #fff; }
-    .chevron { transition: transform 0.3s ease; font-size: 10px; }
-    .nav-section-header.collapsed .chevron { transform: rotate(-90deg); }
 
-    /* COLLAPSIBLE GROUP STYLES */
-    .nav-group {
-      max-height: 500px; /* Arbitrary large height for animation */
-      overflow: hidden;
-      transition: max-height 0.4s cubic-bezier(0, 1, 0, 1);
+    /* Sidebar specific header styling */
+    .nav-section-header {
+      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
+      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
     }
-    .nav-group.collapsed { max-height: 0; }
+    .nav-section-header:hover { color: #fff; }
 
+    /* Main Content specific header styling */
+    .section-heading { 
+      font-size: 14px; font-weight: 700; margin: 30px 0 15px; 
+      color: var(--text-muted); text-transform: uppercase;
+      padding-bottom: 5px; border-bottom: 1px solid #e2e8f0;
+    }
+    .section-heading span:first-child { margin-right: 10px; }
+    .section-heading:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* CHEVRON ANIMATION */
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
+
+    /* COLLAPSIBLE CONTENT CONTAINER */
+    .collapsible-content {
+      max-height: 800px; /* Large enough to fit content */
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+      opacity: 1;
+    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+
+    /* SIDEBAR LINKS */
     .nav-link { 
       display: flex; align-items: center; padding: 10px 24px; 
       color: #64748b; text-decoration: none; font-size: 14px; 
@@ -72,19 +83,12 @@
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-    /* --- MAIN CONTENT --- */
+    /* --- MAIN AREA --- */
     .main { flex: 1; margin-left: 260px; padding: 40px; transition: all 0.3s ease; }
     .header-bar { margin-bottom: 32px; }
     .header-bar h1 { font-size: 28px; font-weight: 800; margin: 0; }
     
-    .section-heading { 
-      font-size: 14px; font-weight: 700; margin: 40px 0 20px; 
-      color: var(--text-muted); text-transform: uppercase;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .section-heading::after { content: ""; flex: 1; height: 1px; background: #e2e8f0; }
-
-    /* --- SWIPEABLE ROW LOGIC --- */
+    /* --- SWIPEABLE TIERS --- */
     .tier-1, .tier-2, .tier-3 {
       display: flex !important; overflow-x: auto !important;
       scroll-snap-type: x mandatory; gap: 20px; padding: 10px 5px 25px 5px;
@@ -134,19 +138,19 @@
 <body>
 
   <aside class="sidebar">
-    <h2>SUBURBAN Brewing</h2>
+    <h2>SUBURBAN BREWING</h2>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-main" class="nav-group">
+    <div id="grp-main" class="collapsible-content">
       <a href="index.html" class="nav-link active"><span>Command Center</span></a>
     </div>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
       <span>Samplings</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-sample" class="nav-group">
+    <div id="grp-sample" class="collapsible-content">
       <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
       <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
@@ -155,7 +159,7 @@
     <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
       <span>Sales</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-sales" class="nav-group">
+    <div id="grp-sales" class="collapsible-content">
       <a href="sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
       <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
       <a href="sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
@@ -166,7 +170,7 @@
     <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
       <span>Inventory</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-inv" class="nav-group">
+    <div id="grp-inv" class="collapsible-content">
       <a href="inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
       <a href="inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
       <a href="inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
@@ -176,7 +180,7 @@
     <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
       <span>Brewing</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-brew" class="nav-group">
+    <div id="grp-brew" class="collapsible-content">
       <a href="Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
       <a href="Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
       <a href="Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
@@ -188,7 +192,7 @@
     <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
       <span>Reporting & Analytics</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-rep" class="nav-group">
+    <div id="grp-rep" class="collapsible-content">
       <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
       <a href="Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
       <a href="Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
@@ -201,73 +205,93 @@
       <div id="current-date" style="color: var(--text-muted); font-size: 14px; font-weight: 500;"></div>
     </header>
     
-    <div class="section-heading">Operational Overview</div>
-    <div class="tier-1">
-      <div class="card" onclick="location.href='Samplings/sampling-calendar.html'" style="cursor:pointer;">
-        <h3>Next Sampling</h3>
-        <div class="val" style="font-size: 20px; margin-top: 15px;">The Beer Spot</div>
-        <p>Today @ 5:00 PM</p>
-      </div>
-      <div class="card" onclick="location.href='sales/leads.html'" style="cursor:pointer;">
-        <h3>Sales Outreach</h3>
-        <div class="val" id="followUpCount">12</div>
-        <p>AI Follow-ups Due Today</p>
-      </div>
-      <div class="card alert-active" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
-        <h3>Inventory Alerts</h3>
-        <div class="val" id="alertCount" style="color: var(--danger);">4</div>
-        <p>Low Stock Master SKUs</p>
+    <div class="section-heading" onclick="toggleGroup('sect-ops', this)">
+      <span>Operational Overview</span><span class="chevron">▼</span>
+    </div>
+    <div id="sect-ops" class="collapsible-content">
+      <div class="tier-1">
+        <div class="card" onclick="location.href='Samplings/sampling-calendar.html'" style="cursor:pointer;">
+          <h3>Next Sampling</h3>
+          <div class="val" style="font-size: 20px; margin-top: 15px;">The Beer Spot</div>
+          <p>Today @ 5:00 PM</p>
+        </div>
+        <div class="card" onclick="location.href='sales/leads.html'" style="cursor:pointer;">
+          <h3>Sales Outreach</h3>
+          <div class="val" id="followUpCount">12</div>
+          <p>AI Follow-ups Due Today</p>
+        </div>
+        <div class="card alert-active" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
+          <h3>Inventory Alerts</h3>
+          <div class="val" id="alertCount" style="color: var(--danger);">4</div>
+          <p>Low Stock Master SKUs</p>
+        </div>
       </div>
     </div>
 
-    <div class="section-heading">Production FVs (10 BBL)</div>
-    <div class="tier-2" id="grid-production"></div>
+    <div class="section-heading" onclick="toggleGroup('sect-prod', this)">
+      <span>Production FVs (10 BBL)</span><span class="chevron">▼</span>
+    </div>
+    <div id="sect-prod" class="collapsible-content">
+      <div class="tier-2" id="grid-production"></div>
+    </div>
 
-    <div class="section-heading">Pilot System (1 BBL)</div>
-    <div class="tier-2" id="grid-pilot"></div>
+    <div class="section-heading" onclick="toggleGroup('sect-pilot', this)">
+      <span>Pilot System (1 BBL)</span><span class="chevron">▼</span>
+    </div>
+    <div id="sect-pilot" class="collapsible-content">
+      <div class="tier-2" id="grid-pilot"></div>
+    </div>
 
-    <div class="section-heading">Brite Tanks (10 BBL)</div>
-    <div class="tier-2" id="grid-brite"></div>
+    <div class="section-heading" onclick="toggleGroup('sect-brite', this)">
+      <span>Brite Tanks (10 BBL)</span><span class="chevron">▼</span>
+    </div>
+    <div id="sect-brite" class="collapsible-content">
+      <div class="tier-2" id="grid-brite"></div>
+    </div>
 
-    <div class="section-heading">Machine Learning Intelligence (Click to Expand)</div>
-    <div class="tier-3">
-        <div class="ml-card" id="perfCard" onclick="this.classList.toggle('expanded')">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="text-align: left;">
-                    <h3 style="margin: 0; color: var(--ml-blue); font-size: 14px;">Learned Performance</h3>
-                    <span class="expand-hint">Click for Trend Chart</span>
-                </div>
-                <div id="ml-efficiency-display" class="ml-stat-val" style="font-size: 2.2rem; line-height: 1;">--%</div>
-            </div>
-            <div class="chart-container"><canvas id="efficiencyChart"></canvas></div>
-            <div style="margin-top: 15px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #edf2f7;">
-                <p id="ml-advice" style="margin: 0; font-size: 12px; color: #475569; font-style: italic;">Connecting...</p>
-            </div>
-        </div>
+    <div class="section-heading" onclick="toggleGroup('sect-ml', this)">
+      <span>Machine Learning Intelligence</span><span class="chevron">▼</span>
+    </div>
+    <div id="sect-ml" class="collapsible-content">
+      <div class="tier-3">
+          <div class="ml-card" id="perfCard" onclick="this.classList.toggle('expanded')">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div style="text-align: left;">
+                      <h3 style="margin: 0; color: var(--ml-blue); font-size: 14px;">Learned Performance</h3>
+                      <span class="expand-hint">Click for Trend Chart</span>
+                  </div>
+                  <div id="ml-efficiency-display" class="ml-stat-val" style="font-size: 2.2rem; line-height: 1;">--%</div>
+              </div>
+              <div class="chart-container"><canvas id="efficiencyChart"></canvas></div>
+              <div style="margin-top: 15px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #edf2f7;">
+                  <p id="ml-advice" style="margin: 0; font-size: 12px; color: #475569; font-style: italic;">Connecting...</p>
+              </div>
+          </div>
 
-        <div class="ml-card" id="costCard" onclick="this.classList.toggle('expanded')" style="border-top-color: #10b981;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="text-align: left;">
-                    <h3 style="margin: 0; color: #10b981; font-size: 14px;">Estimated Savings</h3>
-                    <span class="expand-hint">Click for Breakdown</span>
-                </div>
-                <div id="cost-dollars-saved" class="ml-stat-val" style="font-size: 2.2rem; color: #10b981; line-height: 1;">$ --</div>
-            </div>
-            <div class="chart-container" style="display: flex; flex-direction: column; justify-content: center;">
-                <div class="ml-stats-grid" style="width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 15px;">
-                    <div class="ml-stat-box" style="text-align: center;">
-                        <div class="ml-stat-label">Grain Waste Reduced</div>
-                        <div id="cost-lbs-saved" class="ml-stat-val">-- lbs</div>
-                    </div>
-                </div>
-                <div class="ml-stats-grid" style="width: 100%;">
-                    <div class="ml-stat-box" style="text-align: center;">
-                        <div class="ml-stat-label">Predictive OG (100lb)</div>
-                        <div id="ml-og-display" class="ml-stat-val" style="color: var(--ml-blue);">1.---</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+          <div class="ml-card" id="costCard" onclick="this.classList.toggle('expanded')" style="border-top-color: #10b981;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div style="text-align: left;">
+                      <h3 style="margin: 0; color: #10b981; font-size: 14px;">Estimated Savings</h3>
+                      <span class="expand-hint">Click for Breakdown</span>
+                  </div>
+                  <div id="cost-dollars-saved" class="ml-stat-val" style="font-size: 2.2rem; color: #10b981; line-height: 1;">$ --</div>
+              </div>
+              <div class="chart-container" style="display: flex; flex-direction: column; justify-content: center;">
+                  <div class="ml-stats-grid" style="width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 15px;">
+                      <div class="ml-stat-box" style="text-align: center;">
+                          <div class="ml-stat-label">Grain Waste Reduced</div>
+                          <div id="cost-lbs-saved" class="ml-stat-val">-- lbs</div>
+                      </div>
+                  </div>
+                  <div class="ml-stats-grid" style="width: 100%;">
+                      <div class="ml-stat-box" style="text-align: center;">
+                          <div class="ml-stat-label">Predictive OG (100lb)</div>
+                          <div id="ml-og-display" class="ml-stat-val" style="color: var(--ml-blue);">1.---</div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
     </div>
   </main>
 
@@ -383,27 +407,33 @@
             if (advice) advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
         } catch (e) { console.error("ML Error:", e); }
     }
-    function toggleGroup(groupId, headerEl) {
-      const group = document.getElementById(groupId);
-      // Toggle the classes
-      group.classList.toggle('collapsed');
+    // --- UNIVERSAL TOGGLE FUNCTION ---
+    // Works for both Sidebar Menus AND Main Content Sections
+    function toggleGroup(contentId, headerEl) {
+      const content = document.getElementById(contentId);
+      
+      // Toggle 'collapsed' on content
+      content.classList.toggle('collapsed');
+      
+      // Toggle 'collapsed' on header (for chevron rotation)
       headerEl.classList.toggle('collapsed');
     }
 
-    // Auto-expand the group that contains the active link on load
+    // --- ON LOAD ---
     window.addEventListener('DOMContentLoaded', () => {
-      // Set Date
+      // 1. Set Date
       const d = new Date();
       document.getElementById('current-date').innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-      // Handle Sidebar
+      // 2. Sidebar Logic: Auto-expand active menu
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
-        const parentGroup = activeLink.closest('.nav-group');
+        const parentGroup = activeLink.closest('.collapsible-content');
         if (parentGroup) {
           parentGroup.classList.remove('collapsed');
+          // Find the header associated with this group (it's the previous sibling)
           const header = parentGroup.previousElementSibling;
-          if (header && header.classList.contains('nav-section-header')) {
+          if (header) {
             header.classList.remove('collapsed');
           }
         }
