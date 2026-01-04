@@ -349,12 +349,20 @@
     };
 
     // --- DATA LOADING ---
+    // --- DATA LOADING LOGIC ---
     async function loadQCData() {
       try {
-        const formData = new URLSearchParams();
-        formData.append('action', 'getQCData');
+        // 1. Create a simple object
+        const payload = {
+            action: 'getQCData'
+        };
 
-        const response = await fetch(API_URL, { method: 'POST', body: formData });
+        // 2. Send as a JSON String (matches your backend's JSON.parse)
+        const response = await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify(payload) // <--- FIXED
+        });
+        
         const json = await response.json();
 
         if (json.status === 'success') {
@@ -364,10 +372,13 @@
            renderCharts(history);
         } else {
            console.error("Backend error:", json);
+           // Optional: Show error on screen
+           document.getElementById('history-table-body').innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Error: ${json.message || "Unknown Backend Error"}</td></tr>`;
         }
 
       } catch (e) {
         console.error("QC Load Error", e);
+        document.getElementById('history-table-body').innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Connection Failed. Check Console.</td></tr>`;
       }
     }
 
