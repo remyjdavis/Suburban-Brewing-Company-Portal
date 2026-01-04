@@ -7,8 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+  
   <style>
     /* --- SHARED THEME VARIABLES --- */
     :root {
@@ -209,7 +209,7 @@
         <h1>Quality Control</h1>
         <div id="current-date"></div>
       </div>
-      <button class="btn" onclick="loadQCData()">Refresh Data</button>
+      <button class="btn" onclick="refreshAll()">Refresh Data</button>
     </header>
 
     <div class="section-heading" onclick="toggleGroup('sect-lab', this)">
@@ -282,19 +282,17 @@
       
       <div class="kpi-grid">
         <div class="kpi-card">
-          <h3>True-to-Brand Score</h3>
-          <div class="val" style="color: #2563eb;">4.8/5</div>
-          <div class="sub">Avg Last 3 Panels</div>
+          <h3>Sensory Pass Rate</h3>
+          <div class="val" id="sensory-rate" style="color: #2563eb;">--%</div>
+          <div class="sub" id="sensory-count">Based on -- tests</div>
         </div>
-        <div class="kpi-card">
-          <h3>Panel Participation</h3>
-          <div class="val">6 Staff</div>
-          <div class="sub">Last Session: Yesterday</div>
+        <div class="kpi-card" style="flex: 2;">
+          <h3>Top Detected Faults</h3>
+          <div class="val" id="sensory-faults" style="font-size: 18px; color: var(--text-muted); font-weight: 500; margin-top: 10px;">Loading...</div>
         </div>
-        <div class="kpi-card">
-          <h3>Off-Flavor Flags</h3>
-          <div class="val" style="color:#10b981;">0</div>
-          <div class="sub">Clean Results</div>
+        <div class="kpi-card" onclick="window.open('../sensory-admin.html', '_blank')" style="cursor: pointer; border-color: var(--accent);">
+          <h3 style="color: var(--accent);">Admin Panel</h3>
+          <div class="val" style="font-size: 16px;">View Leaderboard →</div>
         </div>
       </div>
 
@@ -318,8 +316,9 @@
   </main>
 
  <script>
-    // 🔴 CONFIGURATION: Update with your NEW deployment URL
-    const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
+    // 🔴 CONFIGURATION: UPDATE THESE URLS
+    const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
+    const SENSORY_API_URL = "https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec";
 
     // --- TOGGLE FUNCTION ---
     function toggleGroup(contentId, headerEl) {
@@ -333,7 +332,7 @@
       const d = new Date();
       document.getElementById('current-date').innerHTML = `<small>${d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</small>`;
 
-      // 2. Expand Sidebar
+      // 2. Expand Sidebar active state
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.nav-group');
@@ -345,22 +344,22 @@
       }
 
       // 3. Load Data
-      loadQCData();
+      refreshAll();
     };
 
-    // --- DATA LOADING ---
-    // --- DATA LOADING LOGIC ---
+    function refreshAll() {
+      loadQCData();
+      loadSensoryMetrics();
+    }
+
+    // --- 1. LOAD CELLAR METRICS ---
     async function loadQCData() {
       try {
-        // 1. Create a simple object
-        const payload = {
-            action: 'getQCData'
-        };
-
-        // 2. Send as a JSON String (matches your backend's JSON.parse)
-        const response = await fetch(API_URL, { 
+        const payload = { action: 'getQCData' };
+        const response = await fetch(CELLAR_API_URL, { 
             method: 'POST', 
-            body: JSON.stringify(payload) // <--- FIXED
+            body: JSON.stringify(payload),
+            redirect: 'follow'
         });
         
         const json = await response.json();
@@ -372,7 +371,6 @@
            renderCharts(history);
         } else {
            console.error("Backend error:", json);
-           // Optional: Show error on screen
            document.getElementById('history-table-body').innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Error: ${json.message || "Unknown Backend Error"}</td></tr>`;
         }
 
@@ -382,147 +380,163 @@
       }
     }
 
-    // --- DYNAMIC CALCULATIONS ---
-    function renderMetrics(data) {
-        if (!data || data.length === 0) return;
-
-        // 1. VDK Pass Rate
-        const passCount = data.filter(d => d.vdk.includes("PASS")).length;
-        const passRate = (passCount / data.length) * 100;
-        document.getElementById('stat-vdk').innerText = passRate.toFixed(0) + "%";
-
-        // 2. Avg Attenuation: ((OG - FG) / (OG - 1)) * 100
-        let totalAtt = 0;
-        let countAtt = 0;
-        data.forEach(d => {
-            if (d.og > 1 && d.fg > 1) {
-                let att = ((d.og - d.fg) / (d.og - 1)) * 100;
-                totalAtt += att;
-                countAtt++;
-            }
+    // --- 2. LOAD SENSORY METRICS (NEW) ---
+    async function loadSensoryMetrics() {
+      try {
+        const payload = { action: 'getSensoryMetrics' };
+        const response = await fetch(SENSORY_API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify(payload),
+            redirect: 'follow'
         });
-        const avgAtt = countAtt > 0 ? (totalAtt / countAtt) : 0;
-        document.getElementById('stat-attenuation').innerText = avgAtt.toFixed(1) + "%";
+        const json = await response.json();
 
-        // 3. Avg Turnaround (Pack Date - Brew Date)
-        let totalDays = 0;
-        let countDays = 0;
-        data.forEach(d => {
-            const start = new Date(d.start);
-            const end = new Date(d.end);
-            if (!isNaN(start) && !isNaN(end)) {
-                const diffTime = Math.abs(end - start);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                totalDays += diffDays;
-                countDays++;
-            }
-        });
-        const avgDays = countDays > 0 ? Math.round(totalDays / countDays) : 0;
-        document.getElementById('stat-turnaround').innerText = avgDays + " Days";
-
-        // 4. Carb Consistency (Standard Deviation)
-        const carbs = data.map(d => d.carb).filter(c => c > 0);
-        if (carbs.length > 1) {
-            const mean = carbs.reduce((a, b) => a + b) / carbs.length;
-            const variance = carbs.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / carbs.length;
-            const stdDev = Math.sqrt(variance);
-            document.getElementById('stat-carb').innerText = "±" + stdDev.toFixed(2);
-        } else {
-            document.getElementById('stat-carb').innerText = "--";
+        if (json.status === 'success') {
+           document.getElementById('sensory-rate').innerText = json.passRate + "%";
+           document.getElementById('sensory-count').innerText = `Based on ${json.totalTests} tests`;
+           
+           if(json.topFaults && json.topFaults.length > 0) {
+             document.getElementById('sensory-faults').innerText = "Top Issues: " + json.topFaults.join(", ");
+             document.getElementById('sensory-faults').style.color = "var(--danger)";
+           } else {
+             document.getElementById('sensory-faults').innerText = "No significant faults detected.";
+             document.getElementById('sensory-faults').style.color = "var(--success)";
+           }
         }
+      } catch (e) { console.error("Sensory Load Error", e); }
+    }
+
+    // --- RENDER FUNCTIONS ---
+    function renderMetrics(data) {
+       if (!data || data.length === 0) return;
+
+       // VDK
+       const passCount = data.filter(d => d.vdk.includes("PASS")).length;
+       document.getElementById('stat-vdk').innerText = ((passCount / data.length) * 100).toFixed(0) + "%";
+       
+       // Attenuation
+       let totalAtt = 0, countAtt = 0;
+       data.forEach(d => {
+           if (d.og > 1 && d.fg > 1) {
+               totalAtt += ((d.og - d.fg) / (d.og - 1)) * 100;
+               countAtt++;
+           }
+       });
+       document.getElementById('stat-attenuation').innerText = countAtt > 0 ? (totalAtt / countAtt).toFixed(1) + "%" : "--%";
+
+       // Turnaround
+       let totalDays = 0, countDays = 0;
+       data.forEach(d => {
+           const s = new Date(d.start), e = new Date(d.end);
+           if (!isNaN(s) && !isNaN(e)) {
+               totalDays += Math.ceil(Math.abs(e - s) / (86400000)); 
+               countDays++;
+           }
+       });
+       document.getElementById('stat-turnaround').innerText = countDays > 0 ? Math.round(totalDays / countDays) + " Days" : "--";
+
+       // Carb
+       const carbs = data.map(d => d.carb).filter(c => c > 0);
+       if (carbs.length > 1) {
+           const mean = carbs.reduce((a, b) => a + b) / carbs.length;
+           const variance = carbs.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / carbs.length;
+           document.getElementById('stat-carb').innerText = "±" + Math.sqrt(variance).toFixed(2);
+       } else {
+           document.getElementById('stat-carb').innerText = "--";
+       }
     }
 
     function renderTable(data) {
-        const tbody = document.getElementById('history-table-body');
-        tbody.innerHTML = "";
-        
-        data.forEach(row => {
-            let vdkClass = row.vdk.includes("PASS") ? "pass" : "fail";
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${row.id}</strong></td>
-                    <td>${row.brand}</td>
-                    <td>${row.start}</td>
-                    <td>${row.end}</td>
-                    <td>${row.fg.toFixed(3)}</td>
-                    <td><span class="status-pill ${vdkClass}">${row.vdk}</span></td>
-                    <td>${row.carb.toFixed(2)}</td>
-                </tr>
-            `;
-        });
+       const tbody = document.getElementById('history-table-body');
+       tbody.innerHTML = "";
+       
+       data.forEach(row => {
+           let vdkClass = row.vdk.includes("PASS") ? "pass" : "fail";
+           tbody.innerHTML += `
+               <tr>
+                   <td><strong>${row.id}</strong></td>
+                   <td>${row.brand}</td>
+                   <td>${row.start}</td>
+                   <td>${row.end}</td>
+                   <td>${row.fg.toFixed(3)}</td>
+                   <td><span class="status-pill ${vdkClass}">${row.vdk}</span></td>
+                   <td>${row.carb.toFixed(2)}</td>
+               </tr>
+           `;
+       });
     }
 
     function renderCharts(data) {
-        // Prepare Data for Charts (Reverse to show oldest -> newest left to right)
-        const chartData = [...data].reverse();
-        const labels = chartData.map(d => d.id);
-        
-        // 1. Carbonation Chart (Dynamic)
-        new Chart(document.getElementById('carbScatterChart'), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Carb Vol',
-                    data: chartData.map(d => d.carb),
-                    backgroundColor: '#dcfce7',
-                    borderColor: '#10b981',
-                    borderWidth: 1
-                }]
-            },
-            options: { 
-              responsive: true, maintainAspectRatio: false,
-              scales: { y: { min: 2.0, max: 3.0 } }, // Better scaling for CO2
-              plugins: { annotation: { annotations: { line1: { type: 'line', yMin: 2.55, yMax: 2.55, borderColor: 'red', borderDash: [4,4] } } } }
-            }
-        });
+       // Reverse data for charts so time flows Left -> Right
+       const chartData = [...data].reverse();
+       const labels = chartData.map(d => d.id);
 
-        // 2. Mocking Fermentation Curve (Cannot graph dynamic curve without daily logs)
-        // We keep this one mocked or simple for now as we only fetch summary data
-        new Chart(document.getElementById('fermCurveChart'), {
-            type: 'line',
-            data: {
-                labels: ['Start', 'Finish'],
-                datasets: chartData.slice(0, 3).map((batch, i) => ({
-                    label: batch.id + ' (' + batch.brand + ')',
-                    data: [batch.og, batch.fg], // Simply drawing a line from OG to FG
-                    borderColor: i === 0 ? '#2563eb' : (i === 1 ? '#93c5fd' : '#cbd5e1'),
-                    tension: 0.1
-                }))
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+       // 1. Carb Scatter
+       new Chart(document.getElementById('carbScatterChart'), {
+           type: 'bar',
+           data: {
+               labels: labels,
+               datasets: [{
+                   label: 'Carb Vol',
+                   data: chartData.map(d => d.carb),
+                   backgroundColor: '#dcfce7',
+                   borderColor: '#10b981',
+                   borderWidth: 1
+               }]
+           },
+           options: { 
+               responsive: true, 
+               maintainAspectRatio: false,
+               scales: { y: { min: 2.0, max: 3.0 } },
+               plugins: { annotation: { annotations: { line1: { type: 'line', yMin: 2.55, yMax: 2.55, borderColor: 'red', borderDash: [4,4] } } } }
+           }
+       });
 
-        // 3. Sensory Radar (Still Mock - requires sensory backend)
-        new Chart(document.getElementById('radarChart'), {
-          type: 'radar',
-          data: {
-            labels: ['Hoppy', 'Malty', 'Bitter', 'Fruity', 'Floral', 'Body'],
-            datasets: [{
-              label: 'Sensory Panel Avg',
-              data: [4, 2, 4, 3, 3, 3.5],
-              fill: true,
-              backgroundColor: 'rgba(37, 99, 235, 0.2)',
-              borderColor: '#2563eb',
-              pointBackgroundColor: '#2563eb'
-            }]
-          },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
+       // 2. Ferm Curve (Mocked Line from Start to Finish for now)
+       new Chart(document.getElementById('fermCurveChart'), {
+           type: 'line',
+           data: {
+               labels: ['Start', 'Finish'],
+               datasets: chartData.slice(0, 3).map((b, i) => ({
+                   label: b.id + ' (' + b.brand + ')',
+                   data: [b.og, b.fg],
+                   borderColor: i===0 ? '#2563eb' : (i===1 ? '#93c5fd' : '#cbd5e1'),
+                   tension: 0.1
+               }))
+           },
+           options: { responsive: true, maintainAspectRatio: false }
+       });
 
-        // 4. Agreement Bar (Still Mock)
-        new Chart(document.getElementById('barChart'), {
-          type: 'bar',
-          data: {
-            labels: ['Remy', 'Head Brewer', 'Cellarman', 'Packaging'],
-            datasets: [{
-              label: 'Deviation from Mean',
-              data: [0.1, -0.2, 0.05, 0.15],
-              backgroundColor: ['#2563eb', '#ef4444', '#10b981', '#f59e0b']
-            }]
-          },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
+       // 3. Sensory Radar (Still Mock - requires detailed backend data)
+       new Chart(document.getElementById('radarChart'), {
+         type: 'radar',
+         data: {
+           labels: ['Hoppy', 'Malty', 'Bitter', 'Fruity', 'Floral', 'Body'],
+           datasets: [{
+             label: 'Sensory Panel Avg',
+             data: [4, 2, 4, 3, 3, 3.5],
+             fill: true,
+             backgroundColor: 'rgba(37, 99, 235, 0.2)',
+             borderColor: '#2563eb',
+             pointBackgroundColor: '#2563eb'
+           }]
+         },
+         options: { responsive: true, maintainAspectRatio: false }
+       });
+
+       // 4. Agreement Bar (Still Mock)
+       new Chart(document.getElementById('barChart'), {
+         type: 'bar',
+         data: {
+           labels: ['Remy', 'Head Brewer', 'Cellarman', 'Packaging'],
+           datasets: [{
+             label: 'Deviation from Mean',
+             data: [0.1, -0.2, 0.05, 0.15],
+             backgroundColor: ['#2563eb', '#ef4444', '#10b981', '#f59e0b']
+           }]
+         },
+         options: { responsive: true, maintainAspectRatio: false }
+       });
     }
 </script>
 </body>
