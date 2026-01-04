@@ -308,16 +308,18 @@
         // 🔴 PASTE YOUR PRODUCTION BACKEND URL HERE 🔴
         const API_URL = "https://script.google.com/macros/s/AKfycbwHgZeSFsMCbj0I4eUHuDxfs9DX6YZBhkzm26dWlWoyRX0EH0v7Csnnqm1unOdbwEjj/exec";
 
+        // Global variable to store tank data for auto-fill
+        let tankCache = [];
+
         // 1. Initialize Page
         window.onload = function() {
             document.getElementById('pkg-date').valueAsDate = new Date();
             loadBrands();
         };
 
-        // 2. Fetch Brands from Google Sheet
+        // 2. Fetch Active Tanks
         async function loadBrands() {
             try {
-                // We send a POST to avoid CORS issues sometimes seen with GET on Apps Script
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     body: new URLSearchParams({ "action": "getProducts" })
@@ -325,52 +327,70 @@
                 const data = await response.json();
                 
                 if (data.status === 'success') {
+                    tankCache = data.message; // Save data to global cache
                     const select = document.getElementById('pkg-brand');
-                    select.innerHTML = '<option value="" disabled selected>Select Beer...</option>';
                     
-                    // Filter duplicates and create options
-                    const uniqueBrands = [...new Set(data.message.map(b => b.replace(/ Case| 1\/2| 1\/6/gi, "").trim()))];
-                    uniqueBrands.sort().forEach(brand => {
-                        if(brand) {
-                            let opt = document.createElement('option');
-                            opt.value = brand;
-                            opt.text = brand;
-                            select.add(opt);
-                        }
+                    select.innerHTML = '<option value="" disabled selected>Select Active Tank...</option>';
+                    
+                    // Populate Dropdown using the Array Index as the value
+                    tankCache.forEach((tank, index) => {
+                        let opt = document.createElement('option');
+                        opt.value = index; // We store the INDEX, not the name
+                        opt.text = tank.display; // "Suburban IPA (FV-04)"
+                        select.add(opt);
                     });
                 }
             } catch (err) {
-                console.error("Failed to load brands", err);
-                document.getElementById('pkg-brand').innerHTML = '<option disabled>Error loading brands</option>';
+                console.error("Failed to load tanks", err);
+                document.getElementById('pkg-brand').innerHTML = '<option disabled>Error connecting to Cellar</option>';
             }
         }
 
-        // 3. Real-time Calculation (Corrected for 16oz)
+        // 3. AUTO-FILL FUNCTION
+        function fillTankDetails() {
+            const select = document.getElementById('pkg-brand');
+            const selectedIndex = select.value;
+
+            // Look up the full data object using the index
+            const tank = tankCache[selectedIndex];
+
+            if (tank) {
+                // Auto-fill the fields
+                document.getElementById('vessel-source').value = tank.vessel;
+                document.getElementById('pkg-batch-id').value = tank.batch;
+            }
+        }
+
+        // 4. Real-time Calculator
         function calcTotal() {
             const halfs = parseFloat(document.getElementById('yield-half').value) || 0;
             const sixths = parseFloat(document.getElementById('yield-sixth').value) || 0;
             const cases = parseFloat(document.getElementById('yield-cases').value) || 0;
 
-            // 16oz Case (24pk) = 384oz = 0.0968 BBL
+            // 16oz Case (24pk) = 0.0968 BBL
             const totalBBL = (halfs * 0.5) + (sixths * 0.165) + (cases * 0.0968);
             
             document.getElementById('totalBBL').innerText = totalBBL.toFixed(1);
         }
 
-        // 4. Submit Data
+        // 5. Submit Data
         async function submitPackaging() {
             const btn = document.querySelector('.btn-submit');
             const operator = document.getElementById('operator').value;
-            const brand = document.getElementById('pkg-brand').value;
+            const select = document.getElementById('pkg-brand');
+            
+            // Get the clean brand name from our cache (not the index!)
+            const selectedIndex = select.value;
+            const tankData = tankCache[selectedIndex];
 
-            if(!operator || !brand) {
-                Swal.fire({ icon: 'warning', title: 'Missing Info', text: 'Please enter Brand and Operator.', confirmButtonColor: '#1e293b' });
+            if(!operator || !tankData) {
+                Swal.fire({ icon: 'warning', title: 'Missing Info', text: 'Please select a Tank and enter Operator.', confirmButtonColor: '#1e293b' });
                 return;
             }
             
             const payload = {
                 operator: operator,
-                brand: brand,
+                brand: tankData.brand, // Send the CLEAN brand name (e.g. "Suburban IPA")
                 vessel: document.getElementById('vessel-source').value,
                 batchId: document.getElementById('pkg-batch-id').value,
                 date: document.getElementById('pkg-date').value,
@@ -402,9 +422,11 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'Production Logged',
-                    text: `Added stock for ${brand}.`,
+                    text: `Added stock for ${tankData.brand}.`,
                     confirmButtonColor: '#10b981'
                 }).then(() => {
+                    // Clear inputs but keep tank selection for convenience? 
+                    // Or reset all? Let's reset yields.
                     document.getElementById('yield-half').value = "";
                     document.getElementById('yield-sixth').value = "";
                     document.getElementById('yield-cases').value = "";
