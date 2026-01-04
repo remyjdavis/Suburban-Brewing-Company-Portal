@@ -16,9 +16,9 @@
             --card-bg: #ffffff;
             --text-main: #1e293b;
             --text-light: #64748b;
-            --accent: #2563eb;       /* Brand Blue */
-            --success: #10b981;      /* Yield Green */
-            --danger: #ef4444;       /* Waste Red */
+            --accent: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
             --border: #e2e8f0;
         }
 
@@ -174,6 +174,7 @@
         }
         .btn-submit:hover { background: #0f172a; }
         .btn-submit:active { transform: scale(0.99); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* --- MOBILE TWEAKS --- */
         @media (max-width: 900px) {
@@ -221,12 +222,7 @@
                         <div class="form-col">
                             <label>Product / Brand</label>
                             <select id="pkg-brand">
-                                <option value="" disabled selected>Select Beer...</option>
-                                <option>Suburban IPA</option>
-                                <option>Main St. Stout</option>
-                                <option>Honey Brook Helles</option>
-                                <option>Railway Red</option>
-                                <option>Seasonal Sour</option>
+                                <option value="" disabled selected>Loading Brands...</option>
                             </select>
                         </div>
                         <div class="form-col">
@@ -312,25 +308,56 @@
         // 🔴 PASTE YOUR PRODUCTION BACKEND URL HERE 🔴
         const API_URL = "https://script.google.com/macros/s/AKfycbwHgZeSFsMCbj0I4eUHuDxfs9DX6YZBhkzm26dWlWoyRX0EH0v7Csnnqm1unOdbwEjj/exec";
 
-        // Set Date to Today
-        document.getElementById('pkg-date').valueAsDate = new Date();
+        // 1. Initialize Page
+        window.onload = function() {
+            document.getElementById('pkg-date').valueAsDate = new Date();
+            loadBrands();
+        };
 
-        // --- REAL-TIME CALCULATOR ---
+        // 2. Fetch Brands from Google Sheet
+        async function loadBrands() {
+            try {
+                // We send a POST to avoid CORS issues sometimes seen with GET on Apps Script
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: new URLSearchParams({ "action": "getProducts" })
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const select = document.getElementById('pkg-brand');
+                    select.innerHTML = '<option value="" disabled selected>Select Beer...</option>';
+                    
+                    // Filter duplicates and create options
+                    const uniqueBrands = [...new Set(data.message.map(b => b.replace(/ Case| 1\/2| 1\/6/gi, "").trim()))];
+                    uniqueBrands.sort().forEach(brand => {
+                        if(brand) {
+                            let opt = document.createElement('option');
+                            opt.value = brand;
+                            opt.text = brand;
+                            select.add(opt);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to load brands", err);
+                document.getElementById('pkg-brand').innerHTML = '<option disabled>Error loading brands</option>';
+            }
+        }
+
+        // 3. Real-time Calculation (Corrected for 16oz)
         function calcTotal() {
             const halfs = parseFloat(document.getElementById('yield-half').value) || 0;
             const sixths = parseFloat(document.getElementById('yield-sixth').value) || 0;
             const cases = parseFloat(document.getElementById('yield-cases').value) || 0;
 
-            // Conversion Factors (Adjust to your specifics)
-            // 1/2 BBL = 0.5
-            // 1/6 BBL = 0.166
-            // Case (3gal) = 0.096 BBL approx (Using 31gal/bbl) -> 3/31 = 0.0967
-            
-            const totalBBL = (halfs * 0.5) + (sixths * 0.166) + (cases * 0.0967);
+            // 16oz Case (24pk) = 384oz = 0.0968 BBL
+            const totalBBL = (halfs * 0.5) + (sixths * 0.165) + (cases * 0.0968);
             
             document.getElementById('totalBBL').innerText = totalBBL.toFixed(1);
         }
 
+        // 4. Submit Data
         async function submitPackaging() {
             const btn = document.querySelector('.btn-submit');
             const operator = document.getElementById('operator').value;
@@ -360,9 +387,7 @@
                 notes: document.getElementById('pkg-notes').value
             };
 
-            // Lock UI
             btn.innerText = "Syncing Inventory...";
-            btn.style.opacity = "0.7";
             btn.disabled = true;
 
             try {
@@ -380,7 +405,6 @@
                     text: `Added stock for ${brand}.`,
                     confirmButtonColor: '#10b981'
                 }).then(() => {
-                    // Reset Yields only (keep context)
                     document.getElementById('yield-half').value = "";
                     document.getElementById('yield-sixth').value = "";
                     document.getElementById('yield-cases').value = "";
@@ -391,7 +415,6 @@
                 Swal.fire('Error', 'Connection failed.', 'error');
             } finally {
                 btn.innerText = "LOG PRODUCTION";
-                btn.style.opacity = "1";
                 btn.disabled = false;
             }
         }
