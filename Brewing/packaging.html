@@ -217,7 +217,9 @@
             <div>
                 <div class="card">
                     <div class="card-header">Run Context</div>
-                    
+                    <input type="hidden" id="hidden-brand-name">
+                    <input type="hidden" id="hidden-cost-so-far">
+                    <input type="hidden" id="hidden-vessel">
                     <div class="form-row">
                         <div class="form-col">
                             <label>Product / Brand</label>
@@ -242,7 +244,17 @@
                         </div>
                     </div>
                 </div>
-
+                <div class="card" style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+               <div>Revenue: <span id="calc-revenue" style="font-weight:bold; color:var(--success)">$0.00</span></div>
+                <div>Accumulated Cost: <span id="calc-cost" style="font-weight:bold; color:var(--danger)">$0.00</span></div>
+                <div>Total Vol: <span id="calc-vol" style="font-weight:bold;">0.0 BBL</span></div>
+                </div>
+                <div style="text-align: right; margin-top: 10px; font-weight: 800; font-size: 1.2rem;">
+                    Profit: <span id="profit-display" style="color: #cbd5e1;">$0.00</span>
+                 </div>
+                </div>
+                
                 <div class="card" style="border-top: 4px solid var(--success);">
                     <div class="card-header">
                         <span style="color:var(--success)">Saleable Yield</span>
@@ -319,47 +331,50 @@
 
         // 2. Fetch Active Tanks
         async function loadBrands() {
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: new URLSearchParams({ "action": "getProducts" })
-                });
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    tankCache = data.message; // Save data to global cache
-                    const select = document.getElementById('pkg-brand');
-                    
-                    select.innerHTML = '<option value="" disabled selected>Select Active Tank...</option>';
-                    
-                    // Populate Dropdown using the Array Index as the value
-                    tankCache.forEach((tank, index) => {
-                        let opt = document.createElement('option');
-                        opt.value = index; // We store the INDEX, not the name
-                        opt.text = tank.display; // "Suburban IPA (FV-04)"
-                        select.add(opt);
-                    });
-                }
-            } catch (err) {
-                console.error("Failed to load tanks", err);
-                document.getElementById('pkg-brand').innerHTML = '<option disabled>Error connecting to Cellar</option>';
-            }
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: new URLSearchParams({ "action": "getProducts" })
+        });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // 🔴 UPDATED LINE: Store the complex object (Tanks + Prices)
+            globalData = data.message; 
+            
+            const select = document.getElementById('pkg-brand');
+            select.innerHTML = '<option value="" disabled selected>Select Active Tank...</option>';
+            
+            // 🔴 UPDATED LINE: Loop through .tanks specifically
+            globalData.tanks.forEach((tank, index) => {
+                let opt = document.createElement('option');
+                opt.value = index; 
+                opt.text = tank.display; 
+                select.add(opt);
+            });
         }
+    } catch (err) {
+        console.error("Failed to load tanks", err);
+        document.getElementById('pkg-brand').innerHTML = '<option disabled>Error connecting to Cellar</option>';
+    }
+}
 
         // 3. AUTO-FILL FUNCTION
         function fillTankDetails() {
-            const select = document.getElementById('pkg-brand');
-            const selectedIndex = select.value;
-
-            // Look up the full data object using the index
-            const tank = tankCache[selectedIndex];
-
-            if (tank) {
-                // Auto-fill the fields
-                document.getElementById('vessel-source').value = tank.vessel;
-                document.getElementById('pkg-batch-id').value = tank.batch;
-            }
-        }
+    const index = document.getElementById('pkg-brand').value;
+    const tank = globalData.tanks[index];
+    if (tank) {
+        document.getElementById('vessel-source').value = tank.vessel;
+        document.getElementById('pkg-batch-id').value = tank.batch;
+        
+        // Store hidden data for math
+        document.getElementById('hidden-brand-name').value = tank.brand;
+        document.getElementById('hidden-cost-so-far').value = tank.costSoFar; 
+        document.getElementById('hidden-vessel').value = tank.vessel;
+        
+        runCalculations(); // Update the dashboard
+    }
+}
 
         // 4. Real-time Calculator
         function calcTotal() {
@@ -389,21 +404,22 @@
             }
             
             const payload = {
-                operator: operator,
-                brand: tankData.brand, // Send the CLEAN brand name (e.g. "Suburban IPA")
-                vessel: document.getElementById('vessel-source').value,
-                batchId: document.getElementById('pkg-batch-id').value,
-                date: document.getElementById('pkg-date').value,
-                yield: {
-                    halfBBL: document.getElementById('yield-half').value || 0,
-                    sixthBBL: document.getElementById('yield-sixth').value || 0,
-                    cases: document.getElementById('yield-cases').value || 0
-                },
-                waste: {
-                    lowFills: document.getElementById('waste-lowfill').value || 0,
-                    seams: document.getElementById('waste-seams').value || 0,
-                    bottoms: document.getElementById('waste-bottoms').value || 0
-                },
+        operator: operator,
+        brand: document.getElementById('hidden-brand-name').value, // Use hidden field
+        vessel: document.getElementById('hidden-vessel').value,   // Use hidden field
+        batchId: document.getElementById('pkg-batch-id').value,
+        notes: document.getElementById('pkg-notes').value,
+        yield: {
+            halfBBL: document.getElementById('yield-half').value || 0,
+            sixthBBL: document.getElementById('yield-sixth').value || 0,
+            cases: document.getElementById('yield-cases').value || 0
+        },
+        waste: {
+            lowFills: document.getElementById('waste-lowfill').value || 0,
+            seams: document.getElementById('waste-seams').value || 0,
+            bottoms: document.getElementById('waste-bottoms').value || 0
+        }
+    };
                 notes: document.getElementById('pkg-notes').value
             };
 
@@ -440,6 +456,47 @@
                 btn.disabled = false;
             }
         }
+        function runCalculations() {
+    const index = document.getElementById('pkg-brand').value;
+    if(!index) return;
+    
+    const tank = globalData.tanks[index];
+    const prices = globalData.prices[tank.brand] || {};
+
+    // Inputs
+    const halfs = parseFloat(document.getElementById('yield-half').value) || 0;
+    const sixths = parseFloat(document.getElementById('yield-sixth').value) || 0;
+    const cases = parseFloat(document.getElementById('yield-cases').value) || 0;
+    const wasteCans = (parseFloat(document.getElementById('waste-lowfill').value) || 0) + 
+                      (parseFloat(document.getElementById('waste-seams').value) || 0);
+
+    // 1. Revenue
+    const rev = (halfs * (prices["1/2 Keg"] || 0)) + 
+                (sixths * (prices["1/6 Keg"] || 0)) + 
+                (cases * (prices["Case"] || 0));
+
+    // 2. Estimated Cost (Live Preview)
+    // Backend has exact logic, this is a close estimate for the UI ($0.35/can+lid, $0.75/tray)
+    const costSoFar = parseFloat(document.getElementById('hidden-cost-so-far').value) || 0;
+    const estPkgMatCost = ((cases * 24) + wasteCans) * 0.35 + (cases * 0.75); 
+    const totalEstCost = costSoFar + estPkgMatCost;
+
+    // 3. Profit
+    const profit = rev - totalEstCost;
+
+    // 4. Update UI
+    document.getElementById('calc-revenue').innerText = `$${rev.toFixed(2)}`;
+    document.getElementById('calc-cost').innerText = `$${totalEstCost.toFixed(2)}`;
+    
+    const profitEl = document.getElementById('profit-display');
+    profitEl.innerText = `$${profit.toFixed(2)}`;
+    profitEl.style.color = profit > 0 ? '#10b981' : '#ef4444'; // Green or Red
+
+    // 5. Volume
+    const vol = (halfs * 0.5) + (sixths * 0.165) + (cases * 0.0968);
+    document.getElementById('totalBBL').innerText = vol.toFixed(1);
+    document.getElementById('calc-vol').innerText = `${vol.toFixed(1)} BBL`;
+}
     </script>
 </body>
 </html>
