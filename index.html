@@ -39,42 +39,50 @@
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-    /* COLLAPSIBLE HEADERS (Sidebar & Main) */
-    .nav-section-header, .section-heading { 
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      user-select: none;
-    }
-
-    /* Sidebar specific header styling */
+    /* --- COLLAPSIBLE SYSTEM --- */
+    /* 1. Sidebar Headers */
     .nav-section-header {
       font-size: 11px; text-transform: uppercase; color: #94a3b8; 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
     }
     .nav-section-header:hover { color: #fff; }
 
-    /* Main Content specific header styling */
+    /* 2. Main Page - Master Headers */
     .section-heading { 
-      font-size: 14px; font-weight: 700; margin: 30px 0 15px; 
-      color: var(--text-muted); text-transform: uppercase;
-      padding-bottom: 5px; border-bottom: 1px solid #e2e8f0;
+      font-size: 16px; font-weight: 800; margin: 30px 0 15px; 
+      color: var(--text-main); text-transform: uppercase;
+      padding-bottom: 8px; border-bottom: 2px solid #e2e8f0;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
     }
-    .section-heading span:first-child { margin-right: 10px; }
     .section-heading:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
-    /* CHEVRON ANIMATION */
+    /* 3. Main Page - Sub-Section Headers (Nested) */
+    .subsection-heading {
+      font-size: 13px; font-weight: 700; margin: 20px 0 10px 10px; /* Indented */
+      color: var(--text-muted); text-transform: uppercase;
+      padding-bottom: 5px; border-bottom: 1px dashed #cbd5e1;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
+    }
+    .subsection-heading:hover { color: var(--accent); }
+
+    /* Animations & Icons */
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
 
-    /* COLLAPSIBLE CONTENT CONTAINER */
+    /* Content Wrapper */
     .collapsible-content {
-      max-height: 800px; /* Large enough to fit content */
+      max-height: 2500px; /* Large max-height for nested content */
       overflow: hidden;
       transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    /* SIDEBAR LINKS */
+    /* --- SIDEBAR LINKS --- */
     .nav-link { 
       display: flex; align-items: center; padding: 10px 24px; 
       color: #64748b; text-decoration: none; font-size: 14px; 
@@ -138,7 +146,7 @@
 <body>
 
   <aside class="sidebar">
-    <h2>SUBURBAN BREWING</h2>
+    <h2>SUBURBAN Brewing</h2>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
@@ -228,27 +236,34 @@
       </div>
     </div>
 
-    <div class="section-heading" onclick="toggleGroup('sect-prod', this)">
-      <span>Production FVs (10 BBL)</span><span class="chevron">▼</span>
+    <div class="section-heading" onclick="toggleGroup('grp-all-tanks', this)">
+       <span>Active Cellar Overview</span> <span class="chevron">▼</span>
     </div>
-    <div id="sect-prod" class="collapsible-content">
-      <div class="tier-2" id="grid-production"></div>
-    </div>
+    
+    <div id="grp-all-tanks" class="collapsible-content">
+      
+      <div class="subsection-heading" onclick="toggleGroup('sect-prod', this)">
+        <span>Production FVs (10 BBL)</span><span class="chevron">▼</span>
+      </div>
+      <div id="sect-prod" class="collapsible-content">
+        <div class="tier-2" id="grid-production"></div>
+      </div>
 
-    <div class="section-heading" onclick="toggleGroup('sect-pilot', this)">
-      <span>Pilot System (1 BBL)</span><span class="chevron">▼</span>
-    </div>
-    <div id="sect-pilot" class="collapsible-content">
-      <div class="tier-2" id="grid-pilot"></div>
-    </div>
+      <div class="subsection-heading" onclick="toggleGroup('sect-pilot', this)">
+        <span>Pilot System (1 BBL)</span><span class="chevron">▼</span>
+      </div>
+      <div id="sect-pilot" class="collapsible-content">
+        <div class="tier-2" id="grid-pilot"></div>
+      </div>
 
-    <div class="section-heading" onclick="toggleGroup('sect-brite', this)">
-      <span>Brite Tanks (10 BBL)</span><span class="chevron">▼</span>
-    </div>
-    <div id="sect-brite" class="collapsible-content">
-      <div class="tier-2" id="grid-brite"></div>
-    </div>
+      <div class="subsection-heading" onclick="toggleGroup('sect-brite', this)">
+        <span>Brite Tanks (10 BBL)</span><span class="chevron">▼</span>
+      </div>
+      <div id="sect-brite" class="collapsible-content">
+        <div class="tier-2" id="grid-brite"></div>
+      </div>
 
+    </div>
     <div class="section-heading" onclick="toggleGroup('sect-ml', this)">
       <span>Machine Learning Intelligence</span><span class="chevron">▼</span>
     </div>
@@ -408,7 +423,6 @@
         } catch (e) { console.error("ML Error:", e); }
     }
     // --- UNIVERSAL TOGGLE FUNCTION ---
-    // Works for both Sidebar Menus AND Main Content Sections
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
       
@@ -417,6 +431,10 @@
       
       // Toggle 'collapsed' on header (for chevron rotation)
       headerEl.classList.toggle('collapsed');
+      
+      // Special check: If we just opened a Master section, 
+      // we might want to ensure the children render correctly if they were hidden
+      // (CSS handles most of this via the parent's max-height)
     }
 
     // --- ON LOAD ---
@@ -431,7 +449,6 @@
         const parentGroup = activeLink.closest('.collapsible-content');
         if (parentGroup) {
           parentGroup.classList.remove('collapsed');
-          // Find the header associated with this group (it's the previous sibling)
           const header = parentGroup.previousElementSibling;
           if (header) {
             header.classList.remove('collapsed');
