@@ -43,7 +43,7 @@
 
     /* INPUTS */
     label { display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 5px; text-transform: uppercase; }
-    input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 15px; }
+    input, textarea, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 15px; background: #fff; }
     textarea { height: 70px; resize: none; }
 
     /* SLIDERS */
@@ -68,7 +68,7 @@
     .btn-submit:hover { background: #1e293b; }
     .btn-complete { background: #10b981; pointer-events: none; }
 
-    /* CONSENT MODAL */
+    /* MODAL */
     #consentModal {
         display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;
@@ -81,8 +81,10 @@
   </style>
 </head>
 <body>
+
   <aside class="sidebar">
     <div style="padding: 20px; font-weight: 800; font-size: 18px;">SBC SENSORY</div>
+    <a href="index.html" class="nav-link">← Back to Command</a>
   </aside>
 
   <main class="main">
@@ -104,11 +106,12 @@
             <datalist id="panelistOptions"></datalist>
         </div>
       </div>
-      <div id="userStatus" style="font-size: 12px; margin-top: 5px; color: var(--accent); font-weight: 600;"></div>
+      <div id="userStatus" style="font-size: 12px; margin-top: 5px; color: var(--accent); font-weight: 600;">Please log in to see samples.</div>
     </div>
     
-    <div id="loading" style="text-align: center; color: #64748b;">Loading active samples...</div>
+    <div id="loading" style="text-align: center; color: #64748b; display: none;">Loading active samples...</div>
     <div id="sampleGrid" class="sample-grid"></div>
+
   </main>
 
   <div id="consentModal">
@@ -133,19 +136,21 @@
     let panelistRole = "Staff";
     let isRegistered = false;
 
+    // 1. ON LOAD: Only load names, DO NOT load samples
     window.onload = function() {
-        loadSamples();
         loadPanelists();
     };
 
     function resetLogin() {
         document.getElementById('panelistName').value = "";
-        document.getElementById('userStatus').innerText = "";
+        document.getElementById('userStatus').innerText = "Please log in to see samples.";
+        document.getElementById('userStatus').style.color = "var(--text)";
+        document.getElementById('sampleGrid').innerHTML = ""; // Clear Grid
         isRegistered = false;
-        loadPanelists(); // Reload list (could be filtered by role in future)
+        loadPanelists();
     }
 
-    // 1. CHECK USER
+    // 2. CHECK USER
     async function verifyUser() {
         const name = document.getElementById('panelistName').value;
         const role = document.getElementById('userRole').value;
@@ -164,17 +169,19 @@
             if (json.status === 'exists') {
                 isRegistered = true;
                 panelistName = name;
-                panelistRole = role; // User verified
-                document.getElementById('userStatus').innerText = `Welcome back, ${name}.`;
+                panelistRole = role; 
+                document.getElementById('userStatus').innerText = `Welcome back, ${name}. Loading samples...`;
                 document.getElementById('userStatus').style.color = "#10b981";
+                
+                // 🟢 TRIGGER SAMPLE LOAD ONLY HERE
+                loadSamples();
             } else {
-                // NEW USER -> Show Appropriate Legal Text
+                // New User -> Show Modal
                 showConsentModal(role);
             }
         } catch(e) { console.error(e); }
     }
 
-    // 2. SHOW DYNAMIC TEXT
     function showConsentModal(role) {
         const title = document.getElementById('modalTitle');
         const textDiv = document.getElementById('agreementText');
@@ -185,18 +192,17 @@
             textDiv.innerHTML = `
                 <p><strong>1. Purpose:</strong> This application tracks sensory acuity data to maintain product quality at Suburban Brewing Co.</p>
                 <p><strong>2. Metrics:</strong> You acknowledge that your performance metrics (accuracy, blind spot detection) will be recorded for QA validation.</p>
-                <p><strong>3. Usage:</strong> Data is used for calibration training. Consistent inability to detect off-flavors may result in removal from the active sensory roster (re-training).</p>
+                <p><strong>3. Usage:</strong> Data is used for calibration training. Consistent inability to detect off-flavors may result in removal from the active sensory roster.</p>
                 <p><strong>4. Confidentiality:</strong> Do not discuss blind samples until the session is closed.</p>
                 <p><strong>5. Health:</strong> You confirm you are fit to taste and of legal drinking age.</p>
             `;
         } else {
-            // PATRON TEXT (Friendlier, focused on Safety/Volunteering)
             title.innerText = "Guest Taster Waiver";
             textDiv.innerHTML = `
                 <p><strong>1. Voluntary Participation:</strong> I am participating in this tasting voluntarily to help Suburban Brewing Co. improve beer quality.</p>
                 <p><strong>2. Age Verification:</strong> I certify that I am at least 21 years of age.</p>
                 <p><strong>3. Feedback:</strong> I understand my feedback will be anonymized and used for quality control analysis.</p>
-                <p><strong>4. Responsible Consumption:</strong> I agree to sample responsibly and understand that sample sizes are limited for sensory analysis purposes.</p>
+                <p><strong>4. Responsible Consumption:</strong> I agree to sample responsibly and understand that sample sizes are limited.</p>
             `;
         }
         modal.style.display = 'flex';
@@ -212,7 +218,6 @@
         
         await fetch(API_URL, { 
             method: 'POST', 
-            // Send Role to Backend
             body: JSON.stringify({ action: 'registerNewPanelist', name: name, role: role }) 
         });
 
@@ -221,9 +226,12 @@
         panelistRole = role;
         
         document.getElementById('consentModal').style.display = 'none';
-        document.getElementById('userStatus').innerText = "Registered. Ready to taste.";
+        document.getElementById('userStatus').innerText = "Registered. Loading samples...";
         document.getElementById('userStatus').style.color = "#10b981";
-        btn.innerText = "I Understand & Agree"; // Reset button text
+        btn.innerText = "I Understand & Agree";
+        
+        // 🟢 TRIGGER SAMPLE LOAD HERE TOO
+        loadSamples();
     }
 
     function declineConsent() {
@@ -231,7 +239,6 @@
         resetLogin();
     }
 
-    // 4. LOAD SAMPLES & PANELIST LIST (Same as before)
     async function loadPanelists() {
       try {
         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getPanelistList' }) });
@@ -248,14 +255,18 @@
       } catch(e) {}
     }
 
+    // 4. LOAD SAMPLES (Called only after login)
     async function loadSamples() {
+        document.getElementById('loading').style.display = 'block';
+        
         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getBlindSamples' }) });
         const json = await res.json();
+        
         document.getElementById('loading').style.display = 'none';
+        
         if (json.status === 'success') renderSamples(json.data);
     }
 
-    // 5. RENDER & SUBMIT (Passes Role Logic check)
     function renderSamples(samples) {
         const grid = document.getElementById('sampleGrid');
         grid.innerHTML = "";
@@ -309,7 +320,6 @@
             body: JSON.stringify({
                 action: 'submitSensory',
                 panelist: panelistName,
-                // Pass the Role so Backend knows if this is Staff QC or Patron Feedback
                 role: panelistRole, 
                 samples: [{ brand: `Blind-${code}`, score: score, tags: tags.join(", "), notes: notes }]
             })
