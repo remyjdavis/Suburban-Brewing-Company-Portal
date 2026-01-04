@@ -461,6 +461,34 @@
         }
       }
     });
+    // --- CHECK SENSORY STATUS ---
+    function checkSensoryAlerts() {
+      // Reuse your existing API_URL variable
+      const formData = new URLSearchParams();
+      formData.append('action', 'getBlindSamples'); // The function we just wrote
+
+      fetch(API_URL, { method: 'POST', body: formData })
+      .then(res => res.json())
+      .then(json => {
+        if(json.status === 'success') {
+          const count = json.data.length;
+          const isReference = json.data[0].code === "100"; // Don't alert if it's just the default reference
+          
+          if (count > 0 && !isReference) {
+            document.getElementById('sensoryCount').innerText = count;
+            document.getElementById('sensoryStatus').innerText = "Samples Approaching Terminal";
+            document.getElementById('sensoryStatus').style.color = "#8b5cf6"; // Purple text
+            document.getElementById('sensoryStatus').style.fontWeight = "700";
+          } else {
+            document.getElementById('sensoryCount').innerText = "0";
+            document.getElementById('sensoryStatus').innerText = "No critical samples due";
+          }
+        }
+      });
+    }
+
+    // Add this to your window.addEventListener('DOMContentLoaded', ...) block:
+    checkSensoryAlerts();
   </script>
 </body>
 </html>
