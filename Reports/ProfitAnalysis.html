@@ -1,172 +1,295 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <base target="_top">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profit Analysis Report</title>
-    <style>
-      body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f4; padding: 20px; color: #333; }
-      .container { max-width: 1400px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-      h1 { text-align: center; color: #2c3e50; }
-      
-      /* KPI Cards */
-      .summary-cards { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-      .card { flex: 1; background: #fff; border: 1px solid #ddd; border-radius: 5px; padding: 15px; text-align: center; min-width: 150px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-      .card h3 { margin: 0 0 5px 0; font-size: 14px; color: #7f8c8d; }
-      .card .value { font-size: 20px; font-weight: bold; color: #2c3e50; }
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8" />
+  <title>Suburban Brewing Co. | Profit Analysis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <style>
+    /* --- SHARED THEME VARIABLES (From Command Center) --- */
+    :root {
+      --bg: #f8fafc;
+      --sidebar: #0f172a;
+      --accent: #2563eb;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --card-bg: #ffffff;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --neutral: #f1f5f9;
+    }
 
-      /* Table Styles */
-      table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-      th { background-color: #34495e; color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
-      td { padding: 10px; border-bottom: 1px solid #ddd; }
-      tr:hover { background-color: #f1f1f1; }
-      
-      /* Conditional Formatting */
-      .positive { color: #27ae60; font-weight: bold; }
-      .negative { color: #c0392b; font-weight: bold; }
-      .trend-up { color: #27ae60; }
-      .trend-down { color: #c0392b; }
-      
-      /* AI Recommendation Pill */
-      .ai-rec { background-color: #e8f6f3; color: #16a085; padding: 4px 8px; border-radius: 12px; font-size: 12px; border: 1px solid #1abc9c; display: inline-block;}
+    /* --- LAYOUT & SIDEBAR --- */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { 
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text-main); 
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      display: flex; 
+      min-height: 100vh;
+    }
 
-      .btn { background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-      .btn:hover { background-color: #2980b9; }
-      .loading { text-align: center; padding: 50px; color: #666; }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h1>SBC Profit Analysis</h1>
-        <button class="btn" onclick="loadData()">Refresh Report</button>
+    .sidebar { 
+      width: 260px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
+    }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
+    .nav-section-title { 
+      font-size: 11px; text-transform: uppercase; color: #475569; 
+      margin: 24px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+    }
+    .nav-link { 
+      display: flex; align-items: center; padding: 10px 24px; 
+      color: #94a3b8; text-decoration: none; font-size: 14px; 
+      transition: 0.2s; border-left: 4px solid transparent;
+    }
+    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; }
+
+    .main { flex: 1; margin-left: 260px; padding: 40px; transition: all 0.3s ease; }
+    .header-bar { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center;}
+    .header-bar h1 { font-size: 28px; font-weight: 800; margin: 0; }
+
+    /* --- REPORT SPECIFIC CARDS --- */
+    .summary-cards { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+    .card { 
+      flex: 1; min-width: 200px;
+      background: var(--card-bg); 
+      padding: 24px; 
+      border-radius: 16px; 
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .card h3 { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+    .card .val { font-size: 32px; font-weight: 800; margin: 12px 0 4px; color: var(--text-main); }
+    
+    /* --- TABLE STYLING --- */
+    .table-container {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      overflow: hidden; /* Rounded corners for table */
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { background-color: #f8fafc; color: var(--text-muted); font-weight: 700; padding: 16px; text-align: left; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 16px; border-bottom: 1px solid #e2e8f0; color: var(--text-main); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background-color: #f8fafc; }
+
+    /* --- UTILITIES & PILLS --- */
+    .btn { background-color: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: background 0.2s; }
+    .btn:hover { background-color: #1d4ed8; }
+    
+    .ai-pill { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; }
+    .bg-green { background: #dcfce7; color: #15803d; }
+    .bg-red { background: #fee2e2; color: #b91c1c; }
+    .bg-gray { background: #f1f5f9; color: #475569; }
+    .bg-yellow { background: #fef9c3; color: #a16207; }
+
+    .text-green { color: #16a34a; font-weight: 600; }
+    .text-red { color: #dc2626; font-weight: 600; }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .sidebar h2, .sidebar .nav-section-title { display: none; }
+      .nav-link { padding: 0 20px; height: 100%; border: none; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+      .nav-link.active { border-top: 4px solid var(--accent); background: #1e293b; }
+      .main { margin-left: 0; padding: 20px 20px 90px; }
+      .summary-cards { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <h2>SUBURBAN Brewing</h2>
+    
+    <div class="nav-section-title">Main Menu</div>
+    <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    
+    <div class="nav-section-title">Samplings</div>
+    <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+    <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+    <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    
+    <div class="nav-section-title">Sales</div>
+    <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+    <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+    <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+    <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+    <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+
+    <div class="nav-section-title">Inventory</div>
+    <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+    <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+    <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+    <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    
+    <div class="nav-section-title">Brewing</div>
+    <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
+    <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+    <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+    <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+    <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    
+    <div class="nav-section-title">Reporting & Analytics</div>
+    <a href="Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+    <a href="ProfitAnalysis.html" class="nav-link active"><span>Profit Analysis Report</span></a>
+    <a href="sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+  </aside>
+
+  <main class="main">
+    <header class="header-bar">
+      <div>
+        <h1>Profit Analysis Report</h1>
+        <div id="current-date" style="color: var(--text-muted); font-size: 14px; margin-top:5px;"></div>
       </div>
-
-      <div class="summary-cards">
-        <div class="card"><h3>Total Profit</h3><div id="kpiProfit" class="value">--</div></div>
-        <div class="card"><h3>Top Brand</h3><div id="kpiBrand" class="value">--</div></div>
-        <div class="card"><h3>Avg Efficiency</h3><div id="kpiEff" class="value">--</div></div>
-        <div class="card"><h3>Total Cases</h3><div id="kpiCases" class="value">--</div></div>
+      <button class="btn" onclick="loadData()">Refresh Data</button>
+    </header>
+    
+    <div class="summary-cards">
+      <div class="card">
+        <h3>Total Profit</h3>
+        <div id="kpiProfit" class="val">--</div>
       </div>
-
-      <div id="tableContainer">
-        <div class="loading">Loading analysis...</div>
+      <div class="card">
+        <h3>Top Performer</h3>
+        <div id="kpiBrand" class="val" style="font-size: 24px;">--</div>
+      </div>
+      <div class="card">
+        <h3>Avg Efficiency</h3>
+        <div id="kpiEff" class="val">--</div>
+      </div>
+      <div class="card">
+        <h3>Total Vol (Cases)</h3>
+        <div id="kpiCases" class="val">--</div>
       </div>
     </div>
 
-    <script>
-  // 🔴 CONFIGURATION
-  // Your Web App URL (Exec version)
-  const API_URL = "https://script.google.com/macros/s/AKfycbyDxr8REPMn1QfMik5w0iEUEyUiPqhvbk11aNgTNCfEK30zjbcj4kotZ-oqyz2UjP0/exec";
+    <div id="tableContainer" class="table-container">
+      <div style="padding: 40px; text-align: center; color: var(--text-muted);">
+        Loading Analysis...
+      </div>
+    </div>
+  </main>
 
-  window.onload = loadData;
+  <script>
+    // 🔴 CONFIGURATION: Update this URL to your deployed Web App URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbyDxr8REPMn1QfMik5w0iEUEyUiPqhvbk11aNgTNCfEK30zjbcj4kotZ-oqyz2UjP0/exec";
 
-  function loadData() {
-    const container = document.getElementById('tableContainer');
-    container.innerHTML = '<div class="loading">Fetching data via API...</div>';
+    window.onload = function() {
+      // Set Date
+      const d = new Date();
+      document.getElementById('current-date').innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      
+      // Load Data
+      loadData();
+    };
 
-    // We use POST because your backend logic is in doPost()
-    // We use URLSearchParams to ensure e.parameter can read it
-    const formData = new URLSearchParams();
-    formData.append('action', 'getReports');
+    function loadData() {
+      const container = document.getElementById('tableContainer');
+      container.innerHTML = '<div style="padding:40px; text-align:center; color:#64748b;">Fetching data via API...</div>';
 
-    fetch(API_URL, {
-      method: 'POST',
-      body: formData
-    })
-    .then(response => response.json())
-    .then(json => {
-      if (json.status === 'success') {
-        render(json.data);
-      } else {
-        showError("API Error: " + json.data);
-      }
-    })
-    .catch(error => {
-      console.error('Fetch error:', error);
-      showError("Connection failed. If testing locally, check CORS or browser privacy settings.");
-    });
-  }
+      const formData = new URLSearchParams();
+      formData.append('action', 'getReports');
 
-  function render(data) {
-    if (!data || data.length === 0) {
-      document.getElementById('tableContainer').innerHTML = '<p style="text-align:center;">No data found.</p>';
-      return;
+      fetch(API_URL, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(json => {
+        if (json.status === 'success') {
+          render(json.data);
+        } else {
+          container.innerHTML = `<div style="padding:20px; color:red;">Error: ${json.data}</div>`;
+        }
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        // Fallback for local testing if Fetch fails
+        if(window.location.protocol === 'file:') {
+           container.innerHTML = `<div style="padding:20px; text-align:center;">Local Mode: API calls blocked by CORS.<br>Deploy to Google Scripts to view real data.</div>`;
+        }
+      });
     }
 
-    let html = '<table><thead><tr>';
-    html += '<th>Brand</th><th>Total Profit</th><th>Velocity ($/Mo)</th><th>Efficiency ($/BBL)</th><th>Vol (Cases)</th><th>Vol (Kegs)</th><th>AI Recommendation</th>';
-    html += '</tr></thead><tbody>';
-
-    let totalProfit = 0;
-    let totalCases = 0;
-    let efficiencySum = 0;
-    let count = 0;
-    let bestBrand = "N/A";
-    let maxProfit = -Infinity;
-
-    // The API returns an array of objects: { brand, totalProfit, profitPerMonth... }
-    data.forEach(item => {
-      // KPI Calcs
-      totalProfit += item.totalProfit;
-      totalCases += item.caseVol;
-      efficiencySum += item.profitPerBBL;
-      
-      if(item.totalProfit > maxProfit) { 
-        maxProfit = item.totalProfit; 
-        bestBrand = item.brand; 
+    function render(data) {
+      if (!data || data.length === 0) {
+        document.getElementById('tableContainer').innerHTML = '<div style="padding:20px;">No data found.</div>';
+        return;
       }
-      count++;
 
-      let profitClass = item.totalProfit >= 0 ? 'positive' : 'negative';
-      let recClass = getRecClass(item.action);
+      let html = '<table><thead><tr>';
+      html += '<th>Brand</th><th>Total Profit</th><th>Velocity ($/Mo)</th><th>Efficiency ($/BBL)</th><th>Vol (Cases)</th><th>Rec</th>';
+      html += '</tr></thead><tbody>';
 
-      html += `<tr>
-        <td><strong>${item.brand}</strong></td>
-        <td class="${profitClass}">$${formatNum(item.totalProfit)}</td>
-        <td>$${formatNum(item.profitPerMonth)}</td>
-        <td>$${formatNum(item.profitPerBBL)}</td>
-        <td>${item.caseVol}</td>
-        <td>${item.kegVol}</td>
-        <td><span class="ai-rec ${recClass}">${item.action}</span></td>
-      </tr>`;
-    });
+      let totalProfit = 0;
+      let totalCases = 0;
+      let efficiencySum = 0;
+      let count = 0;
+      let bestBrand = "N/A";
+      let maxProfit = -Infinity;
 
-    html += '</tbody></table>';
-    document.getElementById('tableContainer').innerHTML = html;
+      data.forEach(item => {
+        totalProfit += item.totalProfit;
+        totalCases += item.caseVol;
+        efficiencySum += item.profitPerBBL;
+        
+        if(item.totalProfit > maxProfit) { 
+          maxProfit = item.totalProfit; 
+          bestBrand = item.brand; 
+        }
+        count++;
 
-    // Update KPIs
-    updateKPI("kpiProfit", totalProfit, true);
-    document.getElementById("kpiBrand").innerText = bestBrand;
-    updateKPI("kpiCases", totalCases, false);
-    updateKPI("kpiEff", count > 0 ? (efficiencySum / count) : 0, true);
-  }
+        let profitClass = item.totalProfit >= 0 ? 'text-green' : 'text-red';
+        let pillClass = getPillClass(item.action);
 
-  // Helper to color code the AI Recommendation pill
-  function getRecClass(action) {
-    if (action.includes("SCALE") || action.includes("CASH")) return "positive-bg";
-    if (action.includes("CUT")) return "negative-bg";
-    return "neutral-bg";
-  }
+        html += `<tr>
+          <td><strong style="color:var(--text-main);">${item.brand}</strong></td>
+          <td class="${profitClass}">$${formatNum(item.totalProfit)}</td>
+          <td>$${formatNum(item.profitPerMonth)}</td>
+          <td>$${formatNum(item.profitPerBBL)}</td>
+          <td>${item.caseVol}</td>
+          <td><span class="ai-pill ${pillClass}">${item.action}</span></td>
+        </tr>`;
+      });
 
-  function updateKPI(id, val, isMoney) {
-    document.getElementById(id).innerText = (isMoney ? '$' : '') + formatNum(val);
-  }
+      html += '</tbody></table>';
+      document.getElementById('tableContainer').innerHTML = html;
 
-  function formatNum(n) {
-    return n.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-  }
+      // Update KPIs
+      updateKPI("kpiProfit", totalProfit, true);
+      document.getElementById("kpiBrand").innerText = bestBrand;
+      updateKPI("kpiCases", totalCases, false);
+      updateKPI("kpiEff", count > 0 ? (efficiencySum / count) : 0, true);
+    }
 
-  function showError(msg) {
-    document.getElementById('tableContainer').innerHTML = `<p style="color:red; text-align:center;">${msg}</p>`;
-  }
-</script>
+    function getPillClass(action) {
+      if (action.includes("SCALE") || action.includes("CASH")) return "bg-green";
+      if (action.includes("CUT")) return "bg-red";
+      if (action.includes("LUXURY")) return "bg-yellow";
+      return "bg-gray";
+    }
 
-<style>
-  /* Add these utility classes to your CSS for the pills */
-  .positive-bg { background-color: #dcfce7; color: #166534; border-color: #166534; }
-  .negative-bg { background-color: #fee2e2; color: #991b1b; border-color: #991b1b; }
-  .neutral-bg { background-color: #f3f4f6; color: #1f2937; border-color: #1f2937; }
-</style>
-  </body>
+    function updateKPI(id, val, isMoney) {
+      document.getElementById(id).innerText = (isMoney ? '$' : '') + formatNum(val);
+    }
+
+    function formatNum(n) {
+      return n.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+  </script>
+</body>
 </html>
