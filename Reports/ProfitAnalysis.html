@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profit Analysis Report</title>
+    <style>
+      /* Un-streamlined CSS for easy editing */
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      }
+
+      h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 30px;
+      }
+
+      .summary-cards {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+        width: 22%; /* Approx 4 cards per row */
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .card h3 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+        color: #7f8c8d;
+      }
+
+      .card .value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+
+      /* Profit positive/negative styling */
+      .positive { color: #27ae60; }
+      .negative { color: #c0392b; }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      th, td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      th {
+        background-color: #34495e;
+        color: white;
+        position: sticky;
+        top: 0;
+      }
+
+      tr:hover {
+        background-color: #f1f1f1;
+      }
+
+      .loading {
+        text-align: center;
+        font-size: 18px;
+        padding: 50px;
+        color: #666;
+      }
+
+      /* Button Styles */
+      .btn {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+      
+      .btn:hover {
+        background-color: #2980b9;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .card { width: 45%; }
+        th, td { font-size: 14px; padding: 8px; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="container">
+      <h1>Brewery Profit Analysis</h1>
+      
+      <div style="text-align:right;">
+        <button class="btn" onclick="loadProfitData()">Refresh Data</button>
+      </div>
+
+      <div class="summary-cards">
+        <div class="card">
+          <h3>Total Revenue</h3>
+          <div id="totalRevenue" class="value">$0.00</div>
+        </div>
+        <div class="card">
+          <h3>Total COGS</h3>
+          <div id="totalCost" class="value">$0.00</div>
+        </div>
+        <div class="card">
+          <h3>Net Profit</h3>
+          <div id="totalProfit" class="value">$0.00</div>
+        </div>
+        <div class="card">
+          <h3>Avg Margin</h3>
+          <div id="avgMargin" class="value">0.0%</div>
+        </div>
+      </div>
+
+      <div id="tableContainer">
+        <div class="loading">Loading profit data...</div>
+      </div>
+    </div>
+
+    <script>
+      // Run on page load
+      window.onload = function() {
+        loadProfitData();
+      };
+
+      function loadProfitData() {
+        var container = document.getElementById('tableContainer');
+        container.innerHTML = '<div class="loading">Loading profit data...</div>';
+
+        // Call Google Apps Script function
+        google.script.run
+          .withSuccessHandler(renderTable)
+          .withFailureHandler(showError)
+          .getProfitAnalysisData(); // You need to create this function in .gs
+      }
+
+      function renderTable(data) {
+        var container = document.getElementById('tableContainer');
+        
+        // Calculate Totals for cards
+        var totalRev = 0;
+        var totalCost = 0;
+        var totalProfit = 0;
+
+        // Start Table HTML
+        var html = '<table>';
+        html += '<thead><tr>';
+        html += '<th>Product Name</th>';
+        html += '<th>Units Sold</th>';
+        html += '<th>Avg Price</th>';
+        html += '<th>Unit Cost</th>';
+        html += '<th>Revenue</th>';
+        html += '<th>Profit</th>';
+        html += '<th>Margin %</th>';
+        html += '</tr></thead><tbody>';
+
+        if (!data || data.length === 0) {
+          container.innerHTML = '<p style="text-align:center;">No data found.</p>';
+          return;
+        }
+
+        data.forEach(function(row) {
+          // Assuming row structure: [Name, Sold, Price, Cost, Rev, Profit, Margin]
+          // You will map this in your GS code
+          
+          var profitClass = row.profit >= 0 ? 'positive' : 'negative';
+          
+          html += '<tr>';
+          html += '<td>' + row.name + '</td>';
+          html += '<td>' + row.unitsSold + '</td>';
+          html += '<td>$' + parseFloat(row.avgPrice).toFixed(2) + '</td>';
+          html += '<td>$' + parseFloat(row.unitCost).toFixed(2) + '</td>';
+          html += '<td>$' + parseFloat(row.revenue).toFixed(2) + '</td>';
+          html += '<td class="' + profitClass + '">$' + parseFloat(row.profit).toFixed(2) + '</td>';
+          html += '<td>' + parseFloat(row.margin).toFixed(1) + '%</td>';
+          html += '</tr>';
+
+          // Add to totals
+          totalRev += parseFloat(row.revenue);
+          totalCost += (parseFloat(row.revenue) - parseFloat(row.profit)); // Derived cost
+          totalProfit += parseFloat(row.profit);
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+
+        // Update Cards
+        document.getElementById('totalRevenue').innerText = formatMoney(totalRev);
+        document.getElementById('totalCost').innerText = formatMoney(totalCost);
+        document.getElementById('totalProfit').innerText = formatMoney(totalProfit);
+        document.getElementById('totalProfit').className = 'value ' + (totalProfit >= 0 ? 'positive' : 'negative');
+        
+        var margin = totalRev > 0 ? ((totalProfit / totalRev) * 100) : 0;
+        document.getElementById('avgMargin').innerText = margin.toFixed(1) + '%';
+      }
+
+      function formatMoney(amount) {
+        return '$' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+      }
+
+      function showError(error) {
+        var container = document.getElementById('tableContainer');
+        container.innerHTML = '<p style="color:red; text-align:center;">Error loading data: ' + error.message + '</p>';
+      }
+    </script>
+  </body>
+</html>
