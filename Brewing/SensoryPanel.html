@@ -109,12 +109,18 @@
     }
 
     async function loadSamples() {
-      // 1. Fetch Today's Active Blind Samples from Backend
-      const formData = new URLSearchParams();
-      formData.append('action', 'getBlindSamples');
+      // 1. Prepare JSON Payload (Matches your new Backend)
+      const payload = {
+        action: 'getBlindSamples'
+      };
 
       try {
-        const res = await fetch(API_URL, { method: 'POST', body: formData });
+        // 2. Send as raw JSON string
+        const res = await fetch(API_URL, { 
+          method: 'POST', 
+          body: JSON.stringify(payload) // <--- THE FIX
+        });
+        
         const json = await res.json();
         
         document.getElementById('loading').style.display = 'none';
@@ -128,13 +134,12 @@
         console.error(e);
         // Fallback for demo if offline
         renderSamples([
-          { code: "392", type: "Unknown Ale" },
-          { code: "814", type: "Unknown Lager" },
-          { code: "105", type: "Reference Sample" }
+          { code: "392", type: "Unknown Ale (Offline Demo)" },
+          { code: "814", type: "Unknown Lager (Offline Demo)" },
+          { code: "105", type: "Reference Sample (Offline Demo)" }
         ]);
       }
     }
-
     function renderSamples(samples) {
       const grid = document.getElementById('sampleGrid');
       grid.innerHTML = "";
