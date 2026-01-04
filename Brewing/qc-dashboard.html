@@ -10,132 +10,60 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
   
   <style>
-    /* --- SHARED THEME VARIABLES --- */
+    /* --- SHARED THEME --- */
     :root {
-      --bg: #f8fafc;
-      --sidebar: #0f172a;
-      --accent: #2563eb;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-      --card-bg: #ffffff;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --ml-blue: #3498db;
+      --bg: #f8fafc; --sidebar: #0f172a; --accent: #2563eb;
+      --text-main: #1e293b; --text-muted: #64748b;
+      --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
     }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text-main); font-family: 'Inter', system-ui, sans-serif; display: flex; min-height: 100vh; }
 
-    /* --- GLOBAL RESET & LAYOUT --- */
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { 
-      margin: 0; background: var(--bg); color: var(--text-main); 
-      font-family: 'Inter', -apple-system, system-ui, sans-serif;
-      display: flex; min-height: 100vh;
-    }
-
-    /* --- SIDEBAR STYLES (Collapsible) --- */
-    .sidebar { 
-      width: 260px; background: var(--sidebar); color: #fff; 
-      padding: 24px 0; flex-shrink: 0; position: fixed; 
-      height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: all 0.3s ease;
-    }
-    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
-
-    /* Collapsible Sidebar Headers */
-    .nav-section-header {
-      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      user-select: none;
-    }
-    .nav-section-header:hover { color: #fff; }
-
-    /* Collapsible Group Container */
-    .nav-group {
-      max-height: 800px; overflow: hidden;
-      transition: max-height 0.4s cubic-bezier(0, 1, 0, 1);
-    }
+    /* SIDEBAR */
+    .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; }
+    .nav-section-header { font-size: 11px; text-transform: uppercase; color: #94a3b8; margin: 18px 24px 8px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; }
+    .nav-group { max-height: 800px; overflow: hidden; transition: max-height 0.3s; }
     .nav-group.collapsed { max-height: 0; }
-
-    /* Sidebar Links */
-    .nav-link { 
-      display: flex; align-items: center; padding: 10px 24px; 
-      color: #64748b; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent;
-    }
+    .nav-link { display: flex; align-items: center; padding: 10px 24px; color: #64748b; text-decoration: none; font-size: 14px; transition: 0.2s; border-left: 4px solid transparent; }
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-    /* --- MAIN CONTENT AREA --- */
-    .main { flex: 1; margin-left: 260px; padding: 40px; transition: all 0.3s ease; }
-    .header-bar { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center;}
-    .header-bar h1 { font-size: 28px; font-weight: 800; margin: 0; }
-    .header-bar small { color: var(--text-muted); font-size: 14px; font-weight: 500; }
+    /* MAIN */
+    .main { flex: 1; margin-left: 260px; padding: 40px; }
+    .header-bar { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; }
+    .header-bar h1 { margin: 0; font-size: 28px; font-weight: 800; }
+    
+    .section-heading { font-size: 16px; font-weight: 800; margin: 30px 0 15px; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; }
+    .collapsible-content { overflow: hidden; transition: max-height 0.5s; max-height: 2000px; }
+    .collapsible-content.collapsed { max-height: 0; }
 
-    /* --- MAIN PAGE COLLAPSIBLE SECTIONS --- */
-    .section-heading { 
-      font-size: 16px; font-weight: 800; margin: 30px 0 15px; 
-      color: var(--text-main); text-transform: uppercase;
-      padding-bottom: 8px; border-bottom: 2px solid #e2e8f0;
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      user-select: none;
-    }
-    .section-heading:hover { color: var(--accent); border-bottom-color: var(--accent); }
-
-    .collapsible-content {
-      max-height: 2000px; /* Large max-height for content */
-      overflow: hidden;
-      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
-      opacity: 1;
-    }
-    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
-
-    /* Chevron Animation */
-    .chevron { transition: transform 0.3s ease; font-size: 10px; }
-    .collapsed .chevron { transform: rotate(-90deg); }
-
-
-    /* --- DASHBOARD CARDS & GRIDS --- */
+    /* CARDS */
     .kpi-grid { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; }
-    .kpi-card { 
-      flex: 1; min-width: 200px; background: #fff; padding: 20px; 
-      border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.03); 
-    }
+    .kpi-card { flex: 1; min-width: 200px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
     .kpi-card h3 { margin: 0 0 5px 0; font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
-    .kpi-card .val { font-size: 32px; font-weight: 800; color: var(--text-main); margin-bottom: 5px; }
-    .kpi-card .sub { font-size: 12px; color: var(--success); font-weight: 600; }
+    .kpi-card .val { font-size: 32px; font-weight: 800; margin-bottom: 5px; }
+    .kpi-card .sub { font-size: 12px; font-weight: 600; }
 
     .charts-row { display: flex; gap: 20px; margin-bottom: 24px; flex-wrap: wrap; }
-    .chart-card { 
-      flex: 1; min-width: 400px; background: #fff; padding: 24px; 
-      border-radius: 12px; border: 1px solid #e2e8f0; height: 350px;
-      display: flex; flex-direction: column;
-    }
-    .chart-card h4 { margin: 0 0 15px 0; font-size: 14px; color: var(--text-main); font-weight: 700; }
+    .chart-card { flex: 1; min-width: 400px; background: #fff; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; height: 350px; display: flex; flex-direction: column; }
+    .chart-card h4 { margin: 0 0 15px 0; font-size: 14px; font-weight: 700; }
 
-    /* --- TABLE STYLING --- */
-    .table-card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 0; overflow: hidden; margin-bottom: 50px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+    /* TABLE */
+    .table-card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 50px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { background: #f8fafc; text-align: left; padding: 12px 20px; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid #e2e8f0; }
-    td { padding: 12px 20px; border-bottom: 1px solid #f1f5f9; color: var(--text-main); }
-    tr:last-child td { border-bottom: none; }
-    
+    td { padding: 12px 20px; border-bottom: 1px solid #f1f5f9; }
     .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
     .pass { background: #dcfce7; color: #166534; }
     .fail { background: #fee2e2; color: #991b1b; }
-    .warn { background: #fef9c3; color: #a16207; }
 
-    .btn { background-color: #fff; color: var(--text-main); border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
-    .btn:hover { background-color: #f1f5f9; }
+    .btn { background: #fff; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .btn:hover { background: #f1f5f9; }
 
     @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; background: var(--sidebar); overflow-x: auto; }
-      .sidebar h2, .nav-section-header { display: none; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-      .nav-link.active { border-top: 4px solid var(--accent); background: #1e293b; }
-      .main { margin-left: 0; padding: 20px 20px 90px; }
-      .charts-row { flex-direction: column; }
-      .chart-card { min-width: 100%; height: 300px; }
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 20px; }
     }
   </style>
 </head>
@@ -160,27 +88,6 @@
       <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
-      <span>Sales</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-sales" class="nav-group">
-      <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
-      <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-      <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-      <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-      <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
-    </div>
-
-    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
-      <span>Inventory</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-inv" class="nav-group">
-      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-    </div>
-    
     <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
       <span>Brewing</span><span class="chevron">▼</span>
     </div>
@@ -191,15 +98,6 @@
       <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
       <a href="../Brewing/qc-dashboard.html" class="nav-link active"><span>QC Dashboard</span></a>
       <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
-    </div>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
-      <span>Reporting & Analytics</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-rep" class="nav-group">
-      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
-      <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
     </div>
   </aside>
 
@@ -295,32 +193,15 @@
           <div class="val" style="font-size: 16px;">View Leaderboard →</div>
         </div>
       </div>
-
-      <div class="charts-row">
-        <div class="chart-card" style="flex: 2;">
-          <h4>Flavor Profile: Suburban IPA (Batch 24-005)</h4>
-          <div style="flex-grow: 1; position: relative;">
-             <canvas id="radarChart"></canvas>
-          </div>
-        </div>
-        <div class="chart-card" style="flex: 1;">
-          <h4>Panelist Agreement</h4>
-          <div style="flex-grow: 1; position: relative;">
-             <canvas id="barChart"></canvas>
-          </div>
-        </div>
       </div>
-
-    </div>
 
   </main>
 
  <script>
-    // 🔴 CONFIGURATION: UPDATE THESE URLS
+    // 🔴 CONFIGURATION
     const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
     const SENSORY_API_URL = "https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec";
 
-    // --- TOGGLE FUNCTION ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
       content.classList.toggle('collapsed');
@@ -328,11 +209,10 @@
     }
 
     window.onload = function() {
-      // 1. Set Date
       const d = new Date();
       document.getElementById('current-date').innerHTML = `<small>${d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</small>`;
-
-      // 2. Expand Sidebar active state
+      
+      // Expand Sidebar logic...
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.nav-group');
@@ -343,7 +223,6 @@
         }
       }
 
-      // 3. Load Data
       refreshAll();
     };
 
@@ -355,39 +234,28 @@
     // --- 1. LOAD CELLAR METRICS ---
     async function loadQCData() {
       try {
-        const payload = { action: 'getQCData' };
         const response = await fetch(CELLAR_API_URL, { 
-            method: 'POST', 
-            body: JSON.stringify(payload),
-            redirect: 'follow'
+            method: 'POST', body: JSON.stringify({ action: 'getQCData' }), redirect: 'follow'
         });
-        
         const json = await response.json();
 
         if (json.status === 'success') {
-           const history = json.data;
-           renderMetrics(history);
-           renderTable(history);
-           renderCharts(history);
+           renderMetrics(json.data);
+           renderTable(json.data);
+           renderCharts(json.data);
         } else {
-           console.error("Backend error:", json);
-           document.getElementById('history-table-body').innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Error: ${json.message || "Unknown Backend Error"}</td></tr>`;
+           document.getElementById('history-table-body').innerHTML = `<tr><td colspan="7">Error: ${json.message}</td></tr>`;
         }
-
       } catch (e) {
         console.error("QC Load Error", e);
-        document.getElementById('history-table-body').innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Connection Failed. Check Console.</td></tr>`;
       }
     }
 
-    // --- 2. LOAD SENSORY METRICS (NEW) ---
+    // --- 2. LOAD SENSORY METRICS ---
     async function loadSensoryMetrics() {
       try {
-        const payload = { action: 'getSensoryMetrics' };
         const response = await fetch(SENSORY_API_URL, { 
-            method: 'POST', 
-            body: JSON.stringify(payload),
-            redirect: 'follow'
+            method: 'POST', body: JSON.stringify({ action: 'getSensoryMetrics' }), redirect: 'follow'
         });
         const json = await response.json();
 
@@ -409,133 +277,57 @@
     // --- RENDER FUNCTIONS ---
     function renderMetrics(data) {
        if (!data || data.length === 0) return;
-
        // VDK
        const passCount = data.filter(d => d.vdk.includes("PASS")).length;
        document.getElementById('stat-vdk').innerText = ((passCount / data.length) * 100).toFixed(0) + "%";
-       
        // Attenuation
        let totalAtt = 0, countAtt = 0;
-       data.forEach(d => {
-           if (d.og > 1 && d.fg > 1) {
-               totalAtt += ((d.og - d.fg) / (d.og - 1)) * 100;
-               countAtt++;
-           }
-       });
+       data.forEach(d => { if (d.og > 1 && d.fg > 1) { totalAtt += ((d.og - d.fg) / (d.og - 1)) * 100; countAtt++; }});
        document.getElementById('stat-attenuation').innerText = countAtt > 0 ? (totalAtt / countAtt).toFixed(1) + "%" : "--%";
-
        // Turnaround
        let totalDays = 0, countDays = 0;
-       data.forEach(d => {
-           const s = new Date(d.start), e = new Date(d.end);
-           if (!isNaN(s) && !isNaN(e)) {
-               totalDays += Math.ceil(Math.abs(e - s) / (86400000)); 
-               countDays++;
-           }
-       });
+       data.forEach(d => { const s = new Date(d.start), e = new Date(d.end); if (!isNaN(s) && !isNaN(e)) { totalDays += Math.ceil(Math.abs(e - s) / 86400000); countDays++; }});
        document.getElementById('stat-turnaround').innerText = countDays > 0 ? Math.round(totalDays / countDays) + " Days" : "--";
-
        // Carb
        const carbs = data.map(d => d.carb).filter(c => c > 0);
        if (carbs.length > 1) {
            const mean = carbs.reduce((a, b) => a + b) / carbs.length;
            const variance = carbs.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / carbs.length;
            document.getElementById('stat-carb').innerText = "±" + Math.sqrt(variance).toFixed(2);
-       } else {
-           document.getElementById('stat-carb').innerText = "--";
        }
     }
 
     function renderTable(data) {
        const tbody = document.getElementById('history-table-body');
        tbody.innerHTML = "";
-       
        data.forEach(row => {
            let vdkClass = row.vdk.includes("PASS") ? "pass" : "fail";
-           tbody.innerHTML += `
-               <tr>
-                   <td><strong>${row.id}</strong></td>
-                   <td>${row.brand}</td>
-                   <td>${row.start}</td>
-                   <td>${row.end}</td>
-                   <td>${row.fg.toFixed(3)}</td>
-                   <td><span class="status-pill ${vdkClass}">${row.vdk}</span></td>
-                   <td>${row.carb.toFixed(2)}</td>
-               </tr>
-           `;
+           tbody.innerHTML += `<tr><td><strong>${row.id}</strong></td><td>${row.brand}</td><td>${row.start}</td><td>${row.end}</td><td>${row.fg.toFixed(3)}</td><td><span class="status-pill ${vdkClass}">${row.vdk}</span></td><td>${row.carb.toFixed(2)}</td></tr>`;
        });
     }
 
     function renderCharts(data) {
-       // Reverse data for charts so time flows Left -> Right
        const chartData = [...data].reverse();
        const labels = chartData.map(d => d.id);
 
-       // 1. Carb Scatter
        new Chart(document.getElementById('carbScatterChart'), {
            type: 'bar',
            data: {
                labels: labels,
-               datasets: [{
-                   label: 'Carb Vol',
-                   data: chartData.map(d => d.carb),
-                   backgroundColor: '#dcfce7',
-                   borderColor: '#10b981',
-                   borderWidth: 1
-               }]
+               datasets: [{ label: 'Carb Vol', data: chartData.map(d => d.carb), backgroundColor: '#dcfce7', borderColor: '#10b981', borderWidth: 1 }]
            },
-           options: { 
-               responsive: true, 
-               maintainAspectRatio: false,
-               scales: { y: { min: 2.0, max: 3.0 } },
-               plugins: { annotation: { annotations: { line1: { type: 'line', yMin: 2.55, yMax: 2.55, borderColor: 'red', borderDash: [4,4] } } } }
-           }
+           options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 2.0, max: 3.0 } }, plugins: { annotation: { annotations: { line1: { type: 'line', yMin: 2.55, yMax: 2.55, borderColor: 'red', borderDash: [4,4] } } } } }
        });
 
-       // 2. Ferm Curve (Mocked Line from Start to Finish for now)
        new Chart(document.getElementById('fermCurveChart'), {
            type: 'line',
            data: {
                labels: ['Start', 'Finish'],
                datasets: chartData.slice(0, 3).map((b, i) => ({
-                   label: b.id + ' (' + b.brand + ')',
-                   data: [b.og, b.fg],
-                   borderColor: i===0 ? '#2563eb' : (i===1 ? '#93c5fd' : '#cbd5e1'),
-                   tension: 0.1
+                   label: b.id, data: [b.og, b.fg], borderColor: i===0 ? '#2563eb' : '#cbd5e1', tension: 0.1
                }))
            },
            options: { responsive: true, maintainAspectRatio: false }
-       });
-
-       // 3. Sensory Radar (Still Mock - requires detailed backend data)
-       new Chart(document.getElementById('radarChart'), {
-         type: 'radar',
-         data: {
-           labels: ['Hoppy', 'Malty', 'Bitter', 'Fruity', 'Floral', 'Body'],
-           datasets: [{
-             label: 'Sensory Panel Avg',
-             data: [4, 2, 4, 3, 3, 3.5],
-             fill: true,
-             backgroundColor: 'rgba(37, 99, 235, 0.2)',
-             borderColor: '#2563eb',
-             pointBackgroundColor: '#2563eb'
-           }]
-         },
-         options: { responsive: true, maintainAspectRatio: false }
-       });
-
-       // 4. Agreement Bar (Still Mock)
-       new Chart(document.getElementById('barChart'), {
-         type: 'bar',
-         data: {
-           labels: ['Remy', 'Head Brewer', 'Cellarman', 'Packaging'],
-           datasets: [{
-             label: 'Deviation from Mean',
-             data: [0.1, -0.2, 0.05, 0.15],
-             backgroundColor: ['#2563eb', '#ef4444', '#10b981', '#f59e0b']
-           }]
-         },
-         options: { responsive: true, maintainAspectRatio: false }
        });
     }
 </script>
