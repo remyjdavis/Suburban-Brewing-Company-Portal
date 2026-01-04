@@ -68,6 +68,12 @@
     .btn-submit:hover { background: #1e293b; }
     .btn-complete { background: #10b981; pointer-events: none; }
 
+    /* CONSENT MODAL */
+    #consentModal {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;
+    }
+
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .main { margin-left: 0; padding: 20px; }
@@ -87,33 +93,46 @@
 
     <div class="setup-card">
       <label>Panelist Name</label>
-      <input type="text" id="panelistName" list="panelistOptions" placeholder="Start typing your name..." onchange="enablePanel()">
-      <datalist id="panelistOptions">
-        </datalist>
+      <input type="text" id="panelistName" list="panelistOptions" placeholder="Start typing your name..." onchange="verifyUser()">
+      <datalist id="panelistOptions"></datalist>
+      <div id="userStatus" style="font-size: 12px; margin-top: 5px; color: var(--accent); font-weight: 600;"></div>
     </div>
     
     <div id="loading" style="text-align: center; color: #64748b;">Loading today's blind samples...</div>
     
     <div id="sampleGrid" class="sample-grid"></div>
-
   </main>
 
+  <div id="consentModal">
+    <div style="background:white; width:90%; max-width:500px; padding:30px; border-radius:12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+      <h2 style="margin-top:0; color:#0f172a;">Panelist Agreement</h2>
+      <div style="height:200px; overflow-y:auto; background:#f8fafc; padding:15px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px; color:#475569; margin-bottom:20px;">
+        <p><strong>1. Purpose:</strong> This application tracks sensory acuity data to maintain product quality at Suburban Brewing Co.</p>
+        <p><strong>2. Data Collection:</strong> By proceeding, you acknowledge that your performance metrics (accuracy, blind spot detection, false positives) will be recorded and associated with your name.</p>
+        <p><strong>3. Usage:</strong> This data is used solely for calibration training and quality assurance validation. It is not used for disciplinary action regarding employment status, but consistent inability to detect off-flavors may result in removal from the active sensory roster.</p>
+        <p><strong>4. Confidentiality:</strong> You agree not to discuss the identity of blind samples with other panelists until the session administrator declares the session closed.</p>
+        <p><strong>5. Health:</strong> You confirm you are of legal drinking age and are not experiencing symptoms (e.g., congestion) that would impair sensory function.</p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-submit" style="background:#e2e8f0; color:#475569; margin-top:0;" onclick="declineConsent()">Cancel</button>
+        <button class="btn-submit" style="margin-top:0;" onclick="acceptConsent()">I Understand & Agree</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Keep your existing API_URL
+    // 🔴 UPDATE WITH YOUR DEPLOYMENT URL
     const API_URL = "https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec";
 
     let panelistName = "";
+    let isRegistered = false;
 
     window.onload = function() {
         loadSamples();   // Load the beers
         loadPanelists(); // Load the names
     };
 
-    function enablePanel() {
-      panelistName = document.getElementById('panelistName').value;
-    }
-
-    // 1. FETCH SAVED NAMES
+    // 1. FETCH SAVED NAMES FOR AUTOCOMPLETE
     async function loadPanelists() {
       try {
         const res = await fetch(API_URL, { 
@@ -133,21 +152,70 @@
       } catch (e) { console.error("Could not load panelists", e); }
     }
 
-    async function loadSamples() {
-      // 1. Prepare JSON Payload (Matches your new Backend)
-      const payload = {
-        action: 'getBlindSamples'
-      };
+    // 2. CHECK USER STATUS & CONSENT
+    async function verifyUser() {
+        const name = document.getElementById('panelistName').value;
+        if(name.length < 3) return;
 
+        document.getElementById('userStatus').innerText = "Checking profile...";
+        
+        try {
+            const res = await fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'checkUserConsent', name: name }) 
+            });
+            const json = await res.json();
+
+            if (json.status === 'exists') {
+                // User is known
+                isRegistered = true;
+                panelistName = name;
+                document.getElementById('userStatus').innerText = `Welcome back, ${name} (${json.role})`;
+                document.getElementById('userStatus').style.color = "#10b981"; // Green
+            } else {
+                // New User -> Trigger Modal
+                isRegistered = false;
+                document.getElementById('consentModal').style.display = 'flex';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // 3. HANDLE AGREEMENT
+    async function acceptConsent() {
+        const name = document.getElementById('panelistName').value;
+        const btn = document.querySelector('#consentModal .btn-submit:last-child');
+        btn.innerText = "Registering...";
+        
+        // Save them to DB
+        await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'registerNewPanelist', name: name }) 
+        });
+
+        isRegistered = true;
+        panelistName = name;
+        document.getElementById('consentModal').style.display = 'none';
+        document.getElementById('userStatus').innerText = "Profile Created. Ready to taste.";
+        document.getElementById('userStatus').style.color = "#10b981";
+    }
+
+    function declineConsent() {
+        document.getElementById('consentModal').style.display = 'none';
+        document.getElementById('panelistName').value = "";
+        document.getElementById('userStatus').innerText = "Registration cancelled.";
+        document.getElementById('userStatus').style.color = "#ef4444";
+    }
+
+    // 4. LOAD SAMPLES
+    async function loadSamples() {
+      const payload = { action: 'getBlindSamples' };
       try {
-        // 2. Send as raw JSON string
         const res = await fetch(API_URL, { 
           method: 'POST', 
-          body: JSON.stringify(payload) // <--- THE FIX
+          body: JSON.stringify(payload)
         });
         
         const json = await res.json();
-        
         document.getElementById('loading').style.display = 'none';
         
         if (json.status === 'success') {
@@ -157,14 +225,9 @@
         }
       } catch (e) {
         console.error(e);
-        // Fallback for demo if offline
-        renderSamples([
-          { code: "392", type: "Unknown Ale (Offline Demo)" },
-          { code: "814", type: "Unknown Lager (Offline Demo)" },
-          { code: "105", type: "Reference Sample (Offline Demo)" }
-        ]);
       }
     }
+
     function renderSamples(samples) {
       const grid = document.getElementById('sampleGrid');
       grid.innerHTML = "";
@@ -216,7 +279,7 @@
     }
 
     function toggleRate(code) {
-      if(!panelistName) return alert("Please enter your name at the top first.");
+      if(!isRegistered) return alert("Please enter your name and accept the agreement first.");
       document.getElementById(`card-${code}`).classList.toggle('active');
     }
 
@@ -224,13 +287,11 @@
       const score = document.getElementById(`score-${code}`).value;
       const notes = document.getElementById(`notes-${code}`).value;
       
-      // Collect Tags
       const tags = [];
       document.querySelectorAll(`#tags-${code} .tag-check:checked`).forEach(cb => tags.push(cb.value));
 
       if(!notes && tags.length === 0) return alert("Please add at least one tag or note.");
 
-      // Disable UI
       const card = document.getElementById(`card-${code}`);
       const btn = card.querySelector('.btn-submit:last-child');
       btn.innerText = "Processing AI...";
@@ -240,20 +301,15 @@
         action: 'submitSensory',
         panelist: panelistName,
         samples: [{
-          brand: `Blind-${code}`, // Backend maps this code to real beer later
+          brand: `Blind-${code}`,
           score: score,
           tags: tags.join(", "),
           notes: notes
         }]
       };
 
-      // Send to Backend
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
+      await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
 
-      // UI Feedback
       btn.innerText = "Completed ✔";
       btn.classList.add('btn-complete');
       card.classList.remove('active');
