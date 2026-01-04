@@ -55,78 +55,118 @@
     </div>
 
     <script>
-      window.onload = loadData;
+  // 🔴 CONFIGURATION
+  // Your Web App URL (Exec version)
+  const API_URL = "https://script.google.com/macros/s/AKfycbyDxr8REPMn1QfMik5w0iEUEyUiPqhvbk11aNgTNCfEK30zjbcj4kotZ-oqyz2UjP0/exec";
 
-      function loadData() {
-        var container = document.getElementById('tableContainer');
-        container.innerHTML = '<div class="loading">Fetching data from !Profit_Analysis_Report...</div>';
-        google.script.run.withSuccessHandler(render).getProfitReportSheet();
+  window.onload = loadData;
+
+  function loadData() {
+    const container = document.getElementById('tableContainer');
+    container.innerHTML = '<div class="loading">Fetching data via API...</div>';
+
+    // We use POST because your backend logic is in doPost()
+    // We use URLSearchParams to ensure e.parameter can read it
+    const formData = new URLSearchParams();
+    formData.append('action', 'getReports');
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(json => {
+      if (json.status === 'success') {
+        render(json.data);
+      } else {
+        showError("API Error: " + json.data);
       }
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+      showError("Connection failed. If testing locally, check CORS or browser privacy settings.");
+    });
+  }
 
-      function render(data) {
-        if (!data || data.length === 0) {
-          document.getElementById('tableContainer').innerHTML = '<p style="text-align:center;">No data found in the report sheet.</p>';
-          return;
-        }
+  function render(data) {
+    if (!data || data.length === 0) {
+      document.getElementById('tableContainer').innerHTML = '<p style="text-align:center;">No data found.</p>';
+      return;
+    }
 
-        var html = '<table><thead><tr>';
-        html += '<th>Brand</th><th>Total Profit</th><th>Velocity ($/Mo)</th><th>Efficiency ($/BBL)</th><th>Vol (Cases)</th><th>Vol (Kegs)</th><th>AI Recommendation</th><th>Trend</th>';
-        html += '</tr></thead><tbody>';
+    let html = '<table><thead><tr>';
+    html += '<th>Brand</th><th>Total Profit</th><th>Velocity ($/Mo)</th><th>Efficiency ($/BBL)</th><th>Vol (Cases)</th><th>Vol (Kegs)</th><th>AI Recommendation</th>';
+    html += '</tr></thead><tbody>';
 
-        let totalProfit = 0;
-        let totalCases = 0;
-        let maxProfit = -Infinity;
-        let bestBrand = "N/A";
-        let efficiencySum = 0;
-        let count = 0;
+    let totalProfit = 0;
+    let totalCases = 0;
+    let efficiencySum = 0;
+    let count = 0;
+    let bestBrand = "N/A";
+    let maxProfit = -Infinity;
 
-        data.forEach(row => {
-          // Map array indices based on your screenshot columns:
-          // 0:Date, 1:Brand, 2:Profit, 3:Velocity, 4:Efficiency, 5:Cases, 6:Kegs, 7:AI, 8:Trend
-          
-          let brand = row[1];
-          let profit = parseFloat(row[2]) || 0;
-          let velocity = row[3];
-          let eff = parseFloat(row[4]) || 0;
-          let cases = parseFloat(row[5]) || 0;
-          let kegs = row[6];
-          let ai = row[7];
-          let trend = row[8];
-
-          // KPI Calcs
-          totalProfit += profit;
-          totalCases += cases;
-          efficiencySum += eff;
-          if(profit > maxProfit) { maxProfit = profit; bestBrand = brand; }
-          count++;
-
-          let profitClass = profit >= 0 ? 'positive' : 'negative';
-
-          html += `<tr>
-            <td><strong>${brand}</strong></td>
-            <td class="${profitClass}">$${formatNum(profit)}</td>
-            <td>${velocity}</td>
-            <td>$${formatNum(eff)}</td>
-            <td>${cases}</td>
-            <td>${kegs}</td>
-            <td><span class="ai-rec">${ai}</span></td>
-            <td>${trend}</td>
-          </tr>`;
-        });
-
-        html += '</tbody></table>';
-        document.getElementById('tableContainer').innerHTML = html;
-
-        // Update KPIs
-        document.getElementById('kpiProfit').innerText = '$' + formatNum(totalProfit);
-        document.getElementById('kpiBrand').innerText = bestBrand;
-        document.getElementById('kpiCases').innerText = totalCases;
-        document.getElementById('kpiEff').innerText = count > 0 ? '$' + formatNum(efficiencySum/count) : '$0.00';
+    // The API returns an array of objects: { brand, totalProfit, profitPerMonth... }
+    data.forEach(item => {
+      // KPI Calcs
+      totalProfit += item.totalProfit;
+      totalCases += item.caseVol;
+      efficiencySum += item.profitPerBBL;
+      
+      if(item.totalProfit > maxProfit) { 
+        maxProfit = item.totalProfit; 
+        bestBrand = item.brand; 
       }
+      count++;
 
-      function formatNum(n) {
-        return n.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-      }
-    </script>
+      let profitClass = item.totalProfit >= 0 ? 'positive' : 'negative';
+      let recClass = getRecClass(item.action);
+
+      html += `<tr>
+        <td><strong>${item.brand}</strong></td>
+        <td class="${profitClass}">$${formatNum(item.totalProfit)}</td>
+        <td>$${formatNum(item.profitPerMonth)}</td>
+        <td>$${formatNum(item.profitPerBBL)}</td>
+        <td>${item.caseVol}</td>
+        <td>${item.kegVol}</td>
+        <td><span class="ai-rec ${recClass}">${item.action}</span></td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('tableContainer').innerHTML = html;
+
+    // Update KPIs
+    updateKPI("kpiProfit", totalProfit, true);
+    document.getElementById("kpiBrand").innerText = bestBrand;
+    updateKPI("kpiCases", totalCases, false);
+    updateKPI("kpiEff", count > 0 ? (efficiencySum / count) : 0, true);
+  }
+
+  // Helper to color code the AI Recommendation pill
+  function getRecClass(action) {
+    if (action.includes("SCALE") || action.includes("CASH")) return "positive-bg";
+    if (action.includes("CUT")) return "negative-bg";
+    return "neutral-bg";
+  }
+
+  function updateKPI(id, val, isMoney) {
+    document.getElementById(id).innerText = (isMoney ? '$' : '') + formatNum(val);
+  }
+
+  function formatNum(n) {
+    return n.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+  }
+
+  function showError(msg) {
+    document.getElementById('tableContainer').innerHTML = `<p style="color:red; text-align:center;">${msg}</p>`;
+  }
+</script>
+
+<style>
+  /* Add these utility classes to your CSS for the pills */
+  .positive-bg { background-color: #dcfce7; color: #166534; border-color: #166534; }
+  .negative-bg { background-color: #fee2e2; color: #991b1b; border-color: #991b1b; }
+  .neutral-bg { background-color: #f3f4f6; color: #1f2937; border-color: #1f2937; }
+</style>
   </body>
 </html>
