@@ -322,27 +322,83 @@
     const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec'; 
     const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
     const AUTO_REFRESH_MS = 300000; 
-
+// 🔴 NEW: The URL for your Sensory Web App (The one panelists use)
+    const SENSORY_API_URL = 'https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec';
+    
+    // --- ON LOAD ---
     window.addEventListener('DOMContentLoaded', () => {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString(undefined, options);
+      const d = new Date();
+      document.getElementById('current-date').innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-        runAllSyncs();
-        setInterval(runAllSyncs, AUTO_REFRESH_MS);
+      runAllSyncs();
+      setInterval(runAllSyncs, 300000); // 5 Minutes
 
-        const perfCard = document.getElementById('perfCard');
-        if (perfCard) {
-            perfCard.addEventListener('click', () => {
-                if (window.mlChart) setTimeout(() => window.mlChart.resize(), 450);
-            });
+      // Update the Sensory Card Link to open the Panel App
+      const sensCard = document.getElementById('sensoryAlertCard');
+      if(sensCard) {
+        sensCard.onclick = function() {
+            window.open(SENSORY_API_URL, '_blank'); // Opens Sensory App in new tab
+        };
+      }
+// Sidebar active state
+      const activeLink = document.querySelector('.nav-link.active');
+      if (activeLink) {
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) {
+          parentGroup.classList.remove('collapsed');
+          const header = parentGroup.previousElementSibling;
+          if (header) header.classList.remove('collapsed');
         }
+      }
     });
-
-    function runAllSyncs() {
-        refreshMLEngine();    
-        refreshCellarTanks();  
+    
+  function runAllSyncs() {
+        refreshCellarTanks();
+        checkSensoryAlerts();
+        refreshMLEngine();
     }
+    // --- 1. SENSORY ALERT CHECKER (Points to Sensory Backend) ---
+    async function checkSensoryAlerts() {
+      try {
+        const payload = { action: 'getBlindSamples' };
+        
+        // 🔴 NOW FETCHING FROM SENSORY API
+        const res = await fetch(SENSORY_API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify(payload)
+        });
 
+        const json = await res.json();
+
+        if(json.status === 'success') {
+          const count = json.data.length;
+          // Check if it's just the placeholder reference
+          const isReferenceOnly = count === 1 && (json.data[0].code === "100" || json.data[0].code === "105");
+          
+          if (count > 0 && !isReferenceOnly) {
+            document.getElementById('sensoryCount').innerText = count;
+            document.getElementById('sensoryStatus').innerText = "Samples Approaching Terminal";
+            // Visual Styles for Active Alert
+            document.getElementById('sensoryStatus').style.color = "#8b5cf6"; 
+            document.getElementById('sensoryStatus').style.fontWeight = "700";
+            document.getElementById('sensoryAlertCard').style.borderColor = "#8b5cf6";
+            document.getElementById('sensoryAlertCard').style.borderLeftWidth = "6px";
+          } else {
+            document.getElementById('sensoryCount').innerText = "0";
+            document.getElementById('sensoryStatus').innerText = "No critical samples due";
+            // Reset Styles
+            document.getElementById('sensoryStatus').style.color = "var(--text-muted)";
+            document.getElementById('sensoryStatus').style.fontWeight = "400";
+            document.getElementById('sensoryAlertCard').style.borderColor = "#e2e8f0";
+            document.getElementById('sensoryAlertCard').style.borderLeftWidth = "1px";
+          }
+        }
+      } catch (e) {
+        console.error("Sensory Alert Error:", e);
+        document.getElementById('sensoryStatus').innerText = "Sync Failed";
+      }
+    }
+    // --- 2. CELLAR TANK SYNC ---
     async function refreshCellarTanks() {
         const categories = {
             'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"],
@@ -351,7 +407,7 @@
         };
 
         try {
-            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { method: "GET", redirect: "follow" });
+            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { method: "GET" });
             const liveBatches = await res.json();
 
             Object.keys(categories).forEach(gridId => {
@@ -372,7 +428,7 @@
                     }
 
                     container.innerHTML += `
-                        <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'};">
+                        <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'}; border-color: ${isActive ? color : '#e2e8f0'};">
                             <span class="status-badge" style="background: ${isActive ? color + '22' : '#f1f5f9'}; color: ${color};">${statusText}</span>
                             <div class="tank-vessel">
                                 <div class="tank-fill" style="height: ${isActive ? liveData.fill : 0}%; background: ${color}; transition: height 1s ease;"></div>
@@ -387,6 +443,7 @@
         } catch (e) { console.error("Cellar Error:", e); }
     }
 
+    // --- 3. ML ENGINE SYNC ---
     async function refreshMLEngine() {
         const effDisplay = document.getElementById('ml-efficiency-display');
         const ogDisplay = document.getElementById('ml-og-display');
@@ -395,7 +452,7 @@
         const cashSavedDisplay = document.getElementById('cost-dollars-saved');
 
         try {
-            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { method: "GET", redirect: "follow" });
+            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { method: "GET" });
             const data = await res.json();
 
             const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
@@ -427,68 +484,13 @@
             if (advice) advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
         } catch (e) { console.error("ML Error:", e); }
     }
-    // --- UNIVERSAL TOGGLE FUNCTION ---
+
+    // --- TOGGLE FUNCTION ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
-      
-      // Toggle 'collapsed' on content
       content.classList.toggle('collapsed');
-      
-      // Toggle 'collapsed' on header (for chevron rotation)
       headerEl.classList.toggle('collapsed');
-      
-      // Special check: If we just opened a Master section, 
-      // we might want to ensure the children render correctly if they were hidden
-      // (CSS handles most of this via the parent's max-height)
     }
-
-    // --- ON LOAD ---
-    window.addEventListener('DOMContentLoaded', () => {
-      // 1. Set Date
-      const d = new Date();
-      document.getElementById('current-date').innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-      // 2. Sidebar Logic: Auto-expand active menu
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) {
-            header.classList.remove('collapsed');
-          }
-        }
-      }
-    });
-    // --- CHECK SENSORY STATUS ---
-    function checkSensoryAlerts() {
-      // Reuse your existing API_URL variable
-      const formData = new URLSearchParams();
-      formData.append('action', 'getBlindSamples'); // The function we just wrote
-
-      fetch(API_URL, { method: 'POST', body: formData })
-      .then(res => res.json())
-      .then(json => {
-        if(json.status === 'success') {
-          const count = json.data.length;
-          const isReference = json.data[0].code === "100"; // Don't alert if it's just the default reference
-          
-          if (count > 0 && !isReference) {
-            document.getElementById('sensoryCount').innerText = count;
-            document.getElementById('sensoryStatus').innerText = "Samples Approaching Terminal";
-            document.getElementById('sensoryStatus').style.color = "#8b5cf6"; // Purple text
-            document.getElementById('sensoryStatus').style.fontWeight = "700";
-          } else {
-            document.getElementById('sensoryCount').innerText = "0";
-            document.getElementById('sensoryStatus').innerText = "No critical samples due";
-          }
-        }
-      });
-    }
-
-    // Add this to your window.addEventListener('DOMContentLoaded', ...) block:
-    checkSensoryAlerts();
   </script>
 </body>
 </html>
