@@ -1,316 +1,234 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base target="_top">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Sensory Lab | Suburban Brewing</title>
-  
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+  <title>Blind Sensory Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    :root { 
-      --bg: #f1f5f9; 
-      --card: #ffffff; 
-      --text: #0f172a; 
-      --accent: #0f172a; /* Professional Black/Slate */
-      --highlight: #2563eb;
-      --border: #e2e8f0;
-    }
+    /* --- SHARED THEME --- */
+    :root { --bg: #f8fafc; --primary: #0f172a; --accent: #2563eb; --card: #ffffff; --text: #1e293b; --danger: #ef4444; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; }
     
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    /* SIDEBAR */
+    .sidebar { width: 240px; background: var(--primary); color: white; height: 100vh; position: fixed; padding-top: 20px; display: flex; flex-direction: column; }
+    .nav-link { padding: 12px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; display: block; }
+    .nav-link:hover { color: white; background: #1e293b; }
     
-    body { 
-      font-family: 'Inter', sans-serif; 
-      background: var(--bg); color: var(--text); 
-      padding: 20px; margin: 0; 
-      max-width: 600px; margin: 0 auto;
-    }
+    /* MAIN CONTENT */
+    .main { margin-left: 240px; padding: 40px; width: 100%; max-width: 900px; }
+    h1 { margin-bottom: 10px; font-weight: 800; color: var(--primary); }
+    .subtitle { color: #64748b; font-size: 14px; margin-bottom: 30px; }
 
-    /* HEADER */
-    .header { 
-      text-align: center; margin-bottom: 25px; 
-      border-bottom: 2px solid var(--border);
-      padding-bottom: 20px;
-    }
-    .header h1 { 
-      font-size: 1.2rem; margin: 0; 
-      text-transform: uppercase; letter-spacing: 2px;
-      color: #64748b; font-weight: 800;
-    }
-    .header .lab-id {
-      font-family: 'Roboto Mono', monospace;
-      color: var(--highlight); font-weight: 700;
-      font-size: 0.9rem; margin-top: 5px;
-    }
-
-    /* CARDS */
-    .card { 
-      background: var(--card); 
-      padding: 24px; 
-      border-radius: 8px; /* Sharper corners for pro look */
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-      margin-bottom: 20px; 
-      border: 1px solid var(--border);
-    }
-
-    .card-title {
-      font-size: 0.8rem; text-transform: uppercase; 
-      color: #94a3b8; font-weight: 700; letter-spacing: 1px;
-      margin-bottom: 15px; display: block;
-    }
-
-    /* FORM INPUTS */
-    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+    /* PANEL SETUP CARD */
+    .setup-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 30px; }
     
-    label { 
-      display: block; font-weight: 600; font-size: 0.8rem; 
-      margin-bottom: 6px; color: #475569; 
-    }
+    /* SAMPLE GRID */
+    .sample-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
     
-    select, input[type="text"], input[type="number"], textarea { 
-      width: 100%; padding: 12px; 
-      border: 1px solid #cbd5e1; border-radius: 6px; 
-      font-size: 1rem; background: #fff; appearance: none;
-      font-family: 'Inter', sans-serif;
+    /* BLIND SAMPLE CARD */
+    .blind-card {
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
+      transition: all 0.2s; position: relative; overflow: hidden;
     }
+    .blind-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: var(--accent); }
     
-    input[type="text"]:focus, select:focus {
-      border-color: var(--highlight); outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    /* SAMPLE ID (The "Blind" Field) */
-    .blind-input {
-      font-family: 'Roboto Mono', monospace;
-      letter-spacing: 2px;
-      font-weight: 700;
-      color: var(--highlight);
-    }
-
-    /* PROFESSIONAL SLIDERS */
-    .slider-container { margin-bottom: 25px; }
-    .slider-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
-    .slider-label { font-weight: 700; font-size: 0.95rem; }
-    .slider-val { font-family: 'Roboto Mono', monospace; font-weight: 700; color: var(--highlight); }
+    .blind-code { font-size: 24px; font-weight: 800; color: var(--accent); letter-spacing: 1px; margin-bottom: 5px; }
+    .blind-status { font-size: 11px; text-transform: uppercase; font-weight: 700; color: #94a3b8; margin-bottom: 20px; }
     
-    input[type="range"] { 
-      width: 100%; height: 4px; background: #e2e8f0; 
-      border-radius: 2px; outline: none; -webkit-appearance: none;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 20px; height: 20px; 
-      background: var(--text); border: 2px solid #fff; border-radius: 50%; cursor: pointer; 
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
+    /* RATING FORM (Hidden by default) */
+    .rating-form { display: none; margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 20px; }
+    .blind-card.active .rating-form { display: block; }
+    .blind-card.active { border: 2px solid var(--accent); }
 
-    /* OFF FLAVOR BUTTONS */
-    .defect-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .defect-check { display: none; }
-    .defect-label { 
-      padding: 10px; background: #f8fafc; text-align: center;
-      border-radius: 6px; font-size: 0.8rem; font-weight: 600;
-      color: #64748b; border: 1px solid #e2e8f0; 
-      cursor: pointer; transition: 0.1s;
-    }
-    .defect-check:checked + .defect-label { 
-      background: #fee2e2; color: #b91c1c; border-color: #ef4444; 
-    }
+    /* INPUTS */
+    label { display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 5px; text-transform: uppercase; }
+    input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 15px; }
+    textarea { height: 70px; resize: none; }
 
-    /* SUBMIT */
+    /* SLIDERS */
+    .slider-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    input[type=range] { flex: 1; margin: 0 10px; accent-color: var(--accent); }
+    .score-val { font-weight: 700; color: var(--accent); width: 25px; text-align: right; }
+
+    /* TAGS */
+    .tag-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+    .tag-check { display: none; }
+    .tag-label { 
+      padding: 6px 12px; background: #f1f5f9; border-radius: 20px; font-size: 11px; font-weight: 600; 
+      color: #64748b; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+    }
+    .tag-check:checked + .tag-label { background: #dbeafe; color: var(--accent); border-color: var(--accent); }
+
+    /* SUBMIT BUTTON */
     .btn-submit { 
-      width: 100%; padding: 16px; 
-      background: var(--highlight); color: white; 
-      border: none; border-radius: 6px; 
-      font-size: 1rem; font-weight: 600; 
-      margin-top: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+      width: 100%; padding: 12px; background: var(--primary); color: white; border: none; 
+      border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px;
     }
-    .btn-submit:active { opacity: 0.9; }
+    .btn-submit:hover { background: #1e293b; }
+    .btn-complete { background: #10b981; pointer-events: none; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 20px; }
+    }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h1>Sensory Analysis</h1>
-    <div class="lab-id">QC PANEL // BLIND</div>
-  </div>
+  <aside class="sidebar">
+    <div style="padding: 20px; font-weight: 800; font-size: 18px;">SBC SENSORY</div>
+    <a href="index.html" class="nav-link">← Back to Command</a>
+  </aside>
 
-  <div class="card">
-    <span class="card-title">Sample Identification</span>
+  <main class="main">
+    <h1>Blind Sensory Panel</h1>
+    <div class="subtitle">Evaluate the samples below. Do not discuss findings until the session is closed.</div>
+
+    <div class="setup-card">
+      <label>Panelist Name</label>
+      <input type="text" id="panelistName" placeholder="Enter your name to begin..." onchange="enablePanel()">
+    </div>
+
+    <div id="loading" style="text-align: center; color: #64748b;">Loading today's blind samples...</div>
     
-    <div class="input-row">
-      <div>
-        <label>Taster Initials</label>
-        <input type="text" id="taster" placeholder="e.g. RD" style="text-transform: uppercase;">
-      </div>
-      <div>
-        <label>Sample ID / Code</label>
-        <input type="text" id="sampleId" class="blind-input" placeholder="# ---">
-      </div>
-    </div>
+    <div id="sampleGrid" class="sample-grid"></div>
 
-    <div>
-      <label>Product (If Known)</label>
-      <select id="beerSelect">
-        <option value="Blind">-- Blind Sample --</option>
-        <option value="Suburban IPA">Suburban IPA</option>
-        <option value="Main St. Stout">Main St. Stout</option>
-        <option value="Honey Brook Helles">Honey Brook Helles</option>
-        <option value="Railway Red">Railway Red</option>
-        <option value="Seasonal Sour">Seasonal Sour</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="card">
-    <span class="card-title">Attribute Intensity (0-5)</span>
-    <p style="font-size: 0.8rem; color: #64748b; margin-top: -10px; margin-bottom: 20px;">
-      Rate intensity relative to style guidelines.
-    </p>
-
-    <div class="slider-container">
-      <div class="slider-header"><span class="slider-label">Malt</span> <span id="val-malt" class="slider-val">3.0</span></div>
-      <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateVal('malt', this.value)">
-    </div>
-
-    <div class="slider-container">
-      <div class="slider-header"><span class="slider-label">Hops (Aroma/Flavor)</span> <span id="val-hops" class="slider-val">3.0</span></div>
-      <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateVal('hops', this.value)">
-    </div>
-
-    <div class="slider-container">
-      <div class="slider-header"><span class="slider-label">Bitterness</span> <span id="val-bitterness" class="slider-val">3.0</span></div>
-      <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateVal('bitterness', this.value)">
-    </div>
-
-    <div class="slider-container">
-      <div class="slider-header"><span class="slider-label">Esters</span> <span id="val-esters" class="slider-val">1.0</span></div>
-      <input type="range" min="0" max="5" step="0.5" value="1" oninput="updateVal('esters', this.value)">
-    </div>
-    
-    <div class="slider-container">
-      <div class="slider-header"><span class="slider-label">Body / Mouthfeel</span> <span id="val-body" class="slider-val">3.0</span></div>
-      <input type="range" min="0" max="5" step="0.5" value="3" oninput="updateVal('body', this.value)">
-    </div>
-  </div>
-
-  <div class="card">
-    <span class="card-title">Defect Check</span>
-    <div class="defect-grid">
-      <input type="checkbox" id="def1" class="defect-check" value="Diacetyl"><label for="def1" class="defect-label">Diacetyl</label>
-      <input type="checkbox" id="def2" class="defect-check" value="DMS"><label for="def2" class="defect-label">DMS</label>
-      <input type="checkbox" id="def3" class="defect-check" value="Oxidation"><label for="def3" class="defect-label">Oxidation</label>
-      <input type="checkbox" id="def4" class="defect-check" value="Acetaldehyde"><label for="def4" class="defect-label">Acetaldehyde</label>
-      <input type="checkbox" id="def5" class="defect-check" value="Phenolic"><label for="def5" class="defect-label">Phenolic</label>
-      <input type="checkbox" id="def6" class="defect-check" value="Isovaleric"><label for="def6" class="defect-label">Isovaleric</label>
-    </div>
-
-    <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-      <span class="card-title">Overall Impression</span>
-      <div style="display: flex; align-items: center; justify-content: space-between;">
-        <label style="margin:0;">True-to-Brand Score (1-10)</label>
-        <span id="score-disp" style="font-size: 1.5rem; font-weight: 800; color: var(--highlight);">8.0</span>
-      </div>
-      <input type="range" min="1" max="10" step="0.1" value="8" 
-             oninput="document.getElementById('score-disp').innerText=this.value" 
-             style="margin-top: 10px;">
-    </div>
-
-    <div style="margin-top: 20px;">
-      <label>Notes</label>
-      <textarea id="notes" rows="3" placeholder="Brief sensory comments..."></textarea>
-    </div>
-  </div>
-
-  <button class="btn-submit" onclick="submitSensory()">Submit Evaluation</button>
+  </main>
 
   <script>
-    // 🔴 UPDATE WITH YOUR NEW SENSORY BACKEND URL 🔴
-    const API_URL = "https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec";
+    // 🔴 UPDATE WITH YOUR DEPLOYMENT URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
 
-    function updateVal(id, val) {
-      document.getElementById('val-' + id).innerText = parseFloat(val).toFixed(1);
+    let panelistName = "";
+
+    window.onload = loadSamples;
+
+    function enablePanel() {
+      panelistName = document.getElementById('panelistName').value;
     }
 
-    async function submitSensory() {
-      const taster = document.getElementById('taster').value;
-      const sampleId = document.getElementById('sampleId').value;
-      const beer = document.getElementById('beerSelect').value;
-
-      if(!taster) {
-        Swal.fire({ icon: 'error', title: 'Missing Initials', text: 'Please enter who you are.', confirmButtonColor: '#0f172a' });
-        return;
-      }
-
-      // Collect Defects
-      const defects = [];
-      document.querySelectorAll('.defect-check:checked').forEach(c => defects.push(c.value));
-      if(defects.length === 0) defects.push("None");
-
-      // Build "Blind" Batch Name
-      // If they entered a Sample ID, use that. If not, use "N/A"
-      const finalBatch = sampleId ? `SAMPLE #${sampleId}` : "Standard QC";
-
-      const payload = {
-        sessionType: "Production", // Defaulting to Prod for this view
-        taster: taster,
-        role: "Panelist",
-        beer: beer,
-        batch: finalBatch,
-        spikeAgent: "", // No spiking field in Blind view (Admin handles that)
-        score: document.getElementById('score-disp').innerText,
-        profile: {
-          malt: document.getElementById('val-malt').innerText,
-          hops: document.getElementById('val-hops').innerText,
-          bitterness: document.getElementById('val-bitterness').innerText,
-          esters: document.getElementById('val-esters').innerText,
-          body: document.getElementById('val-body').innerText
-        },
-        offFlavors: defects,
-        notes: document.getElementById('notes').value
-      };
-
-      Swal.fire({ 
-        title: 'Submitting...', 
-        text: 'Uploading data to QC Database',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading() 
-      });
+    async function loadSamples() {
+      // 1. Fetch Today's Active Blind Samples from Backend
+      const formData = new URLSearchParams();
+      formData.append('action', 'getBlindSamples');
 
       try {
-        await fetch(API_URL, {
-          method: 'POST',
-          body: new URLSearchParams({
-            "action": "submitSensoryLog",
-            "data": JSON.stringify(payload)
-          })
-        });
-
-        Swal.fire({
-            icon: 'success',
-            title: 'Evaluation Saved',
-            text: 'Ready for next sample.',
-            timer: 1500,
-            showConfirmButton: false
-        }).then(() => {
-            // Soft reset (keep taster name, clear ratings)
-            document.getElementById('sampleId').value = "";
-            document.getElementById('notes').value = "";
-            document.querySelectorAll('.defect-check').forEach(c => c.checked = false);
-            // Reset sliders to 3
-            ['malt','hops','bitterness','body'].forEach(id => {
-                document.getElementById('val-'+id).innerText = "3.0";
-                document.querySelector(`input[oninput="updateVal('${id}', this.value)"]`).value = 3;
-            });
-            // Reset esters to 1
-             document.getElementById('val-esters').innerText = "1.0";
-             document.querySelector(`input[oninput="updateVal('esters', this.value)"]`).value = 1;
-             
-             window.scrollTo(0,0);
-        });
+        const res = await fetch(API_URL, { method: 'POST', body: formData });
+        const json = await res.json();
         
-      } catch(e) {
-        Swal.fire('Error', 'Connection failed.', 'error');
+        document.getElementById('loading').style.display = 'none';
+        
+        if (json.status === 'success') {
+          renderSamples(json.data);
+        } else {
+          alert("Error loading samples: " + json.message);
+        }
+      } catch (e) {
+        console.error(e);
+        // Fallback for demo if offline
+        renderSamples([
+          { code: "392", type: "Unknown Ale" },
+          { code: "814", type: "Unknown Lager" },
+          { code: "105", type: "Reference Sample" }
+        ]);
       }
+    }
+
+    function renderSamples(samples) {
+      const grid = document.getElementById('sampleGrid');
+      grid.innerHTML = "";
+
+      samples.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'blind-card';
+        div.id = `card-${s.code}`;
+        div.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div class="blind-code">SAMPLE ${s.code}</div>
+              <div class="blind-status">${s.type}</div>
+            </div>
+            <button class="btn-submit" style="width:auto; padding: 8px 16px;" onclick="toggleRate('${s.code}')">Rate</button>
+          </div>
+
+          <div class="rating-form" id="form-${s.code}">
+            <label>True-to-Brand Score (1-5)</label>
+            <div class="slider-row">
+              <span style="font-size:10px;">Poor</span>
+              <input type="range" id="score-${s.code}" min="1" max="5" step="0.5" value="3" oninput="document.getElementById('disp-${s.code}').innerText = this.value">
+              <span id="disp-${s.code}" class="score-val">3</span>
+            </div>
+
+            <label style="margin-top:15px;">Descriptors</label>
+            <div class="tag-container" id="tags-${s.code}">
+              ${renderTags(s.code)}
+            </div>
+
+            <label>Sensory Notes (AI Analysis Enabled)</label>
+            <textarea id="notes-${s.code}" placeholder="Describe aroma, flavor, mouthfeel..."></textarea>
+
+            <button class="btn-submit" onclick="submitSample('${s.code}')">Submit Evaluation</button>
+          </div>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function renderTags(code) {
+      const tags = ["Hoppy", "Malty", "Bitter", "Fruity", "Floral", "Diacetyl?", "Oxidized?", "Sulfur?"];
+      return tags.map(t => `
+        <label>
+          <input type="checkbox" class="tag-check" value="${t}">
+          <span class="tag-label">${t}</span>
+        </label>
+      `).join('');
+    }
+
+    function toggleRate(code) {
+      if(!panelistName) return alert("Please enter your name at the top first.");
+      document.getElementById(`card-${code}`).classList.toggle('active');
+    }
+
+    async function submitSample(code) {
+      const score = document.getElementById(`score-${code}`).value;
+      const notes = document.getElementById(`notes-${code}`).value;
+      
+      // Collect Tags
+      const tags = [];
+      document.querySelectorAll(`#tags-${code} .tag-check:checked`).forEach(cb => tags.push(cb.value));
+
+      if(!notes && tags.length === 0) return alert("Please add at least one tag or note.");
+
+      // Disable UI
+      const card = document.getElementById(`card-${code}`);
+      const btn = card.querySelector('.btn-submit:last-child');
+      btn.innerText = "Processing AI...";
+      btn.disabled = true;
+
+      const payload = {
+        action: 'submitSensory',
+        panelist: panelistName,
+        samples: [{
+          brand: `Blind-${code}`, // Backend maps this code to real beer later
+          score: score,
+          tags: tags.join(", "),
+          notes: notes
+        }]
+      };
+
+      // Send to Backend
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      // UI Feedback
+      btn.innerText = "Completed ✔";
+      btn.classList.add('btn-complete');
+      card.classList.remove('active');
+      card.style.opacity = "0.6";
+      card.style.pointerEvents = "none";
     }
   </script>
 </body>
