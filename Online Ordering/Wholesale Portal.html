@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBC Wholesale Portal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding-bottom: 130px; color: #2d3436; }
+        .site-header { background-color: #ffffff; padding: 10px 5%; border-bottom: 2px solid #1a1a1a; display: flex; align-items: center; gap: 20px; }
+        .header-info { font-size: 0.85rem; line-height: 1.3; }
+        .header-info h1 { margin: 0 0 2px 0; font-size: 1.2rem; color: #1a1a1a; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+        .card { background: white; padding: 2rem; border-radius: 12px; border: 1px solid #dee2e6; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .legal-scroll { height: 450px; overflow-y: auto; border: 2px solid #1a1a1a; padding: 1.5rem; margin: 1rem 0; font-size: 0.85rem; line-height: 1.7; background: #fff; text-align: left; }
+        .checkbox-area { background: #f1f2f6; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 12px; border: 1px solid #dfe6e9; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.2rem; }
+        .product-card { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; text-align: center; padding-bottom: 15px; }
+        .product-img-container { width: 100%; height: 180px; background: #fcfcfc; border-bottom: 1px solid #eee; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; }
+        .product-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .live-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a1a; color: white; padding: 0.8rem 5%; display: flex; justify-content: space-between; align-items: center; z-index: 1001; border-top: 4px solid #007bff; }
+        .live-stats { font-size: 0.85rem; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-outline { background: white; border: 1px solid #ccc; color: #333; }
+        .btn-success { background: #27ae60; color: white; }
+        .review-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+        .review-table th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #1a1a1a; }
+        .review-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        @media print { .site-header, .live-bar, .btn-area-nav { display: none !important; } body { padding: 0; background: white; } .card { box-shadow: none; border: none; } }
+    </style>
+</head>
+<body>
+
+<header class="site-header">
+    <img src="https://raw.githubusercontent.com/remyjdavis/brewery-order-form/main/logo.png" alt="SBC Logo" style="height:55px;">
+    <div class="header-info">
+        <h1>Suburban Brewing Co.</h1>
+        3041 Horseshoe Pike, Honey Brook, PA 19344<br>
+        Sales Rep: Remy Davis | (908) 642-1019 | remyjdavis90@gmail.com
+    </div>
+</header>
+
+<div class="container" id="app"></div>
+
+<div id="live-bar" class="live-bar" style="display:none;">
+    <div class="live-stats">
+        <div>SUBTOTAL: <span id="live-sub">$0.00</span> | TAX: <span id="live-tax">$0.00</span></div>
+        <div style="color:#ff7675;">DISCOUNT (10+ Cases): <span id="live-disc">-$0.00</span></div>
+    </div>
+    <div style="text-align:right;">
+        <div id="live-total" style="color:#007bff; font-weight:900; font-size:1.4rem;">$0.00</div>
+    </div>
+    <button class="btn btn-primary" onclick="goToReview()">Review Order</button>
+</div>
+
+<script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbyT1PzljxVZ9NKBbgmAJ7kgPul228vnwrdjf_YRbzhIMR_rXhG2tx36-yzBHfFNH5DX/exec"; 
+    const PRODUCT_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOYHzF6u43ORNewiUMe-i-FtSGPB4mHw-BN9xlqY-UzHvRWUVr-Cgro_kqiGm4G-fKAA6w3ErQwp3O/pub?gid=1782602603&output=csv";
+    const BASE_IMG_URL = "https://raw.githubusercontent.com/remyjdavis/brewery-order-form/main/";
+
+    let groupedProducts = {};
+    let state = { step: 0, customer: null, cart: {}, manualTotal: null };
+
+    async function init() {
+        try {
+            const response = await fetch(PRODUCT_CSV);
+            const data = await response.text();
+            const lines = data.split("\n");
+            for (let i = 1; i < lines.length; i++) {
+                const columns = lines[i].split(",");
+                if (columns[0]) {
+                    const fullName = columns[0].trim();
+                    const price = parseFloat(columns[1]) || 0;
+                    const stock = columns[2] || "0";
+                    const baseName = fullName.replace(/(Keg|Case|1\/2|1\/6|BBL|Can|12oz|16oz)/gi, '').trim();
+                    const type = fullName.replace(baseName, '').trim() || "Unit";
+                    if (!groupedProducts[baseName]) {
+                        const firstWord = baseName.split(' ')[0].toLowerCase();
+                        groupedProducts[baseName] = { name: baseName, options: [], image: firstWord + ".jpg" };
+                    }
+                    groupedProducts[baseName].options.push({ type: type, price: price, stock: stock });
+                }
+            }
+            render();
+        } catch (error) { console.error(error); }
+    }
+
+    function render() {
+        const app = document.getElementById("app");
+        const liveBar = document.getElementById("live-bar");
+        if (state.step === 0) {
+            liveBar.style.display = "none";
+            app.innerHTML = `
+                <div class="card">
+                    <h2 style="text-align:center;">PA WHOLESALE DISTRIBUTION AGREEMENT</h2>
+                    <div class="legal-scroll">
+                        <p>This agreement is compliant with the laws of the Commonwealth of Pennsylvania and the regulations of the Pennsylvania Liquor Control Board (PLCB). By proceeding, the Purchaser agrees to the following terms and conditions:</p>
+                        
+                        <h3>1. PLCB COMPLIANCE & LICENSURE</h3>
+                        <p>Purchaser warrants that it holds a valid, active retail or wholesale license issued by the PLCB. Purchaser agrees to notify Suburban Brewing Co. (SBC) immediately if said license is suspended, revoked, or expired. All sales are contingent upon the verification of a valid license.</p>
+                        
+                        <h3>2. PRICE POSTING & ACT 39</h3>
+                        <p>In accordance with Act 39 of 2016, SBC maintains a public price list. All products are sold at the posted wholesale price at the time of delivery. SBC reserves the right to adjust pricing in accordance with PLCB regulations regarding price change intervals.</p>
+                        
+                        <h3>3. CASH ON DELIVERY (COD) & SECTION 493</h3>
+                        <p>Per Section 493(2) of the Liquor Code, sales of malt or brewed beverages to retail licensees must be for cash or check paid at or before the time of delivery. Failure to provide payment at the time of delivery will result in the refusal of the shipment.</p>
+                        
+                        <h3>4. COLD CHAIN STORAGE & QUALITY CONTROL</h3>
+                        <p>Products produced by SBC are unpasteurized "live" beverages. Purchaser agrees to maintain strict cold chain storage (34°F-38°F) from the moment of delivery. SBC is not liable for product degradation, "skunking," or off-flavors resulting from improper storage, warm handling, or dirty draught lines at the Purchaser's establishment.</p>
+                        
+                        <h3>5. COOPERAGE & EQUIPMENT LIABILITY</h3>
+                        <p>All stainless steel keg shells remain the property of Suburban Brewing Co. A mandatory $30.00 deposit is applied to each keg shell. This deposit is refundable only upon the return of the specific SBC-branded shell in good condition. Purchaser is liable for the full replacement cost (approx. $115.00) of any lost, stolen, or damaged cooperage.</p>
+                        
+                        <h3>6. RETURNED CHECKS & LATE FEES</h3>
+                        <p>Any check returned for non-sufficient funds (NSF) will incur a $50.00 administrative fee. In the event of a returned check, the Purchaser must immediately provide a certified bank check or cash for the balance plus fees. SBC reserves the right to move any repeat offender to a "Cash Only" basis.</p>
+                        
+                        <h3>7. RESALE LIMITATIONS</h3>
+                        <p>Purchaser agrees that all products are for retail sale at the licensed premises only and may not be resold to other retailers or distributors without express written consent and proper PLCB secondary-distribution permits.</p>
+                    </div>
+                    <div class="checkbox-area">
+                        <input type="checkbox" id="agreeCheck" onchange="document.getElementById('acceptBtn').disabled = !this.checked">
+                        <label for="agreeCheck">I certify that I am a licensed PA retail/wholesale agent and agree to all terms above.</label>
+                    </div>
+                    <button id="acceptBtn" class="btn btn-primary" style="width:100%;" disabled onclick="state.step=1;render()">I Accept & Agree</button>
+                </div>`;
+        } else if (state.step === 1) {
+            app.innerHTML = `<div class="card" style="max-width:400px; margin:auto; text-align:center;"><h3>Wholesale Login</h3><input type="text" id="loginInput" placeholder="ENTER UNIQUE KEY" style="width:100%; padding:15px; margin-bottom:15px; border:2px solid #1a1a1a; border-radius:8px; text-align:center; font-size:1.2rem;"><button id="loginBtn" class="btn btn-primary" style="width:100%;" onclick="attemptLogin()">Log In</button></div>`;
+        } else if (state.step === 2) {
+            liveBar.style.display = "flex";
+            let html = `<h3>Available Inventory</h3><div class="product-grid">`;
+            for (const key in groupedProducts) {
+                const p = groupedProducts[key];
+                const id = p.name.replace(/\s/g, '');
+                html += `<div class="product-card"><div class="product-img-container" id="img-cont-${id}"><img src="${BASE_IMG_URL}${p.image}" class="product-img" onerror="document.getElementById('img-cont-${id}').style.display='none'"></div><div style="padding:0 15px 15px 15px;"><h4 style="margin:0 0 10px 0;">${p.name}</h4><select id="select-${id}" style="width:100%; padding:5px;" onchange="updateStockDisplay('${id}', '${p.name}')">${p.options.map((opt, index) => `<option value="${index}">${opt.type} - $${opt.price}</option>`).join('')}</select><p style="font-size:0.75rem; color:#666; margin:8px 0;">In Stock: <span id="stock-${id}">${p.options[0].stock}</span></p>Qty: <input type="number" id="qty-${id}" style="width:50px; padding:5px;" min="0" oninput="addToCart('${p.name}', '${id}')"></div></div>`;
+            }
+            html += `</div>`;
+            app.innerHTML = html;
+            updateLiveTotals();
+        } else if (state.step === 3) {
+            liveBar.style.display = "none";
+            const math = calculateOrderMath();
+            app.innerHTML = `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <img src="https://raw.githubusercontent.com/remyjdavis/brewery-order-form/main/logo.png" style="height:55px; margin-bottom:10px;"><br>
+                            <strong>Suburban Brewing Co.</strong><br>
+                            3041 Horseshoe Pike, Honey Brook, PA 19344<br>
+                            Sales Rep: Remy Davis | (908) 642-1019
+                        </div>
+                        <div style="text-align:right;"><strong>ORDER DATE:</strong><br>${new Date().toLocaleDateString()}</div>
+                    </div>
+                    <hr style="margin:20px 0;">
+                    <div style="text-align:left; margin-bottom:20px;">
+                        <strong style="font-size:1.2rem;">${state.customer.name}</strong><br>
+                        ${state.customer.address}<br>
+                        ${state.customer.city}, ${state.customer.state} ${state.customer.zip}
+                    </div>
+                    <table class="review-table">
+                        <thead><tr><th>Item Description</th><th>Qty</th><th>Total</th></tr></thead>
+                        <tbody>${Object.values(state.cart).map(i => `<tr><td>${i.beer} (${i.type})</td><td>${i.qty}</td><td>$${(i.qty * i.price).toFixed(2)}</td></tr>`).join('')}</tbody>
+                    </table>
+                    <div style="margin-top:20px; text-align:right; line-height:1.8;">
+                        <div>Subtotal: $${math.subtotal}</div>
+                        ${parseFloat(math.deposits) > 0 ? `<div>Keg Deposits: $${math.deposits}</div>` : ''}
+                        <div>Tax: $${math.tax}</div>
+                        <div style="color:red;">Discount: -$${math.discount}</div>
+                        <div onclick="adminOverride()" style="cursor:pointer; font-size:1.6rem; font-weight:900; color:#007bff; margin-top:10px;">GRAND TOTAL: $${math.grandTotal}</div>
+                    </div>
+                    <div class="btn-area-nav" style="display:flex; gap:10px; margin-top:40px;">
+                        <button class="btn btn-outline" onclick="state.step=2;render()">Edit Order</button>
+                        <button class="btn btn-outline" onclick="window.print()">Print Order</button>
+                        <button class="btn btn-outline" onclick="sendEmailCopy()">Email Copy</button>
+                        <button class="btn btn-success" style="flex:1;" onclick="submitFinalOrder()">Submit Final Order</button>
+                    </div>
+                </div>`;
+        }
+    }
+
+    function calculateOrderMath() {
+        let subtotal = 0, kegCount = 0, caseCount = 0;
+        for (const key in state.cart) {
+            const item = state.cart[key];
+            subtotal += (item.price * item.qty);
+            if (item.type.toLowerCase().includes("keg") || item.type.includes("1/")) kegCount += item.qty;
+            if (item.type.toLowerCase().includes("case")) caseCount += item.qty;
+        }
+        const restKeywords = ["RESTAURANT", "BAR", "GRILL", "PUB", "TAVERN", "INN", "DINER", "KITCHEN", "HOUSE", "BREWERY", "BISTRO", "CAFE", "CLUB", "PIZZA", "STEAK", "DELI"];
+        const isRestaurant = state.customer && restKeywords.some(k => state.customer.name.toUpperCase().includes(k));
+        let tax = isRestaurant ? (subtotal * 0.06) : 0;
+        let disc = (caseCount >= 10) ? (subtotal * 0.10) : 0;
+        let deposits = kegCount * 30;
+        let grand = state.manualTotal !== null ? state.manualTotal : (subtotal + tax + deposits - disc);
+        return { subtotal: subtotal.toFixed(2), tax: tax.toFixed(2), discount: disc.toFixed(2), deposits: deposits.toFixed(2), grandTotal: grand.toFixed(2) };
+    }
+
+    async function attemptLogin() {
+        const rawInput = document.getElementById("loginInput").value.trim();
+        const cleanKey = rawInput.replace(/[^a-z0-9]/gi, '').toLowerCase();
+        try {
+            const response = await fetch(`${API_URL}?key=${encodeURIComponent(cleanKey)}`);
+            const result = await response.json();
+            if (result.success) { state.customer = result.customer; state.step = 2; render(); }
+            else { alert("Invalid Access Key."); }
+        } catch (e) { alert("Error connecting."); }
+    }
+
+    function addToCart(beerName, id) {
+        const select = document.getElementById(`select-${id}`);
+        const qty = parseInt(document.getElementById(`qty-${id}`).value) || 0;
+        const opt = groupedProducts[beerName].options[select.value];
+        const key = beerName + "-" + opt.type;
+        if (qty > 0) { state.cart[key] = { beer: beerName, type: opt.type, price: opt.price, qty: qty }; }
+        else { delete state.cart[key]; }
+        updateLiveTotals();
+    }
+
+    function updateLiveTotals() {
+        const math = calculateOrderMath();
+        document.getElementById("live-sub").innerText = "$" + math.subtotal;
+        document.getElementById("live-tax").innerText = "$" + math.tax;
+        document.getElementById("live-disc").innerText = "-$" + math.discount;
+        document.getElementById("live-total").innerText = "$" + math.grandTotal;
+    }
+
+    function updateStockDisplay(id, beerName) {
+        document.getElementById(`stock-${id}`).innerText = groupedProducts[beerName].options[document.getElementById(`select-${id}`).value].stock;
+    }
+
+    function adminOverride() {
+        if (prompt("Enter Override Password:") === "Yankees 1") {
+            const val = prompt("Enter New Grand Total:");
+            if (val !== null) { state.manualTotal = parseFloat(val); render(); }
+        }
+    }
+
+    function goToReview() { state.step = 3; render(); }
+
+    async function sendEmailCopy() { await submitFinalOrder(true); }
+
+    async function submitFinalOrder(isCopyOnly = false) {
+        if (!state.customer.email || state.customer.email.trim() === "" || state.customer.email === "undefined") {
+            const userEmail = prompt("Please enter the email address for the PDF invoice:");
+            if (!userEmail || !userEmail.includes("@")) { alert("Valid email required."); return; }
+            state.customer.email = userEmail.trim();
+        }
+        const btn = document.querySelector(isCopyOnly ? '.btn-outline:nth-child(3)' : '.btn-success');
+        const originalText = btn.innerText;
+        btn.disabled = true; btn.innerText = "GENERATING PDF...";
+        const payload = { ...state, summary: calculateOrderMath() };
+        payload.summary.orderDate = new Date().toLocaleDateString();
+        try {
+            await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+            alert("PDF Invoice Sent!");
+            if (!isCopyOnly) location.reload();
+            else { btn.disabled = false; btn.innerText = originalText; }
+        } catch (e) { alert("Error."); btn.disabled = false; btn.innerText = originalText; }
+    }
+    init();
+</script>
+</body>
+</html>
