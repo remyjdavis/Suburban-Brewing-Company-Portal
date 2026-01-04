@@ -185,17 +185,39 @@
         else { alert("Invalid Access Key."); }
     }
 
+    // UPDATED: addToCart to handle multiple variants per product name
     function addToCart(beerName, id) {
         const select = document.getElementById(`select-${id}`);
-        const qty = parseInt(document.getElementById(`qty-${id}`).value) || 0;
-        const opt = groupedProducts[beerName].options[select.value];
-        const key = beerName + "-" + opt.type;
-        if (qty > opt.stock) { alert("Insufficient stock!"); return; }
-        if (qty > 0) { state.cart[key] = { beer: beerName, type: opt.type, price: opt.price, qty: qty }; }
-        else { delete state.cart[key]; }
+        const qtyInput = document.getElementById(`qty-${id}`);
+        const qty = parseInt(qtyInput.value) || 0;
+        
+        // Get the specific option selected (e.g., 1/2 Keg)
+        const optIndex = select.value;
+        const opt = groupedProducts[beerName].options[optIndex];
+        
+        // Create a unique key for the cart (e.g., "Awesome Larry-1/2 Keg")
+        const cartKey = beerName + "-" + opt.type;
+
+        if (qty > opt.stock) { 
+            alert("Insufficient stock for " + opt.type + "!"); 
+            qtyInput.value = 0;
+            return; 
+        }
+
+        if (qty > 0) { 
+            // Add to cart using the unique variant key
+            state.cart[cartKey] = { 
+                beer: beerName, 
+                type: opt.type, 
+                price: opt.price, 
+                qty: qty 
+            }; 
+        } else { 
+            delete state.cart[cartKey]; 
+        }
+        
         updateLiveTotals();
     }
-
     function calculateOrderMath() {
         let sub = 0, kegs = 0, cases = 0;
         for (const k in state.cart) {
@@ -214,12 +236,21 @@
         document.getElementById("live-total").innerText = "$" + math.grandTotal;
     }
 
+    // UPDATED: updateStockDisplay to also update the quantity input field based on cart
     function updateStockDisplay(id, beerName) {
-        const idx = document.getElementById(`select-${id}`).value;
-        const opt = groupedProducts[beerName].options[idx];
-        document.getElementById(`stock-${id}`).innerText = opt.stock;
+        const select = document.getElementById(`select-${id}`);
+        const qtyInput = document.getElementById(`qty-${id}`);
+        const optIndex = select.value;
+        const opt = groupedProducts[beerName].options[optIndex];
+        
+        // Update Stock Text
+        const stockEl = document.getElementById(`stock-${id}`);
+        stockEl.innerText = opt.stock;
+        
+        // Update Qty Input value to show what's currently in cart for THIS specific variant
+        const cartKey = beerName + "-" + opt.type;
+        qtyInput.value = state.cart[cartKey] ? state.cart[cartKey].qty : 0;
     }
-
     function goToReview() { if(Object.keys(state.cart).length === 0) return alert("Cart empty."); state.step = 3; render(); }
 
     async function submitFinalOrder() {
