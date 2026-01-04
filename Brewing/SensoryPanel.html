@@ -87,9 +87,11 @@
 
     <div class="setup-card">
       <label>Panelist Name</label>
-      <input type="text" id="panelistName" placeholder="Enter your name to begin..." onchange="enablePanel()">
+      <input type="text" id="panelistName" list="panelistOptions" placeholder="Start typing your name..." onchange="enablePanel()">
+      <datalist id="panelistOptions">
+        </datalist>
     </div>
-
+    
     <div id="loading" style="text-align: center; color: #64748b;">Loading today's blind samples...</div>
     
     <div id="sampleGrid" class="sample-grid"></div>
@@ -97,15 +99,38 @@
   </main>
 
   <script>
-    // 🔴 UPDATE WITH YOUR DEPLOYMENT URL
-    const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
+    // Keep your existing API_URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec";
 
     let panelistName = "";
 
-    window.onload = loadSamples;
+    window.onload = function() {
+        loadSamples();   // Load the beers
+        loadPanelists(); // Load the names
+    };
 
     function enablePanel() {
       panelistName = document.getElementById('panelistName').value;
+    }
+
+    // 1. FETCH SAVED NAMES
+    async function loadPanelists() {
+      try {
+        const res = await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'getPanelistList' })
+        });
+        const json = await res.json();
+        if (json.status === 'success') {
+            const list = document.getElementById('panelistOptions');
+            list.innerHTML = ""; // Clear existing
+            json.data.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                list.appendChild(option);
+            });
+        }
+      } catch (e) { console.error("Could not load panelists", e); }
     }
 
     async function loadSamples() {
