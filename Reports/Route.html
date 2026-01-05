@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* --- SHARED THEME VARIABLES --- */
     :root {
       --primary: #2563eb;
       --bg: #0f172a;
@@ -15,6 +16,7 @@
       --sales: #3b82f6;
       --scout: #8b5cf6;
       --overdue: #ef4444;
+      --sidebar-w: 260px;
     }
 
     body {
@@ -25,39 +27,51 @@
       display: flex;
     }
 
-    /* --- SIDEBAR NAVIGATION --- */
-    .sidebar {
-      width: 260px;
-      background: #1e293b;
-      height: 100vh;
-      position: fixed;
-      padding: 20px;
-      border-right: 1px solid #334155;
+    /* --- SIDEBAR STYLES --- */
+    .sidebar { 
+      width: var(--sidebar-w); background: #1e293b; 
+      padding: 24px 0; flex-shrink: 0; position: fixed; 
+      height: 100vh; overflow-y: auto; z-index: 1000;
+      transition: all 0.3s ease; border-right: 1px solid #334155;
     }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; letter-spacing: 1px; }
 
-    .nav-item {
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      color: var(--text-dim);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: all 0.2s;
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-title {
+      font-size: 11px; text-transform: uppercase; color: var(--text-dim); 
+      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
     }
+    .nav-section-title:hover { color: #fff; }
 
-    .nav-item:hover, .nav-item.active {
-      background: var(--primary);
-      color: white;
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
+
+    .collapsible-content {
+      max-height: 500px; overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease;
+      opacity: 1;
     }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+
+    /* LINKS */
+    .nav-link { 
+      display: flex; align-items: center; padding: 10px 24px; 
+      color: var(--text-dim); text-decoration: none; font-size: 14px; 
+      transition: 0.2s; border-left: 4px solid transparent;
+      margin-bottom: 0;
+    }
+    .nav-link:hover, .nav-link.active { background: var(--primary); color: #fff; }
+    .nav-link.active { border-left-color: #fff; font-weight: 600; }
 
     /* --- MAIN CONTENT AREA --- */
     .main-content {
-      margin-left: 260px;
+      margin-left: var(--sidebar-w);
       padding: 40px;
       width: 100%;
       max-width: 1000px;
+      transition: all 0.3s ease;
     }
 
     .header-flex {
@@ -110,21 +124,13 @@
     .stop-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
     .stop-addr { font-size: 14px; color: var(--text-dim); }
 
-    .nav-icon {
-      font-size: 24px;
-      cursor: pointer;
-      padding: 10px;
-      border-radius: 50%;
-      transition: background 0.2s;
-    }
-    .nav-icon:hover { background: rgba(255,255,255,0.1); }
-
     /* --- POLESTAR FOOTER --- */
     .footer-action {
       position: fixed;
       bottom: 30px;
       right: 30px;
-      left: 290px;
+      left: 290px; /* Aligned with sidebar */
+      transition: left 0.3s ease;
     }
 
     .push-btn {
@@ -146,7 +152,9 @@
     #loading { text-align: center; padding: 50px; color: var(--text-dim); }
 
     @media (max-width: 768px) {
-      .sidebar { display: none; }
+      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .sidebar h2, .nav-section-title { display: none; }
+      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
       .main-content { margin-left: 0; padding: 20px; }
       .footer-action { left: 20px; right: 20px; }
     }
@@ -155,38 +163,66 @@
 <body>
 
   <aside class="sidebar">
-        <div class="sidebar-header">SUBURBAN BREWING</div>
-        
-        <div class="nav-section-title">Main Menu</div> 
-        <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-      
-        <div class="nav-section-title">Samplings</div>
-        <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-        <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-        <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-        
-        <div class="nav-section-title">Sales & Outreach</div>
-        <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-        <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-        <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-        <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    <h2>SUBURBAN BREWING</h2>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
+      <span>Main Menu</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-main" class="collapsible-content">
+      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+      <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    </div>
 
-        <div class="nav-section-title">Inventory</div>
-        <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-        <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-        <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-        <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-        
-        <div class="nav-section-title">Brewing</div>
-        <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-        <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-        <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-        <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
-        
-        <div class="nav-section-title">Reporting & Analytics</div>
-        <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-        <a href="../Reports/sales-route.html" class="nav-link active"><span>Sales Route Opt.</span></a>
-    </aside>
+    <div class="nav-section-title" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
+      <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="sales-route.html" class="nav-link active"><span>Sales Route Opt.</span></a>
+    </div>
+  </aside>
 
   <div class="main-content">
     <div class="header-flex">
@@ -204,88 +240,107 @@
     </div>
   </div>
 
-<script>
-  let currentRoute = [];
-  document.getElementById('routeDate').valueAsDate = new Date();
-
-  const scriptURL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-
-  async function fetchRoute() {
-  const date = document.getElementById('routeDate').value;
-  const loader = document.getElementById('loading');
-  const list = document.getElementById('routeList');
-  
-  loader.style.display = "block";
-  list.innerHTML = "";
-
-  // Switch to a secondary proxy if the first one is down
-  const proxyUrl = "https://api.allorigins.win/get?url=";
-  const targetUrl = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}`;
-
-  try {
-    const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
-    
-    if (response.status === 502) {
-      loader.innerText = "Google is busy. Retrying in 3 seconds...";
-      setTimeout(fetchRoute, 3000);
-      return;
+  <script>
+    // --- SIDEBAR TOGGLE ---
+    function toggleGroup(contentId, headerEl) {
+      const content = document.getElementById(contentId);
+      content.classList.toggle('collapsed');
+      headerEl.classList.toggle('collapsed');
     }
 
-    const data = await response.json();
-    const result = JSON.parse(data.contents); 
-
-    if (result.error) {
-      loader.innerText = "Error: " + result.error;
-      return;
-    }
-
-    renderStops(result);
-  } catch (err) {
-    loader.innerText = "Connection lost. Please refresh.";
-    console.error(err);
-  }
-}
-
-  function renderStops(stops) {
-    document.getElementById('loading').style.display = "none";
-    const list = document.getElementById('routeList');
-    currentRoute = stops;
-
-    if (!stops || stops.length === 0) {
-      list.innerHTML = "<div style='text-align:center; color:#666;'>No stops for this date.</div>";
-      return;
-    }
-
-    stops.forEach((stop, i) => {
-      const card = document.createElement('div');
-      card.className = 'stop-card';
-      card.style.borderLeftColor = stop.color;
-      let bat = stop.batteryMsg ? `<div style="color:#34c759; font-size:12px; font-weight:bold;">${stop.batteryMsg}</div>` : "";
-      
-      card.innerHTML = `
-        <div class="stop-num">${i + 1}</div>
-        <div class="stop-info">
-          <span class="badge" style="border: 1px solid ${stop.color}; color:${stop.color}">${stop.type}</span>
-          <div class="stop-name">${stop.name}</div>
-          <div class="stop-addr">${stop.address}</div>
-          ${bat}
-        </div>
-      `;
-      list.appendChild(card);
+    // --- INITIALIZE SIDEBAR ---
+    window.addEventListener('DOMContentLoaded', () => {
+      const activeLink = document.querySelector('.nav-link.active');
+      if (activeLink) {
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) {
+          parentGroup.classList.remove('collapsed');
+          const header = parentGroup.previousElementSibling;
+          if (header) header.classList.remove('collapsed');
+        }
+      }
     });
 
-    document.getElementById('mainNavBtn').style.display = "flex";
-  }
+    let currentRoute = [];
+    document.getElementById('routeDate').valueAsDate = new Date();
 
-  function pushToPolestar() {
-    const origin = encodeURIComponent(currentRoute[0].address);
-    const dest = encodeURIComponent(currentRoute[currentRoute.length - 1].address);
-    const waypoints = currentRoute.slice(1, -1).map(s => encodeURIComponent(s.address)).join('|');
-    const url = 'https://www.google.com/maps/dir/?api=1&origin=' + origin + '&destination=' + dest + '&waypoints=' + waypoints + '&travelmode=driving';
-    window.open(url, '_blank');
-  }
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
 
-  fetchRoute();
-</script>
+    async function fetchRoute() {
+      const date = document.getElementById('routeDate').value;
+      const loader = document.getElementById('loading');
+      const list = document.getElementById('routeList');
+      
+      loader.style.display = "block";
+      list.innerHTML = "";
+
+      const proxyUrl = "https://api.allorigins.win/get?url=";
+      const targetUrl = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}`;
+
+      try {
+        const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
+        
+        if (response.status === 502) {
+          loader.innerText = "Google is busy. Retrying in 3 seconds...";
+          setTimeout(fetchRoute, 3000);
+          return;
+        }
+
+        const data = await response.json();
+        const result = JSON.parse(data.contents); 
+
+        if (result.error) {
+          loader.innerText = "Error: " + result.error;
+          return;
+        }
+
+        renderStops(result);
+      } catch (err) {
+        loader.innerText = "Connection lost. Please refresh.";
+        console.error(err);
+      }
+    }
+
+    function renderStops(stops) {
+      document.getElementById('loading').style.display = "none";
+      const list = document.getElementById('routeList');
+      currentRoute = stops;
+
+      if (!stops || stops.length === 0) {
+        list.innerHTML = "<div style='text-align:center; color:#666;'>No stops for this date.</div>";
+        return;
+      }
+
+      stops.forEach((stop, i) => {
+        const card = document.createElement('div');
+        card.className = 'stop-card';
+        card.style.borderLeftColor = stop.color;
+        let bat = stop.batteryMsg ? `<div style="color:#34c759; font-size:12px; font-weight:bold;">${stop.batteryMsg}</div>` : "";
+        
+        card.innerHTML = `
+          <div class="stop-num">${i + 1}</div>
+          <div class="stop-info">
+            <span class="badge" style="border: 1px solid ${stop.color}; color:${stop.color}">${stop.type}</span>
+            <div class="stop-name">${stop.name}</div>
+            <div class="stop-addr">${stop.address}</div>
+            ${bat}
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      document.getElementById('mainNavBtn').style.display = "flex";
+    }
+
+    function pushToPolestar() {
+      const origin = encodeURIComponent(currentRoute[0].address);
+      const dest = encodeURIComponent(currentRoute[currentRoute.length - 1].address);
+      const waypoints = currentRoute.slice(1, -1).map(s => encodeURIComponent(s.address)).join('|');
+      const url = 'https://www.google.com/maps/dir/?api=1&origin=' + origin + '&destination=' + dest + '&waypoints=' + waypoints + '&travelmode=driving';
+      window.open(url, '_blank');
+    }
+
+    fetchRoute();
+  </script>
 </body>
 </html>
