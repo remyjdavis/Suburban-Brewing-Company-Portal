@@ -355,43 +355,25 @@
   </main>
 
   <script>
-    // 🔴 CONFIGURATION: ENSURE THESE ARE YOUR LATEST DEPLOYMENTS
-    const MASTER_API_URL = 'PASTE_COMMAND_CENTER_MASTER_URL_HERE';
+    // 🔴 CONFIGURATION: USING YOUR MASTER DASHBOARD URL
+    const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
     const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
     const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec';
     const SENSORY_API_URL = 'https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec';
     
     const AUTO_REFRESH_MS = 300000; 
 
+    let currentRouteData = []; // Store globally for the pop-up
+
     // --- ON LOAD ---
     window.addEventListener('DOMContentLoaded', () => {
       const d = new Date();
       document.getElementById('current-date').innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-      // Link for Sensory Card (Opens Sensory App)
-      const sensCard = document.getElementById('sensoryAlertCard');
-      if(sensCard) {
-        sensCard.onclick = function() { window.open(SENSORY_API_URL, '_blank'); };
-      }
-
-      // Initial Sync
       runAllSyncs();
       setInterval(runAllSyncs, AUTO_REFRESH_MS);
-
-      // Sidebar Active State
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) header.classList.remove('collapsed');
-        }
-      }
     });
 
     function runAllSyncs() {
-        console.log("Syncing Dashboard Data...");
         syncZone1();
         refreshCellarTanks();
         checkSensoryAlerts();
@@ -511,38 +493,74 @@
         } catch (e) { console.error("ML Error:", e); }
     }
 
+    // --- 1. ZONE 1 SYNC (SALES OUTREACH & INVENTORY) ---
+    async function syncZone1() {
+        try {
+            const outreachRes = await fetch(`${MASTER_API_URL}?action=getOutreachData`);
+            const outreachJson = await outreachRes.json();
+            
+            if (outreachJson.status === 'success') {
+                currentRouteData = outreachJson.details || [];
+                document.getElementById('followUpCount').innerText = outreachJson.count;
+                const summaryBox = document.getElementById('daily-route-summary');
+                if (summaryBox) {
+                    summaryBox.innerText = outreachJson.route.length > 0 ? outreachJson.route.join(' → ') : "No stops scheduled";
+                }
+            }
+
+            const invRes = await fetch(`${MASTER_API_URL}?action=getInventoryAlerts`);
+            const invJson = await invRes.json();
+            if (invJson.status === 'success') {
+                document.getElementById('alertCount').innerText = invJson.count;
+            }
+        } catch (e) { console.error("Zone 1 Sync Failed", e); }
+    }
+
+    /**
+     * MODAL POP-UP LOGIC: DETAILED DAILY ROUTE
+     * Displays stops and follow-up notes without redirecting [cite: 2025-12-22]
+     */
+    function showRouteDetails() {
+      if (currentRouteData.length === 0) {
+        Swal.fire("Daily Route", "No stops scheduled for today.", "info");
+        return;
+      }
+
+      let html = `
+        <div style="max-height: 400px; overflow-y: auto;">
+          <table class="route-modal-table">
+            <thead>
+              <tr><th>#</th><th>Client</th><th>Type</th><th>Address</th></tr>
+            </thead>
+            <tbody>
+              ${currentRouteData.map((stop, i) => `
+                <tr>
+                  <td><div class="stop-num">${i + 1}</div></td>
+                  <td><strong>${stop.name}</strong></td>
+                  <td><span style="font-size: 10px; color: ${stop.color || '#666'}; font-weight: 700; text-transform: uppercase;">${stop.type}</span></td>
+                  <td style="font-size: 12px; color: var(--text-muted);">${stop.address}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      Swal.fire({
+        title: 'Optimized Daily Route',
+        html: html,
+        width: '600px',
+        confirmButtonText: 'Got it',
+        confirmButtonColor: 'var(--accent)',
+        showCloseButton: true
+      });
+    }
+
     // --- TOGGLE FUNCTION ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
       content.classList.toggle('collapsed');
       headerEl.classList.toggle('collapsed');
-    }
-
-    // --- 4. ZONE 1 SYNC (SALES OUTREACH & INVENTORY) ---
-    async function syncZone1() {
-        try {
-            // Fetch Outreach & Route data from the Master script
-            const outreachRes = await fetch(`${MASTER_API_URL}?action=getOutreachData`);
-            const outreachJson = await outreachRes.json();
-            
-            if (outreachJson.status === 'success') {
-                document.getElementById('followUpCount').innerText = outreachJson.count;
-                const routeBox = document.getElementById('daily-route');
-                if (routeBox) {
-                    routeBox.innerHTML = "<strong>Route:</strong> " + (outreachJson.route.length > 0 ? outreachJson.route.join(' → ') : "No stops scheduled today");
-                }
-            }
-
-            // Fetch Inventory Alerts from the Master script
-            const invRes = await fetch(`${MASTER_API_URL}?action=getInventoryAlerts`);
-            const invJson = await invRes.json();
-            
-            if (invJson.status === 'success') {
-                document.getElementById('alertCount').innerText = invJson.count;
-            }
-        } catch (e) { 
-            console.error("Zone 1 Sync Failed", e); 
-        }
     }
   </script>
 </body>
