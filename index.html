@@ -386,6 +386,7 @@
         console.log("Starting Dashboard Sync...");
         syncZone1();
         syncSamplingCard();
+        syncDeliveryCard(); // <--- NEW ADDITION
         refreshCellarTanks();
         refreshMLEngine();
     }
@@ -520,6 +521,92 @@
       const content = document.getElementById(contentId);
       content.classList.toggle('collapsed');
       headerEl.classList.toggle('collapsed');
+    }
+    let currentDeliveryData = []; // Store for popup
+
+    // --- 3. DELIVERY CARD SYNC ---
+    async function syncDeliveryCard() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getDeliveryStatus`);
+            const json = await res.json();
+            
+            if (json.status === 'success') {
+                currentDeliveryData = json.data;
+                
+                // 1. Calculate Overdue
+                const overdueCount = currentDeliveryData.filter(d => d.isOverdue).length;
+                
+                // 2. Calculate "In Area" (Matches cities in your Daily Route)
+                // We assume currentRouteData is populated by syncZone1
+                let inAreaCount = 0;
+                if (currentRouteData.length > 0) {
+                    const routeString = currentRouteData.map(r => r.address.toLowerCase()).join(" ");
+                    inAreaCount = currentDeliveryData.filter(d => 
+                        !d.isOverdue && routeString.includes(d.address.split(',')[1]?.trim().toLowerCase() || "xxxxx")
+                    ).length;
+                }
+
+                // 3. Update UI
+                const valEl = document.getElementById('activeDeliveryVal');
+                const subEl = document.getElementById('delivery-summary');
+                
+                if (overdueCount > 0) {
+                    valEl.innerText = `${overdueCount} Overdue`;
+                    valEl.style.color = "var(--danger)";
+                    subEl.innerText = inAreaCount > 0 ? `+ ${inAreaCount} on your route` : "Action Required";
+                } else if (inAreaCount > 0) {
+                    valEl.innerText = `${inAreaCount} In Area`;
+                    valEl.style.color = "var(--text-main)";
+                    subEl.innerText = "Matches today's route";
+                } else {
+                    valEl.innerText = currentDeliveryData.length;
+                    valEl.style.color = "var(--text-main)";
+                    subEl.innerText = "Total Pending";
+                }
+            }
+        } catch (e) { console.error("Delivery Sync Failed", e); }
+    }
+
+    /**
+     * MODAL POP-UP LOGIC: DELIVERY DETAILS
+     */
+    function showDeliveryDetails() {
+        if (currentDeliveryData.length === 0) {
+            Swal.fire("Delivery Status", "No pending deliveries.", "success");
+            return;
+        }
+
+        // Sort: Overdue first, then by Area
+        const sorted = currentDeliveryData.sort((a, b) => (a.isOverdue === b.isOverdue) ? 0 : a.isOverdue ? -1 : 1);
+
+        let html = `
+        <div style="max-height: 400px; overflow-y: auto;">
+          <table class="route-modal-table">
+            <thead>
+              <tr><th>Status</th><th>Client</th><th>Address</th></tr>
+            </thead>
+            <tbody>
+              ${sorted.map(d => {
+                  const badgeColor = d.isOverdue ? "var(--danger)" : "var(--green-accent)";
+                  const badgeText = d.isOverdue ? "OVERDUE" : d.dateStr;
+                  return `
+                <tr>
+                  <td><span style="font-size: 10px; background: ${badgeColor}; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700;">${badgeText}</span></td>
+                  <td><strong>${d.client}</strong></td>
+                  <td style="font-size: 12px; color: var(--text-muted);">${d.address}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>`;
+
+        Swal.fire({
+            title: 'Delivery Manifest',
+            html: html,
+            width: '600px',
+            confirmButtonText: 'Close',
+            confirmButtonColor: 'var(--accent)'
+        });
     }
   </script>
 </body>
