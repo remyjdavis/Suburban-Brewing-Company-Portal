@@ -1,259 +1,351 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Activity | Suburban Brewing Co.</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        :root { --sidebar-width: 240px; --primary-dark: #1f2937; --accent: #2563eb; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f3f4f6; margin: 0; display: flex; color: #1f2937; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Activity | Suburban Brewing Co.</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    /* --- SHARED THEME VARIABLES --- */
+    :root {
+      --bg: #f3f4f6;
+      --sidebar: #0f172a;
+      --accent: #2563eb;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --card-bg: #ffffff;
+    }
 
-        /* Sidebar Styling */
-        .sidebar { width: var(--sidebar-width); background: #111827; height: 100vh; color: white; position: fixed; display: flex; flex-direction: column; overflow-y: auto; }
-        .sidebar-header { padding: 25px 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid #1f2937; letter-spacing: 1px; }
-        .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 1px; }
-        .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
-        .nav-link:hover { background: #1f2937; color: #fff; }
-        .nav-link.active { background: var(--accent); color: #fff; font-weight: 600; }
+    /* --- GLOBAL RESET & LAYOUT --- */
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text-main); display: flex; min-height: 100vh; }
 
-        /* Main Content */
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; min-height: 100vh; }
-        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
-        .container { padding: 30px; max-width: 800px; margin: 0 auto; }
+    /* --- SIDEBAR STYLES --- */
+    .sidebar { 
+      width: 260px; background: var(--sidebar); color: #fff; 
+      padding: 24px 0; flex-shrink: 0; position: fixed; 
+      height: 100vh; overflow-y: auto; z-index: 1000;
+      transition: all 0.3s ease;
+    }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-        /* Form Card */
-        .form-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; font-size: 1.5rem; color: #111827; }
-        label { display: block; font-weight: 700; margin: 15px 0 5px; font-size: 11px; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
-        
-        .toggle-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        .toggle-btn { flex: 1; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; text-align: center; font-size: 14px; transition: 0.2s; }
-        .toggle-btn.active { background: #111827; color: white; border-color: #111827; }
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-header {
+      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
+      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
+    }
+    .nav-section-header:hover { color: #fff; }
 
-        .btn-submit { width: 100%; padding: 15px; background: #111827; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 25px; font-size: 16px; transition: background 0.2s; }
-        .btn-submit:hover { background: #000; }
-        .btn-submit:disabled { background: #9ca3af; }
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
 
-        .row { display: flex; gap: 15px; }
-        .col { flex: 1; }
+    .collapsible-content {
+      max-height: 500px; overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease;
+      opacity: 1;
+    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main-content { margin-left: 0; }
-        }
-    </style>
+    /* LINKS */
+    .nav-link { 
+      display: flex; align-items: center; padding: 10px 24px; 
+      color: #64748b; text-decoration: none; font-size: 14px; 
+      transition: 0.2s; border-left: 4px solid transparent;
+    }
+    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; }
+
+    /* --- MAIN CONTENT --- */
+    .main-content { margin-left: 260px; flex-grow: 1; min-height: 100vh; transition: all 0.3s ease; }
+    .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
+    .container { padding: 30px; max-width: 800px; margin: 0 auto; }
+
+    /* Form Card */
+    .form-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    h2 { margin-top: 0; font-size: 1.5rem; color: #111827; }
+    label { display: block; font-weight: 700; margin: 15px 0 5px; font-size: 11px; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
+    
+    .toggle-group { display: flex; gap: 10px; margin-bottom: 15px; }
+    .toggle-btn { flex: 1; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; text-align: center; font-size: 14px; transition: 0.2s; }
+    .toggle-btn.active { background: #111827; color: white; border-color: #111827; }
+
+    .btn-submit { width: 100%; padding: 15px; background: #111827; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 25px; font-size: 16px; transition: background 0.2s; }
+    .btn-submit:hover { background: #000; }
+    .btn-submit:disabled { background: #9ca3af; }
+
+    .row { display: flex; gap: 15px; }
+    .col { flex: 1; }
+
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .main-content { margin-left: 0; padding-bottom: 80px; }
+      .nav-section-header, .sidebar h2 { display: none; }
+      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; }
+    }
+  </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div class="sidebar-header">SUBURBAN BREWING</div>
-        
-        <div class="nav-section-title">Main Menu</div> 
-        <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-      
-        <div class="nav-section-title">Samplings</div>
-        <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-        <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-        <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-        
-        <div class="nav-section-title">Sales & Outreach</div>
-        <a href="leads.html" class="nav-link active"><span>AI Sales Leads</span></a>
-        <a href="invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-        <a href="deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-        <a href="new invoices.html" class="nav-link"><span>New Invoice</span></a>
-
-        <div class="nav-section-title">Inventory</div>
-        <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-        <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-        <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-        <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-        
-        <div class="nav-section-title">Brewing</div>
-        <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-        <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-        <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-        <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
-        
-        <div class="nav-section-title">Reporting & Analytics</div>
-        <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-        <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-        <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
-    </aside>
-
-    <div class="main-content">
-        <div class="header">
-            <span style="font-weight: 600; color: #6b7280;">Sales Portal</span>
-            <div id="dateDisplay" style="font-size: 0.9rem; color: #9ca3af;"></div>
-        </div>
-
-        <div class="container">
-            <div class="form-card">
-                <h2>Log Activity</h2>
-                <form id="salesForm">
-                    <label>Visit Type</label>
-                    <div class="toggle-group">
-                        <div id="btnInitial" class="toggle-btn active" onclick="setVisitType('Initial')">Initial Visit</div>
-                        <div id="btnFollow" class="toggle-btn" onclick="setVisitType('Follow-up')">Follow-up Visit</div>
-                    </div>
-                    <input type="hidden" id="visitType" value="Initial">
-                   
-                    <label>Account Category</label>
-                    <div class="toggle-group">
-                        <div id="btnRest" class="toggle-btn active" onclick="setAccountType('Restaurant')">Restaurant</div>
-                        <div id="btnWhole" class="toggle-btn" onclick="setAccountType('Wholesaler')">Wholesaler</div>
-                    </div>
-                    <input type="hidden" id="accountType" value="Restaurant">
-                    
-                    <label>Account Name</label>
-                    <input list="customers" id="name" placeholder="Search accounts..." onblur="checkExisting()" required>
-                    <datalist id="customers"></datalist>
-
-                    <label>Manager / Contact Name</label>
-                    <input type="text" id="manager" placeholder="TBD">
-
-                    <div class="row">
-                        <div class="col">
-                            <label>Street Address</label>
-                            <input type="text" id="address">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col">
-                            <label>Phone</label>
-                            <input type="tel" id="phone">
-                        </div>
-                        <div class="col">
-                            <label>Email</label>
-                            <input type="email" id="email">
-                        </div>
-                    </div>
-
-                    <label>Outcome</label>
-                    <select id="outcome" required>
-                        <option value="">-- Select Result --</option>
-                        <option value="Sale">Sale (Write Invoice)</option>
-                        <option value="Warm">Warm (Interested / Follow-up)</option>
-                        <option value="Cold">Cold (Long-term Prospect)</option>
-                        <option value="Not Interested">Not Interested</option>
-                    </select>
-
-                    <label>Notes (AI Analysis)</label>
-                    <textarea id="notes" rows="4" placeholder="Manager back on Tuesday..."></textarea>
-
-                    <button type="submit" id="submitBtn" class="btn-submit">Save Activity & Analyze</button>
-                </form>
-            </div>
-        </div>
-    </div>
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-        
-        document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-        function setVisitType(type) {
-            document.getElementById('visitType').value = type;
-            document.getElementById('btnInitial').classList.toggle('active', type === 'Initial');
-            document.getElementById('btnFollow').classList.toggle('active', type === 'Follow-up');
-        }
-
-        window.onload = async () => {
-            try {
-                const resp = await fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" });
-                const data = await resp.json();
-                const dl = document.getElementById('customers');
-                const uniqueNames = [...new Set(data.map(item => item.name))];
-                uniqueNames.forEach(n => { 
-                    let o = document.createElement('option'); o.value = n; dl.appendChild(o); 
-                });
-            } catch (e) { console.error("Customer Load Error:", e); }
-        };
-
-        document.getElementById('salesForm').onsubmit = async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerText = "Processing with Gemini AI...";
-
-            const payload = {
-                visitType: document.getElementById('visitType').value,
-                name: document.getElementById('name').value,
-                type: document.getElementById('accountType').value,
-                manager: document.getElementById('manager').value,
-                address: document.getElementById('address').value,
-                phone: document.getElementById('phone').value,
-                email: document.getElementById('email').value,
-                outcome: document.getElementById('outcome').value,
-                notes: document.getElementById('notes').value
-            };
-
-            try {
-                const params = new URLSearchParams({ action: "submitSalesActivity", data: JSON.stringify(payload) });
-                const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
-                const res = await response.json();
-
-                if (res.success) {
-                    await Swal.fire({
-                        title: 'Activity Saved',
-                        text: `AI Scheduled Follow-up: ${res.nextDate}`,
-                        icon: 'success',
-                        confirmButtonColor: '#111827'
-                    });
-
-                    if (res.redirect) {
-                        window.location.href = "new invoices.html?customer=" + encodeURIComponent(payload.name);
-                    } else {
-                        location.reload();
-                    }
-                }
-            } catch (err) {
-                Swal.fire('Sync Error', err.toString(), 'error');
-                btn.disabled = false;
-                btn.innerText = "Save Activity & Analyze";
-            }
-        };
-        // 1. Handles the UI toggle for Restaurant vs Wholesaler
-function setAccountType(type) {
-    document.getElementById('accountType').value = type;
-    document.getElementById('btnRest').classList.toggle('active', type === 'Restaurant');
-    document.getElementById('btnWhole').classList.toggle('active', type === 'Wholesaler');
+  <aside class="sidebar">
+    <h2>SUBURBAN BREWING</h2>
     
-    // Refresh the datalist based on the selected category
-    checkExisting(); 
-}
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
+      <span>Main Menu</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-main" class="collapsible-content">
+      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="leads.html" class="nav-link active"><span>AI Sales Leads</span></a>
+      <a href="invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+      <a href="deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    </div>
 
-// 2. Updated CheckExisting to filter by the selected Account Type
-async function checkExisting() {
-    const nameInput = document.getElementById("name").value.trim();
-    const selectedCategory = document.getElementById("accountType").value;
-    if (!nameInput) return;
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
+      <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    </div>
+  </aside>
 
-    try {
-        const response = await fetch(`${API_URL}?action=getSalesLeads`);
-        const leads = await response.json();
+  <div class="main-content">
+    <div class="header">
+      <span style="font-weight: 600; color: #6b7280;">Sales Portal</span>
+      <div id="dateDisplay" style="font-size: 0.9rem; color: #9ca3af;"></div>
+    </div>
 
-        // Filter by both Name AND Type (Restaurant/Wholesaler)
-        const match = leads.find(l => 
-            l.name.toLowerCase() === nameInput.toLowerCase() && 
-            l.type === selectedCategory
-        );
+    <div class="container">
+      <div class="form-card">
+        <h2>Log Activity</h2>
+        <form id="salesForm">
+          <label>Visit Type</label>
+          <div class="toggle-group">
+            <div id="btnInitial" class="toggle-btn active" onclick="setVisitType('Initial')">Initial Visit</div>
+            <div id="btnFollow" class="toggle-btn" onclick="setVisitType('Follow-up')">Follow-up Visit</div>
+          </div>
+          <input type="hidden" id="visitType" value="Initial">
+          
+          <label>Account Category</label>
+          <div class="toggle-group">
+            <div id="btnRest" class="toggle-btn active" onclick="setAccountType('Restaurant')">Restaurant</div>
+            <div id="btnWhole" class="toggle-btn" onclick="setAccountType('Wholesaler')">Wholesaler</div>
+          </div>
+          <input type="hidden" id="accountType" value="Restaurant">
+          
+          <label>Account Name</label>
+          <input list="customers" id="name" placeholder="Search accounts..." onblur="checkExisting()" required>
+          <datalist id="customers"></datalist>
 
-        if (match) {
-            document.getElementById("manager").value = match.manager || "";
-            document.getElementById("address").value = match.address || "";
-            document.getElementById("phone").value = match.phone || "";
-            document.getElementById("email").value = match.email || "";
-            document.getElementById("name").style.borderColor = "#34c759";
-            setVisitType('Follow-up');
-        } else {
-            document.getElementById("name").style.borderColor = "#d1d5db";
-        }
-    } catch (err) {
-        console.error("CheckExisting Error:", err);
+          <label>Manager / Contact Name</label>
+          <input type="text" id="manager" placeholder="TBD">
+
+          <div class="row">
+            <div class="col">
+              <label>Street Address</label>
+              <input type="text" id="address">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label>Phone</label>
+              <input type="tel" id="phone">
+            </div>
+            <div class="col">
+              <label>Email</label>
+              <input type="email" id="email">
+            </div>
+          </div>
+
+          <label>Outcome</label>
+          <select id="outcome" required>
+            <option value="">-- Select Result --</option>
+            <option value="Sale">Sale (Write Invoice)</option>
+            <option value="Warm">Warm (Interested / Follow-up)</option>
+            <option value="Cold">Cold (Long-term Prospect)</option>
+            <option value="Not Interested">Not Interested</option>
+          </select>
+
+          <label>Notes (AI Analysis)</label>
+          <textarea id="notes" rows="4" placeholder="Manager back on Tuesday..."></textarea>
+
+          <button type="submit" id="submitBtn" class="btn-submit">Save Activity & Analyze</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+    
+    // --- SIDEBAR TOGGLE LOGIC ---
+    function toggleGroup(contentId, headerEl) {
+      const content = document.getElementById(contentId);
+      content.classList.toggle('collapsed');
+      headerEl.classList.toggle('collapsed');
     }
-}
-    </script>
+
+    document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // --- FORM TOGGLE LOGIC ---
+    function setVisitType(type) {
+      document.getElementById('visitType').value = type;
+      document.getElementById('btnInitial').classList.toggle('active', type === 'Initial');
+      document.getElementById('btnFollow').classList.toggle('active', type === 'Follow-up');
+    }
+
+    function setAccountType(type) {
+      document.getElementById('accountType').value = type;
+      document.getElementById('btnRest').classList.toggle('active', type === 'Restaurant');
+      document.getElementById('btnWhole').classList.toggle('active', type === 'Wholesaler');
+      // Re-trigger inventory fetch or checkExisting logic if needed here
+      checkExisting(); 
+    }
+
+    // --- INITIAL LOAD ---
+    window.onload = async () => {
+      // 1. Sidebar Active State Logic
+      const activeLink = document.querySelector('.nav-link.active');
+      if (activeLink) {
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) {
+          parentGroup.classList.remove('collapsed');
+          const header = parentGroup.previousElementSibling;
+          if (header) header.classList.remove('collapsed');
+        }
+      }
+
+      // 2. Load Customers (Default to Wholesaler Inventory as per original, or we can load both)
+      try {
+        const resp = await fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" });
+        const data = await resp.json();
+        const dl = document.getElementById('customers');
+        const uniqueNames = [...new Set(data.map(item => item.name))];
+        uniqueNames.forEach(n => { 
+          let o = document.createElement('option'); 
+          o.value = n; 
+          dl.appendChild(o); 
+        });
+      } catch (e) { console.error("Customer Load Error:", e); }
+    };
+
+    // --- AUTO-FILL LOGIC ---
+    async function checkExisting() {
+        const nameInput = document.getElementById("name").value.trim();
+        const selectedCategory = document.getElementById("accountType").value;
+        if (!nameInput) return;
+
+        try {
+            // NOTE: Ensure your backend has a handler for 'getSalesLeads' or implies scanning the Leads sheet
+            // If strictly using provided backend actions, we might need to adjust 'action'
+            const response = await fetch(`${API_URL}?action=getSalesLeads`); 
+            const leads = await response.json();
+
+            // Filter by Name
+            const match = leads.find(l => l.name && l.name.toLowerCase() === nameInput.toLowerCase());
+
+            if (match) {
+                document.getElementById("manager").value = match.manager || "";
+                document.getElementById("address").value = match.address || "";
+                document.getElementById("phone").value = match.phone || "";
+                document.getElementById("email").value = match.email || "";
+                document.getElementById("name").style.borderColor = "#34c759";
+                setVisitType('Follow-up');
+            } else {
+                document.getElementById("name").style.borderColor = "#d1d5db";
+            }
+        } catch (err) {
+            console.error("CheckExisting Error:", err);
+        }
+    }
+
+    // --- SUBMIT LOGIC ---
+    document.getElementById('salesForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerText = "Processing with Gemini AI...";
+
+      const payload = {
+        visitType: document.getElementById('visitType').value,
+        name: document.getElementById('name').value,
+        type: document.getElementById('accountType').value,
+        manager: document.getElementById('manager').value,
+        address: document.getElementById('address').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        outcome: document.getElementById('outcome').value,
+        notes: document.getElementById('notes').value
+      };
+
+      try {
+        const params = new URLSearchParams({ action: "submitSalesActivity", data: JSON.stringify(payload) });
+        const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
+        const res = await response.json();
+
+        if (res.success) {
+          await Swal.fire({
+            title: 'Activity Saved',
+            text: `AI Scheduled Follow-up: ${res.nextDate}`,
+            icon: 'success',
+            confirmButtonColor: '#111827'
+          });
+
+          if (res.redirect) {
+            window.location.href = "new invoices.html?customer=" + encodeURIComponent(payload.name);
+          } else {
+            location.reload();
+          }
+        }
+      } catch (err) {
+        Swal.fire('Sync Error', err.toString(), 'error');
+        btn.disabled = false;
+        btn.innerText = "Save Activity & Analyze";
+      }
+    };
+  </script>
 </body>
 </html>
