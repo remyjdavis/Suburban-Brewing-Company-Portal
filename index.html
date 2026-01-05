@@ -568,6 +568,19 @@
             if (advice) advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
         } catch (e) { console.error("ML Error:", e); }
     }
+    async function syncSamplingCard() {
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getNextSampling`);
+        const json = await res.json();
+        if (json.status === 'success') {
+            const card = document.querySelector('.card-quality'); // Card 3
+            card.querySelector('.val').innerText = json.client;
+            card.querySelector('p').innerText = `${json.displayDate} @ ${json.time}`;
+        }
+    } catch (e) { console.error("Sampling Sync Failed", e); }
+}
+
+// Add syncSamplingCard() to your runAllSyncs() function
   </script>
 </body>
 </html>
