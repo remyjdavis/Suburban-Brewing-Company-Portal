@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
     /* --- SHARED THEME VARIABLES --- */
@@ -122,7 +123,7 @@
     .card-finance { border-left: 5px solid var(--green-accent); }
 
     /* ROUTE SPECIFIC STYLING */
-    .route-list { font-size: 11px; color: var(--accent); margin-top: 10px; font-weight: 600; line-height: 1.4; }
+    .route-list-summary { font-size: 11px; color: var(--accent); margin-top: 10px; font-weight: 600; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* --- TANK VISUALS --- */
     .tank-card { background: #fff; border-radius: 20px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; }
@@ -141,6 +142,12 @@
     .chart-container { opacity: 0; transition: opacity 0.3s ease; pointer-events: none; height: 250px; margin-top: 20px; }
     .expanded .chart-container { opacity: 1; pointer-events: auto; }
     .expand-hint { font-size: 10px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-top: 5px; display: block; }
+
+    /* MODAL STYLING */
+    .route-modal-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+    .route-modal-table th { padding: 12px; border-bottom: 2px solid #eee; color: var(--text-muted); }
+    .route-modal-table td { padding: 12px; border-bottom: 1px solid #f1f1f1; vertical-align: top; }
+    .stop-num { width: 24px; height: 24px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; margin-right: 10px; }
 
     @media (max-width: 768px) {
       .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; background: var(--sidebar); overflow-x: auto; }
@@ -226,11 +233,12 @@
     </div>
     <div id="sect-alerts" class="collapsible-content">
       <div class="tier-1">
-        <div class="card card-sales" onclick="location.href='sales/leads.html'" style="cursor:pointer;">
+        <div class="card card-sales" onclick="showRouteDetails()" style="cursor:pointer;">
           <h3>Sales Outreach</h3>
           <div class="val" id="followUpCount">--</div>
-          <p>AI Follow-ups Due Today</p>
-          <div id="daily-route" class="route-list">Route: Loading daily stops...</div>
+          <p>Due/Optimized Stops Today</p>
+          <div id="daily-route-summary" class="route-list-summary">Loading route...</div>
+          <div style="font-size: 10px; color: var(--accent); font-weight: 800; margin-top: 5px; text-transform: uppercase;">Click to View Detailed Route</div>
         </div>
         
         <div class="card card-alert" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
@@ -380,119 +388,6 @@
         refreshMLEngine();
     }
 
-    // --- 1. SENSORY ALERT CHECKER ---
-    async function checkSensoryAlerts() {
-      try {
-        const payload = { action: 'getBlindSamples' };
-        const res = await fetch(SENSORY_API_URL, { 
-            method: 'POST', 
-            body: JSON.stringify(payload),
-            redirect: 'follow'
-        });
-        const json = await res.json();
-        if(json.status === 'success') {
-          const count = json.data.length;
-          const isReferenceOnly = count === 1 && (json.data[0].code === "100" || json.data[0].code === "105");
-          if (count > 0 && !isReferenceOnly) {
-            document.getElementById('sensoryCount').innerText = count;
-            document.getElementById('sensoryStatus').innerText = "Samples Approaching Terminal";
-            document.getElementById('sensoryStatus').style.color = "#8b5cf6"; 
-            document.getElementById('sensoryStatus').style.fontWeight = "700";
-            document.getElementById('sensoryAlertCard').style.borderColor = "#8b5cf6";
-            document.getElementById('sensoryAlertCard').style.borderLeftWidth = "6px";
-          } else {
-            resetSensoryCard();
-          }
-        }
-      } catch (e) {
-        console.error("Sensory Alert Error:", e);
-        document.getElementById('sensoryStatus').innerText = "Offline";
-      }
-    }
-
-    function resetSensoryCard() {
-        document.getElementById('sensoryCount').innerText = "0";
-        document.getElementById('sensoryStatus').innerText = "No critical samples due";
-        document.getElementById('sensoryStatus').style.color = "var(--text-muted)";
-        document.getElementById('sensoryStatus').style.fontWeight = "400";
-        document.getElementById('sensoryAlertCard').style.borderColor = "#e2e8f0";
-        document.getElementById('sensoryAlertCard').style.borderLeftWidth = "1px";
-    }
-
-    // --- 2. CELLAR TANK SYNC ---
-    async function refreshCellarTanks() {
-        const categories = {
-            'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"],
-            'grid-pilot': ["Pilot 1", "Pilot 2"],
-            'grid-brite': ["BT 1", "BT 2"]
-        };
-        try {
-            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { 
-                method: "GET", 
-                redirect: "follow" 
-            });
-            const liveBatches = await res.json();
-            Object.keys(categories).forEach(gridId => {
-                const container = document.getElementById(gridId);
-                if (!container) return;
-                container.innerHTML = ""; 
-                categories[gridId].forEach(tankName => {
-                    const liveData = Array.isArray(liveBatches) ? liveBatches.find(b => b.vessel === tankName) : null;
-                    const isActive = !!liveData;
-                    let sizeLabel = gridId === 'grid-pilot' ? "1 BBL" : "10 BBL";
-                    let color = "var(--text-muted)"; 
-                    let statusText = "Empty/Clean";
-                    if (isActive) {
-                        statusText = liveData.status;
-                        color = statusText.includes("Ready") ? "var(--ready)" : (statusText.includes("Crash") ? "var(--crashing)" : "var(--fermenting)");
-                    }
-                    container.innerHTML += `
-                        <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'}; border-color: ${isActive ? color : '#e2e8f0'};">
-                            <span class="status-badge" style="background: ${isActive ? color + '22' : '#f1f5f9'}; color: ${color};">${statusText}</span>
-                            <div class="tank-vessel">
-                                <div class="tank-fill" style="height: ${isActive ? liveData.fill : 0}%; background: ${color}; transition: height 1s ease;"></div>
-                            </div>
-                            <div style="font-weight:700; font-size: 14px;">${tankName}</div>
-                            <div style="font-size: 10px; color: var(--text-muted); font-weight: bold;">${sizeLabel}</div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${isActive ? liveData.brand : 'Available'}</div>
-                        </div>`;
-                });
-            });
-        } catch (e) { console.error("Cellar Error:", e); }
-    }
-
-    // --- 3. ML ENGINE SYNC ---
-    async function refreshMLEngine() {
-        const effDisplay = document.getElementById('ml-efficiency-display');
-        const advice = document.getElementById('ml-advice');
-        const cashSavedDisplay = document.getElementById('cost-dollars-saved');
-        try {
-            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { 
-                method: "GET", 
-                redirect: "follow" 
-            });
-            const data = await res.json();
-            const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
-            const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
-            if (effDisplay) {
-                effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%";
-                effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
-            }
-            if (cashSavedDisplay) cashSavedDisplay.innerText = "$" + (data.estimatedSavings || 0).toFixed(2);
-            const ctx = document.getElementById('efficiencyChart').getContext('2d');
-            if (window.mlChart) window.mlChart.destroy();
-            window.mlChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: history.map((_, i) => `B${i + 1}`),
-                    datasets: [{ label: 'Efficiency', data: history.map(v => v * 100), borderColor: '#3498db', tension: 0.4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-            if (advice) advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
-        } catch (e) { console.error("ML Error:", e); }
-    }
-
     // --- 1. ZONE 1 SYNC (SALES OUTREACH & INVENTORY) ---
     async function syncZone1() {
         try {
@@ -518,7 +413,7 @@
 
     /**
      * MODAL POP-UP LOGIC: DETAILED DAILY ROUTE
-     * Displays stops and follow-up notes without redirecting [cite: 2025-12-22]
+     * FIXED: No longer redirecting. Triggers SweetAlert2 window.
      */
     function showRouteDetails() {
       if (currentRouteData.length === 0) {
@@ -561,6 +456,117 @@
       const content = document.getElementById(contentId);
       content.classList.toggle('collapsed');
       headerEl.classList.toggle('collapsed');
+    }
+
+    // ... refreshCellarTanks, checkSensoryAlerts, and refreshMLEngine logic ...
+    async function checkSensoryAlerts() {
+      try {
+        const payload = { action: 'getBlindSamples' };
+        const res = await fetch(SENSORY_API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify(payload),
+            redirect: 'follow'
+        });
+        const json = await res.json();
+        if(json.status === 'success') {
+          const count = json.data.length;
+          const isReferenceOnly = count === 1 && (json.data[0].code === "100" || json.data[0].code === "105");
+          if (count > 0 && !isReferenceOnly) {
+            document.getElementById('sensoryCount').innerText = count;
+            document.getElementById('sensoryStatus').innerText = "Samples Approaching Terminal";
+            document.getElementById('sensoryStatus').style.color = "#8b5cf6"; 
+            document.getElementById('sensoryStatus').style.fontWeight = "700";
+            document.getElementById('sensoryAlertCard').style.borderColor = "#8b5cf6";
+            document.getElementById('sensoryAlertCard').style.borderLeftWidth = "6px";
+          } else {
+            resetSensoryCard();
+          }
+        }
+      } catch (e) {
+        console.error("Sensory Alert Error:", e);
+        document.getElementById('sensoryStatus').innerText = "Offline";
+      }
+    }
+
+    function resetSensoryCard() {
+        document.getElementById('sensoryCount').innerText = "0";
+        document.getElementById('sensoryStatus').innerText = "No critical samples due";
+        document.getElementById('sensoryStatus').style.color = "var(--text-muted)";
+        document.getElementById('sensoryStatus').style.fontWeight = "400";
+        document.getElementById('sensoryAlertCard').style.borderColor = "#e2e8f0";
+        document.getElementById('sensoryAlertCard').style.borderLeftWidth = "1px";
+    }
+
+    async function refreshCellarTanks() {
+        const categories = {
+            'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"],
+            'grid-pilot': ["Pilot 1", "Pilot 2"],
+            'grid-brite': ["BT 1", "BT 2"]
+        };
+        try {
+            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { 
+                method: "GET", 
+                redirect: "follow" 
+            });
+            const liveBatches = await res.json();
+            Object.keys(categories).forEach(gridId => {
+                const container = document.getElementById(gridId);
+                if (!container) return;
+                container.innerHTML = ""; 
+                categories[gridId].forEach(tankName => {
+                    const liveData = Array.isArray(liveBatches) ? liveBatches.find(b => b.vessel === tankName) : null;
+                    const isActive = !!liveData;
+                    let sizeLabel = gridId === 'grid-pilot' ? "1 BBL" : "10 BBL";
+                    let color = "var(--text-muted)"; 
+                    let statusText = "Empty/Clean";
+                    if (isActive) {
+                        statusText = liveData.status;
+                        color = statusText.includes("Ready") ? "var(--ready)" : (statusText.includes("Crash") ? "var(--crashing)" : "var(--fermenting)");
+                    }
+                    container.innerHTML += `
+                        <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'}; border-color: ${isActive ? color : '#e2e8f0'};">
+                            <span class="status-badge" style="background: ${isActive ? color + '22' : '#f1f5f9'}; color: ${color};">${statusText}</span>
+                            <div class="tank-vessel">
+                                <div class="tank-fill" style="height: ${isActive ? liveData.fill : 0}%; background: ${color}; transition: height 1s ease;"></div>
+                            </div>
+                            <div style="font-weight:700; font-size: 14px;">${tankName}</div>
+                            <div style="font-size: 10px; color: var(--text-muted); font-weight: bold;">${sizeLabel}</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${isActive ? liveData.brand : 'Available'}</div>
+                        </div>`;
+                });
+            });
+        } catch (e) { console.error("Cellar Error:", e); }
+    }
+
+    async function refreshMLEngine() {
+        const effDisplay = document.getElementById('ml-efficiency-display');
+        const advice = document.getElementById('ml-advice');
+        const cashSavedDisplay = document.getElementById('cost-dollars-saved');
+        try {
+            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { 
+                method: "GET", 
+                redirect: "follow" 
+            });
+            const data = await res.json();
+            const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
+            const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
+            if (effDisplay) {
+                effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%";
+                effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
+            }
+            if (cashSavedDisplay) cashSavedDisplay.innerText = "$" + (data.estimatedSavings || 0).toFixed(2);
+            const ctx = document.getElementById('efficiencyChart').getContext('2d');
+            if (window.mlChart) window.mlChart.destroy();
+            window.mlChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: history.map((_, i) => `B${i + 1}`),
+                    datasets: [{ label: 'Efficiency', data: history.map(v => v * 100), borderColor: '#3498db', tension: 0.4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+            if (advice) advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
+        } catch (e) { console.error("ML Error:", e); }
     }
   </script>
 </body>
