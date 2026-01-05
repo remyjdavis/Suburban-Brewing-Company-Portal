@@ -5,8 +5,8 @@
   <title>Suburban Brewing Co. | New Invoice</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- BARCODE LIB -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
     
@@ -30,46 +30,47 @@
     }
 
     /* ===== SIDEBAR ===== */
-    .sidebar {
-      width: 240px;
-      background: var(--sidebar);
-      color: #fff;
-      padding: 20px 0;
-      position: fixed;
-      height: 100vh;
-      overflow-y: auto;
+    .sidebar { 
+      width: 240px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
+      transition: all 0.3s ease;
     }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-    .sidebar h2 {
-      margin: 0 20px 20px;
-      font-size: 18px;
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-header {
+      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
+      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
     }
+    .nav-section-header:hover { color: #fff; }
 
-    .nav-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      opacity: 0.5;
-      margin: 20px 20px 8px;
-      font-weight: 700;
-    }
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
 
-    .nav-link {
-      display: block;
-      padding: 10px 24px;
-      color: #d1d5db;
-      text-decoration: none;
-      font-size: 14px;
+    .collapsible-content {
+      max-height: 500px; overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease;
+      opacity: 1;
     }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    .nav-link:hover,
-    .nav-link.active {
-      background: #374151;
-      color: #fff;
+    /* LINKS */
+    .nav-link { 
+      display: flex; align-items: center; padding: 10px 24px; 
+      color: #64748b; text-decoration: none; font-size: 14px; 
+      transition: 0.2s; border-left: 4px solid transparent;
     }
-
-    .nav-link.active {
-      border-left: 4px solid var(--accent);
-    }
+    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
     /* ===== MAIN ===== */
     .main {
@@ -227,469 +228,523 @@
       background: #f3f4f6;
     }
     .type-checkboxes em {
-  color: #9ca3af;
-  font-style: normal;
-}
+      color: #9ca3af;
+      font-style: normal;
+    }
 
-.type-checkboxes span {
-  font-weight: 600;
-}
-   .invoice-footer {
-  margin-top: 24px;
-  padding-top: 12px;
-  border-top: 1px solid #000;
-  text-align: center;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-}
+    .type-checkboxes span {
+      font-weight: 600;
+    }
+    .invoice-footer {
+      margin-top: 24px;
+      padding-top: 12px;
+      border-top: 1px solid #000;
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+    }
 
-.footer-message {
-  text-transform: uppercase;
-}
-.invoice-action-bar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 20px;
-}
+    .footer-message {
+      text-transform: uppercase;
+    }
+    .invoice-action-bar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+    }
 
-/* Base button style (matches Save Invoice) */
-.invoice-btn {
-  padding: 10px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  background: #2563eb;
-  color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  appearance: none;
-}
+    /* Base button style (matches Save Invoice) */
+    .invoice-btn {
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      appearance: none;
+    }
 
-/* Hover */
-.invoice-btn:hover {
-  background: #1d4ed8;
-}
+    /* Hover */
+    .invoice-btn:hover {
+      background: #1d4ed8;
+    }
 
-/* Disabled state (still same shape, muted color) */
-.invoice-btn:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-}
+    /* Disabled state (still same shape, muted color) */
+    .invoice-btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
 
-/* ===== PRINT LAYOUT FIX ===== */
-@media print {
-  body {
-    margin: 0;
-    background: #fff;
-  }
+    /* ===== PRINT LAYOUT FIX ===== */
+    @media print {
+      body {
+        margin: 0;
+        background: #fff;
+      }
 
-  .sidebar,
-  .header-bar,
-  #save-invoice-btn {
-    display: none !important;
-  }
+      .sidebar,
+      .header-bar,
+      #save-invoice-btn,
+      .invoice-action-bar {
+        display: none !important;
+      }
 
-  .main {
-    margin: 0;
-    padding: 0;
-  }
+      .main {
+        margin: 0;
+        padding: 0;
+      }
 
-  .invoice-page {
-    width: 7.75in; /* safe printable width */
-    padding: 0.5in;
-    box-shadow: none;
-  }
+      .invoice-page {
+        width: 7.75in; /* safe printable width */
+        padding: 0.5in;
+        box-shadow: none;
+      }
 
-  table.invoice-table {
-    width: 100%;
-    table-layout: fixed;
-  }
+      table.invoice-table {
+        width: 100%;
+        table-layout: fixed;
+      }
 
-  table.invoice-table th,
-  table.invoice-table td {
-    font-size: 11px;
-    padding: 5px;
-  }
-}
+      table.invoice-table th,
+      table.invoice-table td {
+        font-size: 11px;
+        padding: 5px;
+      }
+    }
     /* ===== BARCODE COLUMN HARD CONSTRAINT ===== */
-.invoice-table td:nth-child(5),
-.invoice-table th:nth-child(5) {
-  width: 26%;
-  max-width: 26%;
-  overflow: hidden;
-  text-align: center;
-}
+    .invoice-table td:nth-child(5),
+    .invoice-table th:nth-child(5) {
+      width: 26%;
+      max-width: 26%;
+      overflow: hidden;
+      text-align: center;
+    }
 
-/* Force barcode SVG to obey cell width */
-.invoice-table td:nth-child(5) svg {
-  max-width: 100%;
-  height: 38px;
-  display: block;
-  margin: 0 auto;
-}
+    /* Force barcode SVG to obey cell width */
+    .invoice-table td:nth-child(5) svg {
+      max-width: 100%;
+      height: 38px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .sidebar h2, .nav-section-header { display: none; }
+      .main { margin-left: 0; padding: 20px 20px 90px; }
+      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
+    }
 
   </style>
 </head>
 
 <body>
 
-<!-- ===== SIDEBAR ===== -->
-<aside class="sidebar">
+  <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-  
-     <div class="nav-section-title">Main Menu</div> 
-    <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-  
-    <div class="nav-section-title">Operations</div>
-    <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-    <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-    <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
     
-    <div class="nav-section-title">Sales & Outreach</div>
-    <a href="sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
-    <a href="leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-    <a href="invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-    <a href="deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-    <a href="new invoices.html" class="nav-link active"><span>New Invoice</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
+      <span>Main Menu</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-main" class="collapsible-content">
+      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+      <a href="deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="new invoices.html" class="nav-link active"><span>New Invoice</span></a>
+    </div>
 
-    <div class="nav-section-title">Inventory</div>
-    <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-    <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-    <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-    <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
     
-    <div class="nav-section-title">Brewing</div>
-    <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-    <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-    <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-    <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
+      <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    </div>
     
-    <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-    <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-    <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    </div>
   </aside>
 
-<main class="main">
+  <main class="main">
 
-  <div class="header-bar">
-    <h1>New Invoice</h1>
-    <div id="current-date"></div>
-  </div>
+    <div class="header-bar">
+      <h1>New Invoice</h1>
+      <div id="current-date"></div>
+    </div>
 
-  <div class="section-heading">Invoice Details</div>
+    <div class="section-heading">Invoice Details</div>
 
-  <section class="invoice-page">
+    <section class="invoice-page">
 
-    <header class="invoice-header">
-      <img src="../background.jpg">
-      <div class="invoice-company-info">
-        <strong>Suburban Brewing Company</strong><br>
-        3041 Horseshoe Pike Suite 120 &amp; 130<br>
-        Honey Brook, PA 19344<br>
-        Sales Rep: Remy Davis · 908-642-1019 · Remyjdavis90@gmail.com
-      </div>
-    </header>
-
-    <div class="invoice-title">INVOICE</div>
-    <div class="invoice-divider"></div>
-
-    <section class="invoice-meta-row">
-      <div class="customer-block">
-        <input id="customer-search" class="customer-search" placeholder="Search customer..." autocomplete="off">
-        <div id="customer-display" hidden>
-          <div id="customer-name" class="customer-name"></div>
-          <div id="customer-address" class="customer-address"></div>
+      <header class="invoice-header">
+        <img src="../background.jpg">
+        <div class="invoice-company-info">
+          <strong>Suburban Brewing Company</strong><br>
+          3041 Horseshoe Pike Suite 120 &amp; 130<br>
+          Honey Brook, PA 19344<br>
+          Sales Rep: Remy Davis · 908-642-1019 · Remyjdavis90@gmail.com
         </div>
+      </header>
+
+      <div class="invoice-title">INVOICE</div>
+      <div class="invoice-divider"></div>
+
+      <section class="invoice-meta-row">
+        <div class="customer-block">
+          <input id="customer-search" class="customer-search" placeholder="Search customer..." autocomplete="off">
+          <div id="customer-display" hidden>
+            <div id="customer-name" class="customer-name"></div>
+            <div id="customer-address" class="customer-address"></div>
+          </div>
+        </div>
+
+        <div class="invoice-meta">
+          <div class="meta-line">
+            <strong>Date:</strong>
+            <span id="invoice-date"></span>
+          </div>
+          <div class="meta-line" id="invoice-number-row">
+            <strong>Invoice #:</strong>
+            <input id="invoice-number" style="width:80px;">
+          </div>
+          <svg id="barcode"></svg>
+        </div>
+      </section>
+
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th style="width:24%;">Product</th>
+            <th style="width:16%;">Type</th>
+            <th style="width:12%;">Quantity</th>
+            <th style="width:10%;">Price</th>
+            <th style="width:26%;">Barcode</th>
+            <th style="width:12%;">Line Total</th>
+          </tr>
+        </thead>
+        <tbody id="product-body"></tbody>
+      </table>
+      <div style="margin-top:16px; text-align:right; font-size:13px;">
+        <strong>Subtotal:</strong>
+        <span id="invoice-subtotal">$0.00</span>
+      </div>
+      <div id="discount-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
+        <strong>Discount (10%):</strong>
+        <span id="invoice-discount">$0.00</span>
       </div>
 
-      <div class="invoice-meta">
-        <div class="meta-line">
-          <strong>Date:</strong>
-          <span id="invoice-date"></span>
-        </div>
-        <div class="meta-line" id="invoice-number-row">
-          <strong>Invoice #:</strong>
-          <input id="invoice-number" style="width:80px;">
-        </div>
-        <svg id="barcode"></svg>
+      <div id="deposit-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
+        <strong>Keg Deposit:</strong>
+        <span id="invoice-deposit">$0.00</span>
       </div>
+
+      <div id="tax-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
+        <strong>Sales Tax (6%):</strong>
+        <span id="invoice-tax">$0.00</span>
+      </div>
+
+      <div style="margin-top:6px; text-align:right; font-size:14px;">
+        <strong>Total:</strong>
+        <span id="invoice-total">$0.00</span>
+      </div>
+      <div id="invoice-footer" class="invoice-footer"></div>
+      <div style="margin-top:20px; text-align:right;">  
+      </div>
+
     </section>
+    <div class="invoice-action-bar">
+      <button id="save-invoice-btn" class="invoice-btn primary">
+        Save Invoice
+      </button>
+      <button id="print-invoice-btn" class="invoice-btn">
+        Print
+      </button>
 
-    <table class="invoice-table">
-      <thead>
-       <tr>
-  <th style="width:24%;">Product</th>
-  <th style="width:16%;">Type</th>
-  <th style="width:12%;">Quantity</th>
-  <th style="width:10%;">Price</th>
-  <th style="width:26%;">Barcode</th>
-  <th style="width:12%;">Line Total</th>
-</tr>
+      <button id="email-invoice-btn" class="invoice-btn">
+        Email
+      </button>
 
-      </thead>
-      <tbody id="product-body"></tbody>
-    </table>
-<div style="margin-top:16px; text-align:right; font-size:13px;">
-  <strong>Subtotal:</strong>
-  <span id="invoice-subtotal">$0.00</span>
-</div>
-    <div id="discount-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
-  <strong>Discount (10%):</strong>
-  <span id="invoice-discount">$0.00</span>
-</div>
+    </div>
 
-    <div id="deposit-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
-  <strong>Keg Deposit:</strong>
-  <span id="invoice-deposit">$0.00</span>
-</div>
-
-<div id="tax-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
-  <strong>Sales Tax (6%):</strong>
-  <span id="invoice-tax">$0.00</span>
-</div>
-
-<div style="margin-top:6px; text-align:right; font-size:14px;">
-  <strong>Total:</strong>
-  <span id="invoice-total">$0.00</span>
-</div>
-<div id="invoice-footer" class="invoice-footer"></div>
-<div style="margin-top:20px; text-align:right;">  
-</div>
-
-  </section>
-  <div class="invoice-action-bar">
-  <button id="save-invoice-btn" class="invoice-btn primary">
-    Save Invoice
-  </button>
-    <button id="print-invoice-btn" class="invoice-btn">
-    Print
-  </button>
-
-  <button id="email-invoice-btn" class="invoice-btn">
-    Email
-  </button>
-
-</div>
-
-</main>
-<!-- ===== START OF SCRIPT ===== -->
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
-// ===== GLOBAL =====
-let currentInvoiceNumber = "";
-let invoiceNumberValue = "";
-let addProductButtonRow = null;
-let customers = [];
-let selectedCustomer = null;
-let products = [];
-let groupedProducts = {};
-const KEG_DEPOSITS = {
-  "1/2 Keg": 30,
-  "1/6 Keg": 30
-};
-  /* ===== PRODUCT IS ALREADY SELECTED FUNCTION ===== */
-function isProductAlreadySelected(productName, currentRow) {
-  let found = false;
-
-  document.querySelectorAll("#product-body tr").forEach(row => {
-    if (row === currentRow) return;
-
-    const input = row.querySelector(".product-input");
-    if (input && input.value === productName) {
-      found = true;
+  </main>
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+    
+    // --- SIDEBAR TOGGLE LOGIC ---
+    function toggleGroup(contentId, headerEl) {
+      const content = document.getElementById(contentId);
+      content.classList.toggle('collapsed');
+      headerEl.classList.toggle('collapsed');
     }
-  });
 
-  return found;
-}
+    // ===== GLOBAL =====
+    let currentInvoiceNumber = "";
+    let invoiceNumberValue = "";
+    let addProductButtonRow = null;
+    let customers = [];
+    let selectedCustomer = null;
+    let products = [];
+    let groupedProducts = {};
+    const KEG_DEPOSITS = {
+      "1/2 Keg": 30,
+      "1/6 Keg": 30
+    };
+    /* ===== PRODUCT IS ALREADY SELECTED FUNCTION ===== */
+    function isProductAlreadySelected(productName, currentRow) {
+      let found = false;
 
-document.addEventListener("DOMContentLoaded", () => {
-  const today = new Date().toLocaleDateString();
-  document.getElementById("current-date").textContent = today;
-  document.getElementById("invoice-date").textContent = today;
-  loadCustomers();
-  loadProducts();
-  addProductRow();
-  loadInventory();
-});
+      document.querySelectorAll("#product-body tr").forEach(row => {
+        if (row === currentRow) return;
 
-/* ===== LOAD CUSTOMERS FUNCTION ===== */
-function loadCustomers() {
-  fetch(`${API_URL}?action=getCustomers`)
-    .then(r => r.json())
-    .then(d => customers = d || []);
-}
+        const input = row.querySelector(".product-input");
+        if (input && input.value === productName) {
+          found = true;
+        }
+      });
 
-document.getElementById("customer-search").addEventListener("input", function () {
-  document.querySelectorAll(".suggestion").forEach(e => e.remove());
-  const val = this.value.trim().toLowerCase();
-  if (!val) return;
-
-  const matches = customers.filter(c =>
-    c.name.toLowerCase().includes(val)
-  );
-
-  matches.forEach(c => {
-    const div = document.createElement("div");
-    div.textContent = c.name;
-    div.className = "suggestion";
-    div.onclick = () => selectCustomer(c);
-    this.parentNode.appendChild(div);
-  });
-
-  // 🔹 NO MATCH FOUND → OFFER ADD
-  if (matches.length === 0) {
-    const add = document.createElement("div");
-    add.textContent = `Add "${this.value}" as new customer`;
-    add.className = "suggestion";
-    add.style.fontWeight = "600";
-    add.onclick = () => openNewCustomerModal(this.value);
-    this.parentNode.appendChild(add);
-  }
-});
-/* ===== SELECT CUSTOMERS FUNCTION ===== */
-function selectCustomer(c) {
-  selectedCustomer = c;
-
-  selectedCustomer.paymentMethod =
-    c.Payment || c.payment || c.paymentMethod || "";
-
-  updateInvoiceFooter();
-
-  document.querySelectorAll(".suggestion").forEach(e => e.remove());
-  document.getElementById("customer-search").style.display = "none";
-  document.getElementById("customer-display").hidden = false;
-
-  document.getElementById("customer-name").textContent = c.name;
-
-  // --- CLEAN ADDRESS ---
-  const rawLines = (c.address || "")
-    .split(/,|\n/)
-    .map(l => l.trim())
-    .filter(Boolean);
-
-  const seen = new Set();
-  const cleanLines = rawLines.filter(line => {
-    const normalized = line.toLowerCase();
-    if (
-      normalized === c.name.toLowerCase() ||
-      seen.has(normalized)
-    ) {
-      return false;
+      return found;
     }
-    seen.add(normalized);
-    return true;
-  });
 
-  document.getElementById("customer-address").innerHTML =
-    cleanLines.join("<br>");
-  // Toggle sales tax visibility
-const taxRow = document.getElementById("tax-row");
-if (taxRow) {
-  taxRow.style.display = c.type === "Restaurant" ? "flex" : "none";
-}
-  recalcInvoiceTotals();
-}
-  /* ===== FOOTER SELECTION FUNCTION ===== */
-function updateInvoiceFooter() {
-  const footer = document.getElementById("invoice-footer");
-  if (!footer) return;
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toLocaleDateString();
+      document.getElementById("current-date").textContent = today;
+      document.getElementById("invoice-date").textContent = today;
+      loadCustomers();
+      loadProducts();
+      addProductRow();
+      loadInventory();
+      
+      // Initialize Sidebar State (Open Active Group)
+      const activeLink = document.querySelector('.nav-link.active');
+      if (activeLink) {
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) {
+          parentGroup.classList.remove('collapsed');
+          const header = parentGroup.previousElementSibling;
+          if (header) header.classList.remove('collapsed');
+        }
+      }
+    });
 
-  // Always reset
-  footer.innerHTML = "";
+    /* ===== LOAD CUSTOMERS FUNCTION ===== */
+    function loadCustomers() {
+      fetch(`${API_URL}?action=getCustomers`)
+        .then(r => r.json())
+        .then(d => customers = d || []);
+    }
 
-  if (!selectedCustomer) return;
+    document.getElementById("customer-search").addEventListener("input", function() {
+      document.querySelectorAll(".suggestion").forEach(e => e.remove());
+      const val = this.value.trim().toLowerCase();
+      if (!val) return;
 
-  let message = "";
+      const matches = customers.filter(c =>
+        c.name.toLowerCase().includes(val)
+      );
 
-  switch (selectedCustomer.paymentMethod) {
-    case "Check":
-      message = "MAKE CHECKS PAYABLE TO SUBURBAN BREWING COMPANY";
-      break;
+      matches.forEach(c => {
+        const div = document.createElement("div");
+        div.textContent = c.name;
+        div.className = "suggestion";
+        div.onclick = () => selectCustomer(c);
+        this.parentNode.appendChild(div);
+      });
 
-    case "Fintech":
-      message = "PAID THROUGH FINTECH";
-      break;
+      // 🔹 NO MATCH FOUND → OFFER ADD
+      if (matches.length === 0) {
+        const add = document.createElement("div");
+        add.textContent = `Add "${this.value}" as new customer`;
+        add.className = "suggestion";
+        add.style.fontWeight = "600";
+        add.onclick = () => openNewCustomerModal(this.value);
+        this.parentNode.appendChild(add);
+      }
+    });
+    /* ===== SELECT CUSTOMERS FUNCTION ===== */
+    function selectCustomer(c) {
+      selectedCustomer = c;
 
-    default:
-      message = "";
-  }
+      selectedCustomer.paymentMethod =
+        c.Payment || c.payment || c.paymentMethod || "";
 
-  if (!message) return;
+      updateInvoiceFooter();
 
-  footer.innerHTML = `
+      document.querySelectorAll(".suggestion").forEach(e => e.remove());
+      document.getElementById("customer-search").style.display = "none";
+      document.getElementById("customer-display").hidden = false;
+
+      document.getElementById("customer-name").textContent = c.name;
+
+      // --- CLEAN ADDRESS ---
+      const rawLines = (c.address || "")
+        .split(/,|\n/)
+        .map(l => l.trim())
+        .filter(Boolean);
+
+      const seen = new Set();
+      const cleanLines = rawLines.filter(line => {
+        const normalized = line.toLowerCase();
+        if (
+          normalized === c.name.toLowerCase() ||
+          seen.has(normalized)
+        ) {
+          return false;
+        }
+        seen.add(normalized);
+        return true;
+      });
+
+      document.getElementById("customer-address").innerHTML =
+        cleanLines.join("<br>");
+      // Toggle sales tax visibility
+      const taxRow = document.getElementById("tax-row");
+      if (taxRow) {
+        taxRow.style.display = c.type === "Restaurant" ? "flex" : "none";
+      }
+      recalcInvoiceTotals();
+    }
+    /* ===== FOOTER SELECTION FUNCTION ===== */
+    function updateInvoiceFooter() {
+      const footer = document.getElementById("invoice-footer");
+      if (!footer) return;
+
+      // Always reset
+      footer.innerHTML = "";
+
+      if (!selectedCustomer) return;
+
+      let message = "";
+
+      switch (selectedCustomer.paymentMethod) {
+        case "Check":
+          message = "MAKE CHECKS PAYABLE TO SUBURBAN BREWING COMPANY";
+          break;
+
+        case "Fintech":
+          message = "PAID THROUGH FINTECH";
+          break;
+
+        default:
+          message = "";
+      }
+
+      if (!message) return;
+
+      footer.innerHTML = `
     <div class="footer-message">
       ${message}
     </div>
   `;
-}
+    }
 
-/* ===== INVOICE BARCODE ===== */
-document.getElementById("invoice-number").addEventListener("change", e => {
-  const val = e.target.value.trim();
-  if (!val) return;
+    /* ===== INVOICE BARCODE ===== */
+    document.getElementById("invoice-number").addEventListener("change", e => {
+      const val = e.target.value.trim();
+      if (!val) return;
 
-  currentInvoiceNumber = val; // ✅ STORE IT
+      currentInvoiceNumber = val; // ✅ STORE IT
 
-  document.getElementById("invoice-number-row").innerHTML =
-    `<strong>Invoice #:</strong> <span id="invoice-number-text">${val}</span>`;
+      document.getElementById("invoice-number-row").innerHTML =
+        `<strong>Invoice #:</strong> <span id="invoice-number-text">${val}</span>`;
 
-  JsBarcode("#barcode", val, { height: 30, displayValue: false });
-});
-
-/* ===== LOAD PRODUCTS FUNCTION ===== */
-function loadProducts() {
-  fetch(`${API_URL}?action=getProducts`)
-    .then(r => r.json())
-    .then(data => {
-      products = data || [];
-      groupedProducts = {};
-
-      products.forEach(p => {
-        if (!groupedProducts[p.name]) {
-          groupedProducts[p.name] = {};
-        }
-
-        groupedProducts[p.name][p.package] = {
-          price: p.price,
-          sku: p.sku || ""
-        };
+      JsBarcode("#barcode", val, {
+        height: 30,
+        displayValue: false
       });
     });
-}
-  
-/* ===== LOAD INVENTORY FUNCTION ===== */
-  let inventoryMap = {};
-function loadInventory() {
-  fetch(`${API_URL}?action=getBreweryInventory`)
-    .then(r => r.json())
-    .then(data => {
-      inventoryMap = {};
 
-      data.forEach(product => {
-        const name = product.product;
+    /* ===== LOAD PRODUCTS FUNCTION ===== */
+    function loadProducts() {
+      fetch(`${API_URL}?action=getProducts`)
+        .then(r => r.json())
+        .then(data => {
+          products = data || [];
+          groupedProducts = {};
 
-        if (!inventoryMap[name]) inventoryMap[name] = {};
+          products.forEach(p => {
+            if (!groupedProducts[p.name]) {
+              groupedProducts[p.name] = {};
+            }
 
-        product.packages.forEach(pkg => {
-          inventoryMap[name][pkg.type] = Number(pkg.qty) || 0;
+            groupedProducts[p.name][p.package] = {
+              price: p.price,
+              sku: p.sku || ""
+            };
+          });
         });
-      });
+    }
 
-      console.log("INVENTORY MAP READY:", inventoryMap);
-    });
-}
+    /* ===== LOAD INVENTORY FUNCTION ===== */
+    let inventoryMap = {};
 
-/* ===== ADD PRODUCT ROW FUNCTION ===== */
-function addProductRow() {
-  const tbody = document.getElementById("product-body");
+    function loadInventory() {
+      fetch(`${API_URL}?action=getBreweryInventory`)
+        .then(r => r.json())
+        .then(data => {
+          inventoryMap = {};
 
-  /* ----- CREATE PRODUCT ROW ----- */
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
+          data.forEach(product => {
+            const name = product.product;
+
+            if (!inventoryMap[name]) inventoryMap[name] = {};
+
+            product.packages.forEach(pkg => {
+              inventoryMap[name][pkg.type] = Number(pkg.qty) || 0;
+            });
+          });
+
+          console.log("INVENTORY MAP READY:", inventoryMap);
+        });
+    }
+
+    /* ===== ADD PRODUCT ROW FUNCTION ===== */
+    function addProductRow() {
+      const tbody = document.getElementById("product-body");
+
+      /* ----- CREATE PRODUCT ROW ----- */
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
     <td>
       <input class="product-input" placeholder="Product..." autocomplete="off">
       <div class="product-suggestions"></div>
@@ -701,694 +756,693 @@ function addProductRow() {
     <td class="line-total">$0.00</td>
   `;
 
-  /* ----- REMOVE BUTTON ROW TEMPORARILY ----- */
-  if (addProductButtonRow) {
-    addProductButtonRow.remove();
-  }
+      /* ----- REMOVE BUTTON ROW TEMPORARILY ----- */
+      if (addProductButtonRow) {
+        addProductButtonRow.remove();
+      }
 
-  /* ----- APPEND PRODUCT ROW ----- */
-  tbody.appendChild(tr);
+      /* ----- APPEND PRODUCT ROW ----- */
+      tbody.appendChild(tr);
 
-  /* ----- RECREATE / MOVE BUTTON ROW ----- */
-  addProductButtonRow = document.createElement("tr");
-  addProductButtonRow.innerHTML = `
+      /* ----- RECREATE / MOVE BUTTON ROW ----- */
+      addProductButtonRow = document.createElement("tr");
+      addProductButtonRow.innerHTML = `
     <td colspan="6" style="text-align:left;">
       <button class="add-product-btn">+ Add another product</button>
     </td>
   `;
 
-  addProductButtonRow
-    .querySelector("button")
-    .onclick = addProductRow;
+      addProductButtonRow
+        .querySelector("button")
+        .onclick = addProductRow;
 
-  tbody.appendChild(addProductButtonRow);
+      tbody.appendChild(addProductButtonRow);
 
-  /* ----- WIRE LOGIC ----- */
-  wireProductRow(tr);
-}
+      /* ----- WIRE LOGIC ----- */
+      wireProductRow(tr);
+    }
 
-/* ===== WIRE PRODUCT ROW FUNCTION ===== */
-function wireProductRow(row) {
-  const input = row.querySelector(".product-input");
-  const suggestions = row.querySelector(".product-suggestions");
+    /* ===== WIRE PRODUCT ROW FUNCTION ===== */
+    function wireProductRow(row) {
+      const input = row.querySelector(".product-input");
+      const suggestions = row.querySelector(".product-suggestions");
 
-  input.addEventListener("input", () => {
-    suggestions.innerHTML = "";
-    const val = input.value.toLowerCase();
-    if (!val) return;
+      input.addEventListener("input", () => {
+        suggestions.innerHTML = "";
+        const val = input.value.toLowerCase();
+        if (!val) return;
 
-    Object.keys(groupedProducts)
-      .filter(p => p.toLowerCase().includes(val))
-      .forEach(p => {
-        const d = document.createElement("div");
-        d.textContent = p;
-        d.onclick = () => selectProduct(row, p);
-        suggestions.appendChild(d);
+        Object.keys(groupedProducts)
+          .filter(p => p.toLowerCase().includes(val))
+          .forEach(p => {
+            const d = document.createElement("div");
+            d.textContent = p;
+            d.onclick = () => selectProduct(row, p);
+            suggestions.appendChild(d);
+          });
       });
-  });
-}
-/* ===== SELECT PRODUCT FUNCTION ===== */
-function selectProduct(row, product) {
-
-  function createLowBadge(stock) {
-    const badge = document.createElement("span");
-    badge.textContent = `LOW (${stock})`;
-    badge.style.background = "#fde68a";
-    badge.style.color = "#92400e";
-    badge.style.fontSize = "10px";
-    badge.style.padding = "1px 4px";
-    badge.style.marginLeft = "6px";
-    badge.style.borderRadius = "4px";
-    return badge;
-  }
-
-  // ❌ PREVENT DUPLICATES
-  if (isProductAlreadySelected(product, row)) {
-    alert(`"${product}" is already on this invoice.\nPlease adjust quantities in the existing row.`);
-    row.querySelector(".product-input").value = "";
-    row.querySelector(".product-suggestions").innerHTML = "";
-    return;
-  }
-
-  row.querySelector(".product-input").value = product;
-  row.querySelector(".product-suggestions").innerHTML = "";
-
-  const typesCell = row.querySelector(".type-checkboxes");
-  const qtyCell = row.querySelector(".qty-group");
-  const barcodeCell = row.querySelector(".barcode-cell");
-
-  typesCell.innerHTML = "";
-  qtyCell.innerHTML = "";
-  barcodeCell.innerHTML = "";
-
-  ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
-    if (groupedProducts[product][type] === undefined) return;
-
-    const stock =
-      inventoryMap[product] &&
-      inventoryMap[product][type] !== undefined
-        ? Number(inventoryMap[product][type])
-        : null;
-
-    const label = document.createElement("label");
-    label.style.display = "block";
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.value = type;
-
-    // ❌ OUT OF STOCK
-    if (stock === 0) {
-      checkbox.disabled = true;
-      label.style.opacity = "0.5";
-      label.appendChild(checkbox);
-      label.append(` ${type} — Out of Stock`);
     }
+    /* ===== SELECT PRODUCT FUNCTION ===== */
+    function selectProduct(row, product) {
 
-    // ⚠️ LOW STOCK
-    else if (stock !== null && stock < 10) {
-      label.appendChild(checkbox);
-      label.append(` ${type} `);
-      label.appendChild(createLowBadge(stock));
-    }
-
-    // ✅ NORMAL
-    else {
-      label.appendChild(checkbox);
-      label.append(` ${type}`);
-    }
-
-    // 🔹 LIFECYCLE NOTE (FIXED — label exists, scope correct)
-    const lifecycleNote = getLifecycleWarning(product, type);
-    if (lifecycleNote) {
-      const note = document.createElement("div");
-      note.style.fontSize = "10px";
-      note.style.color = "#6b7280";
-      note.textContent = lifecycleNote;
-      label.appendChild(note);
-    }
-
-    checkbox.onchange = () => updateQuantities(row, product);
-    typesCell.appendChild(label);
-  });
-}
-
-  /* ===== LIFECYLCE WARNING FUNCTION ===== */
-function getLifecycleWarning(product, type) {
-  const lifecycle = products.find(
-    p => p.name === product && p.package === type
-  )?.lifecycle;
-
-  if (lifecycle === "Seasonal") return "⚠ Seasonal Item";
-  if (lifecycle === "Rotating") return "⏳ Rotating Item";
-  return null;
-}
-
-/* ===== UPDATE QUANTITIES FUNCTION ===== */
-function updateQuantities(row, product) {
-  const qtyCell = row.querySelector(".qty-group");
-  const priceCell = row.querySelector(".price-cell");
-  const barcodeCell = row.querySelector(".barcode-cell");
-
-  const checkboxes = row.querySelectorAll(".type-checkboxes input");
-
-  checkboxes.forEach(cb => {
-    const type = cb.value;
-
-    const existingQty = qtyCell.querySelector(`[data-type="${type}"]`);
-    const existingPrice = priceCell.querySelector(`[data-type="${type}"]`);
-
-    // ADD TYPE
-    if (cb.checked && !existingQty) {
-      /* ---------- QTY ---------- */
-      const qtyWrap = document.createElement("div");
-      qtyWrap.dataset.type = type;
-      qtyWrap.style.display = "flex";
-      qtyWrap.style.justifyContent = "space-between";
-      qtyWrap.style.gap = "6px";
-
-      const qtyLabel = document.createElement("span");
-      qtyLabel.textContent = type + ":";
-
-      const qtyInput = document.createElement("input");
-      qtyInput.type = "number";
-      qtyInput.min = 0;
-      qtyInput.value = 0;
-      qtyInput.style.width = "50px";
-      qtyInput.oninput = () => {
-  const max = inventoryMap[product]?.[type];
-
-  if (max !== undefined && Number(qtyInput.value) > max) {
-    qtyInput.value = max;
-    alert(`Only ${max} units of ${product} (${type}) available`);
-  }
-
-  recalcLine(row, product);
-};
-
-      qtyWrap.appendChild(qtyLabel);
-      qtyWrap.appendChild(qtyInput);
-      qtyCell.appendChild(qtyWrap);
-
-      /* ---------- PRICE ---------- */
-      const priceWrap = document.createElement("div");
-      priceWrap.dataset.type = type;
-      priceWrap.textContent =
-  `$${groupedProducts[product][type].price.toFixed(2)}`;
-
-      priceCell.appendChild(priceWrap);
-
-  /* ---------- BARCODE (CASE ONLY) ---------- */
-if (type === "Case") {
-  barcodeCell.innerHTML = "";
-
-  const sku = groupedProducts[product][type].sku;
-
-  if (!sku) {
-    barcodeCell.innerHTML =
-      `<em style="font-size:10px;color:#6b7280;">SKU missing</em>`;
-    return;
-  }
-
-  // ✅ CREATE SVG EXPLICITLY
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.classList.add("line-barcode");
-  barcodeCell.appendChild(svg);
-
-  // ✅ SAFE JsBarcode CALL
-  JsBarcode(svg, sku, {
-    format: "CODE128",
-    width: 1.2,
-    height: 36,
-    margin: 0,
-    displayValue: false
-  });
-}
- }
-    // REMOVE TYPE
-    if (!cb.checked && existingQty) {
-      existingQty.remove();
-      if (existingPrice) existingPrice.remove();
-
-      if (type === "Case") {
-        barcodeCell.innerHTML = "";
+      function createLowBadge(stock) {
+        const badge = document.createElement("span");
+        badge.textContent = `LOW (${stock})`;
+        badge.style.background = "#fde68a";
+        badge.style.color = "#92400e";
+        badge.style.fontSize = "10px";
+        badge.style.padding = "1px 4px";
+        badge.style.marginLeft = "6px";
+        badge.style.borderRadius = "4px";
+        return badge;
       }
-    }
-  });
 
-  recalcLine(row, product);
-}
-  /* ===== FOCUS FIRST PRODUCT ROW FUNCTION ===== */
-  function focusFirstProductRow() {
-  const firstProductInput = document.querySelector(".product-input");
-  if (firstProductInput) {
-    firstProductInput.focus();
-  }
-}
-
-/* ===== RECALCLINE FUNCTION ===== */
-function recalcLine(row, product) {
-  const totalCell = row.querySelector(".line-total");
-  totalCell.innerHTML = "";
-
-  let rowTotal = 0;
-
-  row.querySelectorAll(".qty-group div").forEach(div => {
-    const type = div.dataset.type;
-    const qty = Number(div.querySelector("input").value || 0);
-    const price = groupedProducts[product][type].price;
-    const lineTotal = qty * price;
-
-    rowTotal += lineTotal;
-
-    const line = document.createElement("div");
-    line.textContent = `$${lineTotal.toFixed(2)}`;
-    totalCell.appendChild(line);
-  });
-
-  // 🔑 THIS IS WHAT WAS MISSING
-  totalCell.dataset.value = rowTotal;
-
-  recalcInvoiceTotals();
-}
-
-  /* ===== RECALC INVOICE TOTAL FUNCTION ===== */
-function recalcInvoiceTotals() {
-  let subtotal = 0;
-
-  // ----- PRODUCT SUBTOTAL -----
-  document.querySelectorAll(".line-total").forEach(cell => {
-  if (cell.dataset.value !== undefined) {
-    subtotal += Number(cell.dataset.value);
-  }
-});
-
-  // ----- CASE DISCOUNT (10%) -----
-  const totalCases = getTotalCaseQty();
-  let discount = 0;
-
-  if (totalCases >= 10) {
-    discount = subtotal * 0.10;
-    document.getElementById("discount-row").style.display = "flex";
-  } else {
-    document.getElementById("discount-row").style.display = "none";
-  }
-
-  document.getElementById("invoice-discount").textContent =
-    "-$" + discount.toFixed(2);
-
-  const discountedSubtotal = subtotal - discount;
-
-  // ----- KEG DEPOSIT -----
-  const deposit = recalcKegDeposit();
-
-  // ----- SALES TAX -----
-  const isRestaurant =
-    selectedCustomer && selectedCustomer.type === "Restaurant";
-
-  const taxRate = 0.06;
-  const tax = isRestaurant ? discountedSubtotal * taxRate : 0;
-
-  // ----- FINAL TOTAL -----
-  const total = discountedSubtotal + tax + deposit;
-
-  // ----- UPDATE UI -----
-  document.getElementById("invoice-subtotal").textContent =
-    "$" + subtotal.toFixed(2);
-
-  document.getElementById("invoice-tax").textContent =
-    "$" + tax.toFixed(2);
-
-  document.getElementById("invoice-total").textContent =
-    "$" + total.toFixed(2);
-}
-
-  /* ===== RECALC KEG DEPOSIT FUNCTION ===== */
-function recalcKegDeposit() {
-  let depositTotal = 0;
-
-  document.querySelectorAll("#product-body tr").forEach(row => {
-    if (!row.querySelector(".qty-group")) return;
-
-    row.querySelectorAll(".qty-group div").forEach(div => {
-      const type = div.dataset.type;
-      const qty = Number(div.querySelector("input").value || 0);
-
-      if (KEG_DEPOSITS[type] && qty > 0) {
-        depositTotal += qty * KEG_DEPOSITS[type];
-      }
-    });
-  });
-
-  const depositRow = document.getElementById("deposit-row");
-
-  if (depositTotal > 0) {
-    depositRow.style.display = "block";
-    document.getElementById("invoice-deposit").textContent =
-      "$" + depositTotal.toFixed(2);
-  } else {
-    depositRow.style.display = "none";
-    document.getElementById("invoice-deposit").textContent = "$0.00";
-  }
-
-  return depositTotal;
-}
-  /* ===== TOTAL CASE QUANTITY FUNCTION ===== */
-function getTotalCaseQty() {
-  let total = 0;
-
-  document.querySelectorAll(".qty-group div").forEach(div => {
-    if (div.dataset.type === "Case") {
-      total += Number(div.querySelector("input").value || 0);
-    }
-  });
-
-  return total;
-}
-   /* ===== OPEN NEW CUSTOMER MODAL FUNCTION ===== */
-function openNewCustomerModal(prefillName = "") {
-  const exists = customers.some(c =>
-  c.name.toLowerCase() === prefillName.toLowerCase()
-);
-
-if (exists) {
-  alert("Customer already exists");
-  return;
-}
-  document.getElementById("new-customer-modal").style.display = "block";
-
-  document.getElementById("new-cust-name").value = prefillName;
-  document.getElementById("new-cust-address").value = "";
-  document.getElementById("new-cust-city").value = "";
-  document.getElementById("new-cust-state").value = "";
-  document.getElementById("new-cust-zip").value = "";
-
-  document.getElementById("new-cust-type").value = "Restaurant";
-  document.getElementById("new-cust-payment").value = "Check";
-}
-  
- /* ===== CLOSE NEW CUSTROMER MODAL FUNCTION ===== */
-function closeNewCustomerModal() {
-  document.getElementById("new-customer-modal").style.display = "none";
-}
-  
- /* ===== SAVE NEW CUSTOMER FUNCTION ===== */
-function saveNewCustomer() {
-  const name = document.getElementById("new-cust-name").value.trim();
-  const street = document.getElementById("new-cust-address").value.trim();
-  const city = document.getElementById("new-cust-city").value.trim();
-  const state = document.getElementById("new-cust-state").value.trim();
-  const zip = document.getElementById("new-cust-zip").value.trim();
-  const type = document.getElementById("new-cust-type").value;
-  const paymentMethod = document.getElementById("new-cust-payment").value;
-
-  if (!name) {
-    alert("Customer name is required");
-    return;
-  }
-
-  // 🔧 Build address string (keeps rest of system intact)
-  const addressParts = [street, city, state, zip].filter(Boolean);
-  const address = addressParts.join(", ");
-
-  const duplicate = customers.some(c =>
-  c.name.toLowerCase() === name.toLowerCase()
-);
-
-if (duplicate) {
-  alert("This customer already exists.");
-  return;
-}
-
-  const newCustomer = {
-    name,
-    address,
-    type,
-    paymentMethod
-  };
-
-  fetch(`${API_URL}?action=addCustomer`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(newCustomer)
-})
-.then(r => r.json())
-.then(res => {
-  if (res.success) {
-    customers.push(newCustomer); // keep local list updated
-    closeNewCustomerModal();
-    selectCustomer(newCustomer);
-    focusFirstProductRow();
-  } else {
-    alert("Failed to save customer");
-  }
-})
-.catch(() => {
-  // Fallback (offline-safe)
-  customers.push(newCustomer);
-  closeNewCustomerModal();
-  selectCustomer(newCustomer);
-  focusFirstProductRow();
-});
-}
-  /* ===== BUILD INVOICE PAYLOAD FUNCTION ===== */
-  function buildInvoicePayload() {
-  if (!selectedCustomer) {
-    alert("Select a customer first");
-    return null;
-  }
-
-  const items = [];
-
-  document.querySelectorAll("#product-body tr").forEach(row => {
-    const productInput = row.querySelector(".product-input");
-    if (!productInput || !productInput.value) return;
-
-    const productName = productInput.value;
-
-    row.querySelectorAll(".qty-group div").forEach(div => {
-      const type = div.dataset.type;
-      const qty = Number(div.querySelector("input").value || 0);
-
-      if (qty <= 0) return;
-
-      items.push({
-        product: productName,
-        type: type,
-        qty: qty,
-        price: groupedProducts[productName][type].price,
-        sku: groupedProducts[productName][type].sku || ""
-      });
-    });
-  });
-
-  if (items.length === 0) {
-    alert("Add at least one product");
-    return null;
-  }
-
-  const subtotal = Number(
-    document.getElementById("invoice-subtotal").textContent.replace("$", "")
-  );
-
-  const discount =
-    document.getElementById("discount-row").style.display !== "none"
-      ? Number(
-          document
-            .getElementById("invoice-discount")
-            .textContent.replace(/[^0-9.-]/g, "")
-        )
-      : 0;
-
-  const deposit =
-    document.getElementById("deposit-row").style.display !== "none"
-      ? Number(
-          document
-            .getElementById("invoice-deposit")
-            .textContent.replace("$", "")
-        )
-      : 0;
-
-  const tax =
-    document.getElementById("tax-row").style.display !== "none"
-      ? Number(
-          document
-            .getElementById("invoice-tax")
-            .textContent.replace("$", "")
-        )
-      : 0;
-
-  const total = Number(
-    document.getElementById("invoice-total").textContent.replace("$", "")
-  );
-
-  return {
-  invoiceNumber: currentInvoiceNumber,
-  customer: selectedCustomer.name,
-  address: selectedCustomer.address,
-  customerType: selectedCustomer.type,
-  paymentMethod: selectedCustomer.paymentMethod,
-
-  subtotal,
-  discount,
-  tax,
-  deposit,
-  total,
-
-  items
-};
-}
-/* ===============================
-   BUTTON STATE CONTROL
-   =============================== */
-
-// Disable Print + Email on load
-document.getElementById("print-invoice-btn").disabled = true;
-document.getElementById("email-invoice-btn").disabled = true;
-
-/* ===== SAVE INVOICE FUNCTION ===== */
-function saveInvoice() {
-  const payload = buildInvoicePayload();
-  if (!payload) return;
-
-  const url =
-    API_URL +
-    "?action=saveInvoice" +
-    "&data=" +
-    encodeURIComponent(JSON.stringify(payload));
-
-  fetch(url)
-  .then(r => r.json())
-  .then(res => {
-    if (!res.success) {
-      console.error(res);
-      alert("Save failed");
-      return;
-    }
-// Enable buttons AFTER save
-      document.getElementById("print-invoice-btn").disabled = false;
-      document.getElementById("email-invoice-btn").disabled = false;
-    
-    // ✅ store for later overwrite when delivered
-    window.currentInvoiceFileId = res.fileId;
-
-    // ✅ optional: store invoice number too
-    window.currentInvoiceNumber = res.invoiceNumber;
-
-    alert("Invoice saved successfully");
-
-    // ✅ open PDF immediately (or comment out if you prefer)
-    if (res.pdfUrl) {
-      window.open(res.pdfUrl, "_blank");
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Network error saving invoice");
-  });
-}
-document.getElementById("save-invoice-btn").addEventListener("click", saveInvoice);
-  /* ===== PRINT INVOICE FUNCTION ===== */
-function printInvoice() {
-  if (!window.currentInvoiceFileId) {
-    alert("Invoice must be saved before printing");
-    return;
-  }
-
-  const pdfUrl =
-    "https://drive.google.com/file/d/" +
-    window.currentInvoiceFileId +
-    "/preview";
-
-  const printWindow = window.open(pdfUrl, "_blank");
-
-  if (!printWindow) {
-    alert("Popup blocked — allow popups to print");
-    return;
-  }
-
-  // Give Drive preview time to load before print
-  setTimeout(() => {
-    printWindow.focus();
-    printWindow.print();
-  }, 1500);
-}
-document
-  .getElementById("print-invoice-btn")
-  .addEventListener("click", printInvoice);
-
-  /* ===== PRINT INVOICE FUNCTION ===== */
-  function emailInvoice() {
-  if (!window.currentInvoiceFileId || !window.currentInvoiceNumber) {
-    alert("Invoice must be saved before emailing");
-    return;
-  }
-
-  fetch(API_URL + "?action=emailInvoice", {
-    method: "POST",
-    contentType: "application/json",
-    body: JSON.stringify({
-      fileId: window.currentInvoiceFileId,
-      invoiceNumber: window.currentInvoiceNumber
-    })
-  })
-    .then(r => r.json())
-    .then(res => {
-      if (!res.success) {
-        console.error(res);
-        alert("Email failed");
+      // ❌ PREVENT DUPLICATES
+      if (isProductAlreadySelected(product, row)) {
+        alert(`"${product}" is already on this invoice.\nPlease adjust quantities in the existing row.`);
+        row.querySelector(".product-input").value = "";
+        row.querySelector(".product-suggestions").innerHTML = "";
         return;
       }
 
-      alert("Invoice emailed successfully");
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Network error emailing invoice");
-    });
-}
+      row.querySelector(".product-input").value = product;
+      row.querySelector(".product-suggestions").innerHTML = "";
 
-document
-  .getElementById("email-invoice-btn")
-  .addEventListener("click", emailInvoice);
+      const typesCell = row.querySelector(".type-checkboxes");
+      const qtyCell = row.querySelector(".qty-group");
+      const barcodeCell = row.querySelector(".barcode-cell");
 
-</script>
-<!-- ===== NEW CUSTOMER MODAL ===== -->
-<div id="new-customer-modal"
-     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
+      typesCell.innerHTML = "";
+      qtyCell.innerHTML = "";
+      barcodeCell.innerHTML = "";
 
-  <div style="background:#fff; width:420px; margin:10% auto; padding:20px; border-radius:6px;">
-  <h3 style="margin-top:0;">Add New Customer</h3>
+      ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
+        if (groupedProducts[product][type] === undefined) return;
 
-  <label>Name</label>
-  <input id="new-cust-name" style="width:100%; margin-bottom:8px;">
+        const stock =
+          inventoryMap[product] &&
+          inventoryMap[product][type] !== undefined ?
+          Number(inventoryMap[product][type]) :
+          null;
 
-  <label>Address</label>
-  <input id="new-cust-address" placeholder="Street Address" style="width:100%; margin-bottom:6px;">
+        const label = document.createElement("label");
+        label.style.display = "block";
 
-  <div style="display:flex; gap:6px; margin-bottom:6px;">
-    <input id="new-cust-city" placeholder="City" style="flex:2;">
-    <input id="new-cust-state" placeholder="State" style="flex:1;">
-    <input id="new-cust-zip" placeholder="Zip" style="flex:1;">
-  </div>
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = type;
 
-  <label>Customer Type</label>
-  <select id="new-cust-type" style="width:100%; margin-bottom:8px;">
-    <option value="Restaurant">Restaurant</option>
-    <option value="Wholesaler">Wholesaler</option>
-  </select>
+        // ❌ OUT OF STOCK
+        if (stock === 0) {
+          checkbox.disabled = true;
+          label.style.opacity = "0.5";
+          label.appendChild(checkbox);
+          label.append(` ${type} — Out of Stock`);
+        }
 
-  <label>Payment Method</label>
-  <select id="new-cust-payment" style="width:100%; margin-bottom:12px;">
-    <option value="Check">Check</option>
-    <option value="Fintech">Fintech</option>
-  </select>
+        // ⚠️ LOW STOCK
+        else if (stock !== null && stock < 10) {
+          label.appendChild(checkbox);
+          label.append(` ${type} `);
+          label.appendChild(createLowBadge(stock));
+        }
 
-  <div style="text-align:right;">
-    <button onclick="closeNewCustomerModal()">Cancel</button>
-    <button onclick="saveNewCustomer()">Save Customer</button>
-  </div>
-</div>
+        // ✅ NORMAL
+        else {
+          label.appendChild(checkbox);
+          label.append(` ${type}`);
+        }
+
+        // 🔹 LIFECYCLE NOTE (FIXED — label exists, scope correct)
+        const lifecycleNote = getLifecycleWarning(product, type);
+        if (lifecycleNote) {
+          const note = document.createElement("div");
+          note.style.fontSize = "10px";
+          note.style.color = "#6b7280";
+          note.textContent = lifecycleNote;
+          label.appendChild(note);
+        }
+
+        checkbox.onchange = () => updateQuantities(row, product);
+        typesCell.appendChild(label);
+      });
+    }
+
+    /* ===== LIFECYLCE WARNING FUNCTION ===== */
+    function getLifecycleWarning(product, type) {
+      const lifecycle = products.find(
+        p => p.name === product && p.package === type
+      )?.lifecycle;
+
+      if (lifecycle === "Seasonal") return "⚠ Seasonal Item";
+      if (lifecycle === "Rotating") return "⏳ Rotating Item";
+      return null;
+    }
+
+    /* ===== UPDATE QUANTITIES FUNCTION ===== */
+    function updateQuantities(row, product) {
+      const qtyCell = row.querySelector(".qty-group");
+      const priceCell = row.querySelector(".price-cell");
+      const barcodeCell = row.querySelector(".barcode-cell");
+
+      const checkboxes = row.querySelectorAll(".type-checkboxes input");
+
+      checkboxes.forEach(cb => {
+        const type = cb.value;
+
+        const existingQty = qtyCell.querySelector(`[data-type="${type}"]`);
+        const existingPrice = priceCell.querySelector(`[data-type="${type}"]`);
+
+        // ADD TYPE
+        if (cb.checked && !existingQty) {
+          /* ---------- QTY ---------- */
+          const qtyWrap = document.createElement("div");
+          qtyWrap.dataset.type = type;
+          qtyWrap.style.display = "flex";
+          qtyWrap.style.justifyContent = "space-between";
+          qtyWrap.style.gap = "6px";
+
+          const qtyLabel = document.createElement("span");
+          qtyLabel.textContent = type + ":";
+
+          const qtyInput = document.createElement("input");
+          qtyInput.type = "number";
+          qtyInput.min = 0;
+          qtyInput.value = 0;
+          qtyInput.style.width = "50px";
+          qtyInput.oninput = () => {
+            const max = inventoryMap[product]?.[type];
+
+            if (max !== undefined && Number(qtyInput.value) > max) {
+              qtyInput.value = max;
+              alert(`Only ${max} units of ${product} (${type}) available`);
+            }
+
+            recalcLine(row, product);
+          };
+
+          qtyWrap.appendChild(qtyLabel);
+          qtyWrap.appendChild(qtyInput);
+          qtyCell.appendChild(qtyWrap);
+
+          /* ---------- PRICE ---------- */
+          const priceWrap = document.createElement("div");
+          priceWrap.dataset.type = type;
+          priceWrap.textContent =
+            `$${groupedProducts[product][type].price.toFixed(2)}`;
+
+          priceCell.appendChild(priceWrap);
+
+          /* ---------- BARCODE (CASE ONLY) ---------- */
+          if (type === "Case") {
+            barcodeCell.innerHTML = "";
+
+            const sku = groupedProducts[product][type].sku;
+
+            if (!sku) {
+              barcodeCell.innerHTML =
+                `<em style="font-size:10px;color:#6b7280;">SKU missing</em>`;
+              return;
+            }
+
+            // ✅ CREATE SVG EXPLICITLY
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.classList.add("line-barcode");
+            barcodeCell.appendChild(svg);
+
+            // ✅ SAFE JsBarcode CALL
+            JsBarcode(svg, sku, {
+              format: "CODE128",
+              width: 1.2,
+              height: 36,
+              margin: 0,
+              displayValue: false
+            });
+          }
+        }
+        // REMOVE TYPE
+        if (!cb.checked && existingQty) {
+          existingQty.remove();
+          if (existingPrice) existingPrice.remove();
+
+          if (type === "Case") {
+            barcodeCell.innerHTML = "";
+          }
+        }
+      });
+
+      recalcLine(row, product);
+    }
+    /* ===== FOCUS FIRST PRODUCT ROW FUNCTION ===== */
+    function focusFirstProductRow() {
+      const firstProductInput = document.querySelector(".product-input");
+      if (firstProductInput) {
+        firstProductInput.focus();
+      }
+    }
+
+    /* ===== RECALCLINE FUNCTION ===== */
+    function recalcLine(row, product) {
+      const totalCell = row.querySelector(".line-total");
+      totalCell.innerHTML = "";
+
+      let rowTotal = 0;
+
+      row.querySelectorAll(".qty-group div").forEach(div => {
+        const type = div.dataset.type;
+        const qty = Number(div.querySelector("input").value || 0);
+        const price = groupedProducts[product][type].price;
+        const lineTotal = qty * price;
+
+        rowTotal += lineTotal;
+
+        const line = document.createElement("div");
+        line.textContent = `$${lineTotal.toFixed(2)}`;
+        totalCell.appendChild(line);
+      });
+
+      // 🔑 THIS IS WHAT WAS MISSING
+      totalCell.dataset.value = rowTotal;
+
+      recalcInvoiceTotals();
+    }
+
+    /* ===== RECALC INVOICE TOTAL FUNCTION ===== */
+    function recalcInvoiceTotals() {
+      let subtotal = 0;
+
+      // ----- PRODUCT SUBTOTAL -----
+      document.querySelectorAll(".line-total").forEach(cell => {
+        if (cell.dataset.value !== undefined) {
+          subtotal += Number(cell.dataset.value);
+        }
+      });
+
+      // ----- CASE DISCOUNT (10%) -----
+      const totalCases = getTotalCaseQty();
+      let discount = 0;
+
+      if (totalCases >= 10) {
+        discount = subtotal * 0.10;
+        document.getElementById("discount-row").style.display = "flex";
+      } else {
+        document.getElementById("discount-row").style.display = "none";
+      }
+
+      document.getElementById("invoice-discount").textContent =
+        "-$" + discount.toFixed(2);
+
+      const discountedSubtotal = subtotal - discount;
+
+      // ----- KEG DEPOSIT -----
+      const deposit = recalcKegDeposit();
+
+      // ----- SALES TAX -----
+      const isRestaurant =
+        selectedCustomer && selectedCustomer.type === "Restaurant";
+
+      const taxRate = 0.06;
+      const tax = isRestaurant ? discountedSubtotal * taxRate : 0;
+
+      // ----- FINAL TOTAL -----
+      const total = discountedSubtotal + tax + deposit;
+
+      // ----- UPDATE UI -----
+      document.getElementById("invoice-subtotal").textContent =
+        "$" + subtotal.toFixed(2);
+
+      document.getElementById("invoice-tax").textContent =
+        "$" + tax.toFixed(2);
+
+      document.getElementById("invoice-total").textContent =
+        "$" + total.toFixed(2);
+    }
+
+    /* ===== RECALC KEG DEPOSIT FUNCTION ===== */
+    function recalcKegDeposit() {
+      let depositTotal = 0;
+
+      document.querySelectorAll("#product-body tr").forEach(row => {
+        if (!row.querySelector(".qty-group")) return;
+
+        row.querySelectorAll(".qty-group div").forEach(div => {
+          const type = div.dataset.type;
+          const qty = Number(div.querySelector("input").value || 0);
+
+          if (KEG_DEPOSITS[type] && qty > 0) {
+            depositTotal += qty * KEG_DEPOSITS[type];
+          }
+        });
+      });
+
+      const depositRow = document.getElementById("deposit-row");
+
+      if (depositTotal > 0) {
+        depositRow.style.display = "block";
+        document.getElementById("invoice-deposit").textContent =
+          "$" + depositTotal.toFixed(2);
+      } else {
+        depositRow.style.display = "none";
+        document.getElementById("invoice-deposit").textContent = "$0.00";
+      }
+
+      return depositTotal;
+    }
+    /* ===== TOTAL CASE QUANTITY FUNCTION ===== */
+    function getTotalCaseQty() {
+      let total = 0;
+
+      document.querySelectorAll(".qty-group div").forEach(div => {
+        if (div.dataset.type === "Case") {
+          total += Number(div.querySelector("input").value || 0);
+        }
+      });
+
+      return total;
+    }
+    /* ===== OPEN NEW CUSTOMER MODAL FUNCTION ===== */
+    function openNewCustomerModal(prefillName = "") {
+      const exists = customers.some(c =>
+        c.name.toLowerCase() === prefillName.toLowerCase()
+      );
+
+      if (exists) {
+        alert("Customer already exists");
+        return;
+      }
+      document.getElementById("new-customer-modal").style.display = "block";
+
+      document.getElementById("new-cust-name").value = prefillName;
+      document.getElementById("new-cust-address").value = "";
+      document.getElementById("new-cust-city").value = "";
+      document.getElementById("new-cust-state").value = "";
+      document.getElementById("new-cust-zip").value = "";
+
+      document.getElementById("new-cust-type").value = "Restaurant";
+      document.getElementById("new-cust-payment").value = "Check";
+    }
+
+    /* ===== CLOSE NEW CUSTROMER MODAL FUNCTION ===== */
+    function closeNewCustomerModal() {
+      document.getElementById("new-customer-modal").style.display = "none";
+    }
+
+    /* ===== SAVE NEW CUSTOMER FUNCTION ===== */
+    function saveNewCustomer() {
+      const name = document.getElementById("new-cust-name").value.trim();
+      const street = document.getElementById("new-cust-address").value.trim();
+      const city = document.getElementById("new-cust-city").value.trim();
+      const state = document.getElementById("new-cust-state").value.trim();
+      const zip = document.getElementById("new-cust-zip").value.trim();
+      const type = document.getElementById("new-cust-type").value;
+      const paymentMethod = document.getElementById("new-cust-payment").value;
+
+      if (!name) {
+        alert("Customer name is required");
+        return;
+      }
+
+      // 🔧 Build address string (keeps rest of system intact)
+      const addressParts = [street, city, state, zip].filter(Boolean);
+      const address = addressParts.join(", ");
+
+      const duplicate = customers.some(c =>
+        c.name.toLowerCase() === name.toLowerCase()
+      );
+
+      if (duplicate) {
+        alert("This customer already exists.");
+        return;
+      }
+
+      const newCustomer = {
+        name,
+        address,
+        type,
+        paymentMethod
+      };
+
+      fetch(`${API_URL}?action=addCustomer`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(newCustomer)
+        })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            customers.push(newCustomer); // keep local list updated
+            closeNewCustomerModal();
+            selectCustomer(newCustomer);
+            focusFirstProductRow();
+          } else {
+            alert("Failed to save customer");
+          }
+        })
+        .catch(() => {
+          // Fallback (offline-safe)
+          customers.push(newCustomer);
+          closeNewCustomerModal();
+          selectCustomer(newCustomer);
+          focusFirstProductRow();
+        });
+    }
+    /* ===== BUILD INVOICE PAYLOAD FUNCTION ===== */
+    function buildInvoicePayload() {
+      if (!selectedCustomer) {
+        alert("Select a customer first");
+        return null;
+      }
+
+      const items = [];
+
+      document.querySelectorAll("#product-body tr").forEach(row => {
+        const productInput = row.querySelector(".product-input");
+        if (!productInput || !productInput.value) return;
+
+        const productName = productInput.value;
+
+        row.querySelectorAll(".qty-group div").forEach(div => {
+          const type = div.dataset.type;
+          const qty = Number(div.querySelector("input").value || 0);
+
+          if (qty <= 0) return;
+
+          items.push({
+            product: productName,
+            type: type,
+            qty: qty,
+            price: groupedProducts[productName][type].price,
+            sku: groupedProducts[productName][type].sku || ""
+          });
+        });
+      });
+
+      if (items.length === 0) {
+        alert("Add at least one product");
+        return null;
+      }
+
+      const subtotal = Number(
+        document.getElementById("invoice-subtotal").textContent.replace("$", "")
+      );
+
+      const discount =
+        document.getElementById("discount-row").style.display !== "none" ?
+        Number(
+          document
+          .getElementById("invoice-discount")
+          .textContent.replace(/[^0-9.-]/g, "")
+        ) :
+        0;
+
+      const deposit =
+        document.getElementById("deposit-row").style.display !== "none" ?
+        Number(
+          document
+          .getElementById("invoice-deposit")
+          .textContent.replace("$", "")
+        ) :
+        0;
+
+      const tax =
+        document.getElementById("tax-row").style.display !== "none" ?
+        Number(
+          document
+          .getElementById("invoice-tax")
+          .textContent.replace("$", "")
+        ) :
+        0;
+
+      const total = Number(
+        document.getElementById("invoice-total").textContent.replace("$", "")
+      );
+
+      return {
+        invoiceNumber: currentInvoiceNumber,
+        customer: selectedCustomer.name,
+        address: selectedCustomer.address,
+        customerType: selectedCustomer.type,
+        paymentMethod: selectedCustomer.paymentMethod,
+
+        subtotal,
+        discount,
+        tax,
+        deposit,
+        total,
+
+        items
+      };
+    }
+    /* ===============================
+       BUTTON STATE CONTROL
+       =============================== */
+
+    // Disable Print + Email on load
+    document.getElementById("print-invoice-btn").disabled = true;
+    document.getElementById("email-invoice-btn").disabled = true;
+
+    /* ===== SAVE INVOICE FUNCTION ===== */
+    function saveInvoice() {
+      const payload = buildInvoicePayload();
+      if (!payload) return;
+
+      const url =
+        API_URL +
+        "?action=saveInvoice" +
+        "&data=" +
+        encodeURIComponent(JSON.stringify(payload));
+
+      fetch(url)
+        .then(r => r.json())
+        .then(res => {
+          if (!res.success) {
+            console.error(res);
+            alert("Save failed");
+            return;
+          }
+          // Enable buttons AFTER save
+          document.getElementById("print-invoice-btn").disabled = false;
+          document.getElementById("email-invoice-btn").disabled = false;
+
+          // ✅ store for later overwrite when delivered
+          window.currentInvoiceFileId = res.fileId;
+
+          // ✅ optional: store invoice number too
+          window.currentInvoiceNumber = res.invoiceNumber;
+
+          alert("Invoice saved successfully");
+
+          // ✅ open PDF immediately (or comment out if you prefer)
+          if (res.pdfUrl) {
+            window.open(res.pdfUrl, "_blank");
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Network error saving invoice");
+        });
+    }
+    document.getElementById("save-invoice-btn").addEventListener("click", saveInvoice);
+    /* ===== PRINT INVOICE FUNCTION ===== */
+    function printInvoice() {
+      if (!window.currentInvoiceFileId) {
+        alert("Invoice must be saved before printing");
+        return;
+      }
+
+      const pdfUrl =
+        "https://drive.google.com/file/d/" +
+        window.currentInvoiceFileId +
+        "/preview";
+
+      const printWindow = window.open(pdfUrl, "_blank");
+
+      if (!printWindow) {
+        alert("Popup blocked — allow popups to print");
+        return;
+      }
+
+      // Give Drive preview time to load before print
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 1500);
+    }
+    document
+      .getElementById("print-invoice-btn")
+      .addEventListener("click", printInvoice);
+
+    /* ===== PRINT INVOICE FUNCTION ===== */
+    function emailInvoice() {
+      if (!window.currentInvoiceFileId || !window.currentInvoiceNumber) {
+        alert("Invoice must be saved before emailing");
+        return;
+      }
+
+      fetch(API_URL + "?action=emailInvoice", {
+          method: "POST",
+          contentType: "application/json",
+          body: JSON.stringify({
+            fileId: window.currentInvoiceFileId,
+            invoiceNumber: window.currentInvoiceNumber
+          })
+        })
+        .then(r => r.json())
+        .then(res => {
+          if (!res.success) {
+            console.error(res);
+            alert("Email failed");
+            return;
+          }
+
+          alert("Invoice emailed successfully");
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Network error emailing invoice");
+        });
+    }
+
+    document
+      .getElementById("email-invoice-btn")
+      .addEventListener("click", emailInvoice);
+  </script>
+  <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
+
+    <div style="background:#fff; width:420px; margin:10% auto; padding:20px; border-radius:6px;">
+      <h3 style="margin-top:0;">Add New Customer</h3>
+
+      <label>Name</label>
+      <input id="new-cust-name" style="width:100%; margin-bottom:8px;">
+
+      <label>Address</label>
+      <input id="new-cust-address" placeholder="Street Address" style="width:100%; margin-bottom:6px;">
+
+      <div style="display:flex; gap:6px; margin-bottom:6px;">
+        <input id="new-cust-city" placeholder="City" style="flex:2;">
+        <input id="new-cust-state" placeholder="State" style="flex:1;">
+        <input id="new-cust-zip" placeholder="Zip" style="flex:1;">
+      </div>
+
+      <label>Customer Type</label>
+      <select id="new-cust-type" style="width:100%; margin-bottom:8px;">
+        <option value="Restaurant">Restaurant</option>
+        <option value="Wholesaler">Wholesaler</option>
+      </select>
+
+      <label>Payment Method</label>
+      <select id="new-cust-payment" style="width:100%; margin-bottom:12px;">
+        <option value="Check">Check</option>
+        <option value="Fintech">Fintech</option>
+      </select>
+
+      <div style="text-align:right;">
+        <button onclick="closeNewCustomerModal()">Cancel</button>
+        <button onclick="saveNewCustomer()">Save Customer</button>
+      </div>
+    </div>
 
 </body>
 </html>
