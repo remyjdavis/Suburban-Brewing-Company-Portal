@@ -249,8 +249,8 @@
 
         <div class="card card-quality" onclick="location.href='Samplings/sampling-calendar.html'" style="cursor:pointer;">
           <h3>Next Sampling</h3>
-          <div class="val" style="font-size: 20px; margin-top: 15px;">The Beer Spot</div>
-          <p>Today @ 5:00 PM</p>
+          <div class="val" id="nextSamplingClient" style="font-size: 20px; margin-top: 15px;">Loading...</div>
+          <p id="nextSamplingDetails">Checking Schedule...</p>
         </div>
 
         <div class="card card-quality" id="sensoryAlertCard" style="cursor:pointer;">
@@ -383,6 +383,7 @@
 
     function runAllSyncs() {
         syncZone1();
+        syncSamplingCard();
         refreshCellarTanks();
         checkSensoryAlerts();
         refreshMLEngine();
@@ -411,9 +412,20 @@
         } catch (e) { console.error("Zone 1 Sync Failed", e); }
     }
 
+    // --- 2. SAMPLING CARD SYNC ---
+    async function syncSamplingCard() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getNextSampling`);
+            const json = await res.json();
+            if (json.status === 'success') {
+                document.getElementById('nextSamplingClient').innerText = json.client;
+                document.getElementById('nextSamplingDetails').innerText = `${json.displayDate} @ ${json.time}`;
+            }
+        } catch (e) { console.error("Sampling Sync Failed", e); }
+    }
+
     /**
      * MODAL POP-UP LOGIC: DETAILED DAILY ROUTE
-     * FIXED: No longer redirecting. Triggers SweetAlert2 window.
      */
     function showRouteDetails() {
       if (currentRouteData.length === 0) {
@@ -451,14 +463,7 @@
       });
     }
 
-    // --- TOGGLE FUNCTION ---
-    function toggleGroup(contentId, headerEl) {
-      const content = document.getElementById(contentId);
-      content.classList.toggle('collapsed');
-      headerEl.classList.toggle('collapsed');
-    }
-
-    // ... refreshCellarTanks, checkSensoryAlerts, and refreshMLEngine logic ...
+    // --- SENSORY ALERT CHECKER ---
     async function checkSensoryAlerts() {
       try {
         const payload = { action: 'getBlindSamples' };
@@ -497,6 +502,7 @@
         document.getElementById('sensoryAlertCard').style.borderLeftWidth = "1px";
     }
 
+    // --- CELLAR TANK SYNC ---
     async function refreshCellarTanks() {
         const categories = {
             'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"],
@@ -538,6 +544,7 @@
         } catch (e) { console.error("Cellar Error:", e); }
     }
 
+    // --- ML ENGINE SYNC ---
     async function refreshMLEngine() {
         const effDisplay = document.getElementById('ml-efficiency-display');
         const advice = document.getElementById('ml-advice');
@@ -568,19 +575,13 @@
             if (advice) advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
         } catch (e) { console.error("ML Error:", e); }
     }
-    async function syncSamplingCard() {
-    try {
-        const res = await fetch(`${MASTER_API_URL}?action=getNextSampling`);
-        const json = await res.json();
-        if (json.status === 'success') {
-            const card = document.querySelector('.card-quality'); // Card 3
-            card.querySelector('.val').innerText = json.client;
-            card.querySelector('p').innerText = `${json.displayDate} @ ${json.time}`;
-        }
-    } catch (e) { console.error("Sampling Sync Failed", e); }
-}
 
-// Add syncSamplingCard() to your runAllSyncs() function
+    // --- TOGGLE FUNCTION ---
+    function toggleGroup(contentId, headerEl) {
+      const content = document.getElementById(contentId);
+      content.classList.toggle('collapsed');
+      headerEl.classList.toggle('collapsed');
+    }
   </script>
 </body>
 </html>
