@@ -228,10 +228,10 @@
       <div id="current-date" style="color: var(--text-muted); font-size: 14px; font-weight: 500;"></div>
     </header>
 
-    <div class="section-heading" onclick="toggleGroup('sect-alerts', this)">
-      <span>Zone 1: Daily Operations & Alerts</span><span class="chevron">▼</span>
+    <div class="section-heading" onclick="toggleGroup('sect-sales', this)">
+      <span>Zone 1: Sales Intelligence</span><span class="chevron">▼</span>
     </div>
-    <div id="sect-alerts" class="collapsible-content">
+    <div id="sect-sales" class="collapsible-content">
       <div class="tier-1">
         <div class="card card-sales" onclick="showRouteDetails()" style="cursor:pointer;">
           <h3>Sales Outreach</h3>
@@ -240,17 +240,36 @@
           <div id="daily-route-summary" class="route-list-summary">Loading route...</div>
           <div style="font-size: 10px; color: var(--accent); font-weight: 800; margin-top: 5px; text-transform: uppercase;">Click to View Detailed Route</div>
         </div>
-        
-        <div class="card card-alert" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
-          <h3>Inventory Alerts</h3>
-          <div class="val" id="alertCount">--</div>
-          <p>Low Stock Master SKUs</p>
-        </div>
 
         <div class="card card-quality" onclick="location.href='Samplings/sampling-calendar.html'" style="cursor:pointer;">
           <h3>Next Sampling</h3>
           <div class="val" id="nextSamplingClient" style="font-size: 20px; margin-top: 15px;">Loading...</div>
           <p id="nextSamplingDetails">Checking Schedule...</p>
+        </div>
+
+        <div class="card card-sales" style="cursor:pointer;" onclick="showDeliveryDetails()">
+          <h3>Delivery Status</h3>
+          <div class="val" id="activeDeliveryVal">--</div>
+          <p id="delivery-summary">Checking Tracking...</p>
+        </div>
+
+        <div class="card card-finance" style="cursor:pointer;" onclick="showConversionDetails()">
+            <h3>Lead Conversion</h3>
+            <div id="leadConversionVal" class="val">--%</div>
+            <p>Leads converted to Sales</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-heading" onclick="toggleGroup('sect-ops', this)">
+      <span>Zone 2: Daily Operations</span><span class="chevron">▼</span>
+    </div>
+    <div id="sect-ops" class="collapsible-content">
+      <div class="tier-1">
+        <div class="card card-alert" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
+          <h3>Inventory Alerts</h3>
+          <div class="val" id="alertCount">--</div>
+          <p>Low Stock Master SKUs</p>
         </div>
 
         <div class="card card-quality" id="sensoryAlertCard" style="cursor:pointer;" onclick="showSensoryDetails()">
@@ -260,56 +279,37 @@
           <div id="sensory-due-list" style="display:none;"></div>
         </div>
 
-        <div class="card card-sales" style="cursor:pointer;" onclick="showDeliveryDetails()">
-          <h3>Delivery Status</h3>
-          <div class="val" id="activeDeliveryVal">--</div>
-          <p id="delivery-summary">Checking Tracking...</p>
+        <div class="ml-card" id="perfCard" onclick="this.classList.toggle('expanded')">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="text-align: left;">
+                    <h3 style="margin: 0; color: var(--ml-blue); font-size: 14px;">Learned Performance</h3>
+                    <span class="expand-hint">Click for Trend Chart</span>
+                </div>
+                <div id="ml-efficiency-display" class="ml-stat-val" style="font-size: 2.2rem; line-height: 1;">--%</div>
+            </div>
+            <div class="chart-container"><canvas id="efficiencyChart"></canvas></div>
+            <div style="margin-top: 15px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #edf2f7;">
+                <p id="ml-advice" style="margin: 0; font-size: 12px; color: #475569; font-style: italic;">Connecting...</p>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <div class="section-heading" onclick="toggleGroup('sect-intelligence', this)">
-      <span>Zone 2: Sales Intelligence</span><span class="chevron">▼</span>
-    </div>
-    <div id="sect-intelligence" class="collapsible-content">
-      <div class="tier-3">
-          <div class="ml-card" id="perfCard" onclick="this.classList.toggle('expanded')">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <div style="text-align: left;">
-                      <h3 style="margin: 0; color: var(--ml-blue); font-size: 14px;">Learned Performance</h3>
-                      <span class="expand-hint">Click for Trend Chart</span>
-                  </div>
-                  <div id="ml-efficiency-display" class="ml-stat-val" style="font-size: 2.2rem; line-height: 1;">--%</div>
-              </div>
-              <div class="chart-container"><canvas id="efficiencyChart"></canvas></div>
-              <div style="margin-top: 15px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #edf2f7;">
-                  <p id="ml-advice" style="margin: 0; font-size: 12px; color: #475569; font-style: italic;">Connecting...</p>
-              </div>
-          </div>
-
-          <div class="ml-card" id="costCard" onclick="this.classList.toggle('expanded')" style="border-top-color: #10b981;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <div style="text-align: left;">
-                      <h3 style="margin: 0; color: #10b981; font-size: 14px;">Estimated Savings</h3>
-                      <span class="expand-hint">Click for Breakdown</span>
-                  </div>
-                  <div id="cost-dollars-saved" class="ml-stat-val" style="font-size: 2.2rem; color: #10b981; line-height: 1;">$ --</div>
-              </div>
-              <div class="chart-container" style="display: flex; flex-direction: column; justify-content: center;">
-                  <div class="ml-stats-grid" style="width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 15px;">
-                      <div class="ml-stat-box" style="text-align: center;">
-                          <div class="ml-stat-label">Grain Waste Reduced</div>
-                          <div id="cost-lbs-saved" class="ml-stat-val">-- lbs</div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-
-          <div class="card card-finance" style="cursor:pointer;" onclick="showConversionDetails()">
-            <h3>Lead Conversion</h3>
-            <div id="leadConversionVal" class="val">--%</div>
-            <p>Leads converted to Sales</p>
-          </div>
+        <div class="ml-card" id="costCard" onclick="this.classList.toggle('expanded')" style="border-top-color: #10b981;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="text-align: left;">
+                    <h3 style="margin: 0; color: #10b981; font-size: 14px;">Estimated Savings</h3>
+                    <span class="expand-hint">Click for Breakdown</span>
+                </div>
+                <div id="cost-dollars-saved" class="ml-stat-val" style="font-size: 2.2rem; color: #10b981; line-height: 1;">$ --</div>
+            </div>
+            <div class="chart-container" style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="ml-stats-grid" style="width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 15px;">
+                    <div class="ml-stat-box" style="text-align: center;">
+                        <div class="ml-stat-label">Grain Waste Reduced</div>
+                        <div id="cost-lbs-saved" class="ml-stat-val">-- lbs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
       </div>
     </div>
 
@@ -373,6 +373,8 @@
     const AUTO_REFRESH_MS = 300000; 
 
     let currentRouteData = [];
+    let currentDeliveryData = [];
+    let conversionData = { rate: 0, total: 0, won: 0 };
 
     // --- ON LOAD ---
     window.addEventListener('DOMContentLoaded', () => {
@@ -387,12 +389,12 @@
         syncZone1();
         syncSamplingCard();
         syncDeliveryCard();
-        syncLeadConversion(); // <--- NEW ADDITION
+        syncLeadConversion();
         refreshCellarTanks();
         refreshMLEngine();
     }
 
-    // --- 1. ZONE 1 SYNC (SALES, INVENTORY, SENSORY) ---
+    // --- 1. ZONE 1 & 2 SYNC ---
     async function syncZone1() {
         try {
             // A. FETCH OUTREACH & ROUTE
@@ -412,7 +414,7 @@
                 document.getElementById('alertCount').innerText = invJson.count;
             }
 
-            // C. FETCH SENSORY DUE (Integrated from Bridge)
+            // C. FETCH SENSORY DUE
             const sensoryRes = await fetch(`${MASTER_API_URL}?action=getSensoryDue`);
             const sensoryJson = await sensoryRes.json();
             if (sensoryJson.status === 'success' || sensoryJson.status === 'idle') {
@@ -444,6 +446,53 @@
         } catch (e) { console.error("Sampling Sync Failed", e); }
     }
 
+    // --- 3. DELIVERY CARD SYNC ---
+    async function syncDeliveryCard() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getDeliveryStatus`);
+            const json = await res.json();
+            
+            if (json.status === 'success') {
+                currentDeliveryData = json.data;
+                const overdueCount = currentDeliveryData.filter(d => d.isOverdue).length;
+                let inAreaCount = 0;
+                if (currentRouteData.length > 0) {
+                    const routeString = currentRouteData.map(r => r.address.toLowerCase()).join(" ");
+                    inAreaCount = currentDeliveryData.filter(d => !d.isOverdue && routeString.includes(d.address.split(',')[1]?.trim().toLowerCase() || "xxxxx")).length;
+                }
+                const valEl = document.getElementById('activeDeliveryVal');
+                const subEl = document.getElementById('delivery-summary');
+                if (overdueCount > 0) {
+                    valEl.innerText = `${overdueCount} Overdue`;
+                    valEl.style.color = "var(--danger)";
+                    subEl.innerText = inAreaCount > 0 ? `+ ${inAreaCount} on your route` : "Action Required";
+                } else if (inAreaCount > 0) {
+                    valEl.innerText = `${inAreaCount} In Area`;
+                    valEl.style.color = "var(--text-main)";
+                    subEl.innerText = "Matches today's route";
+                } else {
+                    valEl.innerText = currentDeliveryData.length;
+                    valEl.style.color = "var(--text-main)";
+                    subEl.innerText = "Total Pending";
+                }
+            }
+        } catch (e) { console.error("Delivery Sync Failed", e); }
+    }
+
+    // --- 4. LEAD CONVERSION SYNC ---
+    async function syncLeadConversion() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getLeadConversion`);
+            const json = await res.json();
+            if (json.status === 'success') {
+                conversionData = json;
+                const valEl = document.getElementById('leadConversionVal');
+                valEl.innerText = `${json.rate}%`;
+                valEl.style.color = json.rate >= 50 ? "var(--green-accent)" : "var(--fermenting)";
+            }
+        } catch (e) { console.error("Conversion Sync Failed", e); }
+    }
+
     // --- POPUP MODALS ---
     function showRouteDetails() {
       if (currentRouteData.length === 0) {
@@ -461,6 +510,25 @@
             return;
         }
         Swal.fire({ title: "Sensory Queue", text: "Production QC Required: " + list, icon: "info", confirmButtonColor: "var(--purple-accent)" });
+    }
+
+    function showDeliveryDetails() {
+        if (currentDeliveryData.length === 0) {
+            Swal.fire("Delivery Status", "No pending deliveries.", "success");
+            return;
+        }
+        const sorted = currentDeliveryData.sort((a, b) => (a.isOverdue === b.isOverdue) ? 0 : a.isOverdue ? -1 : 1);
+        let html = `<div style="max-height: 400px; overflow-y: auto;"><table class="route-modal-table"><thead><tr><th>Status</th><th>Client</th><th>Address</th></tr></thead><tbody>${sorted.map(d => { const badgeColor = d.isOverdue ? "var(--danger)" : "var(--green-accent)"; const badgeText = d.isOverdue ? "OVERDUE" : d.dateStr; return `<tr><td><span style="font-size: 10px; background: ${badgeColor}; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700;">${badgeText}</span></td><td><strong>${d.client}</strong></td><td style="font-size: 12px; color: var(--text-muted);">${d.address}</td></tr>`; }).join('')}</tbody></table></div>`;
+        Swal.fire({ title: 'Delivery Manifest', html: html, width: '600px', confirmButtonText: 'Close', confirmButtonColor: 'var(--accent)' });
+    }
+
+    function showConversionDetails() {
+        Swal.fire({
+            title: "Sales Performance",
+            html: `<div style="text-align: center; font-size: 16px;"><p><strong>Total Leads Generated:</strong> ${conversionData.total}</p><p><strong>Successful Sales:</strong> ${conversionData.won}</p><hr style="opacity: 0.2; margin: 15px 0;"><h2 style="color: ${conversionData.rate >= 50 ? '#10b981' : '#f59e0b'}">${conversionData.rate}% Conversion Rate</h2></div>`,
+            confirmButtonText: "Close",
+            confirmButtonColor: "var(--accent)"
+        });
     }
 
     // --- CELLAR TANK SYNC ---
@@ -522,129 +590,6 @@
       const content = document.getElementById(contentId);
       content.classList.toggle('collapsed');
       headerEl.classList.toggle('collapsed');
-    }
-    let currentDeliveryData = []; // Store for popup
-
-    // --- 3. DELIVERY CARD SYNC ---
-    async function syncDeliveryCard() {
-        try {
-            const res = await fetch(`${MASTER_API_URL}?action=getDeliveryStatus`);
-            const json = await res.json();
-            
-            if (json.status === 'success') {
-                currentDeliveryData = json.data;
-                
-                // 1. Calculate Overdue
-                const overdueCount = currentDeliveryData.filter(d => d.isOverdue).length;
-                
-                // 2. Calculate "In Area" (Matches cities in your Daily Route)
-                // We assume currentRouteData is populated by syncZone1
-                let inAreaCount = 0;
-                if (currentRouteData.length > 0) {
-                    const routeString = currentRouteData.map(r => r.address.toLowerCase()).join(" ");
-                    inAreaCount = currentDeliveryData.filter(d => 
-                        !d.isOverdue && routeString.includes(d.address.split(',')[1]?.trim().toLowerCase() || "xxxxx")
-                    ).length;
-                }
-
-                // 3. Update UI
-                const valEl = document.getElementById('activeDeliveryVal');
-                const subEl = document.getElementById('delivery-summary');
-                
-                if (overdueCount > 0) {
-                    valEl.innerText = `${overdueCount} Overdue`;
-                    valEl.style.color = "var(--danger)";
-                    subEl.innerText = inAreaCount > 0 ? `+ ${inAreaCount} on your route` : "Action Required";
-                } else if (inAreaCount > 0) {
-                    valEl.innerText = `${inAreaCount} In Area`;
-                    valEl.style.color = "var(--text-main)";
-                    subEl.innerText = "Matches today's route";
-                } else {
-                    valEl.innerText = currentDeliveryData.length;
-                    valEl.style.color = "var(--text-main)";
-                    subEl.innerText = "Total Pending";
-                }
-            }
-        } catch (e) { console.error("Delivery Sync Failed", e); }
-    }
-
-    /**
-     * MODAL POP-UP LOGIC: DELIVERY DETAILS
-     */
-    function showDeliveryDetails() {
-        if (currentDeliveryData.length === 0) {
-            Swal.fire("Delivery Status", "No pending deliveries.", "success");
-            return;
-        }
-
-        // Sort: Overdue first, then by Area
-        const sorted = currentDeliveryData.sort((a, b) => (a.isOverdue === b.isOverdue) ? 0 : a.isOverdue ? -1 : 1);
-
-        let html = `
-        <div style="max-height: 400px; overflow-y: auto;">
-          <table class="route-modal-table">
-            <thead>
-              <tr><th>Status</th><th>Client</th><th>Address</th></tr>
-            </thead>
-            <tbody>
-              ${sorted.map(d => {
-                  const badgeColor = d.isOverdue ? "var(--danger)" : "var(--green-accent)";
-                  const badgeText = d.isOverdue ? "OVERDUE" : d.dateStr;
-                  return `
-                <tr>
-                  <td><span style="font-size: 10px; background: ${badgeColor}; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700;">${badgeText}</span></td>
-                  <td><strong>${d.client}</strong></td>
-                  <td style="font-size: 12px; color: var(--text-muted);">${d.address}</td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>`;
-
-        Swal.fire({
-            title: 'Delivery Manifest',
-            html: html,
-            width: '600px',
-            confirmButtonText: 'Close',
-            confirmButtonColor: 'var(--accent)'
-        });
-    }
-    let conversionData = { rate: 0, total: 0, won: 0 }; // Store for popup
-
-    // --- 4. LEAD CONVERSION SYNC ---
-    async function syncLeadConversion() {
-        try {
-            const res = await fetch(`${MASTER_API_URL}?action=getLeadConversion`);
-            const json = await res.json();
-            
-            if (json.status === 'success') {
-                conversionData = json;
-                const valEl = document.getElementById('leadConversionVal');
-                valEl.innerText = `${json.rate}%`;
-                
-                // Color coding: Green if > 50%, Orange if < 50%
-                valEl.style.color = json.rate >= 50 ? "var(--green-accent)" : "var(--fermenting)";
-            }
-        } catch (e) { console.error("Conversion Sync Failed", e); }
-    }
-
-    /**
-     * MODAL POP-UP: CONVERSION DETAILS
-     */
-    function showConversionDetails() {
-        Swal.fire({
-            title: "Sales Performance",
-            html: `
-                <div style="text-align: center; font-size: 16px;">
-                    <p><strong>Total Leads Generated:</strong> ${conversionData.total}</p>
-                    <p><strong>Successful Sales:</strong> ${conversionData.won}</p>
-                    <hr style="opacity: 0.2; margin: 15px 0;">
-                    <h2 style="color: ${conversionData.rate >= 50 ? '#10b981' : '#f59e0b'}">${conversionData.rate}% Conversion Rate</h2>
-                </div>
-            `,
-            confirmButtonText: "Close",
-            confirmButtonColor: "var(--accent)"
-        });
     }
   </script>
 </body>
