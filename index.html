@@ -25,6 +25,8 @@
       --carbonating: #8b5cf6;
       --danger: #ef4444;
       --ml-blue: #3498db;
+      --purple-accent: #8b5cf6;
+      --green-accent: #10b981;
     }
 
     /* --- GLOBAL RESET & LAYOUT --- */
@@ -95,12 +97,12 @@
     .header-bar h1 { font-size: 28px; font-weight: 800; margin: 0; }
     
     /* --- CARDS & TIERS --- */
-    .tier-1, .tier-2, .tier-3 {
+    .tier-1, .tier-2, .tier-3, .tier-4 {
       display: flex !important; overflow-x: auto !important;
       scroll-snap-type: x mandatory; gap: 20px; padding: 10px 5px 25px 5px;
       -webkit-overflow-scrolling: touch; scrollbar-width: none;
     }
-    .tier-1::-webkit-scrollbar, .tier-2::-webkit-scrollbar, .tier-3::-webkit-scrollbar { display: none; }
+    .tier-1::-webkit-scrollbar, .tier-2::-webkit-scrollbar, .tier-3::-webkit-scrollbar, .tier-4::-webkit-scrollbar { display: none; }
 
     .card, .ml-card { flex: 0 0 300px; scroll-snap-align: start; }
     .tank-card { flex: 0 0 170px; scroll-snap-align: start; }
@@ -112,6 +114,12 @@
     .card h3 { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
     .card .val { font-size: 32px; font-weight: 800; margin: 12px 0 4px; color: var(--text-main); }
     .card p { margin: 0; font-size: 13px; color: var(--text-muted); }
+
+    /* ZONE SPECIFIC STYLING */
+    .card-alert { border-left: 5px solid var(--danger); }
+    .card-sales { border-left: 5px solid var(--accent); }
+    .card-quality { border-left: 5px solid var(--purple-accent); }
+    .card-finance { border-left: 5px solid var(--green-accent); }
 
     /* --- TANK VISUALS --- */
     .tank-card { background: #fff; border-radius: 20px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; }
@@ -209,69 +217,48 @@
       <h1>Command Center</h1>
       <div id="current-date" style="color: var(--text-muted); font-size: 14px; font-weight: 500;"></div>
     </header>
-    
-    <div class="section-heading" onclick="toggleGroup('sect-ops', this)">
-      <span>Sales/Sampling Overview</span><span class="chevron">▼</span>
+
+    <div class="section-heading" onclick="toggleGroup('sect-alerts', this)">
+      <span>Zone 1: Daily Operations & Alerts</span><span class="chevron">▼</span>
     </div>
-    <div id="sect-ops" class="collapsible-content">
+    <div id="sect-alerts" class="collapsible-content">
       <div class="tier-1">
-        <div class="card" onclick="location.href='Samplings/sampling-calendar.html'" style="cursor:pointer;">
-          <h3>Next Sampling</h3>
-          <div class="val" style="font-size: 20px; margin-top: 15px;">The Beer Spot</div>
-          <p>Today @ 5:00 PM</p>
-        </div>
-        
-        <div class="card" onclick="location.href='sales/leads.html'" style="cursor:pointer;">
+        <div class="card card-sales" onclick="location.href='sales/leads.html'" style="cursor:pointer;">
           <h3>Sales Outreach</h3>
           <div class="val" id="followUpCount">12</div>
           <p>AI Follow-ups Due Today</p>
         </div>
         
-        <div class="card alert-active" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
+        <div class="card card-alert" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
           <h3>Inventory Alerts</h3>
           <div class="val" id="alertCount" style="color: var(--danger);">4</div>
           <p>Low Stock Master SKUs</p>
         </div>
 
-        <div class="card" id="sensoryAlertCard" style="cursor:pointer; border-left: 5px solid #e2e8f0;">
+        <div class="card card-quality" onclick="location.href='Samplings/sampling-calendar.html'" style="cursor:pointer;">
+          <h3>Next Sampling</h3>
+          <div class="val" style="font-size: 20px; margin-top: 15px;">The Beer Spot</div>
+          <p>Today @ 5:00 PM</p>
+        </div>
+
+        <div class="card card-quality" id="sensoryAlertCard" style="cursor:pointer;">
           <h3>Sensory Panel</h3>
           <div class="val" id="sensoryCount">--</div>
           <p id="sensoryStatus">Checking logs...</p>
         </div>
+
+        <div class="card card-sales" style="cursor:pointer;" onclick="location.href='sales/deliveries.html'">
+          <h3>Delivery Status</h3>
+          <div class="val" style="font-size: 20px; margin-top: 15px;">Active Routes</div>
+          <p id="delivery-summary">Checking Tracking...</p>
+        </div>
       </div>
     </div>
 
-    <div class="section-heading" onclick="toggleGroup('grp-all-tanks', this)">
-       <span>Active Cellar Overview</span> <span class="chevron">▼</span>
+    <div class="section-heading" onclick="toggleGroup('sect-intelligence', this)">
+      <span>Zone 2: Sales Intelligence</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-all-tanks" class="collapsible-content">
-      
-      <div class="subsection-heading" onclick="toggleGroup('sect-prod', this)">
-        <span>Production FVs (10 BBL)</span><span class="chevron">▼</span>
-      </div>
-      <div id="sect-prod" class="collapsible-content">
-        <div class="tier-2" id="grid-production"></div>
-      </div>
-
-      <div class="subsection-heading" onclick="toggleGroup('sect-pilot', this)">
-        <span>Pilot System (1 BBL)</span><span class="chevron">▼</span>
-      </div>
-      <div id="sect-pilot" class="collapsible-content">
-        <div class="tier-2" id="grid-pilot"></div>
-      </div>
-
-      <div class="subsection-heading" onclick="toggleGroup('sect-brite', this)">
-        <span>Brite Tanks (10 BBL)</span><span class="chevron">▼</span>
-      </div>
-      <div id="sect-brite" class="collapsible-content">
-        <div class="tier-2" id="grid-brite"></div>
-      </div>
-    </div>
-
-    <div class="section-heading" onclick="toggleGroup('sect-ml', this)">
-      <span>Machine Learning Intelligence</span><span class="chevron">▼</span>
-    </div>
-    <div id="sect-ml" class="collapsible-content">
+    <div id="sect-intelligence" class="collapsible-content">
       <div class="tier-3">
           <div class="ml-card" id="perfCard" onclick="this.classList.toggle('expanded')">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -302,14 +289,63 @@
                           <div id="cost-lbs-saved" class="ml-stat-val">-- lbs</div>
                       </div>
                   </div>
-                  <div class="ml-stats-grid" style="width: 100%;">
-                      <div class="ml-stat-box" style="text-align: center;">
-                          <div class="ml-stat-label">Predictive OG (100lb)</div>
-                          <div id="ml-og-display" class="ml-stat-val" style="color: var(--ml-blue);">1.---</div>
-                      </div>
-                  </div>
               </div>
           </div>
+
+          <div class="card card-finance">
+            <h3>Lead Conversion</h3>
+            <div class="val">82%</div>
+            <p>Leads converted to Sales</p>
+          </div>
+      </div>
+    </div>
+
+    <div class="section-heading" onclick="toggleGroup('grp-all-tanks', this)">
+       <span>Zone 3: Active Cellar Overview</span> <span class="chevron">▼</span>
+    </div>
+    <div id="grp-all-tanks" class="collapsible-content">
+      <div class="subsection-heading" onclick="toggleGroup('sect-prod', this)">
+        <span>Production FVs (10 BBL)</span><span class="chevron">▼</span>
+      </div>
+      <div id="sect-prod" class="collapsible-content">
+        <div class="tier-2" id="grid-production"></div>
+      </div>
+
+      <div class="subsection-heading" onclick="toggleGroup('sect-brite', this)">
+        <span>Brite Tanks (10 BBL)</span><span class="chevron">▼</span>
+      </div>
+      <div id="sect-brite" class="collapsible-content">
+        <div class="tier-2" id="grid-brite"></div>
+      </div>
+
+      <div class="subsection-heading" onclick="toggleGroup('sect-pilot', this)">
+        <span>Pilot System (1 BBL)</span><span class="chevron">▼</span>
+      </div>
+      <div id="sect-pilot" class="collapsible-content">
+        <div class="tier-2" id="grid-pilot"></div>
+      </div>
+    </div>
+
+    <div class="section-heading" onclick="toggleGroup('sect-granularity', this)">
+      <span>Zone 4: Inventory Granularity</span><span class="chevron">▼</span>
+    </div>
+    <div id="sect-granularity" class="collapsible-content">
+      <div class="tier-4">
+        <div class="card" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
+          <h3>Packaged Stock</h3>
+          <div class="val" id="packaged-total">--</div>
+          <p>Total Cases/Kegs for Sale</p>
+        </div>
+        <div class="card" onclick="location.href='inventory/wholesaler-inventory.html'" style="cursor:pointer;">
+          <h3>Wholesaler Held</h3>
+          <div class="val">42 BBL</div>
+          <p>Inventory at Distributor</p>
+        </div>
+        <div class="card" onclick="location.href='inventory/Ingredient-inventory.html'" style="cursor:pointer;">
+          <h3>Ingredient Health</h3>
+          <div class="val">Optimal</div>
+          <p>Base Malt: 4,200 lbs</p>
+        </div>
       </div>
     </div>
   </main>
@@ -360,21 +396,15 @@
     async function checkSensoryAlerts() {
       try {
         const payload = { action: 'getBlindSamples' };
-        
-        // Use JSON body + redirect: 'follow'
         const res = await fetch(SENSORY_API_URL, { 
             method: 'POST', 
             body: JSON.stringify(payload),
             redirect: 'follow'
         });
-
         const json = await res.json();
-
         if(json.status === 'success') {
           const count = json.data.length;
-          // Ignore if it's just the reference sample (code 100 or 105)
           const isReferenceOnly = count === 1 && (json.data[0].code === "100" || json.data[0].code === "105");
-          
           if (count > 0 && !isReferenceOnly) {
             document.getElementById('sensoryCount').innerText = count;
             document.getElementById('sensoryStatus').innerText = "Samples Approaching Terminal";
@@ -408,31 +438,26 @@
             'grid-pilot': ["Pilot 1", "Pilot 2"],
             'grid-brite': ["BT 1", "BT 2"]
         };
-
         try {
             const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { 
                 method: "GET", 
                 redirect: "follow" 
             });
             const liveBatches = await res.json();
-
             Object.keys(categories).forEach(gridId => {
                 const container = document.getElementById(gridId);
                 if (!container) return;
                 container.innerHTML = ""; 
-
                 categories[gridId].forEach(tankName => {
                     const liveData = Array.isArray(liveBatches) ? liveBatches.find(b => b.vessel === tankName) : null;
                     const isActive = !!liveData;
                     let sizeLabel = gridId === 'grid-pilot' ? "1 BBL" : "10 BBL";
                     let color = "var(--text-muted)"; 
                     let statusText = "Empty/Clean";
-                    
                     if (isActive) {
                         statusText = liveData.status;
                         color = statusText.includes("Ready") ? "var(--ready)" : (statusText.includes("Crash") ? "var(--crashing)" : "var(--fermenting)");
                     }
-
                     container.innerHTML += `
                         <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'}; border-color: ${isActive ? color : '#e2e8f0'};">
                             <span class="status-badge" style="background: ${isActive ? color + '22' : '#f1f5f9'}; color: ${color};">${statusText}</span>
@@ -442,7 +467,6 @@
                             <div style="font-weight:700; font-size: 14px;">${tankName}</div>
                             <div style="font-size: 10px; color: var(--text-muted); font-weight: bold;">${sizeLabel}</div>
                             <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${isActive ? liveData.brand : 'Available'}</div>
-                            <div style="font-size: 9px; margin-top: 5px; color: ${isActive ? 'var(--accent)' : 'transparent'}; font-weight: bold;">Batch: ${isActive ? liveData.batchId : '---'}</div>
                         </div>`;
                 });
             });
@@ -452,41 +476,28 @@
     // --- 3. ML ENGINE SYNC ---
     async function refreshMLEngine() {
         const effDisplay = document.getElementById('ml-efficiency-display');
-        const ogDisplay = document.getElementById('ml-og-display');
         const advice = document.getElementById('ml-advice');
-        const lbsSavedDisplay = document.getElementById('cost-lbs-saved');
         const cashSavedDisplay = document.getElementById('cost-dollars-saved');
-
         try {
             const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { 
                 method: "GET", 
                 redirect: "follow" 
             });
             const data = await res.json();
-
             const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
             const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
-            const avgCost = data.avgMaltCost || 0.65;
-
             if (effDisplay) {
                 effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%";
                 effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
             }
-            if (ogDisplay) {
-                const predictedPoints = (100 * 37 * learnedEff) / 31;
-                ogDisplay.innerText = (1 + (predictedPoints / 1000)).toFixed(3);
-            }
-            const lbsSaved = Math.round(4000 * (1 - (0.70 / learnedEff)));
-            if (lbsSavedDisplay) lbsSavedDisplay.innerText = (lbsSaved > 0 ? lbsSaved : 0) + " lbs";
-            if (cashSavedDisplay) cashSavedDisplay.innerText = "$" + (lbsSaved > 0 ? lbsSaved * avgCost : 0).toFixed(2);
-
+            if (cashSavedDisplay) cashSavedDisplay.innerText = "$" + (data.estimatedSavings || 0).toFixed(2);
             const ctx = document.getElementById('efficiencyChart').getContext('2d');
             if (window.mlChart) window.mlChart.destroy();
             window.mlChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: history.map((_, i) => `B${i + 1}`),
-                    datasets: [{ label: 'Efficiency', data: history.map(v => v * 100), borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)', fill: true, tension: 0.4 }]
+                    datasets: [{ label: 'Efficiency', data: history.map(v => v * 100), borderColor: '#3498db', tension: 0.4 }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
