@@ -74,6 +74,7 @@
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbz2YK1MnItnIMJpNHNRCFXoo4hxRJPaF9NmO6ginxaJjfkm7FnbV-gO82_uL8X73AaR/exec"; 
     const BASE_IMG_URL = "https://raw.githubusercontent.com/remyjdavis/brewery-order-form/main/";
+    const FALLBACK_LOGO = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
 
     let groupedProducts = {};
     let customersDB = [];
@@ -108,11 +109,16 @@
             if (!groupedProducts[p.name]) {
                 groupedProducts[p.name] = { 
                     name: p.name, 
-                    lifecycle: p.lifecycle,
+                    lifecycle: p.lifecycle || "Rotating", // Default to Rotating if null
                     upc: p.upc,
                     image: p.image || p.name.split(' ')[0].toLowerCase() + ".jpg", 
                     variants: [] 
                 };
+            } else {
+                // Fix: Ensure the lifecycle tag is captured if it exists on any variant row
+                if (!groupedProducts[p.name].lifecycle && p.lifecycle) {
+                    groupedProducts[p.name].lifecycle = p.lifecycle;
+                }
             }
             groupedProducts[p.name].variants.push({ type: p.type, price: p.price, stock: p.stock });
         });
@@ -176,7 +182,7 @@
                     <div class="product-card" data-name="${p.name}" data-lifecycle="${p.lifecycle}" data-upc="${p.upc}">
                         <div class="product-img-container">
                             <span class="lifecycle-badge">${p.lifecycle}</span>
-                            <img src="${BASE_IMG_URL}${p.image}" class="product-img" onerror="this.src='https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png'">
+                            <img src="${BASE_IMG_URL}${p.image}" class="product-img" onerror="this.onerror=null;this.src='${FALLBACK_LOGO}';">
                         </div>
                         <div style="padding:15px;"><h4 style="margin:0;">${p.name}</h4></div>
                         <div class="variant-list">
@@ -186,10 +192,10 @@
                                 return `
                                 <div class="variant-row">
                                     <div class="variant-info">
-                                        <strong>${v.type}</strong><br>$${v.price} 
+                                        <strong>${v.type}</strong><br>$${v.price} 
                                         <span class="stock-tag ${v.stock <= 0 ? 'stock-none' : (v.stock < 5 ? 'stock-low' : '')}">Stock: ${v.stock}</span>
                                     </div>
-                                    <input type="number" class="variant-qty" min="0" max="${v.stock}" value="${val}" 
+                                    <input type="number" class="variant-qty" min="0" max="${v.stock}" value="${val}" 
                                            oninput="updateCart('${p.name}', '${v.type}', ${v.price}, ${v.stock}, this.value)">
                                 </div>`;
                             }).join('')}
@@ -228,7 +234,7 @@
         const qty = parseInt(val) || 0;
         const key = `${beer}-${type}`;
         if (qty > stock && stock > 0) { Swal.fire("Short Stock", "Requested amount exceeds inventory.", "warning"); return; }
-        if (qty > 0) { state.cart[key] = { beer, type, price, qty }; } 
+        if (qty > 0) { state.cart[key] = { beer, type, price, qty }; } 
         else { delete state.cart[key]; }
         updateLiveTotals();
     }
@@ -259,7 +265,7 @@
 
     function calculateOrderMath() {
         let sub = 0, kegs = 0;
-        for (const k in state.cart) { 
+        for (const k in state.cart) { 
             const item = state.cart[k];
             sub += (item.price * item.qty);
             if (item.type.toLowerCase().includes("keg")) kegs += item.qty;
@@ -282,16 +288,16 @@
         if (emailInput && !emailInput.value) return Swal.fire("Email Required", "Please enter an email for your PDF receipt.", "warning");
         btn.disabled = true; btn.innerText = "PLACING ORDER...";
         try {
-            await fetch(API_URL, { 
-                method: "POST", 
-                mode: "no-cors", 
+            await fetch(API_URL, { 
+                method: "POST", 
+                mode: "no-cors", 
                 body: JSON.stringify({ 
                     action: 'submitOrder', 
                     customer: state.customer, 
                     customerEmail: emailInput ? emailInput.value : null,
                     cart: state.cart, 
                     summary: calculateOrderMath() 
-                }) 
+                }) 
             });
             Swal.fire("Order Placed!", "Your PDF receipt has been emailed.", "success").then(() => location.reload());
         } catch (e) { Swal.fire("Error", "Failed.", "error"); btn.disabled = false; }
