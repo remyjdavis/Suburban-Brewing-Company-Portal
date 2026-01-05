@@ -609,6 +609,43 @@
             confirmButtonColor: 'var(--accent)'
         });
     }
+    let conversionData = { rate: 0, total: 0, won: 0 }; // Store for popup
+
+    // --- 4. LEAD CONVERSION SYNC ---
+    async function syncLeadConversion() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getLeadConversion`);
+            const json = await res.json();
+            
+            if (json.status === 'success') {
+                conversionData = json;
+                const valEl = document.getElementById('leadConversionVal');
+                valEl.innerText = `${json.rate}%`;
+                
+                // Color coding: Green if > 50%, Orange if < 50%
+                valEl.style.color = json.rate >= 50 ? "var(--green-accent)" : "var(--fermenting)";
+            }
+        } catch (e) { console.error("Conversion Sync Failed", e); }
+    }
+
+    /**
+     * MODAL POP-UP: CONVERSION DETAILS
+     */
+    function showConversionDetails() {
+        Swal.fire({
+            title: "Sales Performance",
+            html: `
+                <div style="text-align: center; font-size: 16px;">
+                    <p><strong>Total Leads Generated:</strong> ${conversionData.total}</p>
+                    <p><strong>Successful Sales:</strong> ${conversionData.won}</p>
+                    <hr style="opacity: 0.2; margin: 15px 0;">
+                    <h2 style="color: ${conversionData.rate >= 50 ? '#10b981' : '#f59e0b'}">${conversionData.rate}% Conversion Rate</h2>
+                </div>
+            `,
+            confirmButtonText: "Close",
+            confirmButtonColor: "var(--accent)"
+        });
+    }
   </script>
 </body>
 </html>
