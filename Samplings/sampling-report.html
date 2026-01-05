@@ -5,18 +5,58 @@
   <title>Post-Sampling Report | Suburban Brewing Co.</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; background: #f4f6f8; display: flex; min-height: 100vh; }
-    
-    /* Sidebar */
-    .sidebar { width: 240px; background: #1f2937; color: #fff; padding: 20px 0; flex-shrink: 0; }
-    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; }
-    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.6; margin: 15px 20px 8px; font-weight: 700; }
-    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; }
-    .nav-link:hover { background: #374151; color: #fff; }
-    .nav-link.active { background: #2563eb; color: #fff; font-weight: 600; }
+    /* --- SHARED THEME VARIABLES --- */
+    :root {
+      --bg: #f8fafc;
+      --sidebar: #0f172a;
+      --accent: #2563eb;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --card-bg: #ffffff;
+    }
 
-    .main { flex: 1; display: flex; flex-direction: column; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
+    
+    /* --- SIDEBAR STYLES --- */
+    .sidebar { 
+      width: 260px; background: var(--sidebar); color: #fff; 
+      padding: 24px 0; flex-shrink: 0; position: fixed; 
+      height: 100vh; overflow-y: auto; z-index: 1000;
+      transition: all 0.3s ease;
+    }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
+
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-header {
+      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
+      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
+    }
+    .nav-section-header:hover { color: #fff; }
+
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
+
+    .collapsible-content {
+      max-height: 500px; overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease;
+      opacity: 1;
+    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+
+    /* LINKS */
+    .nav-link { 
+      display: flex; align-items: center; padding: 10px 24px; 
+      color: #64748b; text-decoration: none; font-size: 14px; 
+      transition: 0.2s; border-left: 4px solid transparent;
+    }
+    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; }
+
+    /* --- MAIN AREA --- */
+    .main { flex: 1; margin-left: 260px; display: flex; flex-direction: column; transition: all 0.3s ease; }
     .content { padding: 40px; max-width: 800px; margin: 0 auto; width: 100%; }
     
     .card { background: #fff; padding: 32px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
@@ -28,46 +68,81 @@
     
     button { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 10px; }
     button:hover { background: #1d4ed8; }
+    button:disabled { background: #9ca3af; cursor: not-allowed; }
     
     .helper-text { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .main { margin-left: 0; padding: 20px 20px 90px; }
+      .nav-section-header, .sidebar h2 { display: none; }
+      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; }
+    }
   </style>
 </head>
 <body>
 
   <aside class="sidebar">
-        <div class="sidebar-header">SUBURBAN BREWING</div>
-        
-        <div class="nav-section-title">Main Menu</div> 
-        <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-      
-        <div class="nav-section-title">Samplings</div>
-        <a href="Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-        <a href="sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-        <a href="sampling-report.html" class="nav-link active"><span>Log Sampling Report</span></a>
-        
-        <div class="nav-section-title">Sales & Outreach</div>
-        <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-        <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-        <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-        <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    <h2>SUBURBAN BREWING</h2>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
+      <span>Main Menu</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-main" class="collapsible-content">
+      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="sampling-report.html" class="nav-link active"><span>Log Sampling Report</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+      <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    </div>
 
-        <div class="nav-section-title">Inventory</div>
-        <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-        <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-        <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-        <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-        
-        <div class="nav-section-title">Brewing</div>
-        <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-        <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-        <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-        <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
-        
-        <div class="nav-section-title">Reporting & Analytics</div>
-        <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-        <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-        <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
-    </aside>
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
+      <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    </div>
+  </aside>
 
   <main class="main">
     <div class="content">
@@ -80,7 +155,7 @@
             <label>Select Scheduled Event</label>
             <select id="eventSelect" required>
               <option value="">-- Choose Account --</option>
-              </select>
+            </select>
           </div>
 
           <div class="form-group">
@@ -118,8 +193,27 @@
   <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
 
+  // --- SIDEBAR TOGGLE LOGIC ---
+  function toggleGroup(contentId, headerEl) {
+    const content = document.getElementById(contentId);
+    content.classList.toggle('collapsed');
+    headerEl.classList.toggle('collapsed');
+  }
+
   // 1. Load scheduled events into the dropdown when the page opens
   window.onload = async () => {
+    // A. Initialize Sidebar State (Open Active Group)
+    const activeLink = document.querySelector('.nav-link.active');
+    if (activeLink) {
+      const parentGroup = activeLink.closest('.collapsible-content');
+      if (parentGroup) {
+        parentGroup.classList.remove('collapsed');
+        const header = parentGroup.previousElementSibling;
+        if (header) header.classList.remove('collapsed');
+      }
+    }
+
+    // B. Fetch Data
     try {
       const resp = await fetch(`${API_URL}?action=getSamplingEvents`, { redirect: "follow" });
       const events = await resp.json();
