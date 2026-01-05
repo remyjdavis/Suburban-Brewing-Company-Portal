@@ -225,7 +225,7 @@
       <div class="tier-1">
         <div class="card card-sales" onclick="location.href='sales/leads.html'" style="cursor:pointer;">
           <h3>Sales Outreach</h3>
-          <div class="val" id="followUpCount">12</div>
+          <div class="val" id="followUpCount">--</div>
           <p>AI Follow-ups Due Today</p>
         </div>
         
@@ -387,6 +387,7 @@
 
     function runAllSyncs() {
         console.log("Syncing Dashboard Data...");
+        syncOutreachCard(); // RESTORED CALL TO SALES OUTREACH logic
         refreshCellarTanks();
         checkSensoryAlerts();
         refreshMLEngine();
@@ -511,27 +512,27 @@
       content.classList.toggle('collapsed');
       headerEl.classList.toggle('collapsed');
     }
+
+    // --- 4. SALES OUTREACH SYNC ---
     async function syncOutreachCard() {
-    // 🔴 REPLACE with the Web App URL after deploying the script above
-    const SALES_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
-    
-    try {
-        const response = await fetch(`${SALES_SYNC_URL}?action=getOutreachData`);
-        const json = await response.json();
-        
-        if (json.status === 'success') {
-            const outreachEl = document.getElementById('followUpCount');
-            if (outreachEl) {
-                outreachEl.innerText = json.count;
-                // Add a subtle alert color if follow-ups are high
-                outreachEl.style.color = json.count > 10 ? 'var(--danger)' : 'var(--text-main)';
-            }
-            console.log("Sales Outreach Synced:", json.count);
-        }
-    } catch (error) {
-        console.error("Outreach Sync Failed:", error);
+      // 🔴 REPLACE with your Web App URL after deploying the script I provided
+      const SALES_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
+      try {
+          const response = await fetch(`${SALES_SYNC_URL}?action=getOutreachData`);
+          const json = await response.json();
+          if (json.status === 'success') {
+              const outreachEl = document.getElementById('followUpCount');
+              if (outreachEl) {
+                  outreachEl.innerText = json.count;
+                  // Color coding alert: Turn red if more than 10 follow-ups are due
+                  outreachEl.style.color = json.count > 10 ? 'var(--danger)' : 'var(--text-main)';
+              }
+              console.log("Sales Outreach Synced:", json.count);
+          }
+      } catch (error) {
+          console.error("Outreach Sync Failed:", error);
+      }
     }
-}
   </script>
 </body>
 </html>
