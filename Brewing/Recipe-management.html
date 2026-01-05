@@ -30,7 +30,7 @@
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-    /* COLLAPSIBLE HEADERS */
+    /* SIDEBAR HEADERS */
     .nav-section-title {
       font-size: 11px; text-transform: uppercase; color: #9ca3af; 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
@@ -42,17 +42,17 @@
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
 
-    .collapsible-content {
+    /* SIDEBAR CONTENT GROUP (Fixed Name Conflict) */
+    .nav-group {
       max-height: 500px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
-    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+    .nav-group.collapsed { max-height: 0; opacity: 0; }
 
     /* LINKS */
     .nav-link { 
       display: flex; align-items: center; padding: 10px 24px; 
-      /* Updated color to ensure visibility */
       color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
       margin-bottom: 0;
@@ -68,6 +68,7 @@
     /* --- EDITOR STYLES --- */
     .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent); }
     
+    /* Editor Accordions (Distinct from Sidebar) */
     .collapsible-header { background: #f8f9fa; padding: 12px 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: #374151; }
     .collapsible-content { padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; display: none; background: white; }
     .collapsible-content.active { display: block; }
@@ -117,14 +118,14 @@
     <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-main" class="collapsible-content">
+    <div id="grp-main" class="nav-group">
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
     </div>
     
     <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
       <span>Samplings</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-sample" class="collapsible-content">
+    <div id="grp-sample" class="nav-group">
       <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
       <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
@@ -133,7 +134,7 @@
     <div class="nav-section-title" onclick="toggleGroup('grp-sales', this)">
       <span>Sales</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-sales" class="collapsible-content">
+    <div id="grp-sales" class="nav-group">
       <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
       <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
       <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
@@ -144,7 +145,7 @@
     <div class="nav-section-title" onclick="toggleGroup('grp-inv', this)">
       <span>Inventory</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-inv" class="collapsible-content">
+    <div id="grp-inv" class="nav-group">
       <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
       <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
       <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
@@ -154,7 +155,7 @@
     <div class="nav-section-title" onclick="toggleGroup('grp-brew', this)">
       <span>Brewing</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-brew" class="collapsible-content">
+    <div id="grp-brew" class="nav-group">
       <a href="brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
       <a href="Recipe-management.html" class="nav-link active"><span>Recipe Management</span></a>
       <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
@@ -166,7 +167,7 @@
     <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)">
       <span>Reporting & Analytics</span><span class="chevron">▼</span>
     </div>
-    <div id="grp-rep" class="collapsible-content">
+    <div id="grp-rep" class="nav-group">
       <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
       <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
       <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
@@ -317,7 +318,7 @@
   window.addEventListener('DOMContentLoaded', () => {
     const activeLink = document.querySelector('.nav-link.active');
     if (activeLink) {
-      const parentGroup = activeLink.closest('.collapsible-content');
+      const parentGroup = activeLink.closest('.nav-group');
       if (parentGroup) {
         parentGroup.classList.remove('collapsed');
         const header = parentGroup.previousElementSibling;
