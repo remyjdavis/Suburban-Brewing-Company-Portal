@@ -253,15 +253,16 @@
           <p id="nextSamplingDetails">Checking Schedule...</p>
         </div>
 
-        <div class="card card-quality" id="sensoryAlertCard" style="cursor:pointer;">
+        <div class="card card-quality" id="sensoryAlertCard" style="cursor:pointer;" onclick="showSensoryDetails()">
           <h3>Sensory Panel</h3>
           <div class="val" id="sensoryCount">--</div>
           <p id="sensoryStatus">Checking logs...</p>
+          <div id="sensory-due-list" style="display:none;"></div>
         </div>
 
         <div class="card card-sales" style="cursor:pointer;" onclick="location.href='sales/deliveries.html'">
           <h3>Delivery Status</h3>
-          <div class="val" style="font-size: 20px; margin-top: 15px;">Active Routes</div>
+          <div class="val" id="activeDeliveryVal">--</div>
           <p id="delivery-summary">Checking Tracking...</p>
         </div>
       </div>
@@ -306,7 +307,7 @@
 
           <div class="card card-finance">
             <h3>Lead Conversion</h3>
-            <div class="val">82%</div>
+            <div id="leadConversionVal" class="val">--%</div>
             <p>Leads converted to Sales</p>
           </div>
       </div>
@@ -350,20 +351,20 @@
         </div>
         <div class="card" onclick="location.href='inventory/wholesaler-inventory.html'" style="cursor:pointer;">
           <h3>Wholesaler Held</h3>
-          <div class="val">42 BBL</div>
+          <div class="val" id="wholesaler-held-val">-- BBL</div>
           <p>Inventory at Distributor</p>
         </div>
         <div class="card" onclick="location.href='inventory/Ingredient-inventory.html'" style="cursor:pointer;">
           <h3>Ingredient Health</h3>
-          <div class="val">Optimal</div>
-          <p>Base Malt: 4,200 lbs</p>
+          <div class="val" id="ingredient-health-val">Optimal</div>
+          <p id="base-malt-status">Base Malt: -- lbs</p>
         </div>
       </div>
     </div>
   </main>
 
   <script>
-    // 🔴 CONFIGURATION: USING YOUR MASTER DASHBOARD URL
+    // 🔴 CONFIGURATION
     const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
     const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
     const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec';
@@ -371,7 +372,7 @@
     
     const AUTO_REFRESH_MS = 300000; 
 
-    let currentRouteData = []; // Store globally for the pop-up
+    let currentRouteData = [];
 
     // --- ON LOAD ---
     window.addEventListener('DOMContentLoaded', () => {
@@ -382,32 +383,49 @@
     });
 
     function runAllSyncs() {
+        console.log("Starting Dashboard Sync...");
         syncZone1();
         syncSamplingCard();
         refreshCellarTanks();
-        checkSensoryAlerts();
         refreshMLEngine();
     }
 
-    // --- 1. ZONE 1 SYNC (SALES OUTREACH & INVENTORY) ---
+    // --- 1. ZONE 1 SYNC (SALES, INVENTORY, SENSORY) ---
     async function syncZone1() {
         try {
+            // A. FETCH OUTREACH & ROUTE
             const outreachRes = await fetch(`${MASTER_API_URL}?action=getOutreachData`);
             const outreachJson = await outreachRes.json();
-            
             if (outreachJson.status === 'success') {
                 currentRouteData = outreachJson.details || [];
                 document.getElementById('followUpCount').innerText = outreachJson.count;
                 const summaryBox = document.getElementById('daily-route-summary');
-                if (summaryBox) {
-                    summaryBox.innerText = outreachJson.route.length > 0 ? outreachJson.route.join(' → ') : "No stops scheduled";
-                }
+                if (summaryBox) summaryBox.innerText = outreachJson.route.length > 0 ? outreachJson.route.join(' → ') : "No stops scheduled";
             }
 
+            // B. FETCH INVENTORY ALERTS
             const invRes = await fetch(`${MASTER_API_URL}?action=getInventoryAlerts`);
             const invJson = await invRes.json();
             if (invJson.status === 'success') {
                 document.getElementById('alertCount').innerText = invJson.count;
+            }
+
+            // C. FETCH SENSORY DUE (Integrated from Bridge)
+            const sensoryRes = await fetch(`${MASTER_API_URL}?action=getSensoryDue`);
+            const sensoryJson = await sensoryRes.json();
+            if (sensoryJson.status === 'success' || sensoryJson.status === 'idle') {
+                const count = sensoryJson.count || 0;
+                document.getElementById('sensoryCount').innerText = count;
+                document.getElementById('sensoryStatus').innerText = count > 0 ? "QC Samples Due Today" : "QC logs current";
+                document.getElementById('sensory-due-list').innerText = sensoryJson.list || "";
+                
+                if (count > 0) {
+                    document.getElementById('sensoryAlertCard').style.borderColor = "var(--purple-accent)";
+                    document.getElementById('sensoryAlertCard').style.borderLeftWidth = "8px";
+                } else {
+                    document.getElementById('sensoryAlertCard').style.borderColor = "#e2e8f0";
+                    document.getElementById('sensoryAlertCard').style.borderLeftWidth = "1px";
+                }
             }
         } catch (e) { console.error("Zone 1 Sync Failed", e); }
     }
@@ -424,96 +442,30 @@
         } catch (e) { console.error("Sampling Sync Failed", e); }
     }
 
-    /**
-     * MODAL POP-UP LOGIC: DETAILED DAILY ROUTE
-     */
+    // --- POPUP MODALS ---
     function showRouteDetails() {
       if (currentRouteData.length === 0) {
         Swal.fire("Daily Route", "No stops scheduled for today.", "info");
         return;
       }
-
-      let html = `
-        <div style="max-height: 400px; overflow-y: auto;">
-          <table class="route-modal-table">
-            <thead>
-              <tr><th>#</th><th>Client</th><th>Type</th><th>Address</th></tr>
-            </thead>
-            <tbody>
-              ${currentRouteData.map((stop, i) => `
-                <tr>
-                  <td><div class="stop-num">${i + 1}</div></td>
-                  <td><strong>${stop.name}</strong></td>
-                  <td><span style="font-size: 10px; color: ${stop.color || '#666'}; font-weight: 700; text-transform: uppercase;">${stop.type}</span></td>
-                  <td style="font-size: 12px; color: var(--text-muted);">${stop.address}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-
-      Swal.fire({
-        title: 'Optimized Daily Route',
-        html: html,
-        width: '600px',
-        confirmButtonText: 'Got it',
-        confirmButtonColor: 'var(--accent)',
-        showCloseButton: true
-      });
+      let html = `<div style="max-height: 400px; overflow-y: auto;"><table class="route-modal-table"><thead><tr><th>#</th><th>Client</th><th>Type</th><th>Address</th></tr></thead><tbody>${currentRouteData.map((stop, i) => `<tr><td><div class="stop-num">${i + 1}</div></td><td><strong>${stop.name}</strong></td><td><span style="font-size: 10px; color: ${stop.color || '#666'}; font-weight: 700; text-transform: uppercase;">${stop.type}</span></td><td style="font-size: 12px; color: var(--text-muted);">${stop.address}</td></tr>`).join('')}</tbody></table></div>`;
+      Swal.fire({ title: 'Optimized Daily Route', html: html, width: '600px', confirmButtonText: 'Got it', confirmButtonColor: 'var(--accent)', showCloseButton: true });
     }
 
-    // --- SENSORY ALERT CHECKER ---
-    async function checkSensoryAlerts() {
-      try {
-        const payload = { action: 'getBlindSamples' };
-        const res = await fetch(SENSORY_API_URL, { 
-            method: 'POST', 
-            body: JSON.stringify(payload),
-            redirect: 'follow'
-        });
-        const json = await res.json();
-        if(json.status === 'success') {
-          const count = json.data.length;
-          const isReferenceOnly = count === 1 && (json.data[0].code === "100" || json.data[0].code === "105");
-          if (count > 0 && !isReferenceOnly) {
-            document.getElementById('sensoryCount').innerText = count;
-            document.getElementById('sensoryStatus').innerText = "Samples Approaching Terminal";
-            document.getElementById('sensoryStatus').style.color = "#8b5cf6"; 
-            document.getElementById('sensoryStatus').style.fontWeight = "700";
-            document.getElementById('sensoryAlertCard').style.borderColor = "#8b5cf6";
-            document.getElementById('sensoryAlertCard').style.borderLeftWidth = "6px";
-          } else {
-            resetSensoryCard();
-          }
+    function showSensoryDetails() {
+        const list = document.getElementById('sensory-due-list').innerText;
+        if (!list) {
+            Swal.fire("Sensory Queue", "No PRODUCTION batches due for tasting today.", "success");
+            return;
         }
-      } catch (e) {
-        console.error("Sensory Alert Error:", e);
-        document.getElementById('sensoryStatus').innerText = "Offline";
-      }
-    }
-
-    function resetSensoryCard() {
-        document.getElementById('sensoryCount').innerText = "0";
-        document.getElementById('sensoryStatus').innerText = "No critical samples due";
-        document.getElementById('sensoryStatus').style.color = "var(--text-muted)";
-        document.getElementById('sensoryStatus').style.fontWeight = "400";
-        document.getElementById('sensoryAlertCard').style.borderColor = "#e2e8f0";
-        document.getElementById('sensoryAlertCard').style.borderLeftWidth = "1px";
+        Swal.fire({ title: "Sensory Queue", text: "Production QC Required: " + list, icon: "info", confirmButtonColor: "var(--purple-accent)" });
     }
 
     // --- CELLAR TANK SYNC ---
     async function refreshCellarTanks() {
-        const categories = {
-            'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"],
-            'grid-pilot': ["Pilot 1", "Pilot 2"],
-            'grid-brite': ["BT 1", "BT 2"]
-        };
+        const categories = { 'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"], 'grid-pilot': ["Pilot 1", "Pilot 2"], 'grid-brite': ["BT 1", "BT 2"] };
         try {
-            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { 
-                method: "GET", 
-                redirect: "follow" 
-            });
+            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { method: "GET", redirect: "follow" });
             const liveBatches = await res.json();
             Object.keys(categories).forEach(gridId => {
                 const container = document.getElementById(gridId);
@@ -525,9 +477,9 @@
                     let sizeLabel = gridId === 'grid-pilot' ? "1 BBL" : "10 BBL";
                     let color = "var(--text-muted)"; 
                     let statusText = "Empty/Clean";
-                    if (isActive) {
-                        statusText = liveData.status;
-                        color = statusText.includes("Ready") ? "var(--ready)" : (statusText.includes("Crash") ? "var(--crashing)" : "var(--fermenting)");
+                    if (isActive) { 
+                      statusText = liveData.status; 
+                      color = statusText.includes("Ready") ? "var(--ready)" : (statusText.includes("Crash") ? "var(--crashing)" : "var(--fermenting)"); 
                     }
                     container.innerHTML += `
                         <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-style: ${isActive ? 'solid' : 'dashed'}; border-color: ${isActive ? color : '#e2e8f0'};">
@@ -550,33 +502,20 @@
         const advice = document.getElementById('ml-advice');
         const cashSavedDisplay = document.getElementById('cost-dollars-saved');
         try {
-            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { 
-                method: "GET", 
-                redirect: "follow" 
-            });
+            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`, { method: "GET", redirect: "follow" });
             const data = await res.json();
             const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
             const history = data.batchHistory || [0.72, 0.75, 0.74, 0.76, 0.75];
-            if (effDisplay) {
-                effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%";
-                effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b";
-            }
+            if (effDisplay) { effDisplay.innerText = (learnedEff * 100).toFixed(1) + "%"; effDisplay.style.color = (learnedEff >= 0.75) ? "#10b981" : "#f59e0b"; }
             if (cashSavedDisplay) cashSavedDisplay.innerText = "$" + (data.estimatedSavings || 0).toFixed(2);
             const ctx = document.getElementById('efficiencyChart').getContext('2d');
             if (window.mlChart) window.mlChart.destroy();
-            window.mlChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: history.map((_, i) => `B${i + 1}`),
-                    datasets: [{ label: 'Efficiency', data: history.map(v => v * 100), borderColor: '#3498db', tension: 0.4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
+            window.mlChart = new Chart(ctx, { type: 'line', data: { labels: history.map((_, i) => `B${i + 1}`), datasets: [{ label: 'Efficiency', data: history.map(v => v * 100), borderColor: '#3498db', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
             if (advice) advice.innerText = learnedEff >= 0.75 ? "Brewhouse trending optimally." : "AI Alert: Efficiency below target.";
         } catch (e) { console.error("ML Error:", e); }
     }
 
-    // --- TOGGLE FUNCTION ---
+    // --- UTILS ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
       content.classList.toggle('collapsed');
