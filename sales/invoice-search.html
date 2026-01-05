@@ -18,15 +18,39 @@
     .sidebar { 
       width: 240px; background: var(--sidebar); color: #fff; padding: 20px 0; 
       flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
+      transition: all 0.3s ease;
     }
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; color: #fff; letter-spacing: 1px; }
-    .nav-section-title { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; font-weight: 700; letter-spacing: 0.5px; }
-    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; transition: 0.2s; }
+    
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-header {
+      font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; 
+      font-weight: 700; letter-spacing: 0.5px;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
+    }
+    .nav-section-header:hover { color: #fff; opacity: 1; }
+
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
+
+    .collapsible-content {
+      max-height: 500px; overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease;
+      opacity: 1;
+    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+
+    /* LINKS */
+    .nav-link { 
+      display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
+      transition: 0.2s; border-left: 4px solid transparent;
+    }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
     .nav-link.active { border-left: 4px solid var(--accent); }
 
     /* --- MAIN WRAPPER --- */
-    .main-wrapper { flex: 1; margin-left: 240px; display: flex; flex-direction: column; min-width: 0; }
+    .main-wrapper { flex: 1; margin-left: 240px; display: flex; flex-direction: column; min-width: 0; transition: all 0.3s ease; }
 
     /* --- BLACK HEADER --- */
     .app-header {
@@ -59,48 +83,76 @@
     .preview-box { background: #fafafa; padding: 16px; border-left: 4px solid var(--accent); border-radius: 8px; }
 
     @media (max-width: 1024px) {
-      .sidebar { width: 70px; }
-      .sidebar h2, .sidebar .nav-section-title, .sidebar .nav-link span { display: none; }
-      .main-wrapper { margin-left: 70px; }
+      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .sidebar h2, .nav-section-header { display: none; }
+      .main-wrapper { margin-left: 0; }
+      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
     }
   </style>
 </head>
 
 <body>
   <aside class="sidebar">
-        <div class="sidebar-header">SUBURBAN BREWING</div>
-        
-        <div class="nav-section-title">Main Menu</div> 
-        <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-      
-        <div class="nav-section-title">Samplings</div>
-        <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-        <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-        <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-        
-        <div class="nav-section-title">Sales & Outreach</div>
-        <a href="leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-        <a href="invoice-search.html" class="nav-link active"><span>Invoice Search</span></a>
-        <a href="deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-        <a href="new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    <h2>SUBURBAN BREWING</h2>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
+      <span>Main Menu</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-main" class="collapsible-content">
+      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="invoice-search.html" class="nav-link active"><span>Invoice Search</span></a>
+      <a href="deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    </div>
 
-        <div class="nav-section-title">Inventory</div>
-        <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-        <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-        <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-        <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-        
-        <div class="nav-section-title">Brewing</div>
-        <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-        <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-        <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-        <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
-        
-        <div class="nav-section-title">Reporting & Analytics</div>
-        <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-        <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-        <a href="../Reports/client-inventory.html" class="nav-link"><span>Client Inventory</span></a>
-    </aside>
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
+      <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="../Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    </div>
+  </aside>
 
   <div class="main-wrapper">
     <header class="app-header">
@@ -122,82 +174,89 @@
         </button>
       </div>
 
-<!-- ======================================================
-     SEARCH CUSTOMER
-====================================================== -->
-<div class="section">
-<h2>Find Customer Invoices</h2>
-<div class="form-grid">
-  <div>
-    <label>Customer Name</label>
-    <input id="customerName" placeholder="Type customer name..." oninput="debouncedLoadInvoices()">
+      <div class="section">
+        <h2>Find Customer Invoices</h2>
+        <div class="form-grid">
+          <div>
+            <label>Customer Name</label>
+            <input id="customerName" placeholder="Type customer name..." oninput="debouncedLoadInvoices()">
+          </div>
+          <div>
+            <label>Invoice #</label>
+            <input id="invoiceNumber" disabled>
+          </div>
+          <div>
+            <label>Date</label>
+            <input id="invoiceDate" disabled>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <button class="btn btn-secondary" onclick="clearSelection()">Clear</button>
+          <button class="btn btn-primary" onclick="editInvoice()">Edit Invoice</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Invoice History</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Date</th>
+              <th>Total</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="4">Search a customer to load invoices.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section preview" id="previewPanel" style="display:none;">
+        <h2>Invoice Preview</h2>
+        <div id="previewContent"></div>
+      </div>
+
+    </main>
   </div>
-  <div>
-    <label>Invoice #</label>
-    <input id="invoiceNumber" disabled>
-  </div>
-  <div>
-    <label>Date</label>
-    <input id="invoiceDate" disabled>
-  </div>
-</div>
 
-<div style="margin-top:16px;">
-  <button class="secondary" onclick="clearSelection()">Clear</button>
-  <button onclick="editInvoice()">Edit Invoice</button>
-</div>
-</div>
-
-<!-- ======================================================
-     INVOICE HISTORY
-====================================================== -->
-<div class="section">
-<h2>Invoice History</h2>
-<table>
-<thead>
-<tr>
-  <th>Invoice #</th>
-  <th>Date</th>
-  <th>Total</th>
-  <th>Action</th>
-</tr>
-</thead>
-<tbody id="historyBody">
-<tr><td colspan="4">Search a customer to load invoices.</td></tr>
-</tbody>
-</table>
-</div>
-
-<!-- ======================================================
-     PREVIEW
-====================================================== -->
-<div class="section preview" id="previewPanel" style="display:none;">
-<h2>Invoice Preview</h2>
-<div id="previewContent"></div>
-</div>
-
-</section>
-</div>
-</div>
-
-<!-- ======================================================
-     SCRIPT
-====================================================== -->
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 
 let debounceTimer = null;
 let selectedInvoice = null;
 let invoiceHistory = [];
-// DOM ELEMENTS (REQUIRED – DO NOT REMOVE)
-const customerName  = document.getElementById("customerName");
-const historyBody   = document.getElementById("historyBody");
+
+const customerName = document.getElementById("customerName");
+const historyBody = document.getElementById("historyBody");
 const invoiceNumber = document.getElementById("invoiceNumber");
-const invoiceDate   = document.getElementById("invoiceDate");
-const previewPanel  = document.getElementById("previewPanel");
+const invoiceDate = document.getElementById("invoiceDate");
+const previewPanel = document.getElementById("previewPanel");
 const previewContent = document.getElementById("previewContent");
 
-/* ---------------- LOAD INVOICES ---------------- */
+// --- SIDEBAR TOGGLE ---
+function toggleGroup(contentId, headerEl) {
+  const content = document.getElementById(contentId);
+  content.classList.toggle('collapsed');
+  headerEl.classList.toggle('collapsed');
+}
+
+// Initialize Sidebar State
+window.addEventListener('DOMContentLoaded', () => {
+  const activeLink = document.querySelector('.nav-link.active');
+  if (activeLink) {
+    const parentGroup = activeLink.closest('.collapsible-content');
+    if (parentGroup) {
+      parentGroup.classList.remove('collapsed');
+      const header = parentGroup.previousElementSibling;
+      if (header) header.classList.remove('collapsed');
+    }
+  }
+});
+
+// --- INVOICE LOGIC ---
 function debouncedLoadInvoices() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
@@ -206,15 +265,12 @@ function debouncedLoadInvoices() {
     loadInvoices(name);
   }, 300);
 }
+
 async function loadInvoices(customer) {
-  historyBody.innerHTML =
-    "<tr><td colspan='4'>Loading invoices...</td></tr>";
+  historyBody.innerHTML = "<tr><td colspan='4'>Loading invoices...</td></tr>";
 
   try {
-    const res = await fetch(
-      `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`
-    );
-
+    const res = await fetch(`${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`);
     if (!res.ok) throw new Error("Request failed");
 
     const data = await res.json();
@@ -222,8 +278,7 @@ async function loadInvoices(customer) {
     historyBody.innerHTML = "";
 
     if (!invoiceHistory.length) {
-      historyBody.innerHTML =
-        "<tr><td colspan='4'>No invoices found.</td></tr>";
+      historyBody.innerHTML = "<tr><td colspan='4'>No invoices found.</td></tr>";
       return;
     }
 
@@ -233,133 +288,87 @@ async function loadInvoices(customer) {
         <td>${inv.invoiceNumber}</td>
         <td>${inv.date}</td>
         <td>$${Number(inv.total).toFixed(2)}</td>
-        <td>
-          <button onclick="selectInvoice('${inv.invoiceNumber}', this)">
-            Load
-          </button>
-        </td>
+        <td><button class="btn btn-secondary" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button></td>
       `;
       historyBody.appendChild(tr);
     });
 
   } catch (err) {
     console.error(err);
-    historyBody.innerHTML =
-      "<tr><td colspan='4'>Failed to load invoices.</td></tr>";
+    historyBody.innerHTML = "<tr><td colspan='4'>Failed to load invoices.</td></tr>";
   }
 }
-
 
 async function selectInvoice(invNum, btn) {
   selectedInvoice = invoiceHistory.find(i => i.invoiceNumber === invNum);
   if (!selectedInvoice) return;
 
-  document.querySelectorAll("#historyBody tr").forEach(r =>
-    r.classList.remove("selected")
-  );
+  document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
   btn.closest("tr").classList.add("selected");
 
   invoiceNumber.value = selectedInvoice.invoiceNumber || "";
-invoiceDate.value = selectedInvoice.date || "";
+  invoiceDate.value = selectedInvoice.date || "";
 
   try {
-  const res = await fetch(
-    `${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`
-  );
+    const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`);
+    if (!res.ok) throw new Error("Failed to load items");
 
-  if (!res.ok) throw new Error("Failed to load items");
+    const items = await res.json();
+    selectedInvoice.items = (Array.isArray(items) ? items : []).map(i => ({
+      qty: Number(i.quantity ?? i.qty ?? i.Qty ?? 0),
+      product: String(i.product ?? i.Product ?? "").trim(),
+      type: String(i.type ?? i.Type ?? "").trim(),
+      price: Number(i.price ?? i.Price ?? 0),
+      lineTotal: Number(i.lineTotal ?? i["Line Total"] ?? i.total ?? 0)
+    }));
 
-  const items = await res.json();
+  } catch (err) {
+    console.error("Failed to load invoice items", err);
+    selectedInvoice.items = [];
+  }
 
-  selectedInvoice.items = (Array.isArray(items) ? items : []).map(i => ({
-    qty: Number(
-      i.quantity ??
-      i.qty ??
-      i.Qty ??
-      0
-    ),
-    product: String(
-      i.product ??
-      i.Product ??
-      ""
-    ).trim(),
-    type: String(
-      i.type ??
-      i.Type ??
-      ""
-    ).trim(),
-    price: Number(
-      i.price ??
-      i.Price ??
-      0
-    ),
-    lineTotal: Number(
-      i.lineTotal ??
-      i["Line Total"] ??
-      i.total ??
-      0
-    )
-  }));
-
-} catch (err) {
-  console.error("Failed to load invoice items", err);
-  selectedInvoice.items = [];
+  renderPreview();
 }
 
-renderPreview();
-}
-
-/* ---------------- PREVIEW ---------------- */
 function renderPreview() {
   if (!selectedInvoice) return;
-
-  const panel = document.getElementById("previewPanel");
-  const content = document.getElementById("previewContent");
 
   const itemsHtml = selectedInvoice.items.length
     ? selectedInvoice.items.map(item => `
         <div style="margin-bottom:6px;">
-         ${item.qty} × <strong>${item.product}</strong>
-(${item.type}) — $${item.lineTotal.toFixed(2)}
+         ${item.qty} × <strong>${item.product}</strong> (${item.type}) — $${item.lineTotal.toFixed(2)}
         </div>
       `).join("")
     : "<em>No line items found.</em>";
-const deliveryStatus =
-  selectedInvoice.status &&
-  String(selectedInvoice.status).trim() === "Delivered"
-    ? "Delivered"
-    : "Undelivered";
+    
+  const deliveryStatus = selectedInvoice.status && String(selectedInvoice.status).trim() === "Delivered" ? "Delivered" : "Undelivered";
 
-  content.innerHTML = `
-  <strong>Invoice #:</strong> ${selectedInvoice.invoiceNumber}<br>
-  <strong>Date:</strong> ${selectedInvoice.date}<br>
-  <strong>Status:</strong> ${deliveryStatus}<br>
-  <strong>Total:</strong> $${Number(selectedInvoice.total).toFixed(2)}<br><br>
+  previewContent.innerHTML = `
+    <strong>Invoice #:</strong> ${selectedInvoice.invoiceNumber}<br>
+    <strong>Date:</strong> ${selectedInvoice.date}<br>
+    <strong>Status:</strong> ${deliveryStatus}<br>
+    <strong>Total:</strong> $${Number(selectedInvoice.total).toFixed(2)}<br><br>
+    <strong>Items:</strong><br>
+    ${itemsHtml}
+  `;
 
-  <strong>Items:</strong><br>
-  ${itemsHtml}
-`;
-
-  panel.style.display = "block";
+  previewPanel.style.display = "block";
 }
-/* ---------------- EDIT ---------------- */
+
 function editInvoice() {
   if (!selectedInvoice) return alert("Select an invoice first.");
-  location.href = `new invoices.html?invoice=${encodeURIComponent(
-    selectedInvoice.invoiceNumber
-  )}`;
+  location.href = `new invoices.html?invoice=${encodeURIComponent(selectedInvoice.invoiceNumber)}`;
 }
 
-/* ---------------- CLEAR ---------------- */
 function clearSelection() {
   selectedInvoice = null;
   invoiceNumber.value = "";
   invoiceDate.value = "";
   previewPanel.style.display = "none";
-previewContent.innerHTML = "";
+  previewContent.innerHTML = "";
+  document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
 }
 </script>
-
 
 </body>
 </html>
