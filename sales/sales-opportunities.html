@@ -48,24 +48,30 @@
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
     
-    .nav-section-title { 
-      font-size: 11px; 
-      text-transform: uppercase; 
-      color: #475569; 
-      margin: 24px 24px 8px; 
-      font-weight: 700; 
-      letter-spacing: 1px; 
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-header {
+      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
+      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
     }
-    
+    .nav-section-header:hover { color: #fff; }
+
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
+
+    .collapsible-content {
+      max-height: 500px; overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease;
+      opacity: 1;
+    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+
+    /* LINKS */
     .nav-link { 
-      display: flex;
-      align-items: center;
-      padding: 10px 24px; 
-      color: #94a3b8; 
-      text-decoration: none; 
-      font-size: 14px; 
-      transition: 0.2s; 
-      border-left: 4px solid transparent;
+      display: flex; align-items: center; padding: 10px 24px; 
+      color: #64748b; text-decoration: none; font-size: 14px; 
+      transition: 0.2s; border-left: 4px solid transparent;
     }
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
@@ -193,50 +199,75 @@
     }
 
     @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; background: var(--sidebar); overflow-x: auto; }
-      .sidebar h2, .sidebar .nav-section-title { display: none; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; font-size: 12px; font-weight: 700; white-space: nowrap; }
-      .nav-link.active { border-top: 4px solid var(--accent); border-left: none; background: #1e293b; }
+      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
       .main { margin-left: 0; padding: 20px 20px 90px; }
+      .nav-section-header, .sidebar h2 { display: none; }
+      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; }
     }
   </style>
 </head>
 <body>
 
   <aside class="sidebar">
-    <h2>SUBURBAN Brewing</h2>
+    <h2>SUBURBAN BREWING</h2>
     
-    <div class="nav-section-title">Main Menu</div>
-    <a href="index.html" class="nav-link"><span>Command Center</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
+      <span>Main Menu</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-main" class="collapsible-content">
+      <a href="index.html" class="nav-link"><span>Command Center</span></a>
+    </div>
     
-    <div class="nav-section-title">Samplings</div>
-    <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-    <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-    <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    </div>
     
-    <div class="nav-section-title">Sales</div>
-    <a href="sales-opportunities.html" class="nav-link active"><span>Sales Opportunities</span></a>
-    <a href="leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-    <a href="invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-    <a href="deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-    <a href="new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="sales-opportunities.html" class="nav-link active"><span>Sales Opportunities</span></a>
+      <a href="leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+      <a href="deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    </div>
 
-    <div class="nav-section-title">Inventory</div>
-    <a href="inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-    <a href="inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-    <a href="inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-    <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
     
-    <div class="nav-section-title">Brewing</div>
-    <a href="Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
-    <a href="Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-    <a href="Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-    <a href="Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-    <a href="Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
+      <a href="Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    </div>
     
-    <div class="nav-section-title">Reporting & Analytics</div>
-    <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-    <a href="Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="Reports/sales-route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    </div>
   </aside>
 
   <main class="main">
@@ -283,7 +314,25 @@
 
         let allLeads = []; 
 
+        // --- SIDEBAR TOGGLE LOGIC ---
+        function toggleGroup(contentId, headerEl) {
+          const content = document.getElementById(contentId);
+          content.classList.toggle('collapsed');
+          headerEl.classList.toggle('collapsed');
+        }
+
         window.onload = async function() {
+            // Initialize Sidebar State (Open Active Group)
+            const activeLink = document.querySelector('.nav-link.active');
+            if (activeLink) {
+              const parentGroup = activeLink.closest('.collapsible-content');
+              if (parentGroup) {
+                parentGroup.classList.remove('collapsed');
+                const header = parentGroup.previousElementSibling;
+                if (header) header.classList.remove('collapsed');
+              }
+            }
+
             try {
                 // Fetch Intelligence Data
                 const res = await fetch(`${API_URL}?action=getSalesOptimizationData`);
