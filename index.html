@@ -511,6 +511,27 @@
       content.classList.toggle('collapsed');
       headerEl.classList.toggle('collapsed');
     }
+    async function syncOutreachCard() {
+    // 🔴 REPLACE with the Web App URL after deploying the script above
+    const SALES_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
+    
+    try {
+        const response = await fetch(`${SALES_SYNC_URL}?action=getOutreachData`);
+        const json = await response.json();
+        
+        if (json.status === 'success') {
+            const outreachEl = document.getElementById('followUpCount');
+            if (outreachEl) {
+                outreachEl.innerText = json.count;
+                // Add a subtle alert color if follow-ups are high
+                outreachEl.style.color = json.count > 10 ? 'var(--danger)' : 'var(--text-main)';
+            }
+            console.log("Sales Outreach Synced:", json.count);
+        }
+    } catch (error) {
+        console.error("Outreach Sync Failed:", error);
+    }
+}
   </script>
 </body>
 </html>
