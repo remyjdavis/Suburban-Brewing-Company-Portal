@@ -533,6 +533,20 @@
           console.error("Outreach Sync Failed:", error);
       }
     }
+    async function syncZone1() {
+    // 🔴 Point this to the NEW Command Center Master Deployment
+    const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
+    
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getOutreachData`);
+        const json = await res.json();
+        
+        if (json.status === 'success') {
+            document.getElementById('followUpCount').innerText = json.count;
+            document.getElementById('daily-route').innerText = "Route: " + (json.route.length > 0 ? json.route.join(' → ') : "No stops today");
+        }
+    } catch (e) { console.error("Outreach Sync Failed", e); }
+}
   </script>
 </body>
 </html>
