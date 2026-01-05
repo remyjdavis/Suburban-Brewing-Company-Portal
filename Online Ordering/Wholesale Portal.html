@@ -13,12 +13,16 @@
         .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
         .card { background: white; padding: 2rem; border-radius: 12px; border: 1px solid #dee2e6; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
         
-        /* Search and Category Styling */
+        /* Agreement Styling */
+        .legal-scroll { height: 450px; overflow-y: auto; border: 2px solid #1a1a1a; padding: 1.5rem; margin: 1rem 0; font-size: 0.85rem; line-height: 1.7; background: #fff; text-align: left; }
+        .checkbox-area { background: #f1f2f6; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 12px; border: 1px solid #dfe6e9; }
+
+        /* Search & Filter Styling */
         .controls-area { margin-bottom: 20px; position: sticky; top: 10px; z-index: 100; background: #f8f9fa; padding: 10px 0; }
         .search-input { width: 100%; padding: 15px; border: 2px solid #1a1a1a; border-radius: 8px; font-size: 1rem; margin-bottom: 10px; box-sizing: border-box; }
         .cat-bar { display: flex; gap: 8px; flex-wrap: wrap; }
-        
-        /* Product Grid */
+
+        /* Product Card Styling */
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
         .product-card { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
         .product-img-container { width: 100%; height: 200px; background: #fcfcfc; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: center; position: relative; }
@@ -30,15 +34,19 @@
         .stock-tag { font-size: 0.75rem; color: #27ae60; font-weight: bold; }
         .stock-low { color: #d63031; }
 
-        /* Legal/Agreement */
-        .legal-scroll { height: 400px; overflow-y: auto; border: 2px solid #1a1a1a; padding: 1.5rem; background: #fff; font-size: 0.85rem; line-height: 1.6; }
-
+        /* Order Bar */
         .live-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a1a; color: white; padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; z-index: 1001; border-top: 4px solid #007bff; }
         .btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; }
         .btn-primary { background-color: #007bff; color: white; }
         .btn-outline { background: white; border: 1px solid #ccc; color: #333; }
         .btn-outline.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
         .btn-success { background: #27ae60; color: white; }
+
+        .review-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+        .review-table th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #1a1a1a; }
+        .review-table td { padding: 10px; border-bottom: 1px solid #eee; }
+
+        @media print { .site-header, .live-bar, .btn-area-nav { display: none !important; } body { padding: 0; background: white; } .card { box-shadow: none; border: none; } }
     </style>
 </head>
 <body>
@@ -63,23 +71,21 @@
 </div>
 
 <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz2YK1MnItnIMJpNHNRCFXoo4hxRJPaF9NmO6ginxaJjfkm7FnbV-gO82_uL8X73AaR/exec"; 
+    const API_URL = "REPLACE_WITH_YOUR_BACKEND_URL"; 
     const BASE_IMG_URL = "https://raw.githubusercontent.com/remyjdavis/brewery-order-form/main/";
 
-    let productsDB = [];
     let groupedProducts = {};
     let customersDB = [];
     let state = { step: 0, customer: null, cart: {}, category: 'All' };
 
-    // --- HARDWARE SCANNER LOGIC ---
-    // Listen for rapid typing (scanners) and auto-focus search
+    // Scanner support: listens for rapid keypresses
     document.addEventListener('keydown', (e) => {
         if (state.step === 2 && document.activeElement.tagName !== 'INPUT') {
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) searchInput.focus();
+            const si = document.getElementById('searchInput');
+            if (si) si.focus();
         }
         if (e.key === 'Enter' && state.step === 2) {
-            setTimeout(filterProducts, 50); //
+            setTimeout(filterProducts, 50);
         }
     });
 
@@ -88,12 +94,11 @@
             const response = await fetch(`${API_URL}?action=getStoreData`);
             const data = await response.json();
             if(data.status === 'success') {
-                productsDB = data.products; //
                 processProducts(data.products);
-                customersDB = data.customers; //
+                customersDB = data.customers;
                 render();
             }
-        } catch (error) { console.error("Init failed", error); }
+        } catch (error) { console.error(error); }
     }
 
     function processProducts(rawList) {
@@ -102,9 +107,9 @@
             if (!groupedProducts[p.name]) {
                 groupedProducts[p.name] = { 
                     name: p.name, 
-                    lifecycle: p.lifecycle, //
-                    upc: p.upc, //
-                    image: p.image, 
+                    lifecycle: p.lifecycle,
+                    upc: p.upc,
+                    image: p.image || p.name.split(' ')[0].toLowerCase() + ".jpg", 
                     variants: [] 
                 };
             }
@@ -112,41 +117,37 @@
         });
     }
 
-    function filterProducts() {
-        const query = document.getElementById("searchInput").value.toLowerCase(); //
-        const cards = document.querySelectorAll(".product-card");
-        
-        cards.forEach(card => {
-            const name = card.dataset.name.toLowerCase();
-            const upc = card.dataset.upc.toLowerCase(); //
-            const lifecycle = card.dataset.lifecycle;
-
-            const matchesSearch = name.includes(query) || upc.includes(query) || upc === query; //
-            const matchesCategory = (state.category === 'All' || lifecycle === state.category);
-
-            card.style.display = (matchesSearch && matchesCategory) ? "flex" : "none";
-        });
-    }
-
-    function setCategory(cat) {
-        state.category = cat;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-        filterProducts();
-    }
-
     function render() {
         const app = document.getElementById("app");
         const liveBar = document.getElementById("live-bar");
 
         if (state.step === 0) {
+            liveBar.style.display = "none";
             app.innerHTML = `
                 <div class="card">
-                    <h2 style="text-align:center;">Wholesale Distribution Agreement</h2>
+                    <h2 style="text-align:center;">PA WHOLESALE DISTRIBUTION AGREEMENT</h2>
                     <div class="legal-scroll">
-                        <p>Purchaser agrees to all PA PLCB regulations including COD requirements. Products must be maintained under 38°F at all times...</p>
+                        <p>This agreement is compliant with the laws of the Commonwealth of Pennsylvania and the regulations of the Pennsylvania Liquor Control Board (PLCB). By proceeding, the Purchaser agrees to the following terms and conditions:</p>
+                        <h3>1. PLCB COMPLIANCE & LICENSURE</h3>
+                        <p>Purchaser warrants that it holds a valid, active retail or wholesale license issued by the PLCB. Purchaser agrees to notify Suburban Brewing Co. (SBC) immediately if said license is suspended, revoked, or expired.</p>
+                        <h3>2. PRICE POSTING & ACT 39</h3>
+                        <p>In accordance with Act 39 of 2016, SBC maintains a public price list. All products are sold at the posted wholesale price at the time of delivery.</p>
+                        <h3>3. CASH ON DELIVERY (COD) & SECTION 493</h3>
+                        <p>Per Section 493(2) of the Liquor Code, sales of malt or brewed beverages to retail licensees must be for cash or check paid at or before the time of delivery.</p>
+                        <h3>4. COLD CHAIN STORAGE & QUALITY CONTROL</h3>
+                        <p>Products produced by SBC are unpasteurized "live" beverages. Purchaser agrees to maintain strict cold chain storage (34°F-38°F).</p>
+                        <h3>5. COOPERAGE & EQUIPMENT LIABILITY</h3>
+                        <p>All stainless steel keg shells remain the property of Suburban Brewing Co. A mandatory $30.00 deposit is applied to each keg shell.</p>
+                        <h3>6. RETURNED CHECKS & LATE FEES</h3>
+                        <p>Any check returned for non-sufficient funds (NSF) will incur a $50.00 administrative fee.</p>
+                        <h3>7. RESALE LIMITATIONS</h3>
+                        <p>Purchaser agrees that all products are for retail sale at the licensed premises only.</p>
                     </div>
-                    <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="state.step=1;render()">I Accept & Agree</button>
+                    <div class="checkbox-area">
+                        <input type="checkbox" id="agreeCheck" onchange="document.getElementById('acceptBtn').disabled = !this.checked">
+                        <label for="agreeCheck">I certify that I am a licensed PA retail/wholesale agent and agree to all terms above.</label>
+                    </div>
+                    <button id="acceptBtn" class="btn btn-primary" style="width:100%;" disabled onclick="state.step=1;render()">I Accept & Agree</button>
                 </div>`;
         } else if (state.step === 1) {
             app.innerHTML = `
@@ -168,7 +169,6 @@
                     </div>
                 </div>
                 <div class="product-grid">`;
-
             for (const key in groupedProducts) {
                 const p = groupedProducts[key];
                 html += `
@@ -232,9 +232,26 @@
 
     async function attemptLogin() {
         const input = document.getElementById("loginInput").value.trim().toLowerCase();
-        const found = customersDB.find(c => c.key === input); //
+        const found = customersDB.find(c => c.key === input);
         if (found) { state.customer = found; state.step = 2; render(); }
         else { Swal.fire("Login Failed", "Invalid Access Key.", "error"); }
+    }
+
+    function filterProducts() {
+        const query = document.getElementById("searchInput").value.toLowerCase();
+        const cards = document.querySelectorAll(".product-card");
+        cards.forEach(card => {
+            const matchesSearch = card.dataset.name.toLowerCase().includes(query) || card.dataset.upc.toLowerCase().includes(query);
+            const matchesCategory = (state.category === 'All' || card.dataset.lifecycle === state.category);
+            card.style.display = (matchesSearch && matchesCategory) ? "flex" : "none";
+        });
+    }
+
+    function setCategory(cat) {
+        state.category = cat;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        filterProducts();
     }
 
     function calculateOrderMath() {
@@ -250,7 +267,8 @@
 
     function updateLiveTotals() {
         const math = calculateOrderMath();
-        document.getElementById("live-total").innerText = "$" + math.grandTotal;
+        const totalEl = document.getElementById("live-total");
+        if (totalEl) totalEl.innerText = "$" + math.grandTotal;
     }
 
     function goToReview() { if(Object.keys(state.cart).length === 0) return; state.step = 3; render(); }
@@ -262,10 +280,10 @@
             await fetch(API_URL, { 
                 method: "POST", 
                 mode: "no-cors", 
-                body: JSON.stringify({ action: 'submitOrder', customer: state.customer, cart: state.cart }) 
+                body: JSON.stringify({ action: 'submitOrder', customer: state.customer, cart: state.cart, summary: calculateOrderMath() }) 
             });
-            Swal.fire("Order Placed!", "Your order has been sent successfully.", "success").then(() => location.reload());
-        } catch (e) { Swal.fire("Error", "Check your connection.", "error"); btn.disabled = false; }
+            Swal.fire("Order Placed!", "Success.", "success").then(() => location.reload());
+        } catch (e) { Swal.fire("Error", "Failed.", "error"); btn.disabled = false; }
     }
 
     init();
