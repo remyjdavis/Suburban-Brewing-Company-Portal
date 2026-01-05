@@ -121,6 +121,9 @@
     .card-quality { border-left: 5px solid var(--purple-accent); }
     .card-finance { border-left: 5px solid var(--green-accent); }
 
+    /* ROUTE SPECIFIC STYLING */
+    .route-list { font-size: 11px; color: var(--accent); margin-top: 10px; font-weight: 600; line-height: 1.4; }
+
     /* --- TANK VISUALS --- */
     .tank-card { background: #fff; border-radius: 20px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; }
     .tank-vessel { width: 70px; height: 110px; background: #f1f5f9; margin: 16px auto; border-radius: 8px 8px 30px 30px; position: relative; overflow: hidden; border: 2px solid #e2e8f0; }
@@ -227,11 +230,12 @@
           <h3>Sales Outreach</h3>
           <div class="val" id="followUpCount">--</div>
           <p>AI Follow-ups Due Today</p>
+          <div id="daily-route" class="route-list">Route: Loading daily stops...</div>
         </div>
         
         <div class="card card-alert" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
           <h3>Inventory Alerts</h3>
-          <div class="val" id="alertCount" style="color: var(--danger);">4</div>
+          <div class="val" id="alertCount">--</div>
           <p>Low Stock Master SKUs</p>
         </div>
 
@@ -352,6 +356,7 @@
 
   <script>
     // 🔴 CONFIGURATION: ENSURE THESE ARE YOUR LATEST DEPLOYMENTS
+    const MASTER_API_URL = 'PASTE_COMMAND_CENTER_MASTER_URL_HERE';
     const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
     const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec';
     const SENSORY_API_URL = 'https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec';
@@ -387,7 +392,7 @@
 
     function runAllSyncs() {
         console.log("Syncing Dashboard Data...");
-        syncOutreachCard(); // RESTORED CALL TO SALES OUTREACH logic
+        syncZone1();
         refreshCellarTanks();
         checkSensoryAlerts();
         refreshMLEngine();
@@ -513,40 +518,32 @@
       headerEl.classList.toggle('collapsed');
     }
 
-    // --- 4. SALES OUTREACH SYNC ---
-    async function syncOutreachCard() {
-      // 🔴 REPLACE with your Web App URL after deploying the script I provided
-      const SALES_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
-      try {
-          const response = await fetch(`${SALES_SYNC_URL}?action=getOutreachData`);
-          const json = await response.json();
-          if (json.status === 'success') {
-              const outreachEl = document.getElementById('followUpCount');
-              if (outreachEl) {
-                  outreachEl.innerText = json.count;
-                  // Color coding alert: Turn red if more than 10 follow-ups are due
-                  outreachEl.style.color = json.count > 10 ? 'var(--danger)' : 'var(--text-main)';
-              }
-              console.log("Sales Outreach Synced:", json.count);
-          }
-      } catch (error) {
-          console.error("Outreach Sync Failed:", error);
-      }
-    }
+    // --- 4. ZONE 1 SYNC (SALES OUTREACH & INVENTORY) ---
     async function syncZone1() {
-    // 🔴 Point this to the NEW Command Center Master Deployment
-    const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
-    
-    try {
-        const res = await fetch(`${MASTER_API_URL}?action=getOutreachData`);
-        const json = await res.json();
-        
-        if (json.status === 'success') {
-            document.getElementById('followUpCount').innerText = json.count;
-            document.getElementById('daily-route').innerText = "Route: " + (json.route.length > 0 ? json.route.join(' → ') : "No stops today");
+        try {
+            // Fetch Outreach & Route data from the Master script
+            const outreachRes = await fetch(`${MASTER_API_URL}?action=getOutreachData`);
+            const outreachJson = await outreachRes.json();
+            
+            if (outreachJson.status === 'success') {
+                document.getElementById('followUpCount').innerText = outreachJson.count;
+                const routeBox = document.getElementById('daily-route');
+                if (routeBox) {
+                    routeBox.innerHTML = "<strong>Route:</strong> " + (outreachJson.route.length > 0 ? outreachJson.route.join(' → ') : "No stops scheduled today");
+                }
+            }
+
+            // Fetch Inventory Alerts from the Master script
+            const invRes = await fetch(`${MASTER_API_URL}?action=getInventoryAlerts`);
+            const invJson = await invRes.json();
+            
+            if (invJson.status === 'success') {
+                document.getElementById('alertCount').innerText = invJson.count;
+            }
+        } catch (e) { 
+            console.error("Zone 1 Sync Failed", e); 
         }
-    } catch (e) { console.error("Outreach Sync Failed", e); }
-}
+    }
   </script>
 </body>
 </html>
