@@ -3,27 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <title>SBC Portal Login</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 350px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        /* --- GLOBAL LAYOUT --- */
+        body { 
+            background: #0f172a; 
+            color: white; 
+            font-family: sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; /* Changed from height to min-height for mobile keyboards */
+            margin: 0; 
+            padding: 20px; /* Prevents card from touching edges on small screens */
+        }
+
+        /* --- THE LOGIN CARD --- */
+        .login-card { 
+            background: #1e293b; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            width: 100%; 
+            max-width: 350px; 
+            text-align: center; 
+            transition: all 0.3s ease;
+        }
+
+        /* --- FORM ELEMENTS --- */
+        input { 
+            width: 100%; 
+            padding: 14px; /* Increased for better touch targets */
+            margin: 10px 0; 
+            border-radius: 6px; 
+            border: 1px solid #334155; 
+            background: #0f172a; 
+            color: white; 
+            box-sizing: border-box; 
+            font-size: 16px; /* Prevents iOS zoom-on-focus */
+        }
+
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            background: #2563eb; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-top: 10px; 
+            font-size: 16px;
+        }
+
         .error { color: #f87171; font-size: 14px; margin-bottom: 10px; display: none; }
-        .forgot-link { display: block; margin-top: 20px; color: #94a3b8; font-size: 13px; text-decoration: none; cursor: pointer; }
+        
+        .forgot-link { 
+            display: block; 
+            margin-top: 25px; 
+            color: #94a3b8; 
+            font-size: 14px; 
+            text-decoration: none; 
+            cursor: pointer; 
+        }
         .forgot-link:hover { color: #2563eb; text-decoration: underline; }
+
+        /* --- MOBILE & TABLET REFINEMENTS --- */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 30px 20px;
+                max-width: 100%;
+                border-radius: 8px;
+            }
+            h2 { font-size: 22px; }
+            p { font-size: 14px; }
+        }
+
+        /* Landscape fix for small phones */
+        @media (max-height: 500px) {
+            body { align-items: flex-start; padding-top: 20px; }
+        }
     </style>
 </head>
 <body>
     <div class="login-card">
-        <h2>Suburban Brewing</h2>
-        <p style="color: #94a3b8;">Employee Portal Access</p>
+        <h2 style="margin-bottom: 8px;">Suburban Brewing</h2>
+        <p style="color: #94a3b8; margin-top: 0; margin-bottom: 25px;">Employee Portal Access</p>
         
         <div id="errorMsg" class="error">Incorrect Credentials</div>
         
-        <input type="text" id="userInput" placeholder="Username">
-        <input type="password" id="passInput" placeholder="Password">
+        <input type="text" id="userInput" placeholder="Username" autocomplete="username">
+        <input type="password" id="passInput" placeholder="Password" autocomplete="current-password">
         
         <button onclick="checkLogin()">Access Portal</button>
         
@@ -31,7 +102,7 @@
     </div>
 
 <script>
-// 🔴 Ensure this matches your most recent "New Deployment" URL in Apps Script
+// Logic preserved exactly as you provided
 const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
 
 async function checkLogin() {
@@ -60,43 +131,39 @@ async function checkLogin() {
         const result = await response.json();
 
         if (result.status === "success") {
-            
-            // --- 1. AGREEMENT GATEKEEPER (Only triggers if not signed in Column J) ---
             if (!result.profile.agreementSigned) {
-    const { isConfirmed } = await Swal.fire({
-        title: 'User Access Agreement',
-        html: `
-            <div style="text-align: left; font-size: 13px; color: #cbd5e1; background: #0f172a; border: 1px solid #334155; padding: 15px; max-height: 250px; overflow-y: auto; border-radius: 8px;">
-                <p style="color: #2563eb; font-weight: bold; margin-top: 0;">SBC EMPLOYEE TERMS of USE</p>
-                <p><strong>1. Confidentiality:</strong> All recipes, water profiles, and sales data are SBC trade secrets. Sharing this data externally is prohibited.</p>
-                <p><strong>2. Security:</strong> You are responsible for your credentials. Do not share passwords.</p>
-                <p><strong>3. Integrity:</strong> Brew logs and inventory must be recorded accurately. Falsification is prohibited.</p>
-                <p><strong>4. Monitoring:</strong> All portal activity is logged and timestamped for security auditing.</p>
-                <p><strong>5. Termination:</strong> Access is revoked immediately upon termination of employment.</p>
-            </div>
-            <p style="margin-top: 15px; font-size: 12px; color: #94a3b8;">By clicking below, you provide a digital signature acknowledging these terms.</p>
-        `,
-        icon: 'warning',
-        showCancelButton: false,
-        confirmButtonText: 'I Acknowledge & Accept',
-        confirmButtonColor: '#2563eb',
-        background: '#1e293b',
-        color: '#ffffff',
-        allowOutsideClick: false
-    });
+                const { isConfirmed } = await Swal.fire({
+                    title: 'User Access Agreement',
+                    width: '90%', // Mobile responsive width
+                    html: `
+                        <div style="text-align: left; font-size: 13px; color: #cbd5e1; background: #0f172a; border: 1px solid #334155; padding: 15px; max-height: 250px; overflow-y: auto; border-radius: 8px;">
+                            <p style="color: #2563eb; font-weight: bold; margin-top: 0;">SBC EMPLOYEE TERMS of USE</p>
+                            <p><strong>1. Confidentiality:</strong> All recipes, water profiles, and sales data are SBC trade secrets. Sharing this data externally is prohibited.</p>
+                            <p><strong>2. Security:</strong> You are responsible for your credentials. Do not share passwords.</p>
+                            <p><strong>3. Integrity:</strong> Brew logs and inventory must be recorded accurately. Falsification is prohibited.</p>
+                            <p><strong>4. Monitoring:</strong> All portal activity is logged and timestamped for security auditing.</p>
+                            <p><strong>5. Termination:</strong> Access is revoked immediately upon termination of employment.</p>
+                        </div>
+                        <p style="margin-top: 15px; font-size: 12px; color: #94a3b8;">By clicking below, you provide a digital signature acknowledging these terms.</p>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: false,
+                    confirmButtonText: 'I Acknowledge & Accept',
+                    confirmButtonColor: '#2563eb',
+                    background: '#1e293b',
+                    color: '#ffffff',
+                    allowOutsideClick: false
+                });
 
-    if (isConfirmed) {
-        // Record the signature in Column J of !Employee_Database
-        await fetch(`${MASTER_API_URL}?action=signAgreement&user=${encodeURIComponent(user)}`);
-    }
-}
+                if (isConfirmed) {
+                    await fetch(`${MASTER_API_URL}?action=signAgreement&user=${encodeURIComponent(user)}`);
+                }
+            }
 
-            // --- 2. SET SESSION & REDIRECT ---
             sessionStorage.setItem("sbc_auth", "true");
             sessionStorage.setItem("user_name", result.profile.name);
             sessionStorage.setItem("user_role", result.profile.role);
             sessionStorage.setItem("user_access", result.profile.access);
-            
             window.location.replace("index.html"); 
 
         } else {
@@ -114,9 +181,6 @@ async function checkLogin() {
     }
 }
 
-/**
- * AUTOMATED PASSWORD RECOVERY
- */
 async function forgotPassword() {
     const { value: email } = await Swal.fire({
         title: 'Reset Password',
@@ -131,11 +195,9 @@ async function forgotPassword() {
 
     if (email) {
         Swal.fire({ title: 'Processing...', didOpen: () => { Swal.showLoading(); } });
-        
         try {
             const response = await fetch(`${MASTER_API_URL}?action=forgotPassword&email=${encodeURIComponent(email)}`);
             const result = await response.json();
-            
             if (result.status === "success") {
                 Swal.fire('Sent!', result.message, 'success');
             } else {
