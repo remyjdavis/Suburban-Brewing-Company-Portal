@@ -55,12 +55,13 @@
     
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 800; color: #fff; padding-top: 20px; }
 
-    /* COLLAPSIBLE HEADERS */
+    /* COLLAPSIBLE HEADERS: Added position relative to stop overlapping */
     .nav-section-title {
       font-size: 11px; text-transform: uppercase; color: #9ca3af; 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
       user-select: none;
+      position: relative !important; /* FIX: Prevents floating overlap */
     }
     .nav-section-title:hover { color: #fff; }
 
@@ -71,6 +72,7 @@
       max-height: 500px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
+      position: relative !important; /* FIX: Prevents floating overlap */
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
@@ -78,6 +80,7 @@
     .nav-link { 
       display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
+      position: relative !important; /* FIX: Prevents floating overlap */
     }
     /* Matching the "Command Center" active state color */
     .nav-link:hover, .nav-link.active { 
@@ -221,25 +224,27 @@
       .main-content { margin-left: 0; padding: 20px 20px 90px; }
       .action-panel { grid-template-columns: 1fr; }
     }
+    
     /* Styling to match the existing sidebar theme */
-.logout-link {
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
+    .logout-link {
+        color: #f87171 !important; /* A soft red to indicate an exit action */
+        border-left: 4px solid transparent;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        position: relative !important; /* FIX: Added relative to stop overlap */
+    }
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
+    .logout-link:hover {
+        background: #450a0a !important; /* Dark red background on hover */
+        color: #fee2e2 !important;
+        border-left-color: #ef4444;
+    }
 
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
-  </style>
+    .logout-link span.icon {
+        margin-right: 12px;
+        font-size: 16px;
+    }
+</style>
 </head>
 <body>
 
