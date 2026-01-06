@@ -31,6 +31,7 @@
     </div>
 
 <script>
+// 🔴 Ensure this matches your most recent "New Deployment" URL in Apps Script
 const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
 
 async function checkLogin() {
@@ -59,44 +60,8 @@ async function checkLogin() {
         const result = await response.json();
 
         if (result.status === "success") {
-            sessionStorage.setItem("sbc_auth", "true");
-            sessionStorage.setItem("user_name", result.profile.name);
-            sessionStorage.setItem("user_role", result.profile.role);
-            sessionStorage.setItem("user_access", result.profile.access);
-            window.location.replace("index.html"); 
-        } else {
-            errorMsg.innerText = result.message || "Invalid Credentials";
-            errorMsg.style.display = 'block';
-            passInput.value = ""; 
-        }
-    } catch (error) {
-        console.error("Login Error:", error);
-        errorMsg.innerText = "Connection Error. Please check your internet.";
-        errorMsg.style.display = 'block';
-    } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }
-}
-
-/**
- * AUTOMATED PASSWORD RECOVERY UI
- */
-async function checkLogin() {
-    const userInput = document.getElementById('userInput');
-    const passInput = document.getElementById('passInput');
-    const errorMsg = document.getElementById('errorMsg');
-    
-    const user = userInput.value.trim();
-    const pass = passInput.value.trim();
-
-    try {
-        const response = await fetch(`${MASTER_API_URL}?action=login&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`);
-        const result = await response.json();
-
-        if (result.status === "success") {
             
-            // AUTOMATED AGREEMENT GATEKEEPER
+            // --- 1. AGREEMENT GATEKEEPER (Only triggers if not signed in Column J) ---
             if (!result.profile.agreementSigned) {
                 const { isConfirmed } = await Swal.fire({
                     title: 'Access Agreement',
@@ -120,25 +85,72 @@ async function checkLogin() {
                 });
 
                 if (isConfirmed) {
-                    // Tell the database this user has signed
+                    // Record signature in database Column J
                     await fetch(`${MASTER_API_URL}?action=signAgreement&user=${encodeURIComponent(user)}`);
                 }
             }
 
-            // Save session and enter portal
+            // --- 2. SET SESSION & REDIRECT ---
             sessionStorage.setItem("sbc_auth", "true");
             sessionStorage.setItem("user_name", result.profile.name);
             sessionStorage.setItem("user_role", result.profile.role);
-            window.location.replace("index.html"); 
+            sessionStorage.setItem("user_access", result.profile.access);
             
+            window.location.replace("index.html"); 
+
         } else {
-            errorMsg.innerText = result.message;
+            errorMsg.innerText = result.message || "Invalid Credentials";
             errorMsg.style.display = 'block';
+            passInput.value = ""; 
         }
     } catch (error) {
         console.error("Login Error:", error);
+        errorMsg.innerText = "Connection Error. Please check your internet.";
+        errorMsg.style.display = 'block';
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
     }
 }
+
+/**
+ * AUTOMATED PASSWORD RECOVERY
+ */
+async function forgotPassword() {
+    const { value: email } = await Swal.fire({
+        title: 'Reset Password',
+        input: 'email',
+        inputLabel: 'Enter your registered SBC email address',
+        inputPlaceholder: 'email@suburbanbrewing.com',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        background: '#1e293b',
+        color: '#ffffff'
+    });
+
+    if (email) {
+        Swal.fire({ title: 'Processing...', didOpen: () => { Swal.showLoading(); } });
+        
+        try {
+            const response = await fetch(`${MASTER_API_URL}?action=forgotPassword&email=${encodeURIComponent(email)}`);
+            const result = await response.json();
+            
+            if (result.status === "success") {
+                Swal.fire('Sent!', result.message, 'success');
+            } else {
+                Swal.fire('Error', result.message, 'error');
+            }
+        } catch (e) {
+            Swal.fire('Error', 'Connection failed.', 'error');
+        }
+    }
+}
+
+document.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        checkLogin();
+    }
+});
 </script>
 </body>
 </html>
