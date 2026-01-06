@@ -27,19 +27,18 @@
       --card-bg: #ffffff;
     }
 
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: #1f2937; display: flex; min-height: 100vh; }
     
-    /* --- SIDEBAR STYLES --- */
+    /* --- SIDEBAR (Desktop Default) --- */
     .sidebar { 
       width: 260px; background: var(--sidebar); color: #fff; 
       padding: 24px 0; flex-shrink: 0; position: fixed; 
       height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: all 0.3s ease;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-    /* COLLAPSIBLE HEADERS */
     .nav-section-header {
       font-size: 11px; text-transform: uppercase; color: #9ca3af; 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
@@ -52,73 +51,73 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 500px; overflow: hidden;
+      max-height: 2000px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    /* LINKS */
     .nav-link { 
-      display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
+      display: block; padding: 12px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
     }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
     /* --- MAIN CONTENT --- */
-    .main { flex: 1; display: flex; flex-direction: column; margin-left: 260px; transition: all 0.3s ease; }
-    .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .main { flex: 1; display: flex; flex-direction: column; margin-left: 260px; transition: all 0.3s ease; width: 100%; }
+    .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 900; }
     .content { padding: 24px; }
     
-    #restaurantContainer { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    #restaurantContainer { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
     .account-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.2s; }
     .account-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-    .account-card h3 { margin: 0 0 5px 0; font-size: 18px; }
-    .badge { display: inline-block; margin-top: 10px; font-size: 11px; padding: 4px 8px; background: #f3f4f6; border-radius: 99px; font-weight: 600; }
     
     /* --- MODALS --- */
-    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-    .modal-content { background: white; margin: 50px auto; padding: 24px; width: 90%; max-width: 550px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+    .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    .modal-content { background: white; margin: 5vh auto; padding: 20px; width: 95%; max-width: 550px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+    
     .inventory-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
-    .qty-controls { display: flex; align-items: center; gap: 10px; }
-    .qty-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; }
-    .qty-input { width: 45px; text-align: center; border: none; font-weight: bold; font-size: 16px; }
-    .onboarding-list { max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-top: 10px; }
-    .btn-primary { background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .qty-controls { display: flex; align-items: center; gap: 15px; }
+    .qty-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 18px; }
+    .qty-input { width: 45px; text-align: center; border: none; font-weight: bold; font-size: 18px; color: var(--accent); }
+    
+    .btn-primary { background: #2563eb; color: #fff; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; }
     .btn-full { width: 100%; margin-top: 20px; }
-    input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+    input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
 
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
-      .main { margin-left: 0; padding: 20px 20px 90px; }
-      .nav-section-header, .sidebar h2 { display: none; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; }
+    /* ============================================================
+       MOBILE & TABLET DRAWER LOGIC 
+       ============================================================ */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
+
+    @media (max-width: 1024px) {
+      .sidebar { left: -260px; z-index: 2001; }
+      .sidebar.open { left: 0; }
+      .main { margin-left: 0 !important; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 65px; height: 65px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 28px; z-index: 2002; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+      .content { padding: 15px; }
+      .topbar h1 { font-size: 18px; }
+      .modal-content { margin: 2vh auto; width: 98%; padding: 15px; }
     }
-    /* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
-
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
-  </style>
+    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
+</style>
 </head>
 <body>
-
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
@@ -246,9 +245,25 @@
     }
 
     const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+// --- MOBILE DRAWER TOGGLE ---
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
+        
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        
+        // Prevent background scrolling on phone while menu is open
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        
+        // Switch icon between Hamburger and X
+        btn.innerText = isOpen ? '✕' : '☰';
+    }
 
+    // --- CONSOLIDATED INITIALIZATION ---
     document.addEventListener("DOMContentLoaded", () => {
-      // 1. Sidebar Logic
+      // 1. Sidebar Logic (Auto-expand active group)
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -258,8 +273,18 @@
           if (header) header.classList.remove('collapsed');
         }
       }
+
+      // 2. Mobile Link Auto-close
+      document.querySelectorAll('.nav-link').forEach(link => {
+          link.addEventListener('click', () => {
+              if (window.innerWidth <= 1024) {
+                  const sidebar = document.querySelector('.sidebar');
+                  if (sidebar.classList.contains('open')) toggleMobileMenu();
+              }
+          });
+      });
       
-      // 2. Load Dashboard
+      // 3. Load Dashboard
       loadDashboard();
     });
 
