@@ -354,10 +354,7 @@
       </div>
     </div>
 
-    <div class="section-heading" onclick="toggleGroup('sect-ops', this)">
-    <span>Zone 2: Daily Operations</span><span class="chevron">▼</span>
-</div>
-<div id="sect-ops" class="collapsible-content">
+    <div id="sect-ops" class="collapsible-content">
     <div class="tier-1">
         <div class="card card-alert" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
             <h3>Inventory Alerts</h3>
@@ -371,7 +368,7 @@
             <p id="sensoryStatus">Checking logs...</p>
         </div>
 
-        <div class="ml-card" id="perfCard" onclick="toggleMLCard('perfCard')">
+        <div class="ml-card" id="perfCard" onclick="toggleMLCard('perfCard', event)">
             <div class="ml-card-header">
                 <div style="text-align: left;">
                     <h3 style="margin: 0; color: var(--ml-blue); font-size: 14px;">Learned Performance</h3>
@@ -379,16 +376,22 @@
                 </div>
                 <div id="ml-efficiency-display" class="ml-stat-val" style="font-size: 2.2rem; line-height: 1;">--%</div>
             </div>
-            <div class="chart-overlay-content">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <strong>Predictive Efficiency Trend</strong>
-                    <button class="close-ml-btn">✕</button>
+            
+            <div class="ml-overlay-body">
+                <div class="overlay-top-bar">
+                    <span style="font-weight:bold; color:#1e293b;">Efficiency Trend (Last 15 Batches)</span>
+                    <button class="close-overlay-btn" onclick="toggleMLCard('perfCard', event)">✕</button>
                 </div>
-                <div class="chart-container"><canvas id="efficiencyChart"></canvas></div>
+                <div class="chart-container" style="height: 300px; display:block;">
+                    <canvas id="efficiencyChart"></canvas>
+                </div>
+                <div style="margin-top:15px; padding:10px; background:#f8fafc; border-radius:6px; font-size:12px; color:#64748b;">
+                    <strong style="color:var(--ml-blue)">AI Insight:</strong> <span id="ml-advice">Connecting...</span>
+                </div>
             </div>
         </div>
 
-        <div class="ml-card" id="costCard" onclick="toggleMLCard('costCard')" style="border-top-color: #10b981;">
+        <div class="ml-card" id="costCard" onclick="toggleMLCard('costCard', event)" style="border-top-color: #10b981;">
             <div class="ml-card-header">
                 <div style="text-align: left;">
                     <h3 style="margin: 0; color: #10b981; font-size: 14px;">Estimated Savings</h3>
@@ -396,15 +399,20 @@
                 </div>
                 <div id="cost-dollars-saved" class="ml-stat-val" style="font-size: 2.2rem; color: #10b981; line-height: 1;">$ --</div>
             </div>
-            <div class="chart-overlay-content">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <strong>Savings Analysis</strong>
-                    <button class="close-ml-btn">✕</button>
+
+            <div class="ml-overlay-body">
+                <div class="overlay-top-bar">
+                    <span style="font-weight:bold; color:#1e293b;">Financial Impact Report</span>
+                    <button class="close-overlay-btn" onclick="toggleMLCard('costCard', event)">✕</button>
                 </div>
-                <div class="ml-stats-grid">
-                    <div class="ml-stat-box">
-                        <div class="ml-stat-label">Grain Waste Reduced</div>
-                        <div id="cost-lbs-saved" class="ml-stat-val" style="color:#10b981">-- lbs</div>
+                <div class="ml-stats-grid" style="display: flex; gap: 20px; margin-top: 20px;">
+                    <div style="flex:1; text-align:center; padding:20px; background:#ecfdf5; border-radius:10px;">
+                        <div style="font-size:11px; text-transform:uppercase; color:#065f46; font-weight:700;">Grain Waste Reduced</div>
+                        <div id="cost-lbs-saved" style="font-size:28px; font-weight:800; color:#10b981;">-- lbs</div>
+                    </div>
+                    <div style="flex:1; text-align:center; padding:20px; background:#eff6ff; border-radius:10px;">
+                        <div style="font-size:11px; text-transform:uppercase; color:#1e40af; font-weight:700;">Projected Annual</div>
+                        <div style="font-size:28px; font-weight:800; color:#3b82f6;">Calc...</div>
                     </div>
                 </div>
             </div>
