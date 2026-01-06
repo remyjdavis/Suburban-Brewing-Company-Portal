@@ -399,7 +399,7 @@
   </main>
 
   <script>
-    const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
+   const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
     const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
     const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec';
 
@@ -408,17 +408,19 @@
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.getElementById('menu-overlay');
         const btn = document.getElementById('menu-toggle');
-        sidebar.classList.toggle('open');
+        if (!sidebar || !overlay || !btn) return;
+
+        const isOpen = sidebar.classList.toggle('open');
         overlay.classList.toggle('active');
-        btn.innerText = sidebar.classList.contains('open') ? '✕' : '☰';
+        btn.innerText = isOpen ? '✕' : '☰';
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-        // Session / Welcome Logic
+    // --- INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // A. Setup Welcome Message & Date
         const userName = sessionStorage.getItem("user_name");
         const userRole = sessionStorage.getItem("user_role");
-        const storedPic = sessionStorage.getItem("user_pic");
-        const userPic = (storedPic && storedPic !== "null" && storedPic !== "") ? storedPic : "../SBC-Logo.png";
+        const userPic = sessionStorage.getItem("user_pic") || "./Online Ordering/logo.png"; // RELATIVE PATH FIX
         
         const welcomeTarget = document.getElementById('welcome-target');
         if (userName && welcomeTarget) {
@@ -428,47 +430,21 @@
                         <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
                         <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userRole}</span>
                     </div>
-                    <img id="user-avatar" src="${userPic}" style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;">
+                    <img src="${userPic}" style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;" onerror="this.src='./Online Ordering/logo.png'">
                 </div>
             `;
         }
         
         const dateEl = document.getElementById('current-date');
         if (dateEl) {
-            const d = new Date();
-            dateEl.innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            dateEl.innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         }
 
-        // Auto-close menu on link click
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth <= 1024) {
-                    const sidebar = document.querySelector('.sidebar');
-                    if (sidebar.classList.contains('open')) toggleMobileMenu();
-                }
-            });
-        });
-        
+        // B. Run Syncs
         runAllSyncs();
-        setInterval(runAllSyncs, 300000);
+        setInterval(runAllSyncs, 300000); // Sync every 5 mins
     });
-function toggleMobileMenu() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('menu-overlay');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
-    
-    // Change icon between burger and X
-    const btn = document.getElementById('menu-toggle');
-    btn.innerText = sidebar.classList.contains('open') ? '✕' : '☰';
-}
 
-// Automatically close menu when a link is clicked
-document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-        if(window.innerWidth <= 1024) toggleMobileMenu();
-    });
-});
     function runAllSyncs() {
         syncZone1();
         syncSamplingCard();
@@ -478,6 +454,67 @@ document.querySelectorAll('.nav-link').forEach(link => {
         refreshMLEngine();
     }
 
+    // --- REFRESH CELLAR (WITH SAFETY CHECKS) ---
+    async function refreshCellarTanks() {
+        const categories = { 
+            'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"], 
+            'grid-brite': ["BT 1", "BT 2"] 
+        };
+
+        try {
+            const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`);
+            const liveBatches = await res.json();
+
+            Object.keys(categories).forEach(gridId => {
+                const container = document.getElementById(gridId);
+                if (!container) return; // SKIP IF ELEMENT MISSING
+
+                container.innerHTML = ""; 
+                categories[gridId].forEach(tankName => {
+                    const liveData = Array.isArray(liveBatches) ? liveBatches.find(b => b.vessel === tankName) : null;
+                    const isActive = !!liveData;
+                    let color = isActive ? (liveData.status.includes("Ready") ? "var(--ready)" : "var(--fermenting)") : "var(--text-muted)";
+                    
+                    container.innerHTML += `
+                        <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-color: ${isActive ? color : '#e2e8f0'};">
+                            <span class="status-badge" style="color: ${color};">${isActive ? liveData.status : 'Empty'}</span>
+                            <div class="tank-vessel">
+                                <div class="tank-fill" style="height: ${isActive ? liveData.fill : 0}%; background: ${color};"></div>
+                            </div>
+                            <div style="font-weight:700;">${tankName}</div>
+                            <div style="font-size: 11px;">${isActive ? liveData.brand : 'Available'}</div>
+                        </div>`;
+                });
+            });
+        } catch (e) { console.error("Cellar Sync Error:", e); }
+    }
+
+    // --- REFRESH ML ENGINE (FIXED IDs) ---
+    async function refreshMLEngine() {
+        try {
+            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`);
+            const data = await res.json();
+            
+            const effEl = document.getElementById('ml-efficiency-display');
+            if (effEl) {
+                const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
+                effEl.innerText = (learnedEff * 100).toFixed(1) + "%";
+            }
+
+            const adviceEl = document.getElementById('ml-advice');
+            if (adviceEl) {
+                adviceEl.innerText = data.avgMaltCost ? `Target Cost: $${data.avgMaltCost.toFixed(2)}/lb` : "Analyzing batch history...";
+            }
+        } catch (e) { console.error("ML Engine Error:", e); }
+    }
+
+    function toggleGroup(contentId, headerEl) {
+      const content = document.getElementById(contentId);
+      if (content) {
+        content.classList.toggle('collapsed');
+        headerEl.classList.toggle('collapsed');
+      }
+    }
     // --- PROFILE MANAGEMENT ---
     async function openProfileModal() {
         const { value: formValues } = await Swal.fire({
