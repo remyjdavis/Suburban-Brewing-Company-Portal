@@ -69,11 +69,12 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 500px; overflow: hidden;
-      transition: max-height 0.4s ease, opacity 0.4s ease;
-      opacity: 1;
-    }
-    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+  display: block;
+}
+
+.collapsible-content.collapsed {
+  display: none;
+}
 
     /* LINKS */
     .nav-link { 
@@ -352,7 +353,7 @@
     }
 /* Styling to match the existing sidebar theme */
 .logout-link {
-    margin-top: 20px;
+    margin-top: 12px;
     color: #f87171 !important; /* A soft red to indicate an exit action */
     border-left: 4px solid transparent;
     transition: all 0.2s ease;
@@ -378,11 +379,11 @@
     <div class="nav-section-header">
   <span>System</span>
 </div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
+<a href="#" class="nav-link logout-link" onclick="handleLogout()">
+  <span class="icon">󰗼</span>
+  <span>Logout of Portal</span>
+</a>
+
 
 <script>
  function handleLogout() {
