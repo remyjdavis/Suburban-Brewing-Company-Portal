@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script>
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
@@ -21,7 +22,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <style>
+ <style>
     /* --- SHARED THEME VARIABLES --- */
     :root {
       --bg: #f8fafc;
@@ -161,33 +162,126 @@
     .route-modal-table td { padding: 12px; border-bottom: 1px solid #f1f1f1; vertical-align: top; }
     .stop-num { width: 24px; height: 24px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; margin-right: 10px; }
 
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; background: var(--sidebar); overflow-x: auto; }
-      .sidebar h2, .nav-section-header { display: none; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-      .nav-link.active { border-top: 4px solid var(--accent); background: #1e293b; }
-      .main { margin-left: 0; padding: 20px 20px 90px; }
+    /* --- LOGOUT & SYSTEM STYLING --- */
+    .logout-link {
+      margin-top: 20px;
+      color: #f87171 !important; 
+      border-left: 4px solid transparent;
+      transition: all 0.2s ease;
+      cursor: pointer;
     }
-    /* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
+    .logout-link:hover {
+      background: #450a0a !important; 
+      color: #fee2e2 !important;
+      border-left-color: #ef4444;
+    }
+    .logout-link span.icon {
+      margin-right: 12px;
+      font-size: 16px;
+    }
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
+    /* --- TABLET COMPATIBILITY --- */
+    @media (max-width: 1024px) {
+      .sidebar { width: 200px; }
+      .main { margin-left: 200px; padding: 20px; }
+      .card { flex: 0 0 45%; } 
+    }
 
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
-  </style>
+    /* --- MOBILE PHONE COMPATIBILITY --- */
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+
+      .sidebar {
+        position: fixed;
+        bottom: 0;
+        top: auto;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 65px;
+        display: flex;
+        flex-direction: row;
+        padding: 0;
+        justify-content: space-around;
+        overflow-x: auto;
+        border-top: 1px solid #334155;
+        z-index: 1001;
+      }
+
+      .sidebar h2, .nav-section-header, .sidebar span:not(.icon) {
+        display: none !important;
+      }
+
+      .nav-link {
+        flex: 1;
+        justify-content: center;
+        padding: 0;
+        border: none !important;
+        height: 100%;
+      }
+
+      .nav-link .icon {
+        font-size: 24px;
+        margin: 0;
+      }
+
+      .main {
+        margin-left: 0 !important;
+        padding: 20px 15px 90px 15px;
+      }
+
+      .header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px;
+      }
+
+      #welcome-target {
+        text-align: left !important;
+        width: 100%;
+        justify-content: flex-start !important;
+        margin-top: 5px;
+      }
+
+      .header-bar h1 {
+        font-size: 22px;
+      }
+
+      .tier-1, .tier-2, .tier-3, .tier-4 {
+        flex-direction: column !important;
+        overflow-x: hidden !important;
+        gap: 15px;
+      }
+
+      .card, .ml-card, .tank-card {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-height: none !important;
+      }
+
+      #grid-production, #grid-brite, #grid-pilot {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+      }
+    }
+
+    /* --- TOUCH & INPUT OPTIMIZATIONS --- */
+    @media (max-width: 768px) {
+      input, select, textarea {
+        font-size: 16px !important;
+      }
+      button, .nav-link, .card, .section-heading {
+        min-height: 48px;
+        cursor: pointer;
+      }
+      .route-modal-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+    }
+</style>
 </head>
 <body>
 
