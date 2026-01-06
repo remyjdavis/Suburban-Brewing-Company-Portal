@@ -417,13 +417,68 @@
             margin-bottom: 10px;
         }
 
-        @media screen and (max-width: 1024px) {
-    body { flex-direction: column; }
+       /* --- RESPONSIVE HAMBURGER MENU & MOBILE DRAWER --- */
+#menu-toggle { display: none; } /* Hidden on Desktop */
+
+@media (max-width: 1024px) {
     .sidebar {
-        width: 100%;
-        min-width: unset;
-        height: auto;
-        position: relative;
+        left: -260px; /* Hide sidebar off-screen */
+        position: fixed;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 10000;
+        box-shadow: 10px 0 20px rgba(0,0,0,0.3);
+    }
+    
+    .sidebar.open {
+        left: 0; /* Slide in when toggled */
+    }
+
+    .main { margin-left: 0 !important; padding: 15px; }
+
+    /* Floating Menu Button */
+    #menu-toggle {
+        display: flex;
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        width: 60px;
+        height: 60px;
+        background: var(--accent);
+        color: white;
+        border-radius: 50%;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        z-index: 10001;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        cursor: pointer;
+        border: none;
+    }
+    
+    /* Background Dimmer when menu is open */
+    .menu-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+        backdrop-filter: blur(2px);
+    }
+    .menu-overlay.active { display: block; }
+
+    /* Table Stacking for Phones */
+    .data-table, .data-table thead, .data-table tbody, .data-table th, .data-table td, .data-table tr { display: block; }
+    .data-table thead tr { position: absolute; top: -9999px; left: -9999px; }
+    .data-table tr { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; padding: 10px; background: #fff; }
+    .data-table td { 
+        border: none; border-bottom: 1px solid #f1f1f1; position: relative; 
+        padding-left: 50%; text-align: right; min-height: 40px;
+        display: flex; align-items: center; justify-content: flex-end; 
+    }
+    .data-table td:before { 
+        position: absolute; left: 10px; width: 45%; padding-right: 10px; 
+        content: attr(data-label); font-weight: 800; text-align: left; 
+        font-size: 10px; color: var(--accent-gray); text-transform: uppercase; 
     }
 }
 
@@ -475,7 +530,9 @@
     </style>
 </head>
 <body>
-
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+<div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+    
   <aside class="sidebar">
     <div class="sidebar-header">SUBURBAN BREWING</div>
      <div class="nav-section-header">
@@ -990,6 +1047,27 @@
 </main>
 
 <script>
+    function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('menu-overlay');
+    const btn = document.getElementById('menu-toggle');
+    
+    const isOpen = sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    
+    // Switch icon between Hamburger and X
+    btn.innerText = isOpen ? '✕' : '☰';
+}
+
+// Add this into your existing window.onload or DOMContentLoaded
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 1024) {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar.classList.contains('open')) toggleMobileMenu();
+        }
+    });
+});
     // --- SIDEBAR TOGGLE LOGIC ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
@@ -1090,76 +1168,42 @@ function loadRecipeToLog() {
     // --- QC SECTION 1: SALTS & ACIDS ---
     const saltBody = document.getElementById('salt-body');
     saltBody.innerHTML = (r.salts || []).map(s => {
-        const saltName = s[0];
-        const targetM = parseFloat(s[1]) || 0;
-        const targetS = parseFloat(s[2]) || 0;
-        const invMatch = inventory.water.find(i => i.name.toLowerCase() === saltName.toLowerCase());
-        
-        let suggestM = targetM;
-        let suggestS = targetS;
-
-        /**
-         * AUTOMATED ACID ADJUSTMENT
-         * Normalized to 88% Lactic Acid baseline
-         */
-        if (invMatch && invMatch.specs.strength) {
-            const actualStrength = parseFloat(invMatch.specs.strength);
-            if (actualStrength > 0) {
-                suggestM = (targetM * 0.88) / actualStrength;
-                suggestS = (targetS * 0.88) / actualStrength;
-            }
-        }
-
-        return `<tr>
-            <td>${saltName}<br><small>Lot: ${invMatch ? invMatch.lot : 'N/A'}</small></td>
-            <td><span class="target-display">${targetM}</span></td>
-            <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestM.toFixed(2)}</span></td>
-            <td><input type="number" class="actual-input"></td>
-            <td><span class="target-display">${targetS}</span></td>
-            <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestS.toFixed(2)}</span></td>
-            <td><input type="number" class="actual-input"></td>
-        </tr>`;
-    }).join('');
+    return `<tr>
+        <td data-label="Salt">${s[0]}</td>
+        <td data-label="Mash Target">${s[1]}</td>
+        <td data-label="Suggested Mash">${s[1]}</td>
+        <td data-label="Mash Actual"><input type="number" class="actual-input"></td>
+        <td data-label="Sparge Target">${s[2]}</td>
+        <td data-label="Suggested Sparge">${s[2]}</td>
+        <td data-label="Sparge Actual"><input type="number" class="actual-input"></td>
+    </tr>`;
+}).join('');
 
     // --- QC SECTION 2: GRAIN BILL & ML EXTRACT PREP ---
     let totalPotentialPoints = 0; // Tracking for Machine Learning Efficiency Model
     const grainBody = document.getElementById('grain-body');
     grainBody.innerHTML = (r.grains || []).map(g => {
-        const maltName = g[0];
-        const targetQty = parseFloat(g[1]);
-        const invMatch = inventory.grains.find(i => i.name.toLowerCase() === maltName.toLowerCase());
-        
-        /**
-         * AUTOMATED EXTRACT ADJUSTMENT (QC)
-         * Based on Extract FGDB % (Normalized to 37.0 baseline)
-         */
-        let suggested = targetQty;
-        let actualCOAExtract = 37.0; 
+    const maltName = g[0];
+    const targetQty = parseFloat(g[1]);
+    const invMatch = inventory.grains.find(i => i.name.toLowerCase() === maltName.toLowerCase());
+    
+    let suggested = targetQty;
+    if (invMatch && invMatch.specs.extract) {
+        suggested = (targetQty * 37.0) / parseFloat(invMatch.specs.extract);
+    }
 
-        if (invMatch && invMatch.specs.extract) {
-            actualCOAExtract = parseFloat(invMatch.specs.extract);
-            if (actualCOAExtract > 0) {
-                suggested = (targetQty * 37.0) / actualCOAExtract;
-            }
-        }
-
-        // ML DATA ACCUMULATION: Summing potential extract for efficiency calc
-        totalPotentialPoints += (suggested * actualCOAExtract);
-
-        return `<tr class="deduct-row" data-type="grain">
-            <td>${maltName}</td>
-            <td><span class="target-display">${targetQty}</span></td>
-            <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggested.toFixed(2)}</span></td>
-            <td><input type="number" class="actual-input ing-qty" value="${suggested.toFixed(2)}" data-unitprice="${invMatch ? invMatch.specs.cost : 0}" onchange="calculateLiveBatchCost()"></td>
-            <td>
-                <input type="text" class="actual-input ing-lot" value="${invMatch ? invMatch.lot : ''}" placeholder="Lot #">
-                <br>
-                <small style="color:${invMatch && invMatch.qty < suggested ? '#e74c3c' : '#27ae60'}">
-                    Stock: ${invMatch ? invMatch.qty : 0}
-                </small>
-            </td>
-        </tr>`;
-    }).join('');
+    return `<tr class="deduct-row" data-type="grain">
+        <td data-label="Malt">${maltName}</td>
+        <td data-label="Target">${targetQty}</td>
+        <td data-label="Suggested">${suggested.toFixed(2)}</td>
+        <td data-label="Actual">
+            <input type="number" class="actual-input ing-qty" value="${suggested.toFixed(2)}" data-unitprice="${invMatch ? invMatch.specs.cost : 0}" onchange="calculateLiveBatchCost()">
+        </td>
+        <td data-label="Lot #">
+            <input type="text" class="actual-input ing-lot" value="${invMatch ? invMatch.lot : ''}" placeholder="Lot #">
+        </td>
+    </tr>`;
+}).join('');
 
     if(r.mash && r.mash.length > 0) document.getElementById('t-mash-temp').innerText = (r.mash[0][1] || '-') + "°F"; 
     document.getElementById('t-pre-g').innerText = r.og || '-';
@@ -1167,41 +1211,30 @@ function loadRecipeToLog() {
     
     // --- QC SECTION 3: BOIL ADDITIONS (AUTOMATED HOP AA% SCALING) ---
     const boilBody = document.getElementById('boil-body');
-    boilBody.innerHTML = '';
-    if(r.boil) {
-        r.boil.sort((a, b) => b[3] - a[3]).forEach(b => {
-            const addName = b[0];
-            const targetW = parseFloat(b[2]);
-            const recipeAA = parseFloat(b[3]); // Target AA% defined in recipe
-            const invMatch = inventory.hops.find(i => i.name.toLowerCase() === addName.toLowerCase());
+    boilBody.innerHTML = (r.boil || []).map(b => {
+    const addName = b[0];
+    const targetW = parseFloat(b[2]);
+    const recipeAA = parseFloat(b[3]);
+    const invMatch = inventory.hops.find(i => i.name.toLowerCase() === addName.toLowerCase());
 
-            /**
-             * AUTOMATED BITTERNESS NORMALIZATION (IBU QC)
-             * (Recipe Weight * Recipe AA) / Actual Lot AA
-             */
-            let suggestedHop = targetW;
-            let currentLotAA = recipeAA;
-
-            if (invMatch && invMatch.specs.alpha) {
-                currentLotAA = parseFloat(invMatch.specs.alpha);
-                if (currentLotAA > 0) {
-                    suggestedHop = (targetW * recipeAA) / currentLotAA;
-                }
-            }
-
-            boilBody.innerHTML += `<tr class="deduct-row" data-type="hop" data-time="${b[3]}">
-                <td>${addName}<br><small>Target: ${recipeAA}% AA</small></td>
-                <td>${b[3]} min</td>
-                <td><span class="target-display">${targetW}</span></td>
-                <td><span class="target-display" style="background:#fff7ed; border-color:#fed7aa;">${suggestedHop.toFixed(2)}</span></td>
-                <td>
-                    <input type="number" class="actual-input ing-qty" placeholder="${suggestedHop.toFixed(2)}" data-unitprice="${invMatch ? invMatch.specs.cost : 0}" onchange="calculateLiveBatchCost()">
-                    <input type="hidden" class="ing-target-aa" value="${recipeAA}">
-                </td>
-                <td><input type="text" class="actual-input ing-lot" value="${invMatch ? invMatch.lot : ''}" placeholder="Lot #"></td>
-            </tr>`;
-        });
+    let suggestedHop = targetW;
+    if (invMatch && invMatch.specs.alpha) {
+        suggestedHop = (targetW * recipeAA) / parseFloat(invMatch.specs.alpha);
     }
+
+    return `<tr class="deduct-row" data-type="hop" data-time="${b[3]}">
+        <td data-label="Addition">${addName}</td>
+        <td data-label="Time">${b[3]} min</td>
+        <td data-label="Target">${targetW}</td>
+        <td data-label="Suggested">${suggestedHop.toFixed(2)}</td>
+        <td data-label="Actual">
+            <input type="number" class="actual-input ing-qty" placeholder="${suggestedHop.toFixed(2)}" data-unitprice="${invMatch ? invMatch.specs.cost : 0}" onchange="calculateLiveBatchCost()">
+        </td>
+        <td data-label="Lot #">
+            <input type="text" class="actual-input ing-lot" value="${invMatch ? invMatch.lot : ''}" placeholder="Lot #">
+        </td>
+    </tr>`;
+}).join('');
 
     // --- QC SECTION 4: YEAST HEALTH CHECKS ---
     if(r.yeast) {
