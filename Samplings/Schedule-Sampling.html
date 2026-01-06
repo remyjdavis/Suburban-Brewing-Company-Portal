@@ -2,17 +2,16 @@
 <html lang="en">
 <head>
   <script>
-  (function() {
-    const auth = sessionStorage.getItem("sbc_auth");
-    // If not on the login page and not authenticated
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentPage = urlParams.get('page');
+    (function() {
+        const auth = sessionStorage.getItem("sbc_auth");
+        const isLoginPage = window.location.pathname.includes("login.html");
 
-    if (auth !== "true" && currentPage !== "login") {
-       // Forces the Web App to load the login view
-       window.top.location.href = "<?= ScriptApp.getService().getUrl() ?>?page=login";
-    }
-  })();
+        if (auth !== "true" && !isLoginPage) {
+            // This finds the root of your GitHub repo automatically
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            window.location.replace(repoPath + "login.html");
+        }
+    })();
 </script>
   <meta charset="UTF-8" />
   <title>Schedule Sampling | Suburban Brewing Co.</title>
