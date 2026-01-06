@@ -5,9 +5,7 @@
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
-
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
@@ -15,124 +13,175 @@
 </script>
   <base target="_top">
   <meta charset="UTF-8">
-  <title>Sensory Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensory Admin | Suburban Brewing Co.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <style>
-    :root { --bg: #f1f5f9; --sidebar: #0f172a; --card: #fff; --text: #1e293b; --accent: #2563eb; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; color: var(--text); }
+    :root { 
+      --bg: #f1f5f9; 
+      --sidebar: #0f172a; 
+      --card: #fff; 
+      --text: #1e293b; 
+      --accent: #2563eb; 
+      --text-muted: #64748b;
+    }
     
-    .sidebar { width: 240px; background: var(--sidebar); color: white; height: 100vh; position: fixed; padding: 20px; }
-    .main { margin-left: 240px; padding: 40px; width: 100%; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; color: var(--text); min-height: 100vh; }
     
-    h1 { margin-top: 0; }
+    /* --- SIDEBAR STYLES --- */
+    .sidebar { 
+      width: 240px; 
+      background: var(--sidebar); 
+      color: white; 
+      height: 100vh; 
+      position: fixed; 
+      padding: 20px; 
+      z-index: 1000;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sidebar h2 { margin: 0 0 32px; font-size: 20px; font-weight: 800; color: #fff; }
+
+    /* --- MAIN CONTENT --- */
+    .main { 
+      margin-left: 240px; 
+      padding: 40px; 
+      width: 100%; 
+      transition: all 0.3s ease;
+    }
+    
+    h1 { margin-top: 0; font-size: 24px; font-weight: 800; }
     
     .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 20px; }
     
-    .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-    .card h3 { margin-top: 0; color: #64748b; font-size: 14px; text-transform: uppercase; }
+    .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+    .card h3 { margin: 0 0 20px 0; color: var(--text-muted); font-size: 13px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
 
-    /* TABLE STYLES */
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th { text-align: left; padding: 10px; border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 12px; }
-    td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
+    /* --- TABLE STYLES --- */
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 500px; }
+    th { text-align: left; padding: 12px 10px; border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 11px; text-transform: uppercase; }
+    td { padding: 14px 10px; border-bottom: 1px solid #f1f5f9; }
     
-    .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
     .status-Expert { background: #dcfce7; color: #166534; }
     .status-Active { background: #e0f2fe; color: #075985; }
     .status-Provisional { background: #f1f5f9; color: #475569; }
     .status-Needs { background: #fee2e2; color: #991b1b; } 
 
-    .log-item { padding: 10px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
-    .log-meta { font-size: 11px; color: #94a3b8; }
-    .acc-CORRECT { color: #10b981; font-weight: 700; }
-    .acc-MISS { color: #ef4444; font-weight: 700; }
-  .logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
+    .log-item { padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; gap: 10px; }
+    .log-meta { font-size: 11px; color: #94a3b8; font-weight: 500; }
+    .acc-CORRECT { color: #10b981; font-weight: 800; }
+    .acc-MISS { color: #ef4444; font-weight: 800; }
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
+    .logout-link {
+        margin-top: 20px;
+        color: #f87171 !important;
+        border-left: 4px solid transparent;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: block;
+        padding: 10px 0;
+        text-decoration: none;
+    }
+    .logout-link:hover { color: #fee2e2 !important; border-left-color: #ef4444; }
 
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
+    /* ============================================================
+       RESPONSIVE HAMBURGER MENU & MOBILE DRAWER LOGIC
+       ============================================================ */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
+
+    @media (max-width: 1024px) {
+      .sidebar { left: -240px; }
+      .sidebar.open { left: 0; }
+      .main { margin-left: 0; padding: 20px; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 65px; height: 65px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 28px; z-index: 1001; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+      .grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
+  <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+
   <aside class="sidebar">
     <h2>SENSORY ADMIN</h2>
-   <div class="nav-section-header">
-  <span>System</span>
-</div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
+    <div class="nav-section-header"><span>System</span></div>
+    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+      <span class="icon">🚪</span> <span>Logout</span>
+    </a>
 
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
-    
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
     <div style="margin-top: 40px;">
-      <a href="qc-dashboard.html" style="color: #94a3b8; text-decoration: none; display: block; margin-bottom: 15px;">← QC Dashboard</a>
-      <a href="#" style="color: white; font-weight: 700; text-decoration: none;">Panelist Stats</a>
+      <a href="qc-dashboard.html" class="nav-link" style="color: #94a3b8; text-decoration: none; display: block; margin-bottom: 15px; font-size: 14px;">← Back to QC</a>
+      <a href="#" class="nav-link" style="color: white; font-weight: 700; text-decoration: none; font-size: 14px;">Panelist Intelligence</a>
     </div>
   </aside>
 
   <main class="main">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
       <h1>Panelist Intelligence</h1>
-      <button onclick="loadAdminData()" style="padding: 8px 16px; background: white; border: 1px solid #ccc; cursor: pointer;">Refresh</button>
+      <button onclick="loadAdminData()" style="padding: 10px 16px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px;">Refresh</button>
     </div>
+    <p style="color: var(--text-muted); margin: 0 0 20px 0; font-size: 14px;">Real-time validation of panelist accuracy and training status.</p>
 
     <div class="grid">
       <div class="card">
         <h3>Panelist Roster</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Sessions</th>
-              <th>Score</th>
-              <th>Confirmed Skills</th>
-            </tr>
-          </thead>
-          <tbody id="roster-body">
-            <tr><td colspan="5">Loading...</td></tr>
-          </tbody>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Sessions</th>
+                <th>Score</th>
+                <th>Detections</th>
+              </tr>
+            </thead>
+            <tbody id="roster-body">
+              <tr><td colspan="5" style="text-align: center; padding: 40px; color: #94a3b8;">Syncing Roster...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card">
         <h3>Recent Submissions</h3>
         <div id="log-feed">
-          </div>
+          <div style="text-align: center; padding: 40px; color: #94a3b8;">Syncing Submissions...</div>
+        </div>
       </div>
     </div>
   </main>
 
   <script>
-    // 🔴 UPDATE WITH YOUR SENSORY SCRIPT URL
     const API_URL = "https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec";
 
     window.onload = loadAdminData;
+
+    // --- MOBILE DRAWER TOGGLE ---
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        btn.innerText = isOpen ? '✕' : '☰';
+    }
+
+    function handleLogout() {
+        sessionStorage.removeItem("sbc_auth");
+        const repoPath = "/Suburban-Brewing-Company-Portal/";
+        window.location.replace(repoPath + "login.html");
+    }
 
     async function loadAdminData() {
       try {
@@ -142,7 +191,6 @@
           redirect: 'follow'
         });
         const json = await res.json();
-
         if (json.status === 'success') {
           renderRoster(json.panelists);
           renderLogs(json.recentLogs);
@@ -153,20 +201,16 @@
     function renderRoster(list) {
       const tbody = document.getElementById('roster-body');
       tbody.innerHTML = "";
-      
-      // Sort: Expert first, then Active
       list.sort((a,b) => b.score - a.score);
 
       list.forEach(p => {
-        // Handle "Needs Calibration" class name
         const statusClass = p.status.includes("Needs") ? "Needs" : p.status.split(" ")[0];
-        
         tbody.innerHTML += `
           <tr>
-            <td style="font-weight: 600;">${p.name}</td>
+            <td style="font-weight: 700;">${p.name}</td>
             <td><span class="status-badge status-${statusClass}">${p.status}</span></td>
             <td>${p.sessions}</td>
-            <td>${p.score}</td>
+            <td style="font-weight: 800; color: var(--accent);">${p.score}</td>
             <td style="font-size: 11px; color: #64748b;">${p.detections || "-"}</td>
           </tr>
         `;
@@ -185,13 +229,13 @@
         feed.innerHTML += `
           <div class="log-item">
             <div>
-              <div style="font-weight: 600; font-size: 13px;">${l.taster}</div>
-              <div class="log-meta">${l.beer} • Score: ${l.score}</div>
-              <div style="font-size: 12px; color: #475569;">"${l.notes}"</div>
+              <div style="font-weight: 700; font-size: 13px;">${l.taster}</div>
+              <div class="log-meta">${l.beer} • ${l.score}/5</div>
+              <div style="font-size: 12px; color: #475569; font-style: italic; margin-top: 4px;">"${l.notes}"</div>
             </div>
-            <div style="text-align: right;">
+            <div style="text-align: right; min-width: 80px;">
               <div class="log-meta">${l.date}</div>
-              <div class="${accClass}" style="font-size: 11px;">${l.accuracy}</div>
+              <div class="${accClass}" style="font-size: 10px; margin-top: 5px;">${l.accuracy}</div>
             </div>
           </div>
         `;
