@@ -236,7 +236,7 @@
           });
       });
 
-      // 2. Sidebar Active State Logic (Auto-expand current section)
+      // 2. Sidebar Active State Logic
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -253,12 +253,11 @@
           return;
       }
 
-      const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+      const API_URL = "https://script.google.com/macros/s/AKfycbWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
       const calendarEl = document.getElementById('calendar');
       const loader = document.getElementById('loading-overlay');
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
-        // Switch to List View on small screens for better readability
         initialView: window.innerWidth < 768 ? 'listMonth' : 'dayGridMonth',
         headerToolbar: {
           left: 'prev,next today',
@@ -269,41 +268,40 @@
         eventColor: '#2563eb',
         
         events: async function(info, successCallback, failureCallback) {
-  loader.style.display = 'block';
-  try {
-    const response = await fetch(`${API_URL}?action=getSamplingEvents`, { 
-      method: 'GET'
-    });
-    const rawEvents = await response.json();
-    
-    // Safety Check: Ensure rawEvents is actually an array
-    if (!Array.isArray(rawEvents)) {
-      console.error("API did not return an array:", rawEvents);
-      loader.innerHTML = "No events found or data format error.";
-      successCallback([]); // Return an empty array so the calendar doesn't crash
-      return;
-    }
-    
-    // Map backend "name" to fullcalendar "title"
-    const events = rawEvents.map(ev => ({
-      title: ev.name || "Unknown Account",
-      start: ev.date, 
-      allDay: true,
-      extendedProps: {
-        items: ev.items || "",
-        notes: ev.notes || "",
-        time: ev.time || ""
-      }
-    }));
-    
-    loader.style.display = 'none';
-    successCallback(events);
-  } catch (err) {
-    console.error("Calendar Load Error:", err);
-    loader.innerHTML = "Error connecting to database.";
-    failureCallback(err);
-  }
-}
+          loader.style.display = 'block';
+          try {
+            const response = await fetch(`${API_URL}?action=getSamplingEvents`, { 
+              method: 'GET'
+            });
+            const rawEvents = await response.json();
+            
+            if (!Array.isArray(rawEvents)) {
+              console.error("API did not return an array:", rawEvents);
+              loader.innerHTML = "No events found or data format error.";
+              successCallback([]); 
+              return;
+            }
+            
+            const events = rawEvents.map(ev => ({
+              title: ev.name || "Unknown Account",
+              start: ev.date, 
+              allDay: true,
+              extendedProps: {
+                items: ev.items || "",
+                notes: ev.notes || "",
+                time: ev.time || ""
+              }
+            }));
+            
+            loader.style.display = 'none';
+            successCallback(events);
+          } catch (err) {
+            console.error("Calendar Load Error:", err);
+            loader.innerHTML = "Error connecting to database.";
+            failureCallback(err);
+          }
+        }, // <--- CORRECTED: COMMA ADDED HERE
+
         eventClick: function(info) {
           const props = info.event.extendedProps;
           const details = `
