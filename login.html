@@ -82,57 +82,63 @@ async function checkLogin() {
 /**
  * AUTOMATED PASSWORD RECOVERY UI
  */
-async function forgotPassword() {
-    const { value: email } = await Swal.fire({
-        title: 'Reset Password',
-        input: 'email',
-        inputLabel: 'Enter your registered SBC email address',
-        inputPlaceholder: 'email@suburbanbrewing.com',
-        showCancelButton: true,
-        confirmButtonColor: '#2563eb',
-        background: '#1e293b',
-        color: '#ffffff',
-        cancelButtonColor: '#d33'
-    });
+async function checkLogin() {
+    const userInput = document.getElementById('userInput');
+    const passInput = document.getElementById('passInput');
+    const errorMsg = document.getElementById('errorMsg');
+    
+    const user = userInput.value.trim();
+    const pass = passInput.value.trim();
 
-    if (email) {
-        Swal.fire({
-            title: 'Processing...',
-            text: 'Scanning database...',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
+    try {
+        const response = await fetch(`${MASTER_API_URL}?action=login&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`);
+        const result = await response.json();
 
-        try {
-            const response = await fetch(`${MASTER_API_URL}?action=forgotPassword&email=${encodeURIComponent(email)}`);
-            const result = await response.json();
-
-            if (result.status === "success") {
-                Swal.fire({
-                    title: 'Email Sent!',
-                    text: result.message,
-                    icon: 'success',
-                    confirmButtonColor: '#2563eb'
+        if (result.status === "success") {
+            
+            // AUTOMATED AGREEMENT GATEKEEPER
+            if (!result.profile.agreementSigned) {
+                const { isConfirmed } = await Swal.fire({
+                    title: 'Access Agreement',
+                    html: `
+                        <div style="text-align: left; font-size: 13px; color: #94a3b8; border: 1px solid #334155; padding: 15px; max-height: 200px; overflow-y: auto;">
+                            <p><strong>Suburban Brewing Co. Portal Terms:</strong></p>
+                            <ul>
+                                <li>All brewing recipes and sales data are confidential.</li>
+                                <li>Account credentials must not be shared.</li>
+                                <li>Activity is logged and monitored for security.</li>
+                            </ul>
+                        </div>
+                    `,
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: 'I Acknowledge & Accept',
+                    confirmButtonColor: '#2563eb',
+                    background: '#1e293b',
+                    color: '#ffffff',
+                    allowOutsideClick: false
                 });
-            } else {
-                Swal.fire({
-                    title: 'Error',
-                    text: result.message,
-                    icon: 'error',
-                    confirmButtonColor: '#2563eb'
-                });
+
+                if (isConfirmed) {
+                    // Tell the database this user has signed
+                    await fetch(`${MASTER_API_URL}?action=signAgreement&user=${encodeURIComponent(user)}`);
+                }
             }
-        } catch (error) {
-            Swal.fire('Error', 'Connection to database failed.', 'error');
+
+            // Save session and enter portal
+            sessionStorage.setItem("sbc_auth", "true");
+            sessionStorage.setItem("user_name", result.profile.name);
+            sessionStorage.setItem("user_role", result.profile.role);
+            window.location.replace("index.html"); 
+            
+        } else {
+            errorMsg.innerText = result.message;
+            errorMsg.style.display = 'block';
         }
+    } catch (error) {
+        console.error("Login Error:", error);
     }
 }
-
-document.addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        checkLogin();
-    }
-});
 </script>
 </body>
 </html>
