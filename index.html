@@ -294,6 +294,60 @@
       }
       .header-bar h1 { font-size: 22px; }
     }
+    /* --- FOOTER STYLES --- */
+.app-footer {
+    margin-top: 40px;
+    padding: 20px 0;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.footer-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    margin-left: 20px;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.system-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 15px;
+    padding-left: 15px;
+    border-left: 1px solid #cbd5e1;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--ready); /* Green */
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@media (max-width: 768px) {
+    .app-footer { flex-direction: column; gap: 15px; text-align: center; }
+    .footer-links a { margin: 0 10px; }
+    .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
+}
   </style>
 </head>
 
@@ -491,6 +545,21 @@
     <div class="subsection-heading" onclick="toggleGroup('sect-brite', this)"><span>Brite Tanks (10 BBL)</span><span class="chevron">▼</span></div>
     <div id="sect-brite" class="collapsible-content"><div class="tier-2" id="grid-brite"></div></div>
 </div>
+    <footer class="app-footer">
+        <div class="footer-left">
+            <span>&copy; <span id="copyright-year">2025</span> Suburban Brewing Co.</span>
+            <span class="system-status">
+                <span class="status-dot"></span>
+                System Operational
+            </span>
+        </div>
+        <div class="footer-links">
+            <span>Portal v2.5</span>
+            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
+            <a href="#" onclick="Swal.fire('Support', 'Contact Admin: rdavis@suburbanbrewing.com', 'info')">Support</a>
+            <a href="#" onclick="location.reload()">Refresh Data</a>
+        </div>
+    </footer>
   </main>
 
  <script>
@@ -502,7 +571,8 @@
 
     // --- INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', () => {
-        setupWelcomeUI();
+    document.getElementById('copyright-year').innerText = new Date().getFullYear();
+      setupWelcomeUI();
         runAllSyncs();
         // Auto-refresh every 5 minutes
         setInterval(runAllSyncs, 300000);
