@@ -2,15 +2,17 @@
 <html lang="en">
 <head>
   <script>
-    // THE GATEKEEPER: Runs before anything else loads
-    (function() {
-        const auth = sessionStorage.getItem("sbc_auth");
-        // If not authenticated, send to login page immediately
-        if (auth !== "true") {
-            // Adjust the path below if your files are in subfolders
-            window.location.replace("login.html"); 
-        }
-    })();
+  (function() {
+    const auth = sessionStorage.getItem("sbc_auth");
+    // If not on the login page and not authenticated
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = urlParams.get('page');
+
+    if (auth !== "true" && currentPage !== "login") {
+       // Forces the Web App to load the login view
+       window.top.location.href = "<?= ScriptApp.getService().getUrl() ?>?page=login";
+    }
+  })();
 </script>
   <meta charset="UTF-8" />
   <title>Suburban Brewing Co. | New Invoice</title>
