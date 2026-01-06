@@ -22,13 +22,13 @@
 
   <style>
     :root {
-  --sidebar-width: 240px;
-  /* Original Sidebar Color */
-  --primary-dark: #0f172a; 
-  --accent: #2563eb;
-  --bg-light: #f8fafc;
-  --text-main: #1e293b;
-}
+      --sidebar-width: 240px;
+      /* Original Sidebar Color */
+      --primary-dark: #0f172a; 
+      --accent: #2563eb;
+      --bg-light: #f8fafc;
+      --text-main: #1e293b;
+    }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -42,16 +42,16 @@
 
     /* --- SIDEBAR --- */
     .sidebar {
-    width: 240px; 
-    background: #0f172a; /* Your original Midnight Blue */
-    height: 100vh; 
-    color: white; 
-    display: flex; 
-    flex-direction: column; /* This prevents the stacking overlap */
-    overflow-y: auto; 
-    position: fixed; 
-    z-index: 1000;
-}
+      width: 240px; 
+      background: #0f172a; /* Midnight Blue */
+      height: 100vh; 
+      color: white; 
+      display: flex !important;           /* Fixed syntax: !important */
+      flex-direction: column !important;  /* Fixed syntax: !important */
+      overflow-y: auto; 
+      position: fixed; 
+      z-index: 1000;
+    }
     
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 800; color: #fff; padding-top: 20px; }
 
@@ -61,6 +61,7 @@
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
       user-select: none;
+      position: relative;
     }
     .nav-section-title:hover { color: #fff; }
 
@@ -71,6 +72,8 @@
       max-height: 500px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
+      position: relative;
+      width: 100%;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
@@ -79,11 +82,37 @@
       display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
     }
+    
     /* Matching the "Command Center" active state color */
-.nav-link:hover, .nav-link.active { 
-  background: #1e293b; 
-  color: #fff; 
-}
+    .nav-link:hover, .nav-link.active { 
+      background: #1e293b; 
+      color: #fff; 
+    }
+
+    /* FIX: This kills the white box and the overlap */
+    .logout-link {
+        position: static !important;    /* Prevents floating over other text */
+        background: transparent !important; 
+        margin: 0 !important;           /* Removes margin causing overlap */
+        padding: 10px 24px !important; 
+        display: flex !important;
+        align-items: center;
+        color: #f87171 !important;      /* Soft red for visibility */
+        box-shadow: none !important; 
+        text-decoration: none;
+    }
+
+    .logout-link:hover {
+        background: #1e293b !important; 
+        color: #fee2e2 !important;
+        border-left: 4px solid #ef4444;
+    }
+
+    .logout-link .icon {
+        margin-right: 12px;
+        width: 20px;
+        display: inline-block;
+    }
 
     /* --- MAIN CONTENT --- */
     .main-content {
@@ -221,32 +250,10 @@
       .main-content { margin-left: 0; padding: 20px 20px 90px; }
       .action-panel { grid-template-columns: 1fr; }
     }
-    /* This kills the white box and the overlap */
-.logout-link {
-    position: static !important;   /* Prevents it from floating over other text */
-    background: transparent !important; /* Removes the white box seen in your screenshot */
-    margin: 0 !important;          /* Removes the margin that pushes it into other elements */
-    padding: 10px 24px !important; /* Matches your other menu items */
-    display: flex !important;
-    align-items: center;
-    color: #f87171 !important;     /* Keeps the soft red for visibility */
-    box-shadow: none !important;   /* Removes any lingering box shadows */
-}
-
-.logout-link:hover {
-    background: #1e293b !important; /* Matches your Midnight Blue hover state */
-    color: #fee2e2 !important;
-}
-
-/* Ensure the icon doesn't shift the text */
-.logout-link .icon {
-    margin-right: 12px;
-    width: 20px;
-    display: inline-block;
-}
   </style>
 </head>
 <body>
+
   <aside class="sidebar">
     <div class="sidebar-header">
       <h2>SUBURBAN BREWING</h2>
@@ -265,13 +272,13 @@
     <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
     </div>
-  <div id="grp-main" class="collapsible-content">
-    <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-  </div>
-  
-  <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
-    <span>Samplings</span><span class="chevron">▼</span>
-  </div>
+    <div id="grp-main" class="collapsible-content">
+      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-sample" class="collapsible-content">
       <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
@@ -361,11 +368,12 @@
   </main>
 
   <script>
-   function handleLogout() {
-    sessionStorage.removeItem("sbc_auth");
-    // Explicit GitHub Pages path
-    window.location.replace("https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/login.html");
-}
+    function handleLogout() {
+        sessionStorage.removeItem("sbc_auth");
+        // Explicit GitHub Pages path
+        window.location.replace("https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/login.html");
+    }
+
     // --- SIDEBAR TOGGLE ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
@@ -376,7 +384,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
 
     document.addEventListener('DOMContentLoaded', async function() {
-      // Initialize Sidebar
+      // Initialize Sidebar Active States
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -388,7 +396,6 @@
       }
 
       var calendarEl = document.getElementById('calendar');
-      
       Swal.fire({title: 'Loading Schedule...', didOpen: () => Swal.showLoading()});
 
       var calendar = new FullCalendar.Calendar(calendarEl, {
