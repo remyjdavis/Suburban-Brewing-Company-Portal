@@ -427,31 +427,51 @@
     }
 }
 
-         /* Styling to match the existing sidebar theme */
-./* --- LOGOUT LINK FIX --- */
+       /* --- LOGOUT LINK FIX --- */
 .logout-link {
-    color: #f87171 !important; /* soft red */
+    color: #f87171 !important;       /* soft red */
     border-left: 4px solid transparent;
     transition: all 0.2s ease;
     cursor: pointer;
-    display: block;             /* ensure proper block spacing */
-    padding: 10px 15px;        /* match other nav-links */
-    margin: 5px 0;              /* spacing from section header */
+    display: flex;                   /* keep icon + text inline */
+    align-items: center;             /* vertical center */
+    padding: 10px 15px;              /* match other links */
+    margin: 5px 0;                   /* spacing from System header */
     border-radius: 4px;
     font-size: 0.9rem;
+    text-decoration: none;
 }
 
+/* Hover state */
 .logout-link:hover {
-    background: rgba(255, 0, 0, 0.2); /* subtle red highlight */
+    background: #450a0a !important;  /* dark red background */
     color: #fee2e2 !important;
     border-left-color: #ef4444;
 }
 
-
+/* Icon spacing */
 .logout-link span.icon {
     margin-right: 12px;
     font-size: 16px;
 }
+
+/* Ensure collapsible sections stack properly */
+.collapsible-content {
+    max-height: none;        /* prevent height clipping */
+    overflow: visible;       /* allow links to fully show */
+    transition: max-height 0.4s ease, opacity 0.4s ease;
+    opacity: 1;
+}
+
+/* Remove previous flex-bottom behavior */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 100vh;
+    padding: 20px 16px;
+}
+
     </style>
 </head>
 <body>
