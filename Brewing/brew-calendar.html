@@ -42,15 +42,15 @@
 
     /* --- SIDEBAR --- */
     .sidebar {
-  width: 240px; 
-  background: #0f172a; /* Midnight Blue */
-  height: 100vh; 
-  color: white; 
-  display: flex; 
-  flex-direction: column; 
-  overflow-y: auto; 
-  position: fixed; 
-  z-index: 1000;
+    width: 240px; 
+    background: #0f172a; /* Your original Midnight Blue */
+    height: 100vh; 
+    color: white; 
+    display: flex; 
+    flex-direction: column; /* This prevents the stacking overlap */
+    overflow-y: auto; 
+    position: fixed; 
+    z-index: 1000;
 }
     
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 800; color: #fff; padding-top: 20px; }
@@ -221,24 +221,30 @@
       .main-content { margin-left: 0; padding: 20px 20px 90px; }
       .action-panel { grid-template-columns: 1fr; }
     }
-    /* Styling to match the existing sidebar theme */
+    /* Update this section in your <style> block */
 .logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
+    /* REMOVED margin-top: 20px; to stop the overlapping */
+    display: flex !important;
+    align-items: center;
+    padding: 10px 24px;
+    color: #f87171 !important; /* Soft red exit color */
     border-left: 4px solid transparent;
     transition: all 0.2s ease;
     cursor: pointer;
+    text-decoration: none;
 }
 
 .logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
+    background: #1e293b !important; /* Matches your other hover states */
     color: #fee2e2 !important;
     border-left-color: #ef4444;
 }
 
-.logout-link span.icon {
+.logout-link .icon {
     margin-right: 12px;
     font-size: 16px;
+    display: inline-block;
+    width: 20px;
 }
   </style>
 </head>
