@@ -22,15 +22,32 @@
     </div>
 
     <script>
-        function login() {
-    const pw = document.getElementById('pw').value;
-    if (pw === "SBC2026") {
-        sessionStorage.setItem("sbc_auth", "true");
-        window.location.replace("index.html"); // Go to Dashboard
-    } else {
-        document.getElementById('error').style.display = 'block';
+    // SBC Web App Authentication Logic
+    function checkLogin() {
+        const passInput = document.getElementById('passInput');
+        const errorMsg = document.getElementById('errorMsg');
+        
+        // Use the password we agreed on
+        if (passInput.value === "SBC2026") { 
+            // Save session for GitHub Pages environment
+            sessionStorage.setItem("sbc_auth", "true");
+            
+            // Redirect to the dashboard
+            // Note: window.location.replace is better for security as it clears the login from history
+            window.location.replace("index.html"); 
+        } else {
+            // Show error if password fails
+            if (errorMsg) errorMsg.style.display = 'block';
+            passInput.value = ""; // Clear the failed attempt
+        }
     }
-}
-    </script>
+
+    // Optional: Allow pressing "Enter" to login
+    document.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            checkLogin();
+        }
+    });
+</script>
 </body>
 </html>
