@@ -31,22 +31,22 @@
     }
 
     /* --- GLOBAL RESET & LAYOUT --- */
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { 
       margin: 0; background: var(--bg); color: var(--text-main); 
-      font-family: 'Inter', -apple-system, system-ui, sans-serif;
       display: flex; min-height: 100vh;
     }
 
-    /* --- SIDEBAR (Fixed Desktop) --- */
+    /* --- SIDEBAR STYLES --- */
     .sidebar { 
       width: 260px; background: var(--sidebar); color: #fff; 
       padding: 24px 0; flex-shrink: 0; position: fixed; 
       height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s ease;
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
+    /* COLLAPSIBLE HEADERS */
     .nav-section-header {
       font-size: 11px; text-transform: uppercase; color: #94a3b8; 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
@@ -54,16 +54,18 @@
       user-select: none;
     }
     .nav-section-header:hover { color: #fff; }
+
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 1000px; overflow: hidden;
+      max-height: 500px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
+    /* LINKS */
     .nav-link { 
       display: flex; align-items: center; padding: 10px 24px; 
       color: #64748b; text-decoration: none; font-size: 14px; 
@@ -73,45 +75,41 @@
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
     /* --- MAIN AREA --- */
-    .main { flex: 1; margin-left: 260px; padding: 40px; transition: all 0.3s ease; width: 100%; }
-    #calendar-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; min-height: 600px; }
+    .main { flex: 1; margin-left: 260px; padding: 40px; transition: all 0.3s ease; }
+    #calendar-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; min-height: 600px; }
     
+    /* Loading Spinner */
     #loading-overlay { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; font-weight: bold; color: var(--accent); }
 
-    /* ============================================================
-       MOBILE & TABLET DRAWER LOGIC 
-       ============================================================ */
-    #menu-toggle { display: none; }
-    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
-
-    @media (max-width: 1024px) {
-      .sidebar { left: -260px; z-index: 2000; }
-      .sidebar.open { left: 0; }
-      .main { margin-left: 0 !important; padding: 15px; }
-      .menu-overlay.active { display: block; }
-      
-      #menu-toggle {
-        display: flex; position: fixed; bottom: 25px; right: 25px;
-        width: 65px; height: 65px; background: var(--accent); color: white;
-        border-radius: 50%; justify-content: center; align-items: center;
-        font-size: 28px; z-index: 2100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
-      }
-
-      /* Adjust Calendar for Mobile */
-      .fc-header-toolbar { flex-direction: column; gap: 10px; }
-      .fc-toolbar-chunk { display: flex; justify-content: center; width: 100%; }
-      .fc-button { font-size: 0.8rem !important; }
-      #calendar-container { padding: 10px; }
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .main { margin-left: 0; padding: 20px 20px 90px; }
+      .nav-section-header, .sidebar h2 { display: none; }
+      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; }
     }
+    /* Styling to match the existing sidebar theme */
+.logout-link {
+    margin-top: 20px;
+    color: #f87171 !important; /* A soft red to indicate an exit action */
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
 
-    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
-    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
+.logout-link:hover {
+    background: #450a0a !important; /* Dark red background on hover */
+    color: #fee2e2 !important;
+    border-left-color: #ef4444;
+}
+
+.logout-link span.icon {
+    margin-right: 12px;
+    font-size: 16px;
+}
   </style>
 </head>
 <body>
-<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
-  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
-  
+
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
@@ -208,92 +206,45 @@
       headerEl.classList.toggle('collapsed');
     }
 
-    // --- MOBILE DRAWER TOGGLE ---
-    function toggleMobileMenu() {
-        const sidebar = document.querySelector('.sidebar');
-        const overlay = document.getElementById('menu-overlay');
-        const btn = document.getElementById('menu-toggle');
-        
-        const isOpen = sidebar.classList.toggle('open');
-        overlay.classList.toggle('active');
-        
-        // Prevent background scrolling on phone while menu is open
-        document.body.style.overflow = isOpen ? 'hidden' : '';
-        
-        // Switch icon between Hamburger and X
-        btn.innerText = isOpen ? '✕' : '☰';
-    }
-
-    // --- CALENDAR & INITIALIZATION LOGIC ---
+    // --- CALENDAR LOGIC ---
     document.addEventListener('DOMContentLoaded', function() {
-      // 1. Mobile Navigation Auto-close Listener
-      document.querySelectorAll('.nav-link').forEach(link => {
-          link.addEventListener('click', () => {
-              if (window.innerWidth <= 1024) {
-                  const sidebar = document.querySelector('.sidebar');
-                  if (sidebar.classList.contains('open')) toggleMobileMenu();
-              }
-          });
-      });
-
-      // 2. Sidebar Active State Logic
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) header.classList.remove('collapsed');
-        }
-      }
-
-      // 3. Calendar Safety Check
+      // Safety Check: Check if library loaded
       if (typeof FullCalendar === 'undefined') {
           alert("Calendar Library failed to load. Please check your internet connection.");
           return;
       }
 
-      const API_URL = "https://script.google.com/macros/s/AKfycbWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+      const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
       const calendarEl = document.getElementById('calendar');
       const loader = document.getElementById('loading-overlay');
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: window.innerWidth < 768 ? 'listMonth' : 'dayGridMonth',
+        initialView: 'dayGridMonth',
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
-          right: window.innerWidth < 768 ? 'listMonth,dayGridMonth' : 'dayGridMonth,timeGridWeek,listMonth'
+          right: 'dayGridMonth,timeGridWeek,listMonth'
         },
         themeSystem: 'standard',
         eventColor: '#2563eb',
         
-       events: async function(info, successCallback, failureCallback) {
+        events: async function(info, successCallback, failureCallback) {
           loader.style.display = 'block';
           try {
-            // Updated fetch call with necessary Google CORS parameters
             const response = await fetch(`${API_URL}?action=getSamplingEvents`, { 
-              method: 'GET',
-              mode: 'cors', // Explicitly request CORS
-              redirect: 'follow' // Required for Google Scripts
+              method: 'GET'
             });
-            
             const rawEvents = await response.json();
             
-            if (!Array.isArray(rawEvents)) {
-              console.error("API did not return an array:", rawEvents);
-              loader.innerHTML = "No events found.";
-              successCallback([]); 
-              return;
-            }
-            
+            // Map backend "name" to fullcalendar "title"
             const events = rawEvents.map(ev => ({
-              title: ev.name || "Unknown Account",
+              title: ev.name,
               start: ev.date, 
               allDay: true,
               extendedProps: {
-                items: ev.items || "",
-                notes: ev.notes || "",
-                time: ev.time || ""
+                items: ev.items,
+                notes: ev.notes,
+                time: ev.time
               }
             }));
             
@@ -301,10 +252,10 @@
             successCallback(events);
           } catch (err) {
             console.error("Calendar Load Error:", err);
-            loader.innerHTML = "Connection Error.";
+            loader.innerHTML = "Error loading data.";
             failureCallback(err);
           }
-        }, // <--- CORRECTED: COMMA ADDED HERE
+        },
 
         eventClick: function(info) {
           const props = info.event.extendedProps;
@@ -323,7 +274,18 @@
       });
 
       calendar.render();
+      
+      // Initialize Sidebar State (Open Active Group)
+      const activeLink = document.querySelector('.nav-link.active');
+      if (activeLink) {
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) {
+          parentGroup.classList.remove('collapsed');
+          const header = parentGroup.previousElementSibling;
+          if (header) header.classList.remove('collapsed');
+        }
+      }
     });
-</script>
+  </script>
 </body>
 </html>
