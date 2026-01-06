@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // THE GATEKEEPER: Runs before anything else loads
+    (function() {
+        const auth = sessionStorage.getItem("sbc_auth");
+        // If not authenticated, send to login page immediately
+        if (auth !== "true") {
+            // Adjust the path below if your files are in subfolders
+            window.location.replace("login.html"); 
+        }
+    })();
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Suburban Brewing - Ingredient Inventory</title>
