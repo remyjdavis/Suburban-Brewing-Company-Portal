@@ -31,7 +31,6 @@
     </div>
 
 <script>
-// 🔴 CONFIGURATION: Update this with your deployed Command Center Master Web App URL
 const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
 
 async function checkLogin() {
@@ -42,7 +41,6 @@ async function checkLogin() {
     const user = userInput.value.trim();
     const pass = passInput.value.trim();
 
-    // Clear previous errors
     errorMsg.style.display = 'none';
 
     if (!user || !pass) {
@@ -51,25 +49,20 @@ async function checkLogin() {
         return;
     }
 
-    // Visual feedback (Disable button during check)
     const btn = document.querySelector('button');
     const originalText = btn.innerText;
     btn.innerText = "Authenticating...";
     btn.disabled = true;
 
     try {
-        // 
         const response = await fetch(`${MASTER_API_URL}?action=login&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`);
         const result = await response.json();
 
         if (result.status === "success") {
-            // Save employee session data
             sessionStorage.setItem("sbc_auth", "true");
             sessionStorage.setItem("user_name", result.profile.name);
             sessionStorage.setItem("user_role", result.profile.role);
             sessionStorage.setItem("user_access", result.profile.access);
-            
-            // Redirect to dashboard
             window.location.replace("index.html"); 
         } else {
             errorMsg.innerText = result.message || "Invalid Credentials";
@@ -86,15 +79,53 @@ async function checkLogin() {
     }
 }
 
-function forgotPassword() {
-    Swal.fire({
-        title: 'Account Recovery',
-        text: 'Please contact the System Administrator or your Manager to reset your portal password.',
-        icon: 'info',
+/**
+ * AUTOMATED PASSWORD RECOVERY UI
+ */
+async function forgotPassword() {
+    const { value: email } = await Swal.fire({
+        title: 'Reset Password',
+        input: 'email',
+        inputLabel: 'Enter your registered SBC email address',
+        inputPlaceholder: 'email@suburbanbrewing.com',
+        showCancelButton: true,
         confirmButtonColor: '#2563eb',
         background: '#1e293b',
-        color: '#ffffff'
+        color: '#ffffff',
+        cancelButtonColor: '#d33'
     });
+
+    if (email) {
+        Swal.fire({
+            title: 'Processing...',
+            text: 'Scanning database...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        try {
+            const response = await fetch(`${MASTER_API_URL}?action=forgotPassword&email=${encodeURIComponent(email)}`);
+            const result = await response.json();
+
+            if (result.status === "success") {
+                Swal.fire({
+                    title: 'Email Sent!',
+                    text: result.message,
+                    icon: 'success',
+                    confirmButtonColor: '#2563eb'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: result.message,
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+            }
+        } catch (error) {
+            Swal.fire('Error', 'Connection to database failed.', 'error');
+        }
+    }
 }
 
 document.addEventListener('keypress', function (e) {
