@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+   <script>
+    (function() {
+        const auth = sessionStorage.getItem("sbc_auth");
+        const isLoginPage = window.location.pathname.includes("login.html");
+
+        if (auth !== "true" && !isLoginPage) {
+            // This finds the root of your GitHub repo automatically
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            window.location.replace(repoPath + "login.html");
+        }
+    })();
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Production Schedule | Suburban Brewing Co.</title>
@@ -45,6 +57,15 @@
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
       user-select: none;
     }
+    .nav-section-header {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin: 18px 24px 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
     .nav-section-title:hover { color: #fff; }
 
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
@@ -233,11 +254,9 @@
     <div class="nav-section-header">
   <span>System</span>
 </div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
+<a href="#" class="nav-link logout-link" onclick="handleLogout()">
+  <span class="icon">󰗼</span> <span>Logout of Portal</span>
+</a>
 
 <script>
  function handleLogout() {
