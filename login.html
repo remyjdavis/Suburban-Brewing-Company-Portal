@@ -4,50 +4,104 @@
     <meta charset="UTF-8">
     <title>SBC Portal Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .login-card { background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 350px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; }
-        button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .error { color: #f87171; font-size: 14px; margin-bottom: 10px; display: none; }
+        .forgot-link { display: block; margin-top: 20px; color: #94a3b8; font-size: 13px; text-decoration: none; cursor: pointer; }
+        .forgot-link:hover { color: #2563eb; text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="login-card">
         <h2>Suburban Brewing</h2>
-        <p style="color: #94a3b8;">Enter Portal Password</p>
-        <div id="errorMsg" class="error">Incorrect Password</div>
+        <p style="color: #94a3b8;">Employee Portal Access</p>
+        
+        <div id="errorMsg" class="error">Incorrect Credentials</div>
+        
+        <input type="text" id="userInput" placeholder="Username">
         <input type="password" id="passInput" placeholder="Password">
+        
         <button onclick="checkLogin()">Access Portal</button>
+        
+        <a class="forgot-link" onclick="forgotPassword()">Forgot Password?</a>
     </div>
 
-    <script>
-    // SBC Web App Authentication Logic
-    function checkLogin() {
-        const passInput = document.getElementById('passInput');
-        const errorMsg = document.getElementById('errorMsg');
-        
-        // Use the password we agreed on
-        if (passInput.value === "SBC2026") { 
-            // Save session for GitHub Pages environment
-            sessionStorage.setItem("sbc_auth", "true");
-            
-            // Redirect to the dashboard
-            // Note: window.location.replace is better for security as it clears the login from history
-            window.location.replace("index.html"); 
-        } else {
-            // Show error if password fails
-            if (errorMsg) errorMsg.style.display = 'block';
-            passInput.value = ""; // Clear the failed attempt
-        }
+<script>
+// 🔴 CONFIGURATION: Update this with your deployed Command Center Master Web App URL
+const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
+
+async function checkLogin() {
+    const userInput = document.getElementById('userInput');
+    const passInput = document.getElementById('passInput');
+    const errorMsg = document.getElementById('errorMsg');
+    
+    const user = userInput.value.trim();
+    const pass = passInput.value.trim();
+
+    // Clear previous errors
+    errorMsg.style.display = 'none';
+
+    if (!user || !pass) {
+        errorMsg.innerText = "Please enter both username and password";
+        errorMsg.style.display = 'block';
+        return;
     }
 
-    // Optional: Allow pressing "Enter" to login
-    document.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            checkLogin();
+    // Visual feedback (Disable button during check)
+    const btn = document.querySelector('button');
+    const originalText = btn.innerText;
+    btn.innerText = "Authenticating...";
+    btn.disabled = true;
+
+    try {
+        // 
+        const response = await fetch(`${MASTER_API_URL}?action=login&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`);
+        const result = await response.json();
+
+        if (result.status === "success") {
+            // Save employee session data
+            sessionStorage.setItem("sbc_auth", "true");
+            sessionStorage.setItem("user_name", result.profile.name);
+            sessionStorage.setItem("user_role", result.profile.role);
+            sessionStorage.setItem("user_access", result.profile.access);
+            
+            // Redirect to dashboard
+            window.location.replace("index.html"); 
+        } else {
+            errorMsg.innerText = result.message || "Invalid Credentials";
+            errorMsg.style.display = 'block';
+            passInput.value = ""; 
         }
+    } catch (error) {
+        console.error("Login Error:", error);
+        errorMsg.innerText = "Connection Error. Please check your internet.";
+        errorMsg.style.display = 'block';
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
+function forgotPassword() {
+    Swal.fire({
+        title: 'Account Recovery',
+        text: 'Please contact the System Administrator or your Manager to reset your portal password.',
+        icon: 'info',
+        confirmButtonColor: '#2563eb',
+        background: '#1e293b',
+        color: '#ffffff'
     });
+}
+
+document.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        checkLogin();
+    }
+});
 </script>
 </body>
 </html>
