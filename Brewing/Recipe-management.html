@@ -120,13 +120,50 @@
       .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
       .main-content { margin-left: 0; width: 100%; padding: 20px 20px 90px; }
     }
+     /* Styling to match the existing sidebar theme */
+.logout-link {
+    margin-top: 20px;
+    color: #f87171 !important; /* A soft red to indicate an exit action */
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.logout-link:hover {
+    background: #450a0a !important; /* Dark red background on hover */
+    color: #fee2e2 !important;
+    border-left-color: #ef4444;
+}
+
+.logout-link span.icon {
+    margin-right: 12px;
+    font-size: 16px;
+}
   </style>
 </head>
-<body onload="loadPageData()">
+<body>
 
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
+    <div class="nav-section-header">
+  <span>System</span>
+</div>
+<div class="collapsible-content">
+  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+    <span class="icon">󰗼</span> <span>Logout of Portal</span>
+  </a>
+</div>
+
+<script>
+ function handleLogout() {
+    // Clear the authentication session
+    sessionStorage.removeItem("sbc_auth");
     
+    // Redirect to the login page relative to your GitHub repo root
+    const repoPath = "/Suburban-Brewing-Company-Portal/";
+    window.location.replace(repoPath + "login.html");
+}
+</script>
     <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
     </div>
