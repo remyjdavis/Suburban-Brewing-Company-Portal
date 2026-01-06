@@ -40,12 +40,17 @@
     }
 
     /* --- SIDEBAR --- */
-    .sidebar {
-      width: 240px; background: var(--primary-dark); height: 100vh; color: white; 
-      display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; 
-      position: fixed; z-index: 1000;
-      transition: all 0.3s ease;
-    }
+    ..sidebar {
+  width: 240px; 
+  background: var(--primary-dark); 
+  height: 100vh; 
+  color: white; 
+  display: flex; 
+  flex-direction: column; /* Force vertical stacking */
+  overflow-y: auto; 
+  position: fixed; 
+  z-index: 1000;
+}
     
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 800; color: #fff; padding-top: 20px; }
 
@@ -240,37 +245,26 @@
     <h2>SUBURBAN BREWING</h2>
   </div>
 
-  <div class="nav-section-header" onclick="toggleGroup('grp-system', this)">
+  <div class="nav-section-title" onclick="toggleGroup('grp-system', this)">
     <span>System</span><span class="chevron">▼</span>
   </div>
   <div id="grp-system" class="collapsible-content">
     <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-      <span class="icon" style="margin-right:10px;">󰗼</span>
+      <span class="icon">󰗼</span>
       <span>Logout of Portal</span>
     </a>
   </div>
-
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
-    
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
    
-    <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
-      <span>Main Menu</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-main" class="collapsible-content">
-      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    </div>
-    
-    <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
-      <span>Samplings</span><span class="chevron">▼</span>
-    </div>
+  <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
+    <span>Main Menu</span><span class="chevron">▼</span>
+  </div>
+  <div id="grp-main" class="collapsible-content">
+    <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+  </div>
+  
+  <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
+    <span>Samplings</span><span class="chevron">▼</span>
+  </div>
     <div id="grp-sample" class="collapsible-content">
       <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
@@ -360,6 +354,11 @@
   </main>
 
   <script>
+   function handleLogout() {
+    sessionStorage.removeItem("sbc_auth");
+    // Explicit GitHub Pages path
+    window.location.replace("https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/login.html");
+}
     // --- SIDEBAR TOGGLE ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
