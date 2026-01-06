@@ -7,6 +7,7 @@
         const isLoginPage = window.location.pathname.includes("login.html");
 
         if (auth !== "true" && !isLoginPage) {
+            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
@@ -22,10 +23,11 @@
   <style>
     :root {
       --sidebar-width: 240px;
-      --primary-dark: #111827;
+      /* Original Sidebar Color */
+      --primary-dark: #0f172a; 
       --accent: #2563eb;
-      --bg-light: #f3f4f6;
-      --text-main: #1f2937;
+      --bg-light: #f8fafc;
+      --text-main: #1e293b;
     }
 
     body {
@@ -38,23 +40,22 @@
       color: var(--text-main);
     }
 
-    /* --- SIDEBAR FIX: Forces vertical flow to stop overlap --- */
+    /* --- SIDEBAR FIX: FORCED VERTICAL FLOW --- */
     .sidebar {
       width: 240px; 
-      background: var(--primary-dark); 
+      background: #0f172a; 
       height: 100vh; 
       color: white; 
-      display: flex !important; 
-      flex-direction: column !important; 
+      display: flex !important;           /* Enables flex stacking */
+      flex-direction: column !important;  /* Forces vertical flow */
       overflow-y: auto; 
-      flex-shrink: 0; 
       position: fixed; 
       z-index: 1000;
-      transition: all 0.3s ease;
     }
     
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 800; color: #fff; padding-top: 20px; }
 
+    /* COLLAPSIBLE HEADERS */
     .nav-section-title {
       font-size: 11px; text-transform: uppercase; color: #9ca3af; 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
@@ -73,15 +74,16 @@
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
+    /* LINKS */
     .nav-link { 
       display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
     }
-    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
-    .nav-link.active { border-left-color: var(--accent); color: #fff; background: #374151; }
-
-    .logout-link { color: #f87171 !important; cursor: pointer; }
-    .logout-link:hover { background: #450a0a !important; border-left-color: #ef4444; }
+    /* Matching the "Command Center" active state color */
+    .nav-link:hover, .nav-link.active { 
+      background: #1e293b; 
+      color: #fff; 
+    }
 
     /* --- MAIN CONTENT --- */
     .main-content {
@@ -119,6 +121,7 @@
       margin-right: 5px;
     }
 
+    /* --- CALENDAR CONTAINER --- */
     #calendar-container {
       background: white;
       padding: 20px;
@@ -129,11 +132,13 @@
       min-height: 500px;
     }
 
+    /* FullCalendar Customization */
     .fc-event { cursor: pointer; border: none; font-weight: 600; font-size: 0.85rem; padding: 2px 4px; }
     .fc-toolbar-title { font-size: 1.5rem !important; font-weight: 800; color: var(--primary-dark); }
     .fc-button-primary { background-color: var(--primary-dark) !important; border-color: var(--primary-dark) !important; }
     .fc-button-primary:hover { background-color: #374151 !important; }
 
+    /* Event Colors */
     .evt-cellar { background-color: #10b981 !important; border-left: 4px solid #065f46 !important; color: white; }
     .evt-production { background-color: #3b82f6 !important; border-left: 4px solid #1e40af !important; color: white; }
     .evt-logistics { background-color: #ef4444 !important; border-left: 4px solid #991b1b !important; color: white; }
@@ -145,6 +150,7 @@
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
+    /* --- BOTTOM PANELS --- */
     .action-panel {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -215,30 +221,53 @@
       .main-content { margin-left: 0; padding: 20px 20px 90px; }
       .action-panel { grid-template-columns: 1fr; }
     }
+    /* Styling to match the existing sidebar theme */
+.logout-link {
+    color: #f87171 !important; /* A soft red to indicate an exit action */
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.logout-link:hover {
+    background: #450a0a !important; /* Dark red background on hover */
+    color: #fee2e2 !important;
+    border-left-color: #ef4444;
+}
+
+.logout-link span.icon {
+    margin-right: 12px;
+    font-size: 16px;
+}
   </style>
 </head>
 <body>
 
   <aside class="sidebar">
+  <div class="sidebar-header">
     <h2>SUBURBAN BREWING</h2>
+  </div>
 
-    <div class="nav-section-title"><span>System</span></div>
-    <div class="collapsible-content">
-      <a class="nav-link logout-link" onclick="handleLogout()">
-        <span>Logout of Portal</span>
-      </a>
-    </div>
-    
-    <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
-      <span>Main Menu</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-main" class="collapsible-content">
-      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    </div>
-    
-    <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
-      <span>Samplings</span><span class="chevron">▼</span>
-    </div>
+  <div class="nav-section-title">
+    <span>System</span>
+  </div>
+  <div class="collapsible-content">
+    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+      <span class="icon">󰗼</span>
+      <span>Logout of Portal</span>
+    </a>
+  </div>
+   
+  <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
+    <span>Main Menu</span><span class="chevron">▼</span>
+  </div>
+  <div id="grp-main" class="collapsible-content">
+    <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+  </div>
+  
+  <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
+    <span>Samplings</span><span class="chevron">▼</span>
+  </div>
     <div id="grp-sample" class="collapsible-content">
       <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
@@ -328,23 +357,21 @@
   </main>
 
   <script>
-    function handleLogout() {
-        sessionStorage.removeItem("sbc_auth");
-        const repoPath = "/Suburban-Brewing-Company-Portal/";
-        window.location.replace(repoPath + "login.html");
-    }
-
+   function handleLogout() {
+    sessionStorage.removeItem("sbc_auth");
+    window.location.replace("https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/login.html");
+}
+    // --- SIDEBAR TOGGLE ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
-      if (content) {
-        content.classList.toggle('collapsed');
-        if (headerEl) headerEl.classList.toggle('collapsed');
-      }
+      content.classList.toggle('collapsed');
+      headerEl.classList.toggle('collapsed');
     }
 
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
 
     document.addEventListener('DOMContentLoaded', async function() {
+      // Initialize Sidebar
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -356,26 +383,38 @@
       }
 
       var calendarEl = document.getElementById('calendar');
+      
       Swal.fire({title: 'Loading Schedule...', didOpen: () => Swal.showLoading()});
 
       var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listWeek' },
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,listWeek'
+        },
         height: '100%',
         navLinks: true,
         editable: false, 
+        
         events: async function(info, successCallback, failureCallback) {
           try {
             const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`);
             const data = await res.json();
+            
             updateSidePanels(data.tasks);
+            
             const events = data.tasks.map(task => ({
               title: task.title,
               start: task.date,
               allDay: true,
               classNames: [`evt-${task.type}`, task.status === 'urgent' ? 'evt-urgent' : ''],
-              extendedProps: { description: task.status, type: task.type }
+              extendedProps: {
+                description: task.status,
+                type: task.type
+              }
             }));
+            
             Swal.close();
             successCallback(events);
           } catch (e) {
@@ -384,14 +423,18 @@
             failureCallback(e);
           }
         },
+
         eventClick: function(info) {
           const props = info.event.extendedProps;
           let icon = 'info';
           if(props.type === 'logistics') icon = 'warning';
           if(props.type === 'production') icon = 'question';
+
           Swal.fire({
             title: info.event.title,
-            html: `<b>Date:</b> ${info.event.start.toLocaleDateString()}<br><b>Type:</b> ${props.type.toUpperCase()}<br><b>Status:</b> ${props.description}`,
+            html: `<b>Date:</b> ${info.event.start.toLocaleDateString()}<br>
+                   <b>Type:</b> ${props.type.toUpperCase()}<br>
+                   <b>Status:</b> ${props.description}`,
             icon: icon,
             showCancelButton: props.type === 'production',
             confirmButtonText: props.type === 'production' ? 'Start Brew Log' : 'OK'
@@ -402,32 +445,54 @@
           });
         }
       });
+
       calendar.render();
     });
 
     function updateSidePanels(tasks) {
       const alertContainer = document.getElementById('alert-list');
       const suggestContainer = document.getElementById('suggestion-list');
+      
       if (!alertContainer || !suggestContainer) return;
 
       alertContainer.innerHTML = "";
       suggestContainer.innerHTML = "";
-      let alertCount = 0; let suggestCount = 0;
+
+      let alertCount = 0;
+      let suggestCount = 0;
 
       tasks.forEach(t => {
         const dateStr = new Date(t.date).toLocaleDateString();
+
         if (t.type === 'logistics') {
           alertCount++;
-          alertContainer.innerHTML += `<div class="alert-item"><div><b>${t.title}</b><br><small>Needed by: ${dateStr}</small></div><button onclick="markOrdered(this)" style="border:1px solid #ef4444; color:#ef4444; background:none; border-radius:4px; padding:4px; cursor:pointer;">Ordered</button></div>`;
+          alertContainer.innerHTML += `
+            <div class="alert-item">
+              <div>
+                <b>${t.title}</b><br>
+                <small>Needed by: ${dateStr}</small>
+              </div>
+              <button onclick="markOrdered(this)" style="border:1px solid #ef4444; color:#ef4444; background:none; border-radius:4px; padding:4px; cursor:pointer;">Ordered</button>
+            </div>`;
         }
+        
         if (t.type === 'production') {
           suggestCount++;
           const urgentBadge = t.status === 'urgent' ? '🔥' : '';
-          suggestContainer.innerHTML += `<div class="suggestion-item"><div><b>${urgentBadge} ${t.title.replace('🍺 ', '')}</b><br><small>Target: ${dateStr}</small></div><button class="btn-approve" onclick="approveBrew('${t.title}')">Approve</button></div>`;
+          suggestContainer.innerHTML += `
+            <div class="suggestion-item">
+              <div>
+                <b>${urgentBadge} ${t.title.replace('🍺 ', '')}</b><br>
+                <small>Target: ${dateStr}</small>
+              </div>
+              <button class="btn-approve" onclick="approveBrew('${t.title}')">Approve</button>
+            </div>`;
         }
       });
+
       document.getElementById('alert-count').innerText = alertCount;
       document.getElementById('suggest-count').innerText = suggestCount;
+
       if (alertCount === 0) alertContainer.innerHTML = "<div style='color:#10b981; padding:10px;'>✅ All ingredients in stock.</div>";
       if (suggestCount === 0) suggestContainer.innerHTML = "<div style='color:#6b7280; padding:10px;'>Inventory levels look healthy.</div>";
     }
