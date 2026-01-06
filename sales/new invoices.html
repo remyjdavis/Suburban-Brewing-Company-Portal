@@ -345,11 +345,33 @@
       margin: 0 auto;
     }
 
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
-      .sidebar h2, .nav-section-header { display: none; }
-      .main { margin-left: 0; padding: 20px 20px 90px; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
+    /* --- MOBILE & TABLET DRAWER LOGIC --- */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
+
+    @media (max-width: 1024px) {
+      .sidebar { left: -240px; }
+      .sidebar.open { left: 0; }
+      .main { margin-left: 0 !important; padding: 15px !important; width: 100%; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 65px; height: 65px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 28px; z-index: 2100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+
+      /* Protect Invoice Format: Allow horizontal scroll instead of squishing it */
+      .main { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .invoice-page { 
+        margin: 0; /* Align to left on mobile so user knows they can scroll */
+        box-shadow: none; 
+        border: 1px solid #e5e7eb;
+      }
+      
+      .invoice-action-bar { flex-direction: column; gap: 10px; width: 100%; }
+      .invoice-btn { width: 100%; padding: 15px; }
     }
 /* Styling to match the existing sidebar theme */
 .logout-link {
@@ -373,7 +395,9 @@
   </style>
 </head>
 <body>
-
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
@@ -567,6 +591,19 @@
       headerEl.classList.toggle('collapsed');
     }
 
+    // --- MOBILE DRAWER TOGGLE ---
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        
+        // Prevent background scroll when menu is open
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        btn.innerText = isOpen ? '✕' : '☰';
+    }
+
     // ===== GLOBAL =====
     let currentInvoiceNumber = "";
     let invoiceNumberValue = "";
@@ -595,6 +632,7 @@
       return found;
     }
 
+    // --- CONSOLIDATED INITIALIZATION ---
     document.addEventListener("DOMContentLoaded", () => {
       const today = new Date().toLocaleDateString();
       document.getElementById("current-date").textContent = today;
@@ -604,7 +642,14 @@
       addProductRow();
       loadInventory();
       
-      // Initialize Sidebar State (Open Active Group)
+      // Auto-close menu when a link is clicked on mobile
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) toggleMobileMenu();
+        });
+      });
+
+      // Existing Sidebar Logic (Keep active group expanded)
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -948,7 +993,7 @@
       return null;
     }
 
-    /* ===== UPDATE QUANTITIES FUNCTION ===== */
+   /* ===== UPDATE QUANTITIES FUNCTION ===== */
     function updateQuantities(row, product) {
       const qtyCell = row.querySelector(".qty-group");
       const priceCell = row.querySelector(".price-cell");
@@ -969,7 +1014,9 @@
           qtyWrap.dataset.type = type;
           qtyWrap.style.display = "flex";
           qtyWrap.style.justifyContent = "space-between";
+          qtyWrap.style.alignItems = "center";
           qtyWrap.style.gap = "6px";
+          qtyWrap.style.marginBottom = "4px";
 
           const qtyLabel = document.createElement("span");
           qtyLabel.textContent = type + ":";
@@ -978,7 +1025,9 @@
           qtyInput.type = "number";
           qtyInput.min = 0;
           qtyInput.value = 0;
-          qtyInput.style.width = "50px";
+          qtyInput.style.width = "60px";
+          qtyInput.style.padding = "8px";
+          qtyInput.style.fontSize = "16px"; // Prevents auto-zoom on mobile
           qtyInput.oninput = () => {
             const max = inventoryMap[product]?.[type];
 
@@ -1014,12 +1063,10 @@
               return;
             }
 
-            // ✅ CREATE SVG EXPLICITLY
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svg.classList.add("line-barcode");
             barcodeCell.appendChild(svg);
 
-            // ✅ SAFE JsBarcode CALL
             JsBarcode(svg, sku, {
               format: "CODE128",
               width: 1.2,
