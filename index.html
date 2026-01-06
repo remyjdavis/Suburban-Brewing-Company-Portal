@@ -149,7 +149,6 @@
     .ml-card.expanded { max-height: 650px; }
     .chart-container { opacity: 0; transition: opacity 0.3s ease; pointer-events: none; height: 250px; margin-top: 20px; }
     .expanded .chart-container { opacity: 1; pointer-events: auto; }
-    .expand-hint { font-size: 10px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-top: 5px; display: block; }
 
     /* --- LOGOUT & SYSTEM STYLING --- */
     .logout-link {
@@ -170,25 +169,25 @@
     }
 
     /* ============================================================
-       RESPONSIVE HAMBURGER MENU & MOBILE OVERRIDES (Non-Consolidated)
+       RESPONSIVE HAMBURGER MENU & MOBILE DRAWER LOGIC
        ============================================================ */
     #menu-toggle { display: none; } /* Hidden on Desktop */
 
     @media (max-width: 1024px) {
       .sidebar {
-        left: -260px; /* Hide sidebar off-screen by default */
+        left: -260px; /* Hide sidebar off-screen */
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 10000;
         box-shadow: 10px 0 20px rgba(0,0,0,0.3);
       }
       
       .sidebar.open {
-        left: 0; /* Slide in when open class is added via JS */
+        left: 0; /* Slide in */
       }
 
       .main { margin-left: 0 !important; padding: 20px 15px; }
 
-      /* Floating Menu Toggle Button (Mobile/Tablet Only) */
+      /* Floating Menu Toggle Button (Thumb-zone optimized) */
       #menu-toggle {
         display: flex;
         position: fixed;
@@ -225,34 +224,30 @@
 
     /* --- MOBILE DATA GRID TWEAKS --- */
     @media (max-width: 768px) {
-      input, select, textarea { font-size: 16px !important; } /* Fix iOS auto-zoom */
+      input, select, textarea { font-size: 16px !important; }
       .header { flex-direction: column !important; align-items: flex-start !important; gap: 10px; }
       #welcome-target { text-align: left !important; width: 100%; justify-content: flex-start !important; }
       
       .tier-1, .tier-2, .tier-3, .tier-4 { flex-direction: column !important; overflow-x: hidden !important; gap: 15px; }
       .card, .ml-card, .tank-card { flex: 1 1 100% !important; width: 100% !important; max-height: none !important; }
       
-      /* 2-Column Grid for tanks to save vertical space */
       #grid-production, #grid-brite, #grid-pilot { 
         grid-template-columns: repeat(2, 1fr) !important; 
         display: grid !important; 
         gap: 10px; 
       }
-      
       .header-bar h1 { font-size: 22px; }
     }
-</style>
+  </style>
 </head>
 
 <body>
-<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
-<div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
-  
+  <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-      <span>System</span>
-    </div>
+    <div class="nav-section-header"><span>System</span></div>
     <div class="collapsible-content">
       <a href="#" class="nav-link logout-link" onclick="handleLogout()">
         <span class="icon">🚪</span> <span>Logout of Portal</span>
@@ -267,25 +262,19 @@
       }
     </script>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
-      <span>Main Menu</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span><span class="chevron">▼</span></div>
     <div id="grp-main" class="collapsible-content">
       <a href="index.html" class="nav-link active"><span>Command Center</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
-      <span>Samplings</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)"><span>Samplings</span><span class="chevron">▼</span></div>
     <div id="grp-sample" class="collapsible-content">
       <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
       <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
-      <span>Sales</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)"><span>Sales</span><span class="chevron">▼</span></div>
     <div id="grp-sales" class="collapsible-content">
       <a href="sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
       <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
@@ -294,9 +283,7 @@
       <a href="sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
     </div>
 
-    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
-      <span>Inventory</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)"><span>Inventory</span><span class="chevron">▼</span></div>
     <div id="grp-inv" class="collapsible-content">
       <a href="inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
       <a href="inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
@@ -304,9 +291,7 @@
       <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
-      <span>Brewing</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)"><span>Brewing</span><span class="chevron">▼</span></div>
     <div id="grp-brew" class="collapsible-content">
       <a href="Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
       <a href="Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
@@ -316,9 +301,7 @@
       <a href="Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
-      <span>Reporting & Analytics</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)"><span>Reporting & Analytics</span><span class="chevron">▼</span></div>
     <div id="grp-rep" class="collapsible-content">
       <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
       <a href="Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
@@ -347,7 +330,6 @@
           <div class="val" id="followUpCount">--</div>
           <p>Due/Optimized Stops Today</p>
           <div id="daily-route-summary" class="route-list-summary">Loading route...</div>
-          <div style="font-size: 10px; color: var(--accent); font-weight: 800; margin-top: 5px; text-transform: uppercase;">Click to View Detailed Route</div>
         </div>
 
         <div class="card card-quality" onclick="location.href='Samplings/sampling-calendar.html'" style="cursor:pointer;">
@@ -401,24 +383,6 @@
                 <p id="ml-advice" style="margin: 0; font-size: 12px; color: #475569; font-style: italic;">Connecting...</p>
             </div>
         </div>
-
-        <div class="ml-card" id="costCard" onclick="this.classList.toggle('expanded')" style="border-top-color: #10b981;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="text-align: left;">
-                    <h3 style="margin: 0; color: #10b981; font-size: 14px;">Estimated Savings</h3>
-                    <span class="expand-hint">Click for Breakdown</span>
-                </div>
-                <div id="cost-dollars-saved" class="ml-stat-val" style="font-size: 2.2rem; color: #10b981; line-height: 1;">$ --</div>
-            </div>
-            <div class="chart-container" style="display: flex; flex-direction: column; justify-content: center;">
-                <div class="ml-stats-grid" style="width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 15px;">
-                    <div class="ml-stat-box" style="text-align: center;">
-                        <div class="ml-stat-label">Grain Waste Reduced</div>
-                        <div id="cost-lbs-saved" class="ml-stat-val">-- lbs</div>
-                    </div>
-                </div>
-            </div>
-        </div>
       </div>
     </div>
 
@@ -426,78 +390,40 @@
        <span>Zone 3: Active Cellar Overview</span> <span class="chevron">▼</span>
     </div>
     <div id="grp-all-tanks" class="collapsible-content">
-      <div class="subsection-heading" onclick="toggleGroup('sect-prod', this)">
-        <span>Production FVs (10 BBL)</span><span class="chevron">▼</span>
-      </div>
-      <div id="sect-prod" class="collapsible-content">
-        <div class="tier-2" id="grid-production"></div>
-      </div>
+      <div class="subsection-heading" onclick="toggleGroup('sect-prod', this)"><span>Production FVs (10 BBL)</span><span class="chevron">▼</span></div>
+      <div id="sect-prod" class="collapsible-content"><div class="tier-2" id="grid-production"></div></div>
 
-      <div class="subsection-heading" onclick="toggleGroup('sect-brite', this)">
-        <span>Brite Tanks (10 BBL)</span><span class="chevron">▼</span>
-      </div>
-      <div id="sect-brite" class="collapsible-content">
-        <div class="tier-2" id="grid-brite"></div>
-      </div>
-
-      <div class="subsection-heading" onclick="toggleGroup('sect-pilot', this)">
-        <span>Pilot System (1 BBL)</span><span class="chevron">▼</span>
-      </div>
-      <div id="sect-pilot" class="collapsible-content">
-        <div class="tier-2" id="grid-pilot"></div>
-      </div>
-    </div>
-
-    <div class="section-heading" onclick="toggleGroup('sect-granularity', this)">
-      <span>Zone 4: Inventory Granularity</span><span class="chevron">▼</span>
-    </div>
-    <div id="sect-granularity" class="collapsible-content">
-      <div class="tier-4">
-        <div class="card" onclick="location.href='inventory/brewery.html'" style="cursor:pointer;">
-          <h3>Packaged Stock</h3>
-          <div class="val" id="packaged-total">--</div>
-          <p>Total Cases/Kegs for Sale</p>
-        </div>
-        <div class="card" onclick="location.href='inventory/wholesaler-inventory.html'" style="cursor:pointer;">
-          <h3>Wholesaler Held</h3>
-          <div class="val" id="wholesaler-held-val">-- BBL</div>
-          <p>Inventory at Distributor</p>
-        </div>
-        <div class="card" onclick="location.href='inventory/Ingredient-inventory.html'" style="cursor:pointer;">
-          <h3>Ingredient Health</h3>
-          <div class="val" id="ingredient-health-val">Optimal</div>
-          <p id="base-malt-status">Base Malt: -- lbs</p>
-        </div>
-      </div>
+      <div class="subsection-heading" onclick="toggleGroup('sect-brite', this)"><span>Brite Tanks (10 BBL)</span><span class="chevron">▼</span></div>
+      <div id="sect-brite" class="collapsible-content"><div class="tier-2" id="grid-brite"></div></div>
     </div>
   </main>
 
   <script>
-    // 🔴 CONFIGURATION
     const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
     const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
     const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec';
-    const SENSORY_API_URL = 'https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec';
-    
-    const AUTO_REFRESH_MS = 300000; 
 
-    let currentRouteData = [];
-    let currentDeliveryData = [];
-    let conversionData = { rate: 0, total: 0, won: 0 };
+    // --- DRAWER TOGGLE LOGIC ---
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        btn.innerText = sidebar.classList.contains('open') ? '✕' : '☰';
+    }
 
-    // --- ON LOAD ---
     window.addEventListener('DOMContentLoaded', () => {
+        // Session / Welcome Logic
         const userName = sessionStorage.getItem("user_name");
         const userRole = sessionStorage.getItem("user_role");
         const storedPic = sessionStorage.getItem("user_pic");
         const userPic = (storedPic && storedPic !== "null" && storedPic !== "") ? storedPic : "../SBC-Logo.png";
         
         const welcomeTarget = document.getElementById('welcome-target');
-        
         if (userName && welcomeTarget) {
             welcomeTarget.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s;" 
-                     onclick="openProfileModal()" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                <div style="display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="openProfileModal()">
                     <div style="text-align: right;">
                         <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
                         <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userRole}</span>
@@ -512,6 +438,16 @@
             const d = new Date();
             dateEl.innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         }
+
+        // Auto-close menu on link click
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 1024) {
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar.classList.contains('open')) toggleMobileMenu();
+                }
+            });
+        });
         
         runAllSyncs();
         setInterval(runAllSyncs, 300000);
