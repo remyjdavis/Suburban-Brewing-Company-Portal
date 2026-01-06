@@ -476,62 +476,76 @@
 // --- Updated Profile Modal with Password Support ---
 async function openProfileModal() {
     const { value: formValues } = await Swal.fire({
-        title: 'Edit Profile & Security',
+        title: 'Edit Profile',
         background: '#1e293b',
         color: '#ffffff',
-        confirmButtonColor: '#2563eb',
-        showCancelButton: true,
         html: `
             <div style="text-align: left; padding: 10px;">
-                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Contact Information</label>
-                <input id="swal-email" class="swal2-input" placeholder="Email" value="${sessionStorage.getItem('user_email') || ''}" style="margin-bottom: 10px;">
-                <input id="swal-phone" class="swal2-input" placeholder="Phone Number" value="${sessionStorage.getItem('user_phone') || ''}">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../SBC-Logo.png'}" 
+                         style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
+                    <br>
+                    <button type="button" onclick="document.getElementById('file-input').click()" 
+                            style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px;">
+                        Change Photo
+                    </button>
+                    <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
+                </div>
+
+                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
+                <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
                 
-                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase; margin-top: 20px; display: block;">Custom Avatar URL</label>
-                <input id="swal-pic" class="swal2-input" placeholder="Link to photo (e.g., Imgur)" value="${sessionStorage.getItem('user_pic') || ''}">
+                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
+                <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
                 
-                <label style="font-size: 11px; color: #ef4444; text-transform: uppercase; margin-top: 20px; display: block;">Security</label>
-                <input id="swal-pass" type="password" class="swal2-input" placeholder="Enter new password to change">
+                <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Security</label>
+                <input id="p-pass" type="password" class="swal2-input" placeholder="New password (optional)">
             </div>
         `,
         preConfirm: () => {
             return {
-                email: document.getElementById('swal-email').value,
-                phone: document.getElementById('swal-phone').value,
-                pic: document.getElementById('swal-pic').value,
-                pass: document.getElementById('swal-pass').value
+                email: document.getElementById('p-email').value,
+                phone: document.getElementById('p-phone').value,
+                pass: document.getElementById('p-pass').value,
+                pic: document.getElementById('preview-pic').src // Grabs the new Base64 string
             }
         }
     });
 
     if (formValues) {
-        Swal.fire({ title: 'Updating Database...', didOpen: () => { Swal.showLoading(); } });
-        
-        const username = sessionStorage.getItem("user_login_id");
-        // Automation: Build params including the new password field
-        const params = new URLSearchParams({
+        saveProfile(formValues);
+    }
+}
+
+// Logic to convert file to Base64 so it can be saved in Google Sheets
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('preview-pic').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function saveProfile(data) {
+    Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
+    
+    // We use POST here because Base64 images are too large for a standard URL link
+    const username = sessionStorage.getItem("user_login_id");
+    const response = await fetch(`${MASTER_API_URL}`, {
+        method: 'POST',
+        body: JSON.stringify({
             action: 'updateProfile',
             user: username,
-            email: formValues.email,
-            phone: formValues.phone,
-            pic: formValues.pic,
-            pass: formValues.pass
-        });
-
-        try {
-            const res = await fetch(`${MASTER_API_URL}?${params.toString()}`);
-            const result = await res.json();
-            if (result.status === "success") {
-                // Update local session
-                sessionStorage.setItem("user_email", formValues.email);
-                sessionStorage.setItem("user_phone", formValues.phone);
-                sessionStorage.setItem("user_pic", formValues.pic);
-                
-                Swal.fire('Success', 'Profile and security settings updated.', 'success').then(() => location.reload());
-            }
-        } catch (e) {
-            Swal.fire('Error', 'Update failed. Check connection.', 'error');
-        }
+            ...data
+        })
+    });
+    
+    const result = await response.json();
+    if (result.status === "success") {
+        sessionStorage.setItem("user_pic", data.pic);
+        Swal.fire('Saved!', 'Profile updated.', 'success').then(() => location.reload());
     }
 }
     // --- 1. ZONE 1 & 2 SYNC ---
