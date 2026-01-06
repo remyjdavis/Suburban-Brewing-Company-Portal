@@ -178,116 +178,71 @@
       font-size: 16px;
     }
 
-    /* ============================================================
-       MOBILE & TABLET COMPATIBILITY (Non-Consolidated)
-       ============================================================ */
+    /* --- RESPONSIVE HAMBURGER MENU LOGIC --- */
+    #menu-toggle { display: none; } /* Hidden on Desktop */
 
-    /* TABLET COMPATIBILITY */
     @media (max-width: 1024px) {
-      .sidebar { width: 200px; }
-      .main { margin-left: 200px; padding: 20px; }
-      .card { flex: 0 0 45%; } 
-    }
-
-    /* MOBILE PHONE COMPATIBILITY */
-    @media (max-width: 768px) {
-      body { flex-direction: column; }
-
       .sidebar {
-        position: fixed;
-        bottom: 0;
-        top: auto;
-        left: 0;
-        right: 0;
-        width: 100%;
-        height: 65px;
+        left: -260px; /* Hide sidebar off-screen by default */
+        transition: left 0.3s ease;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+      }
+      .sidebar.open {
+        left: 0; /* Slide in when open */
+      }
+      .main { margin-left: 0 !important; padding: 20px 15px; }
+
+      /* Floating Menu Button */
+      #menu-toggle {
         display: flex;
-        flex-direction: row;
-        padding: 0;
-        justify-content: space-around;
-        overflow-x: auto;
-        border-top: 1px solid #334155;
-        z-index: 1001;
-      }
-
-      .sidebar h2, .nav-section-header, .sidebar span:not(.icon) {
-        display: none !important;
-      }
-
-      .nav-link {
-        flex: 1;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background: var(--accent);
+        color: white;
+        border-radius: 50%;
         justify-content: center;
-        padding: 0;
-        border: none !important;
-        height: 100%;
-      }
-
-      .nav-link .icon {
+        align-items: center;
         font-size: 24px;
-        margin: 0;
+        z-index: 2001;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        cursor: pointer;
+        border: none;
       }
-
-      .main {
-        margin-left: 0 !important;
-        padding: 20px 15px 90px 15px;
+      
+      /* Show text labels on mobile in the slide-out menu */
+      .sidebar span:not(.icon) { display: inline !important; }
+      .sidebar h2, .nav-section-header { display: block !important; }
+      
+      /* Mobile Overlay when menu is open */
+      .menu-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
       }
-
-      .header {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 8px;
-      }
-
-      #welcome-target {
-        text-align: left !important;
-        width: 100%;
-        justify-content: flex-start !important;
-        margin-top: 5px;
-      }
-
-      .header-bar h1 {
-        font-size: 22px;
-      }
-
-      .tier-1, .tier-2, .tier-3, .tier-4 {
-        flex-direction: column !important;
-        overflow-x: hidden !important;
-        gap: 15px;
-      }
-
-      .card, .ml-card, .tank-card {
-        flex: 1 1 100% !important;
-        width: 100% !important;
-        max-height: none !important;
-      }
-
-      #grid-production, #grid-brite, #grid-pilot {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px;
-      }
+      .menu-overlay.active { display: block; }
     }
 
     /* --- TOUCH & INPUT OPTIMIZATIONS --- */
     @media (max-width: 768px) {
-      input, select, textarea {
-        font-size: 16px !important;
-      }
-      button, .nav-link, .card, .section-heading {
-        min-height: 48px;
-        cursor: pointer;
-      }
-      .route-modal-table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-      }
+      input, select, textarea { font-size: 16px !important; }
+      .header { flex-direction: column !important; align-items: flex-start !important; }
+      #welcome-target { text-align: left !important; width: 100%; justify-content: flex-start !important; }
+      .tier-1, .tier-2, .tier-3, .tier-4 { flex-direction: column !important; overflow-x: hidden !important; gap: 15px; }
+      .card, .ml-card, .tank-card { flex: 1 1 100% !important; width: 100% !important; }
+      #grid-production, #grid-brite, #grid-pilot { grid-template-columns: repeat(2, 1fr) !important; display: grid !important; gap: 10px; }
     }
   </style>
 </head>
 
 <body>
-
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+<div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
@@ -556,7 +511,23 @@
         runAllSyncs();
         setInterval(runAllSyncs, 300000);
     });
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('menu-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    
+    // Change icon between burger and X
+    const btn = document.getElementById('menu-toggle');
+    btn.innerText = sidebar.classList.contains('open') ? '✕' : '☰';
+}
 
+// Automatically close menu when a link is clicked
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        if(window.innerWidth <= 1024) toggleMobileMenu();
+    });
+});
     function runAllSyncs() {
         syncZone1();
         syncSamplingCard();
