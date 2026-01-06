@@ -24,9 +24,10 @@
       --accent: #2563eb;
       --text: #1f2937;
       --card-bg: #ffffff;
+      --text-muted: #6b7280;
     }
 
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body { 
       margin: 0; 
@@ -40,11 +41,10 @@
     .sidebar { 
       width: 240px; background: var(--sidebar); color: #fff; padding: 20px 0; 
       flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; color: #fff; letter-spacing: 1px; }
     
-    /* COLLAPSIBLE HEADERS */
     .nav-section-header {
       font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; 
       font-weight: 700; letter-spacing: 0.5px;
@@ -57,15 +57,14 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 500px; overflow: hidden;
+      max-height: 1000px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    /* LINKS */
     .nav-link { 
-      display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
+      display: block; padding: 12px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
     }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
@@ -81,7 +80,6 @@
       transition: all 0.3s ease;
     }
 
-    /* --- HEADER (SOLID BLACK) --- */
     .app-header {
       display: flex;
       align-items: center;
@@ -93,21 +91,9 @@
 
     .logo { height: 60px; }
     .company-name { font-size: 20px; font-weight: 700; }
-    .company-address { font-size: 13px; opacity: 0.9; }
+    .header-right { margin-left: auto; text-align: right; font-size: 13px; }
 
-    .header-right {
-      margin-left: auto;
-      text-align: right;
-      font-size: 13px;
-    }
-
-    /* --- LAYOUT & CARDS --- */
-    main {
-      padding: 30px;
-      max-width: 1100px;
-      width: 100%;
-      margin: 0 auto;
-    }
+    main { padding: 30px; max-width: 1100px; width: 100%; margin: 0 auto; }
 
     .section {
       background: white;
@@ -117,123 +103,71 @@
       margin-bottom: 24px;
     }
 
-    h2 {
-      margin: 0 0 16px;
-      font-size: 18px;
-      color: #374151;
-      border-bottom: 2px solid #e5e7eb;
-      padding-bottom: 8px;
-    }
+    h2 { margin: 0 0 16px; font-size: 18px; color: #374151; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
 
-    /* --- ACTION BAR --- */
-    .action-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 16px;
-      align-items: center;
-    }
+    .action-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: center; }
 
-    input {
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      font-size: 14px;
-      flex: 1;
-      min-width: 200px;
-    }
+    input { padding: 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 16px; flex: 1; min-width: 200px; }
 
-    /* --- TABLE --- */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    /* --- TABLE STYLES --- */
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f9fafb; color: #6b7280; font-weight: 600; text-align: left; padding: 12px; font-size: 13px; text-transform: uppercase; }
+    td { padding: 14px 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
 
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid #e5e7eb;
-      font-size: 14px;
-      text-align: left;
-    }
+    tr.selected { background: #eff6ff; border-left: 4px solid var(--accent); }
+    .status { font-weight: 700; color: #b45309; }
 
-    th { background: #f9fafb; color: #6b7280; font-weight: 600; }
+    .btn { padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 700; transition: 0.2s; }
+    .btn-primary { background: #16a34a; color: white; }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
 
-    tr.selected {
-      background: #eff6ff;
-      border-left: 4px solid var(--accent);
-    }
+    #scanner { max-width: 100%; width: 420px; margin: 15px auto; border-radius: 12px; overflow: hidden; border: 1px solid #ddd; background: #000; }
 
-    .status { font-weight: 600; color: #b45309; }
+    /* --- MOBILE & TABLET DRAWER LOGIC --- */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
-    /* --- BUTTONS --- */
-    .btn {
-      padding: 10px 18px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: 0.2s;
-    }
-
-    .btn-primary {
-      background: #16a34a;
-      color: white;
-    }
-
-    .btn-primary:hover { background: #15803d; }
-
-    .btn-secondary {
-      background: #e5e7eb;
-      color: #374151;
-    }
-
-    .btn-secondary:hover { background: #d1d5db; }
-
-    .loading, .empty {
-      padding: 24px;
-      text-align: center;
-      color: #6b7280;
-    }
-
-    #scanner { 
-      max-width: 420px; 
-      margin-top: 15px;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid #ddd;
-    }
-
-    /* Responsive adjustment for small screens */
     @media (max-width: 1024px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
-      .sidebar h2, .nav-section-header { display: none; }
+      .sidebar { left: -240px; z-index: 10001; }
+      .sidebar.open { left: 0; }
       .main-wrapper { margin-left: 0; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 65px; height: 65px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 28px; z-index: 10002; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+      .app-header { flex-direction: column; text-align: center; }
+      .header-right { margin: 10px 0 0 0; text-align: center; }
     }
-    /* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
+    @media (max-width: 768px) {
+      main { padding: 15px; }
+      .section { padding: 15px; }
+      
+      /* Card-Stacking Table for Drivers */
+      table, thead, tbody, th, td, tr { display: block; }
+      thead tr { position: absolute; top: -9999px; left: -9999px; }
+      tr { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; padding: 8px; background: #fff; }
+      td { border: none; position: relative; padding-left: 45%; text-align: right; border-bottom: 1px solid #f1f1f1; min-height: 40px; display: flex; align-items: center; justify-content: flex-end; }
+      td:before { 
+        position: absolute; left: 10px; width: 40%; padding-right: 10px; 
+        content: attr(data-label); font-weight: 800; text-align: left; 
+        font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+      }
+    }
 
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
-  </style>
+    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
+</style>
 </head>
 <body>
-
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+<div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
@@ -390,7 +324,19 @@ function toggleGroup(contentId, headerEl) {
   content.classList.toggle('collapsed');
   headerEl.classList.toggle('collapsed');
 }
-
+// --- MOBILE DRAWER TOGGLE ---
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('menu-overlay');
+    const btn = document.getElementById('menu-toggle');
+    const isOpen = sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    
+    // Prevent background scroll
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+    
+    btn.innerText = isOpen ? '✕' : '☰';
+}
 /* ===== INITIALIZE ===== */
 document.addEventListener("DOMContentLoaded", () => {
   // 1. Sidebar Logic
@@ -412,8 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadOpenDeliveries() {
   try {
     const res = await fetch(`${API_URL}?action=getOpenDeliveries`);
-    deliveries = await res.json();
-
+    const deliveries = await res.json();
     document.getElementById("loading").style.display = "none";
 
     if (!deliveries.length) {
@@ -423,25 +368,18 @@ async function loadOpenDeliveries() {
 
     const tbody = document.getElementById("deliveryBody");
     document.getElementById("deliveryTable").style.display = "table";
-    tbody.innerHTML = "";
-
-    deliveries.forEach(inv => {
-      const tr = document.createElement("tr");
-      tr.dataset.invoice = inv.invoiceNumber;
-
-      tr.innerHTML = `
-        <td>${inv.invoiceNumber}</td>
-        <td>${inv.date}</td>
-        <td>${inv.customer}</td>
-        <td>$${Number(inv.total).toFixed(2)}</td>
-        <td class="status">${inv.status}</td>
-      `;
-
-      tr.onclick = () => selectRow(tr, inv.invoiceNumber);
-      tbody.appendChild(tr);
-    });
+    
+    // Updated with data-label for mobile card stacking
+    tbody.innerHTML = deliveries.map(inv => `
+      <tr data-invoice="${inv.invoiceNumber}" onclick="selectRow(this, '${inv.invoiceNumber}')">
+        <td data-label="Invoice #">${inv.invoiceNumber}</td>
+        <td data-label="Date">${inv.date}</td>
+        <td data-label="Customer">${inv.customer}</td>
+        <td data-label="Total">$${Number(inv.total).toFixed(2)}</td>
+        <td data-label="Status" class="status">${inv.status}</td>
+      </tr>
+    `).join('');
   } catch (err) {
-    console.error("Failed to load deliveries", err);
     document.getElementById("loading").textContent = "Error loading data.";
   }
 }
