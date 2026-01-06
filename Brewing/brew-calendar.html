@@ -55,7 +55,6 @@
     
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 800; color: #fff; padding-top: 20px; }
 
-    /* COLLAPSIBLE HEADERS */
     .nav-section-title {
       font-size: 11px; text-transform: uppercase; color: #9ca3af; 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
@@ -74,7 +73,6 @@
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    /* LINKS */
     .nav-link { 
       display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
@@ -82,7 +80,6 @@
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; background: #374151; }
 
-    /* LOGOUT LINK STYLE */
     .logout-link { color: #f87171 !important; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; border-left-color: #ef4444; }
 
@@ -122,7 +119,6 @@
       margin-right: 5px;
     }
 
-    /* --- CALENDAR CONTAINER --- */
     #calendar-container {
       background: white;
       padding: 20px;
@@ -133,13 +129,11 @@
       min-height: 500px;
     }
 
-    /* FullCalendar Customization */
     .fc-event { cursor: pointer; border: none; font-weight: 600; font-size: 0.85rem; padding: 2px 4px; }
     .fc-toolbar-title { font-size: 1.5rem !important; font-weight: 800; color: var(--primary-dark); }
     .fc-button-primary { background-color: var(--primary-dark) !important; border-color: var(--primary-dark) !important; }
     .fc-button-primary:hover { background-color: #374151 !important; }
 
-    /* Event Colors */
     .evt-cellar { background-color: #10b981 !important; border-left: 4px solid #065f46 !important; color: white; }
     .evt-production { background-color: #3b82f6 !important; border-left: 4px solid #1e40af !important; color: white; }
     .evt-logistics { background-color: #ef4444 !important; border-left: 4px solid #991b1b !important; color: white; }
@@ -151,7 +145,6 @@
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
-    /* --- BOTTOM PANELS --- */
     .action-panel {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -343,8 +336,10 @@
 
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
-      content.classList.toggle('collapsed');
-      headerEl.classList.toggle('collapsed');
+      if (content) {
+        content.classList.toggle('collapsed');
+        if (headerEl) headerEl.classList.toggle('collapsed');
+      }
     }
 
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
@@ -414,9 +409,11 @@
       const alertContainer = document.getElementById('alert-list');
       const suggestContainer = document.getElementById('suggestion-list');
       if (!alertContainer || !suggestContainer) return;
+
       alertContainer.innerHTML = "";
       suggestContainer.innerHTML = "";
       let alertCount = 0; let suggestCount = 0;
+
       tasks.forEach(t => {
         const dateStr = new Date(t.date).toLocaleDateString();
         if (t.type === 'logistics') {
