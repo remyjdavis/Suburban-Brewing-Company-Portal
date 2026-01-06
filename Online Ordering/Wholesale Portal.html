@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBC Wholesale Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
+    <script src="https://unpkg.com/html5-qrcode"></script>
    <style>
          /* --- SHARED THEME VARIABLES --- */
     :root {
@@ -204,6 +204,54 @@
 
     @media print { 
         .site-header, .live-bar, #menu-toggle { display: none !important; } 
+        /* SCANNER OVERLAY */
+#scanner-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 2000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+#reader {
+    width: 90%;
+    max-width: 500px;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.scanner-close {
+    margin-top: 20px;
+    padding: 15px 30px;
+    background: #d63031;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+/* SEARCH BAR WRAPPER */
+.search-wrapper {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.scan-btn {
+    height: 50px;
+    padding: 0 15px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
 </style>
 </head>
 <body>
@@ -235,7 +283,41 @@
     let groupedProducts = {};
     let customersDB = [];
     let state = { step: 0, customer: null, cart: {}, category: 'All' };
+let html5QrCode;
 
+async function startScanner() {
+    document.getElementById('scanner-container').style.display = 'flex';
+    html5QrCode = new Html5Qrcode("reader");
+    
+    const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+    try {
+        await html5QrCode.start(
+            { facingMode: "environment" }, // Uses the back camera
+            config,
+            (decodedText) => {
+                // When a barcode is found:
+                document.getElementById('searchInput').value = decodedText;
+                filterProducts();
+                stopScanner();
+                Swal.fire({ icon: 'success', title: 'Scanned!', timer: 1000, showConfirmButton: false });
+            },
+            (errorMessage) => { /* Ignore constant scanning noise */ }
+        );
+    } catch (err) {
+        console.error("Camera access denied", err);
+        Swal.fire("Camera Error", "Please allow camera access to scan barcodes.", "error");
+        stopScanner();
+    }
+}
+
+async function stopScanner() {
+    if (html5QrCode) {
+        await html5QrCode.stop();
+        await html5QrCode.clear();
+    }
+    document.getElementById('scanner-container').style.display = 'none';
+}
     // Scanner support: listens for rapid keypresses
     document.addEventListener('keydown', (e) => {
         if (state.step === 2 && document.activeElement.tagName !== 'INPUT') {
@@ -328,15 +410,12 @@
         } else if (state.step === 2) {
             liveBar.style.display = "flex";
             let html = `
-                <div class="controls-area">
-                    <input type="text" id="searchInput" class="search-input" placeholder="Search by name or scan UPC..." oninput="filterProducts()">
-                    <div class="cat-bar">
-                        <button class="btn btn-outline cat-btn active" onclick="setCategory('All')">All</button>
-                        <button class="btn btn-outline cat-btn" onclick="setCategory('Core')">Core</button>
-                        <button class="btn btn-outline cat-btn" onclick="setCategory('Seasonal')">Seasonal</button>
-                        <button class="btn btn-outline cat-btn" onclick="setCategory('Rotating')">Rotating</button>
-                    </div>
-                </div>
+                <<div class="controls-area">
+    <div class="search-wrapper">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search or scan UPC..." oninput="filterProducts()">
+        <button class="scan-btn" onclick="startScanner()">📷</button>
+    </div>
+    </div>
                 <div class="product-grid">`;
             for (const key in groupedProducts) {
                 const p = groupedProducts[key];
@@ -482,5 +561,9 @@
 
     init();
 </script>
+    <div id="scanner-container">
+    <div id="reader"></div>
+    <button class="scanner-close" onclick="stopScanner()">Close Camera</button>
+</div>
 </body>
 </html>
