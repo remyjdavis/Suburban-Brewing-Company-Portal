@@ -46,12 +46,49 @@
     .log-meta { font-size: 11px; color: #94a3b8; }
     .acc-CORRECT { color: #10b981; font-weight: 700; }
     .acc-MISS { color: #ef4444; font-weight: 700; }
+  .logout-link {
+    margin-top: 20px;
+    color: #f87171 !important; /* A soft red to indicate an exit action */
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.logout-link:hover {
+    background: #450a0a !important; /* Dark red background on hover */
+    color: #fee2e2 !important;
+    border-left-color: #ef4444;
+}
+
+.logout-link span.icon {
+    margin-right: 12px;
+    font-size: 16px;
+}
   </style>
 </head>
 <body>
 
   <aside class="sidebar">
     <h2>SENSORY ADMIN</h2>
+   <div class="nav-section-header">
+  <span>System</span>
+</div>
+<div class="collapsible-content">
+  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+    <span class="icon">󰗼</span> <span>Logout of Portal</span>
+  </a>
+</div>
+
+<script>
+ function handleLogout() {
+    // Clear the authentication session
+    sessionStorage.removeItem("sbc_auth");
+    
+    // Redirect to the login page relative to your GitHub repo root
+    const repoPath = "/Suburban-Brewing-Company-Portal/";
+    window.location.replace(repoPath + "login.html");
+}
+</script>
     <div style="margin-top: 40px;">
       <a href="qc-dashboard.html" style="color: #94a3b8; text-decoration: none; display: block; margin-bottom: 15px;">← QC Dashboard</a>
       <a href="#" style="color: white; font-weight: 700; text-decoration: none;">Panelist Stats</a>
