@@ -302,11 +302,15 @@
       .container { padding: 15px; }
       .dashboard-row { grid-template-columns: 1fr; }
       
-      #vessel-modal { width: 98%; height: 95vh; }
+      /* UPDATE THIS PART BELOW */
+      #vessel-modal { 
+        display: none !important; /* Forces it to stay hidden until openModal() runs */
+        width: 98%; 
+        height: 95vh; 
+      }
       .modal-content-area > div { flex-direction: column !important; gap: 20px !important; }
       .modal-content-area div[style*="border-right"] { border-right: none !important; padding-right: 0 !important; }
     }
-
     .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
   </style>
@@ -798,7 +802,9 @@
       currentBatchId = batchId;
       currentBrand = beerName;
       
-      document.getElementById('vessel-modal').style.display = 'block';
+      // Update this line to handle the !important override
+      document.getElementById('vessel-modal').style.setProperty('display', 'flex', 'important');
+      
       document.getElementById('overlay').style.display = 'block';
       document.getElementById('modal-title').innerText = vessel;
       
@@ -825,9 +831,11 @@
     }
 
     function closeModal() { 
-      document.getElementById('vessel-modal').style.display = 'none'; 
+      // Update this line
+      document.getElementById('vessel-modal').style.setProperty('display', 'none', 'important');
+      
       document.getElementById('overlay').style.display = 'none'; 
-      document.body.style.overflow = ''; // Re-enable scroll
+      document.body.style.overflow = ''; 
     }
 
     async function loadInventoryLots() {
