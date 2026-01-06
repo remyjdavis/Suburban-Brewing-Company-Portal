@@ -21,7 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /* --- CORE THEME (From Command Center) --- */
+    /* --- CORE THEME --- */
     :root {
       --bg: #f8fafc;
       --sidebar: #0f172a;
@@ -45,22 +45,14 @@
       min-height: 100vh;
     }
 
-    /* --- SIDEBAR (Fixed) --- */
+    /* --- SIDEBAR (Desktop Default) --- */
     .sidebar { 
-      width: 260px; 
-      background: var(--sidebar); 
-      color: #fff; 
-      padding: 24px 0; 
-      flex-shrink: 0; 
-      position: fixed; 
-      height: 100vh; 
-      overflow-y: auto; 
-      z-index: 1000;
-      transition: all 0.3s ease;
+      width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; 
+      flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
     
-    /* COLLAPSIBLE HEADERS */
     .nav-section-header {
       font-size: 11px; text-transform: uppercase; color: #94a3b8; 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
@@ -73,13 +65,12 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 500px; overflow: hidden;
+      max-height: 1000px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    /* LINKS */
     .nav-link { 
       display: flex; align-items: center; padding: 10px 24px; 
       color: #64748b; text-decoration: none; font-size: 14px; 
@@ -95,9 +86,9 @@
       padding: 40px; 
       transition: all 0.3s ease; 
       max-width: 1400px;
+      width: 100%;
     }
 
-    /* --- HEADER BAR (Adaptive) --- */
     .header-bar { 
       margin-bottom: 32px; 
       display: flex;
@@ -109,32 +100,14 @@
       border: 1px solid #e2e8f0;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
     }
-    .header-content h1 { font-size: 24px; font-weight: 800; margin: 0; color: var(--text-main); }
-    .header-content p { margin: 4px 0 0; color: var(--text-muted); font-size: 14px; }
+    .header-content h1 { font-size: 24px; font-weight: 800; margin: 0; }
 
-    /* --- CONTROLS --- */
-    .route-selector { display: flex; align-items: center; gap: 12px; }
-    .route-selector label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-    select {
-      padding: 10px 16px;
-      border-radius: 8px;
-      border: 1px solid #cbd5e1;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-main);
-      background: #fff;
-      min-width: 220px;
-      cursor: pointer;
-    }
-
-    /* --- DASHBOARD GRID --- */
     .dashboard-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
       gap: 25px;
     }
 
-    /* --- CARDS & PANELS --- */
     .leads-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -142,103 +115,44 @@
     }
 
     .lead-card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-      border: 1px solid #e2e8f0;
-      border-left: 5px solid #cbd5e1; /* Default styling */
-      position: relative;
+      background: var(--card-bg); border-radius: 16px; padding: 24px;
+      border: 1px solid #e2e8f0; border-left: 5px solid #cbd5e1;
       transition: transform 0.2s;
     }
-    .lead-card:hover { transform: translateY(-2px); }
 
-    /* Priority Colors */
-    .priority-high { border-left-color: var(--danger); }
-    .priority-med { border-left-color: var(--warning); }
+    /* ============================================================
+       MOBILE & TABLET DRAWER LOGIC
+       ============================================================ */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
-    .client-header { margin-bottom: 15px; }
-    .client-name { font-weight: 800; font-size: 18px; color: var(--text-main); }
-    .client-loc { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 4px; font-weight: 500; }
-
-    .pitch-box {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 10px;
-      padding: 16px;
-      margin-top: 15px;
-    }
-
-    .pitch-label { font-size: 11px; text-transform: uppercase; color: var(--accent); font-weight: 800; letter-spacing: 0.5px; }
-    .pitch-product { font-size: 18px; font-weight: 800; color: #1e3a8a; margin: 6px 0; }
-    .pitch-reason { font-size: 14px; color: #475569; font-style: italic; line-height: 1.4; }
-
-    .stock-badge {
-      display: inline-block;
-      background: #dcfce7; color: #166534;
-      font-size: 11px; font-weight: 700;
-      padding: 4px 10px; border-radius: 20px;
-      margin-top: 10px; text-transform: uppercase;
-    }
-
-    /* --- TRENDS SIDEBAR --- */
-    .trends-panel {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 24px;
-      height: fit-content;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    }
-    .trend-title { font-weight: 800; color: var(--text-main); margin-bottom: 20px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
-    
-    .trend-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid #f1f5f9;
-      font-size: 14px;
-    }
-    .trend-city { font-weight: 600; color: var(--text-main); }
-    .trend-brand { color: var(--accent); font-weight: 700; }
-
-    /* --- MOBILE RESPONSIVE --- */
-    @media (max-width: 900px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
+    @media (max-width: 1024px) {
+      .sidebar { left: -260px; z-index: 2000; }
+      .sidebar.open { left: 0; }
+      .main { margin-left: 0 !important; padding: 20px; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 65px; height: 65px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 28px; z-index: 2100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+      
       .header-bar { flex-direction: column; align-items: flex-start; gap: 20px; }
+      .dashboard-grid { grid-template-columns: 1fr; }
       .route-selector { width: 100%; }
-      select { width: 100%; }
+      select { width: 100%; font-size: 16px; } /* 16px prevents iOS auto-zoom */
     }
 
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
-      .main { margin-left: 0; padding: 20px 20px 90px; }
-      .nav-section-header, .sidebar h2 { display: none; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; }
-    }
-   /* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
-
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
+    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
   </style>
 </head>
 <body>
-
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
@@ -358,166 +272,196 @@
 
     </div>
     <script>
-        // 🔴 UPDATE WITH YOUR DEPLOYED SCRIPT URL 🔴
-        const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+    // 🔴 UPDATE WITH YOUR DEPLOYED SCRIPT URL 🔴
+    const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
 
-        let allLeads = []; 
+    let allLeads = []; 
 
-        // --- SIDEBAR TOGGLE LOGIC ---
-        function toggleGroup(contentId, headerEl) {
-          const content = document.getElementById(contentId);
-          content.classList.toggle('collapsed');
-          headerEl.classList.toggle('collapsed');
+    // --- SIDEBAR TOGGLE LOGIC ---
+    function toggleGroup(contentId, headerEl) {
+      const content = document.getElementById(contentId);
+      content.classList.toggle('collapsed');
+      headerEl.classList.toggle('collapsed');
+    }
+
+    // --- MOBILE DRAWER TOGGLE ---
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
+        
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        
+        // Prevent background scrolling on phone while menu is open
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        
+        // Switch icon between Hamburger and X
+        btn.innerText = isOpen ? '✕' : '☰';
+    }
+
+    // --- CONSOLIDATED INITIAL LOAD ---
+    window.onload = async function() {
+        // 1. Sidebar Active State Logic (Auto-expand relevant section)
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const parentGroup = activeLink.closest('.collapsible-content');
+          if (parentGroup) {
+            parentGroup.classList.remove('collapsed');
+            const header = parentGroup.previousElementSibling;
+            if (header) header.classList.remove('collapsed');
+          }
         }
 
-        window.onload = async function() {
-            // Initialize Sidebar State (Open Active Group)
-            const activeLink = document.querySelector('.nav-link.active');
-            if (activeLink) {
-              const parentGroup = activeLink.closest('.collapsible-content');
-              if (parentGroup) {
-                parentGroup.classList.remove('collapsed');
-                const header = parentGroup.previousElementSibling;
-                if (header) header.classList.remove('collapsed');
-              }
-            }
+        // 2. Mobile Link Auto-close Listener
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 1024) {
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar.classList.contains('open')) toggleMobileMenu();
+                }
+            });
+        });
 
-            try {
-                // Fetch Intelligence Data
-                const res = await fetch(`${API_URL}?action=getSalesOptimizationData`);
-                const data = await res.json();
-                
-                allLeads = data.leads;
-                
-                // 1. Populate Route Dropdown
-                populateRouteFilter(data.leads);
-                
-                // 2. CHECK ROUTE CONTEXT
-                const todayArea = data.today ? data.today.area : null;
-                const select = document.getElementById('route-select');
+        // 3. Fetch Intelligence Data
+        try {
+            const res = await fetch(`${API_URL}?action=getSalesOptimizationData`);
+            const data = await res.json();
+            
+            allLeads = data.leads;
+            
+            // Populate Route Dropdown
+            populateRouteFilter(data.leads);
+            
+            // CHECK ROUTE CONTEXT
+            const todayArea = data.today ? data.today.area : null;
+            const select = document.getElementById('route-select');
 
-                if (todayArea && todayArea !== "All Areas") {
-                    let found = false;
-                    for (let i = 0; i < select.options.length; i++) {
-                        if (select.options[i].value === todayArea) {
-                            select.selectedIndex = i;
-                            found = true;
-                            break;
-                        }
+            if (todayArea && todayArea !== "All Areas") {
+                let found = false;
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].value === todayArea) {
+                        select.selectedIndex = i;
+                        found = true;
+                        break;
                     }
-                    
-                    if (found) {
-                        document.getElementById('route-status').innerHTML = 
-                            `📅 <b>It's ${data.today.day}.</b> Focusing on <u>${todayArea}</u> route.`;
-                        filterByRoute();
-                    } else {
-                        renderLeads(allLeads);
-                    }
+                }
+                
+                if (found) {
+                    document.getElementById('route-status').innerHTML = 
+                        `📅 <b>It's ${data.today.day}.</b> Focusing on <u>${todayArea}</u> route.`;
+                    filterByRoute();
                 } else {
                     renderLeads(allLeads);
                 }
-                
-                // 3. Render Trends
-                renderTrends(data.trends);
-
-            } catch (e) {
-                console.error("API Error:", e);
-                document.getElementById('loading-state').innerHTML = `<span style="color:#ef4444;">Error loading data. Check console.</span>`;
-            }
-        };
-
-        // --- FILTER LOGIC ---
-        function populateRouteFilter(leads) {
-            const cities = [...new Set(leads.map(l => l.city))].sort();
-            const select = document.getElementById('route-select');
-            
-            cities.forEach(city => {
-                if(city) {
-                    const opt = document.createElement('option');
-                    opt.value = city;
-                    opt.innerText = city;
-                    select.appendChild(opt);
-                }
-            });
-        }
-
-        function filterByRoute() {
-            const selectedCity = document.getElementById('route-select').value;
-            if (selectedCity === "All") {
-                renderLeads(allLeads);
             } else {
-                const filtered = allLeads.filter(l => l.city === selectedCity);
-                renderLeads(filtered);
+                renderLeads(allLeads);
             }
-        }
-
-        // --- RENDER CARDS ---
-        function renderLeads(leads) {
-            const container = document.getElementById('leads-grid');
-            document.getElementById('loading-state').style.display = 'none';
-            container.innerHTML = "";
-
-            if (leads.length === 0) {
-                container.innerHTML = "<div style='grid-column:1/-1; text-align:center; color:#6b7280; padding:20px;'>No high-priority gaps found. Good job!</div>";
-                return;
-            }
-
-            leads.forEach(lead => {
-                const priorityClass = lead.priority === 'High' ? 'priority-high' : 'priority-med';
-                
-                const card = document.createElement('div');
-                card.className = `lead-card ${priorityClass}`;
-                card.innerHTML = `
-                    <div class="client-header">
-                        <div>
-                            <div class="client-name">${lead.customer}</div>
-                            <div class="client-loc">📍 ${lead.city}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="pitch-box">
-                        <div class="pitch-label">Recommended Pitch</div>
-                        <div class="pitch-product">🍺 ${lead.product}</div>
-                        <div class="pitch-reason">${lead.reason}</div>
-                        <div class="stock-badge">✅ In Stock</div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // --- RENDER TRENDS SIDEBAR ---
-        function renderTrends(trends) {
-            const list = document.getElementById('trends-list');
-            list.innerHTML = "";
             
-            // Populate List
-            trends.slice(0, 5).forEach(t => {
-                list.innerHTML += `
-                    <div class="trend-item">
-                        <span class="trend-city">${t.city}</span>
-                        <span class="trend-brand">${t.topBrand}</span>
-                    </div>`;
-            });
+            // Render Trends
+            renderTrends(data.trends);
 
-            // Populate Chart
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: trends.slice(0,5).map(t => t.topBrand),
-                    datasets: [{
-                        data: trends.slice(0,5).map(t => t.volume),
-                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false }, title: { display: true, text: 'Top Regional Movers' } }
-                }
-            });
+        } catch (e) {
+            console.error("API Error:", e);
+            document.getElementById('loading-state').innerHTML = `<span style="color:#ef4444;">Error loading data. Check console.</span>`;
         }
-    </script>
+    };
+
+    // --- FILTER LOGIC ---
+    function populateRouteFilter(leads) {
+        const cities = [...new Set(leads.map(l => l.city))].sort();
+        const select = document.getElementById('route-select');
+        
+        cities.forEach(city => {
+            if(city) {
+                const opt = document.createElement('option');
+                opt.value = city;
+                opt.innerText = city;
+                select.appendChild(opt);
+            }
+        });
+    }
+
+    function filterByRoute() {
+        const selectedCity = document.getElementById('route-select').value;
+        if (selectedCity === "All") {
+            renderLeads(allLeads);
+        } else {
+            const filtered = allLeads.filter(l => l.city === selectedCity);
+            renderLeads(filtered);
+        }
+    }
+
+    // --- RENDER CARDS ---
+    function renderLeads(leads) {
+        const container = document.getElementById('leads-grid');
+        document.getElementById('loading-state').style.display = 'none';
+        container.innerHTML = "";
+
+        if (leads.length === 0) {
+            container.innerHTML = "<div style='grid-column:1/-1; text-align:center; color:#6b7280; padding:20px;'>No high-priority gaps found. Good job!</div>";
+            return;
+        }
+
+        leads.forEach(lead => {
+            const priorityClass = lead.priority === 'High' ? 'priority-high' : 'priority-med';
+            
+            const card = document.createElement('div');
+            card.className = `lead-card ${priorityClass}`;
+            card.innerHTML = `
+                <div class="client-header">
+                    <div>
+                        <div class="client-name">${lead.customer}</div>
+                        <div class="client-loc">📍 ${lead.city}</div>
+                    </div>
+                </div>
+                
+                <div class="pitch-box">
+                    <div class="pitch-label">Recommended Pitch</div>
+                    <div class="pitch-product">🍺 ${lead.product}</div>
+                    <div class="pitch-reason">${lead.reason}</div>
+                    <div class="stock-badge">✅ In Stock</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // --- RENDER TRENDS SIDEBAR ---
+    function renderTrends(trends) {
+        const list = document.getElementById('trends-list');
+        list.innerHTML = "";
+        
+        // Populate List
+        trends.slice(0, 5).forEach(t => {
+            list.innerHTML += `
+                <div class="trend-item">
+                    <span class="trend-city">${t.city}</span>
+                    <span class="trend-brand">${t.topBrand}</span>
+                </div>`;
+        });
+
+        // Populate Chart
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: trends.slice(0,5).map(t => t.topBrand),
+                datasets: [{
+                    data: trends.slice(0,5).map(t => t.volume),
+                    backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { 
+                    legend: { display: false }, 
+                    title: { display: true, text: 'Top Regional Movers' } 
+                }
+            }
+        });
+    }
+</script>
 
 </body>
 </html>
