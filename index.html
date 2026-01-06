@@ -426,12 +426,29 @@
 </div>
   </main>
 
-  <script>
-   const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
+ <script>
+    const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
     const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
     const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec';
 
     let dashboardCharts = {};
+
+    // --- INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
+        setupWelcomeUI();
+        runAllSyncs();
+        // Auto-refresh every 5 minutes
+        setInterval(runAllSyncs, 300000);
+    });
+
+    function runAllSyncs() {
+        syncOutreachAndInventory(); // Zone 1 General
+        syncSamplingCard();         // Zone 1 Sampling
+        syncDeliveryCard();         // Zone 1 Delivery
+        syncLeadConversion();       // Zone 1 Leads
+        refreshCellarTanks();       // Zone 3 Tanks
+        refreshMLEngine();          // Zone 2 ML/Stats
+    }
 
     // --- DRAWER & UI TOGGLES ---
     function toggleMobileMenu() {
@@ -443,12 +460,17 @@
         btn.innerText = isOpen ? '✕' : '☰';
     }
 
-    // FIX: Individual Card Expansion with Overlay
+    function toggleGroup(id, el) {
+        document.getElementById(id).classList.toggle('collapsed');
+        el.classList.toggle('collapsed');
+    }
+
+    // --- CARD EXPANSION & CHART HANDLING ---
     function toggleMLCard(cardId) {
         const card = document.getElementById(cardId);
         const overlay = document.getElementById('menu-overlay');
         
-        // Close any other expanded cards first
+        // Close other expanded cards
         document.querySelectorAll('.ml-card.expanded').forEach(c => {
             if(c.id !== cardId) c.classList.remove('expanded');
         });
@@ -456,13 +478,60 @@
         const isExpanding = card.classList.toggle('expanded');
         overlay.classList.toggle('active', isExpanding);
 
-        // Load Chart if expanding Performance Card
+        // Initialize Chart if opening the Performance card
         if (isExpanding && cardId === 'perfCard') {
             initEfficiencyChart();
         }
     }
 
-    // --- NAVIGATION HANDLERS (Fixing Issues 1 & 2) ---
+    async function initEfficiencyChart() {
+        const canvas = document.getElementById('efficiencyChart');
+        if (!canvas) return;
+
+        try {
+            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`);
+            const data = await res.json();
+
+            // Destroy old chart to prevent "glitching" overlay
+            if (dashboardCharts['eff']) dashboardCharts['eff'].destroy();
+
+            dashboardCharts['eff'] = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: data.batchHistory.map((_, i) => `Batch ${i+1}`),
+                    datasets: [{
+                        label: 'Brewhouse Efficiency',
+                        data: data.batchHistory.map(v => (v * 100).toFixed(1)),
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        } catch (e) { console.error("Chart Error", e); }
+    }
+
+    // --- NAVIGATION & MODALS ---
+    function showRouteDetails() {
+        Swal.fire({
+            title: 'Sales Route',
+            text: document.getElementById('daily-route-summary').innerText,
+            icon: 'info',
+            confirmButtonColor: 'var(--accent)'
+        });
+    }
+
+    function showSensoryDetails() {
+        Swal.fire({
+            title: 'Sensory Panel',
+            html: document.getElementById('sensory-due-list').innerHTML || "No active sensory tasks.",
+            icon: 'info',
+            confirmButtonColor: 'var(--purple-accent)'
+        });
+    }
+
     function showDeliveryDetails() {
         Swal.fire({
             title: 'Delivery Status',
@@ -489,112 +558,220 @@
         });
     }
 
-    // --- DATA SYNCING ---
-    document.addEventListener('DOMContentLoaded', () => {
-        setupWelcomeUI();
-        runAllSyncs();
-        setInterval(runAllSyncs, 300000);
-    });
+    // --- DATA FETCHERS ---
 
-    function runAllSyncs() {
-        syncZone1();
-        syncSamplingCard();
-        syncDeliveryCard();
-        syncLeadConversion();
-        refreshCellarTanks();
-        refreshMLEngine();
-    }
-
-    // --- CHART LOGIC (Fixing Issue 4) ---
-    
-    async function initEfficiencyChart() {
-        const canvas = document.getElementById('efficiencyChart');
-        if (!canvas) return;
-
+    // 1. Zone 1: Outreach, Inventory & Sensory
+    async function syncOutreachAndInventory() {
         try {
-            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`);
-            const data = await res.json();
+            // Outreach
+            const outRes = await fetch(`${MASTER_API_URL}?action=getOutreachData`);
+            const outJson = await outRes.json();
+            if (outJson.status === 'success') {
+                document.getElementById('followUpCount').innerText = outJson.count;
+                document.getElementById('daily-route-summary').innerText = outJson.route.join(' → ') || "No stops today";
+            }
 
-            if (dashboardCharts['eff']) dashboardCharts['eff'].destroy();
+            // Inventory Alerts
+            const invRes = await fetch(`${MASTER_API_URL}?action=getInventoryAlerts`);
+            const invJson = await invRes.json();
+            if (invJson.status === 'success') document.getElementById('alertCount').innerText = invJson.count;
 
-            dashboardCharts['eff'] = new Chart(canvas, {
-                type: 'line',
-                data: {
-                    labels: data.batchHistory.map((_, i) => `Batch ${i+1}`),
-                    datasets: [{
-                        label: 'Brewhouse Efficiency',
-                        data: data.batchHistory.map(v => (v * 100).toFixed(1)),
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        } catch (e) { console.error("Chart Error", e); }
+            // Sensory
+            const senRes = await fetch(`${MASTER_API_URL}?action=getSensoryDue`);
+            const senJson = await senRes.json();
+            if (senJson.status === 'success' || senJson.status === 'idle') {
+                document.getElementById('sensoryCount').innerText = senJson.count || 0;
+                document.getElementById('sensoryStatus').innerText = (senJson.count > 0) ? "QC Samples Due" : "Logs Current";
+                document.getElementById('sensory-due-list').innerText = senJson.list || "No tasks";
+            }
+        } catch (e) { console.error("Zone 1 Gen Sync Error", e); }
     }
 
+    // 2. Zone 1: Sampling
+    async function syncSamplingCard() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getNextSampling`);
+            const json = await res.json();
+            if (json.status === 'success') {
+                document.getElementById('nextSamplingClient').innerText = json.client;
+                document.getElementById('nextSamplingDetails').innerText = `${json.displayDate} @ ${json.time}`;
+            }
+        } catch (e) { console.error("Sampling Sync Error", e); }
+    }
+
+    // 3. Zone 1: Delivery
+    async function syncDeliveryCard() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getDeliveryStatus`);
+            const json = await res.json();
+            const valEl = document.getElementById('activeDeliveryVal');
+            const sumEl = document.getElementById('delivery-summary');
+            
+            if (json.status === 'success' && Array.isArray(json.data)) {
+                const overdue = json.data.filter(d => d.isOverdue === true || d.isOverdue === "TRUE").length;
+                if(overdue > 0) {
+                    valEl.innerText = overdue;
+                    valEl.style.color = "var(--danger)";
+                    sumEl.innerText = `${overdue} Overdue`;
+                } else {
+                    valEl.innerText = json.data.length;
+                    valEl.style.color = "var(--text-main)";
+                    sumEl.innerText = "On Track";
+                }
+            }
+        } catch (e) { console.error("Delivery Sync Error", e); }
+    }
+
+    // 4. Zone 1: Leads
+    async function syncLeadConversion() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getLeadConversion`);
+            const json = await res.json();
+            if (json.status === 'success') {
+                document.getElementById('leadConversionVal').innerText = `${json.rate}%`;
+            }
+        } catch (e) { console.error("Lead Sync Error", e); }
+    }
+
+    // 5. Zone 2: ML Engine
     async function refreshMLEngine() {
         try {
             const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`);
             const data = await res.json();
             
+            // Efficiency
             const eff = data.brewhousePredictiveEfficiency || 0.75;
             document.getElementById('ml-efficiency-display').innerText = (eff * 100).toFixed(1) + "%";
+            
+            // Financials
             document.getElementById('cost-dollars-saved').innerText = "$" + (data.estimatedSavings || 0).toFixed(2);
             
             const lbsEl = document.getElementById('cost-lbs-saved');
             if (lbsEl) lbsEl.innerText = (data.grainWasteSaved || 0) + " lbs";
+            
+            const adviceEl = document.getElementById('ml-advice');
+            if (adviceEl) adviceEl.innerText = "Model active. Tracking batch history.";
         } catch (e) { console.error("ML Sync Error", e); }
     }
 
-    // --- SHARED DATA FETCHERS ---
-    async function syncZone1() {
-        try {
-            const res = await fetch(`${MASTER_API_URL}?action=getOutreachData`);
-            const json = await res.json();
-            if (json.status === 'success') {
-                document.getElementById('followUpCount').innerText = json.count;
-                document.getElementById('daily-route-summary').innerText = json.route.join(' → ') || "No stops today";
-            }
-        } catch (e) { console.error("Outreach Error", e); }
-    }
-
+    // 6. Zone 3: Cellar Tanks
     async function refreshCellarTanks() {
         const categories = { 'grid-production': ["FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6"], 'grid-pilot': ["Pilot 1", "Pilot 2"], 'grid-brite': ["BT 1", "BT 2"] };
         try {
             const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`);
             const live = await res.json();
+            
             Object.keys(categories).forEach(gridId => {
                 const container = document.getElementById(gridId);
                 if (!container) return;
                 container.innerHTML = "";
+                
                 categories[gridId].forEach(tank => {
-                    const data = live.find(b => b.vessel === tank);
-                    const color = data ? (data.status.includes("Ready") ? "var(--ready)" : "var(--fermenting)") : "var(--text-muted)";
+                    const data = Array.isArray(live) ? live.find(b => b.vessel === tank) : null;
+                    const isActive = !!data;
+                    const color = isActive ? (data.status.includes("Ready") ? "var(--ready)" : "var(--fermenting)") : "var(--text-muted)";
+                    
                     container.innerHTML += `
-                        <div class="tank-card" style="border-color: ${color}">
-                            <span class="status-badge" style="color: ${color}">${data ? data.status : 'Empty'}</span>
-                            <div class="tank-vessel"><div class="tank-fill" style="height: ${data ? data.fill : 0}%; background: ${color}"></div></div>
-                            <strong>${tank}</strong>
-                            <div style="font-size: 11px;">${data ? data.brand : 'Available'}</div>
+                        <div class="tank-card" style="opacity: ${isActive ? '1' : '0.5'}; border-color: ${isActive ? color : '#e2e8f0'};">
+                            <span class="status-badge" style="color: ${color};">${isActive ? data.status : 'Empty'}</span>
+                            <div class="tank-vessel">
+                                <div class="tank-fill" style="height: ${isActive ? data.fill : 0}%; background: ${color};"></div>
+                            </div>
+                            <div style="font-weight:700;">${tank}</div>
+                            <div style="font-size: 11px;">${isActive ? data.brand : 'Available'}</div>
                         </div>`;
                 });
             });
         } catch (e) { console.error("Cellar Error", e); }
     }
 
+    // --- PROFILE & USER UI ---
     function setupWelcomeUI() {
-        const name = sessionStorage.getItem("user_name") || "User";
-        document.getElementById('welcome-target').innerHTML = `<span>Welcome, <b>${name}</b></span>`;
+        const userName = sessionStorage.getItem("user_name");
+        const userRole = sessionStorage.getItem("user_role");
+        const userPic = sessionStorage.getItem("user_pic") || "./Online Ordering/logo.png";
+        
+        const welcomeTarget = document.getElementById('welcome-target');
+        if (userName && welcomeTarget) {
+            welcomeTarget.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="openProfileModal()">
+                    <div style="text-align: right;">
+                        <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
+                        <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userRole}</span>
+                    </div>
+                    <img id="user-avatar" src="${userPic}" style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;" onerror="this.src='./Online Ordering/logo.png'">
+                </div>
+            `;
+        }
+        
+        const dateEl = document.getElementById('current-date');
+        if (dateEl) {
+            dateEl.innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
     }
 
-    function toggleGroup(id, el) {
-        document.getElementById(id).classList.toggle('collapsed');
-        el.classList.toggle('collapsed');
+    async function openProfileModal() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Edit Profile Settings',
+            background: '#1e293b',
+            color: '#ffffff',
+            html: `
+                <div style="text-align: left; padding: 10px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../SBC-Logo.png'}" 
+                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
+                        <br>
+                        <button type="button" onclick="document.getElementById('file-input').click()" 
+                                style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px;">
+                            Change Photo
+                        </button>
+                        <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
+                    </div>
+                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
+                    <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
+                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
+                    <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
+                    <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Security</label>
+                    <input id="p-pass" type="password" class="swal2-input" placeholder="New password (optional)">
+                </div>
+            `,
+            preConfirm: () => {
+                return {
+                    email: document.getElementById('p-email').value,
+                    phone: document.getElementById('p-phone').value,
+                    pass: document.getElementById('p-pass').value,
+                    pic: document.getElementById('preview-pic').src
+                }
+            }
+        });
+
+        if (formValues) saveProfile(formValues);
     }
-  </script>
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('preview-pic').src = e.target.result; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function saveProfile(data) {
+        Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
+        const username = sessionStorage.getItem("user_login_id");
+        const response = await fetch(`${MASTER_API_URL}`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'updateProfile', user: username, ...data })
+        });
+        const result = await response.json();
+        if (result.status === "success") {
+            sessionStorage.setItem("user_pic", data.pic);
+            sessionStorage.setItem("user_email", data.email);
+            sessionStorage.setItem("user_phone", data.phone);
+            Swal.fire('Saved!', 'Profile updated.', 'success').then(() => location.reload());
+        }
+    }
+</script>
   
 </body>
 </html>
