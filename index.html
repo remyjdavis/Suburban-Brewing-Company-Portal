@@ -427,29 +427,42 @@
 
     // --- ON LOAD ---
     window.addEventListener('DOMContentLoaded', () => {
-    // 1. Greet Employee
+    // 1. DATA RECOVERY: Check if we have the user info
     const userName = sessionStorage.getItem("user_name");
     const userRole = sessionStorage.getItem("user_role");
     
+    console.log("Logged in user:", userName); // Debug check in F12 console
+
     if (userName) {
+        // This targets the specific span in your header
         const headerTitle = document.querySelector('.header span');
+        
         if (headerTitle) {
-            headerTitle.innerHTML = `Brewing Portal | <strong>Welcome, ${userName}</strong> (${userRole})`;
+            headerTitle.style.display = "flex";
+            headerTitle.style.alignItems = "center";
+            headerTitle.style.gap = "10px";
+            
+            // Injects the Welcome message alongside the portal title
+            headerTitle.innerHTML = `
+                <span style="color: #6b7280;">Command Center</span>
+                <span style="color: #e5e7eb; margin: 0 10px;">|</span>
+                <span style="color: #1f2937; font-weight: 800;">Welcome, ${userName}</span>
+                <span style="font-size: 0.75rem; background: #eef2ff; color: #4338ca; padding: 2px 8px; border-radius: 12px; margin-left: 5px;">${userRole}</span>
+            `;
         }
     }
 
-    // 2. Set Current Date
-    const d = new Date();
+    // 2. DATE & SYNC (Preserved)
     const dateEl = document.getElementById('current-date');
     if (dateEl) {
-        dateEl.innerText = d.toLocaleDateString('en-US', { 
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-        });
+        const d = new Date();
+        dateEl.innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     }
-
-    // 3. Start Data Sync
-    runAllSyncs();
-    setInterval(runAllSyncs, AUTO_REFRESH_MS);
+    
+    if (typeof runAllSyncs === "function") {
+        runAllSyncs();
+        setInterval(runAllSyncs, 300000);
+    }
 });
 
     function runAllSyncs() {
