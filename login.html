@@ -63,32 +63,33 @@ async function checkLogin() {
             
             // --- 1. AGREEMENT GATEKEEPER (Only triggers if not signed in Column J) ---
             if (!result.profile.agreementSigned) {
-                const { isConfirmed } = await Swal.fire({
-                    title: 'Access Agreement',
-                    html: `
-                        <div style="text-align: left; font-size: 13px; color: #94a3b8; border: 1px solid #334155; padding: 15px; max-height: 200px; overflow-y: auto;">
-                            <p><strong>Suburban Brewing Co. Portal Terms:</strong></p>
-                            <ul>
-                                <li>All brewing recipes and sales data are confidential.</li>
-                                <li>Account credentials must not be shared.</li>
-                                <li>Activity is logged and monitored for security.</li>
-                            </ul>
-                        </div>
-                    `,
-                    icon: 'info',
-                    showCancelButton: false,
-                    confirmButtonText: 'I Acknowledge & Accept',
-                    confirmButtonColor: '#2563eb',
-                    background: '#1e293b',
-                    color: '#ffffff',
-                    allowOutsideClick: false
-                });
+    const { isConfirmed } = await Swal.fire({
+        title: 'User Access Agreement',
+        html: `
+            <div style="text-align: left; font-size: 13px; color: #cbd5e1; background: #0f172a; border: 1px solid #334155; padding: 15px; max-height: 250px; overflow-y: auto; border-radius: 8px;">
+                <p style="color: #2563eb; font-weight: bold; margin-top: 0;">SBC EMPLOYEE TERMS of USE</p>
+                <p><strong>1. Confidentiality:</strong> All recipes, water profiles, and sales data are SBC trade secrets. Sharing this data externally is prohibited.</p>
+                <p><strong>2. Security:</strong> You are responsible for your credentials. Do not share passwords.</p>
+                <p><strong>3. Integrity:</strong> Brew logs and inventory must be recorded accurately. Falsification is prohibited.</p>
+                <p><strong>4. Monitoring:</strong> All portal activity is logged and timestamped for security auditing.</p>
+                <p><strong>5. Termination:</strong> Access is revoked immediately upon termination of employment.</p>
+            </div>
+            <p style="margin-top: 15px; font-size: 12px; color: #94a3b8;">By clicking below, you provide a digital signature acknowledging these terms.</p>
+        `,
+        icon: 'warning',
+        showCancelButton: false,
+        confirmButtonText: 'I Acknowledge & Accept',
+        confirmButtonColor: '#2563eb',
+        background: '#1e293b',
+        color: '#ffffff',
+        allowOutsideClick: false
+    });
 
-                if (isConfirmed) {
-                    // Record signature in database Column J
-                    await fetch(`${MASTER_API_URL}?action=signAgreement&user=${encodeURIComponent(user)}`);
-                }
-            }
+    if (isConfirmed) {
+        // Record the signature in Column J of !Employee_Database
+        await fetch(`${MASTER_API_URL}?action=signAgreement&user=${encodeURIComponent(user)}`);
+    }
+}
 
             // --- 2. SET SESSION & REDIRECT ---
             sessionStorage.setItem("sbc_auth", "true");
