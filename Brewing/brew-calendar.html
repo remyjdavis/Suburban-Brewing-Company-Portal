@@ -47,18 +47,19 @@
       background: #0f172a !important; 
       height: 100vh; 
       color: white; 
-      display: flex !important;           /* Enables flex stacking */
-      flex-direction: column !important;  /* Forces elements to stack vertically */
+      display: flex !important;           
+      flex-direction: column !important;  
       overflow-y: auto; 
       position: fixed; 
       z-index: 1000;
       flex-shrink: 0;
+      padding: 0; /* Remove padding here to prevent the 'push down' effect */
     }
     
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 800; color: #fff; padding-top: 20px; }
 
     /* COLLAPSIBLE HEADERS: Position relative stops the 'floating' overlap */
-    .nav-section-title {
+    nav-section-title {
       font-size: 11px; 
       text-transform: uppercase; 
       color: #9ca3af; 
@@ -66,23 +67,24 @@
       font-weight: 700; 
       letter-spacing: 1px; 
       cursor: pointer; 
-      display: flex; 
+      display: flex !important; /* Force space occupancy */
       justify-content: space-between; 
       align-items: center;
       user-select: none;
-      position: relative !important; /* FIX: Prevents floating overlap */
+      position: relative !important; /* Prevents floating */
     }
     .nav-section-title:hover { color: #fff; }
 
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
 
-    .collapsible-content {
+.collapsible-content {
       max-height: 2500px; 
       overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
-      position: relative !important; /* FIX: Forces content to take up physical space */
+      position: relative !important; /* Prevents the 'Main Menu' from sliding up */
+      display: block !important;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
@@ -106,13 +108,16 @@
 
     /* LOGOUT BUTTON: Integrated into the vertical stack */
     .logout-link {
-        color: #f87171 !important; 
-        border-left: 4px solid transparent;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        display: flex !important;
-        align-items: center;
-    }
+    color: #f87171 !important; 
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex !important;
+    align-items: center;
+    position: relative !important; /* Ensures it stays in the vertical stack */
+    width: 100%;
+    box-sizing: border-box;
+}
 
     .logout-link:hover {
         background: #450a0a !important; 
