@@ -512,23 +512,53 @@
     } catch (e) { console.error("Cellar Sync Error:", e); }
 }
     // --- REFRESH ML ENGINE (FIXED IDs) ---
-    async function refreshMLEngine() {
-        try {
-            const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`);
-            const data = await res.json();
-            
-            const effEl = document.getElementById('ml-efficiency-display');
-            if (effEl) {
-                const learnedEff = data.brewhousePredictiveEfficiency || 0.75;
-                effEl.innerText = (learnedEff * 100).toFixed(1) + "%";
-            }
+   async function refreshMLEngine() {
+    try {
+        const res = await fetch(`${PRODUCTION_API_URL}?action=getMLTrend`);
+        const data = await res.json();
+        
+        // ... (existing text update logic here) ...
 
-            const adviceEl = document.getElementById('ml-advice');
-            if (adviceEl) {
-                adviceEl.innerText = data.avgMaltCost ? `Target Cost: $${data.avgMaltCost.toFixed(2)}/lb` : "Analyzing batch history...";
-            }
-        } catch (e) { console.error("ML Engine Error:", e); }
+        // CHART INITIALIZATION
+        const ctx = document.getElementById('efficiencyChart');
+        if (ctx && data.batchHistory) {
+            // Destroy existing chart instance if it exists to avoid hover glitches
+            const existingChart = Chart.getChart("efficiencyChart");
+            if (existingChart) existingChart.destroy();
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.batchHistory.map((_, i) => `Batch ${i + 1}`),
+                    datasets: [{
+                        label: 'Brewhouse Efficiency',
+                        data: data.batchHistory.map(val => (val * 100).toFixed(1)),
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            beginAtZero: false,
+                            grid: { color: '#f1f5f9' },
+                            ticks: { callback: value => value + '%' }
+                        },
+                        x: { display: false }
+                    }
+                }
+            });
+        }
+    } catch (e) { 
+        console.error("ML Engine Error:", e); 
     }
+}
 
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
