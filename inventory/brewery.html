@@ -275,7 +275,8 @@
 
     const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
     let inventory = [];
-// --- MOBILE DRAWER TOGGLE ---
+
+    // --- MOBILE DRAWER TOGGLE ---
     function toggleMobileMenu() {
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.getElementById('menu-overlay');
@@ -291,9 +292,9 @@
         btn.innerText = isOpen ? '✕' : '☰';
     }
 
-    // --- WRAP EXISTING INITIALIZATION ---
+    // --- CONSOLIDATED INITIALIZATION ---
     document.addEventListener("DOMContentLoaded", () => {
-      // 1. Sidebar Logic (Auto-expand active)
+      // 1. Sidebar Logic (Auto-expand active group)
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -304,7 +305,7 @@
         }
       }
       
-      // 2. Mobile Link Auto-close
+      // 2. Mobile Link Auto-close Listener
       document.querySelectorAll('.nav-link').forEach(link => {
           link.addEventListener('click', () => {
               if (window.innerWidth <= 1024) {
@@ -314,9 +315,11 @@
           });
       });
 
-      // 3. Load Inventory
+      // 3. Load Inventory Data
       loadInventory();
     });
+
+    // --- DATA FUNCTIONS (Preserved Logic) ---
 
     async function loadInventory() {
       try {
@@ -370,6 +373,6 @@
       closeProductModal(); 
       loadInventory();
     }
-  </script>
+</script>
 </body>
 </html>
