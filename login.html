@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SBC Portal Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 350px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; }
+        button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .error { color: #f87171; font-size: 14px; margin-bottom: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>Suburban Brewing</h2>
+        <p style="color: #94a3b8;">Enter Portal Password</p>
+        <div id="errorMsg" class="error">Incorrect Password</div>
+        <input type="password" id="passInput" placeholder="Password">
+        <button onclick="checkLogin()">Access Portal</button>
+    </div>
+
+    <script>
+        function checkLogin() {
+            const pass = document.getElementById('passInput').value;
+            // Set your internal password here
+            if (pass === "SBC2026") { 
+                sessionStorage.setItem("sbc_auth", "true");
+                window.location.href = "index.html"; // Redirect to home
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
