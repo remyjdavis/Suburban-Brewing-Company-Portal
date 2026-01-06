@@ -267,17 +267,21 @@
         themeSystem: 'standard',
         eventColor: '#2563eb',
         
-        events: async function(info, successCallback, failureCallback) {
+       events: async function(info, successCallback, failureCallback) {
           loader.style.display = 'block';
           try {
+            // Updated fetch call with necessary Google CORS parameters
             const response = await fetch(`${API_URL}?action=getSamplingEvents`, { 
-              method: 'GET'
+              method: 'GET',
+              mode: 'cors', // Explicitly request CORS
+              redirect: 'follow' // Required for Google Scripts
             });
+            
             const rawEvents = await response.json();
             
             if (!Array.isArray(rawEvents)) {
               console.error("API did not return an array:", rawEvents);
-              loader.innerHTML = "No events found or data format error.";
+              loader.innerHTML = "No events found.";
               successCallback([]); 
               return;
             }
@@ -297,7 +301,7 @@
             successCallback(events);
           } catch (err) {
             console.error("Calendar Load Error:", err);
-            loader.innerHTML = "Error connecting to database.";
+            loader.innerHTML = "Connection Error.";
             failureCallback(err);
           }
         }, // <--- CORRECTED: COMMA ADDED HERE
