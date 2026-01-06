@@ -6,253 +6,257 @@
     <title>SBC Wholesale Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-   <style>
-         /* --- SHARED THEME VARIABLES --- */
-    :root {
-        --bg: #f8f9fa;
-        --sidebar: #0f172a;
-        --accent: #2563eb;
-        --text-main: #1e293b;
-        --text-muted: #64748b;
-        --card-bg: #ffffff;
-    }
+    <style>
+        /* --- SHARED THEME VARIABLES --- */
+        :root {
+            --bg: #f8f9fa;
+            --sidebar: #0f172a;
+            --accent: #2563eb;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --card-bg: #ffffff;
+            --primary: #1a1a1a;
+        }
 
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    
-    body { 
-        margin: 0; 
-        background-color: var(--bg); 
-        color: #1f2937; 
-        padding-bottom: 140px; /* Space for the live bar */
-        -webkit-tap-highlight-color: transparent;
-    }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        body { 
+            margin: 0; 
+            background-color: var(--bg); 
+            color: #1f2937; 
+            padding-bottom: 140px; /* Space for the live bar */
+            -webkit-tap-highlight-color: transparent;
+        }
 
-    .site-header { 
-        background-color: #ffffff; 
-        padding: 15px 5%; 
-        border-bottom: 2px solid #1a1a1a; 
-        display: flex; 
-        align-items: center; 
-        gap: 15px; 
-    }
+        .site-header { 
+            background-color: #ffffff; 
+            padding: 15px 5%; 
+            border-bottom: 2px solid #1a1a1a; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+        }
 
-    .header-info h1 { margin: 0; font-size: 1.1rem; color: #1a1a1a; }
-    .header-info { font-size: 0.75rem; line-height: 1.2; }
+        .header-info h1 { margin: 0; font-size: 1.1rem; color: #1a1a1a; }
+        .header-info { font-size: 0.75rem; line-height: 1.2; }
 
-    .container { 
-        max-width: 1000px; 
-        margin: 10px auto; 
-        padding: 0 12px; 
-    }
+        .container { 
+            max-width: 1000px; 
+            margin: 10px auto; 
+            padding: 0 12px; 
+        }
 
-    .card { 
-        background: white; 
-        padding: 1.2rem; 
-        border-radius: 12px; 
-        border: 1px solid #dee2e6; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-    }
-    
-    /* MOBILE OPTIMIZED SCROLL BOX */
-    .legal-scroll { 
-        height: 350px; 
-        overflow-y: auto; 
-        border: 2px solid #1a1a1a; 
-        padding: 1rem; 
-        margin: 1rem 0; 
-        font-size: 0.85rem; 
-        line-height: 1.6; 
-        background: #fff; 
-        -webkit-overflow-scrolling: touch;
-    }
+        .card { 
+            background: white; 
+            padding: 1.2rem; 
+            border-radius: 12px; 
+            border: 1px solid #dee2e6; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+        
+        /* MOBILE OPTIMIZED SCROLL BOX */
+        .legal-scroll { 
+            height: 350px; 
+            overflow-y: auto; 
+            border: 2px solid #1a1a1a; 
+            padding: 1rem; 
+            margin: 1rem 0; 
+            font-size: 0.85rem; 
+            line-height: 1.6; 
+            background: #fff; 
+            -webkit-overflow-scrolling: touch;
+        }
 
-    .checkbox-area { 
-        background: #f1f2f6; 
-        padding: 12px; 
-        border-radius: 8px; 
-        margin-bottom: 1rem; 
-        display: flex; 
-        align-items: flex-start; 
-        gap: 10px; 
-        font-size: 0.85rem;
-    }
+        .checkbox-area { 
+            background: #f1f2f6; 
+            padding: 12px; 
+            border-radius: 8px; 
+            margin-bottom: 1rem; 
+            display: flex; 
+            align-items: flex-start; 
+            gap: 10px; 
+            font-size: 0.85rem;
+        }
 
-    /* SEARCH STICKY BAR */
-    .controls-area { 
-        margin-bottom: 15px; 
-        position: sticky; 
-        top: 0; 
-        z-index: 100; 
-        background: var(--bg); 
-        padding: 10px 0; 
-    }
+        /* SEARCH STICKY BAR */
+        .controls-area { 
+            margin-bottom: 15px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 100; 
+            background: var(--bg); 
+            padding: 10px 0; 
+        }
 
-    .search-input { 
-        width: 100%; 
-        padding: 12px; 
-        border: 2px solid #1a1a1a; 
-        border-radius: 8px; 
-        font-size: 16px; /* Prevents iOS zoom-on-focus */
-        margin-bottom: 10px; 
-    }
+        .search-input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #1a1a1a; 
+            border-radius: 8px; 
+            font-size: 16px; /* Prevents iOS zoom-on-focus */
+            margin-bottom: 10px; 
+        }
 
-    .cat-bar { 
-        display: flex; 
-        gap: 6px; 
-        overflow-x: auto; 
-        padding-bottom: 5px;
-        scrollbar-width: none; /* Firefox */
-    }
-    .cat-bar::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        .cat-bar { 
+            display: flex; 
+            gap: 6px; 
+            overflow-x: auto; 
+            padding-bottom: 5px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .cat-bar::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
-    /* PRODUCT GRID */
-    .product-grid { 
-        display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)); 
-        gap: 1rem; 
-    }
+        /* PRODUCT GRID */
+        .product-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)); 
+            gap: 1rem; 
+        }
 
-    /* Tablet/Desktop Grid adjustment */
-    @media (min-width: 600px) {
-        .product-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-    }
+        /* Tablet/Desktop Grid adjustment */
+        @media (min-width: 600px) {
+            .product-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        }
 
-    .product-card { 
-        background: #fff; 
-        border: 1px solid #dee2e6; 
-        border-radius: 12px; 
-        overflow: hidden; 
-        display: flex; 
-        flex-direction: column; 
-    }
+        .product-card { 
+            background: #fff; 
+            border: 1px solid #dee2e6; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+        }
 
-    .product-img-container { 
-        width: 100%; 
-        height: 180px; 
-        background: #fcfcfc; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        position: relative; 
-    }
+        .product-img-container { 
+            width: 100%; 
+            height: 180px; 
+            background: #fcfcfc; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+        }
 
-    .lifecycle-badge { 
-        position: absolute; 
-        top: 8px; 
-        right: 8px; 
-        padding: 4px 8px; 
-        background: rgba(255,255,255,0.9);
-        border: 1px solid #ddd;
-        border-radius: 4px; 
-        font-size: 0.65rem; 
-        font-weight: bold; 
-    }
+        .lifecycle-badge { 
+            position: absolute; 
+            top: 8px; 
+            right: 8px; 
+            padding: 4px 8px; 
+            background: rgba(255,255,255,0.9);
+            border: 1px solid #ddd;
+            border-radius: 4px; 
+            font-size: 0.65rem; 
+            font-weight: bold; 
+        }
 
-    .variant-row { 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        padding: 12px 15px; 
-        border-bottom: 1px solid #f1f1f1; 
-    }
+        .variant-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 12px 15px; 
+            border-bottom: 1px solid #f1f1f1; 
+        }
 
-    .variant-qty { 
-        width: 70px; 
-        height: 45px; /* Larger touch target */
-        padding: 5px; 
-        text-align: center; 
-        border: 2px solid #ddd; 
-        border-radius: 6px; 
-        font-size: 1rem;
-        font-weight: bold; 
-    }
+        .variant-qty { 
+            width: 70px; 
+            height: 45px; /* Larger touch target */
+            padding: 5px; 
+            text-align: center; 
+            border: 2px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 1rem;
+            font-weight: bold; 
+        }
 
-    /* ORDER BAR */
-    .live-bar { 
-        position: fixed; 
-        bottom: 0; 
-        left: 0; 
-        right: 0; 
-        background: #1a1a1a; 
-        color: white; 
-        padding: 15px 5%; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        z-index: 1001; 
-        box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
-    }
+        /* ORDER BAR */
+        .live-bar { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: #1a1a1a; 
+            color: white; 
+            padding: 15px 5%; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            z-index: 1001; 
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
+        }
 
-    .btn { 
-        padding: 12px 20px; 
-        border: none; 
-        border-radius: 8px; 
-        font-weight: 800; 
-        font-size: 0.9rem;
-        cursor: pointer; 
-    }
+        .btn { 
+            padding: 12px 20px; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: 800; 
+            font-size: 0.9rem;
+            cursor: pointer; 
+        }
 
-    .btn-primary { background-color: #007bff; color: white; }
-    .btn-outline { background: white; border: 1px solid #ccc; font-size: 0.8rem;}
-    .btn-outline.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
-    .btn-success { background: #27ae60; color: white; width: 100%; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-outline { background: white; border: 1px solid #ccc; font-size: 0.8rem;}
+        .btn-outline.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
+        .btn-success { background: #27ae60; color: white; width: 100%; }
 
-    /* REVIEW TABLE MOBILE */
-    .review-table { width: 100%; font-size: 0.85rem; margin-top: 10px;}
-    .review-table th { text-align: left; padding: 8px; border-bottom: 2px solid #eee; }
-    .review-table td { padding: 8px; border-bottom: 1px solid #f9f9f9; }
+        /* REVIEW TABLE MOBILE */
+        .review-table { width: 100%; font-size: 0.85rem; margin-top: 10px;}
+        .review-table th { text-align: left; padding: 8px; border-bottom: 2px solid #eee; }
+        .review-table td { padding: 8px; border-bottom: 1px solid #f9f9f9; }
 
-    @media print { 
-        .site-header, .live-bar, #menu-toggle { display: none !important; } 
-        /* SCANNER OVERLAY */
-#scanner-container {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.9);
-    z-index: 2000;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-#reader {
-    width: 90%;
-    max-width: 500px;
-    background: #fff;
-    border-radius: 12px;
-    overflow: hidden;
-}
-.scanner-close {
-    margin-top: 20px;
-    padding: 15px 30px;
-    background: #d63031;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-}
-/* SEARCH BAR WRAPPER */
-.search-wrapper {
-    position: relative;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-.scan-btn {
-    height: 50px;
-    padding: 0 15px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1.2rem;
-}
-</style>
+        @media print { 
+            .site-header, .live-bar, #menu-toggle { display: none !important; } 
+        }
+
+        /* SCANNER OVERLAY - Fixed position outside print media query */
+        #scanner-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #reader {
+            width: 90%;
+            max-width: 500px;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .scanner-close {
+            margin-top: 20px;
+            padding: 15px 30px;
+            background: #d63031;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        /* SEARCH BAR WRAPPER */
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+        .scan-btn {
+            height: 50px;
+            padding: 0 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+    </style>
 </head>
 <body>
 
@@ -283,42 +287,43 @@
     let groupedProducts = {};
     let customersDB = [];
     let state = { step: 0, customer: null, cart: {}, category: 'All' };
-let html5QrCode;
+    let html5QrCode;
 
-async function startScanner() {
-    document.getElementById('scanner-container').style.display = 'flex';
-    html5QrCode = new Html5Qrcode("reader");
-    
-    const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+    async function startScanner() {
+        document.getElementById('scanner-container').style.display = 'flex';
+        html5QrCode = new Html5Qrcode("reader");
+        
+        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
 
-    try {
-        await html5QrCode.start(
-            { facingMode: "environment" }, // Uses the back camera
-            config,
-            (decodedText) => {
-                // When a barcode is found:
-                document.getElementById('searchInput').value = decodedText;
-                filterProducts();
-                stopScanner();
-                Swal.fire({ icon: 'success', title: 'Scanned!', timer: 1000, showConfirmButton: false });
-            },
-            (errorMessage) => { /* Ignore constant scanning noise */ }
-        );
-    } catch (err) {
-        console.error("Camera access denied", err);
-        Swal.fire("Camera Error", "Please allow camera access to scan barcodes.", "error");
-        stopScanner();
+        try {
+            await html5QrCode.start(
+                { facingMode: "environment" }, 
+                config,
+                (decodedText) => {
+                    document.getElementById('searchInput').value = decodedText;
+                    filterProducts();
+                    stopScanner();
+                    Swal.fire({ icon: 'success', title: 'Scanned!', timer: 1000, showConfirmButton: false });
+                },
+                (errorMessage) => { }
+            );
+        } catch (err) {
+            console.error("Camera access denied", err);
+            Swal.fire("Camera Error", "Please allow camera access to scan barcodes.", "error");
+            stopScanner();
+        }
     }
-}
 
-async function stopScanner() {
-    if (html5QrCode) {
-        await html5QrCode.stop();
-        await html5QrCode.clear();
+    async function stopScanner() {
+        if (html5QrCode) {
+            try {
+                await html5QrCode.stop();
+                await html5QrCode.clear();
+            } catch (e) { console.log(e); }
+        }
+        document.getElementById('scanner-container').style.display = 'none';
     }
-    document.getElementById('scanner-container').style.display = 'none';
-}
-    // Scanner support: listens for rapid keypresses
+
     document.addEventListener('keydown', (e) => {
         if (state.step === 2 && document.activeElement.tagName !== 'INPUT') {
             const si = document.getElementById('searchInput');
@@ -371,28 +376,21 @@ async function stopScanner() {
                 <div class="card">
                     <h2 style="text-align:center;">PA WHOLESALE DISTRIBUTION AGREEMENT</h2>
                     <div class="legal-scroll">
-                        <p>This agreement is compliant with the laws of the Commonwealth of Pennsylvania and the regulations of the Pennsylvania Liquor Control Board (PLCB). By proceeding, the Purchaser agrees to the following terms and conditions:</p>
-                        
+                        <p>This agreement is compliant with the laws of the Commonwealth of Pennsylvania...</p>
                         <h3>1. PLCB COMPLIANCE & LICENSURE</h3>
-                        <p>Purchaser warrants that it holds a valid, active retail or wholesale license issued by the PLCB. Purchaser agrees to notify Suburban Brewing Co. (SBC) immediately if said license is suspended, revoked, or expired. All sales are contingent upon the verification of a valid license.</p>
-                        
+                        <p>Purchaser warrants that it holds a valid, active retail or wholesale license...</p>
                         <h3>2. PRICE POSTING & ACT 39</h3>
-                        <p>In accordance with Act 39 of 2016, SBC maintains a public price list. All products are sold at the posted wholesale price at the time of delivery. SBC reserves the right to adjust pricing in accordance with PLCB regulations regarding price change intervals.</p>
-                        
+                        <p>In accordance with Act 39 of 2016, SBC maintains a public price list...</p>
                         <h3>3. CASH ON DELIVERY (COD) & SECTION 493</h3>
-                        <p>Per Section 493(2) of the Liquor Code, sales of malt or brewed beverages to retail licensees must be for cash or check paid at or before the time of delivery. Failure to provide payment at the time of delivery will result in the refusal of the shipment.</p>
-                        
+                        <p>Per Section 493(2) of the Liquor Code, sales must be for cash or check...</p>
                         <h3>4. COLD CHAIN STORAGE & QUALITY CONTROL</h3>
-                        <p>Products produced by SBC are unpasteurized "live" beverages. Purchaser agrees to maintain strict cold chain storage (34°F-38°F) from the moment of delivery. SBC is not liable for product degradation, "skunking," or off-flavors resulting from improper storage, warm handling, or dirty draught lines at the Purchaser's establishment.</p>
-                        
+                        <p>Purchaser agrees to maintain strict cold chain storage (34°F-38°F)...</p>
                         <h3>5. COOPERAGE & EQUIPMENT LIABILITY</h3>
-                        <p>All stainless steel keg shells remain the property of Suburban Brewing Co. A mandatory $30.00 deposit is applied to each keg shell. This deposit is refundable only upon the return of the specific SBC-branded shell in good condition. Purchaser is liable for the full replacement cost (approx. $115.00) of any lost, stolen, or damaged cooperage.</p>
-                        
+                        <p>All stainless steel keg shells remain property of Suburban Brewing Co...</p>
                         <h3>6. RETURNED CHECKS & LATE FEES</h3>
-                        <p>Any check returned for non-sufficient funds (NSF) will incur a $50.00 administrative fee. In the event of a returned check, the Purchaser must immediately provide a certified bank check or cash for the balance plus fees. SBC reserves the right to move any repeat offender to a "Cash Only" basis.</p>
-                        
+                        <p>Any check returned for NSF will incur a $50.00 fee...</p>
                         <h3>7. RESALE LIMITATIONS</h3>
-                        <p>Purchaser agrees that all products are for retail sale at the licensed premises only and may not be resold to other retailers or distributors without express written consent and proper PLCB secondary-distribution permits.</p>
+                        <p>Purchaser agrees products are for retail sale at licensed premises only...</p>
                     </div>
                     <div class="checkbox-area">
                         <input type="checkbox" id="agreeCheck" onchange="document.getElementById('acceptBtn').disabled = !this.checked">
@@ -410,12 +408,18 @@ async function stopScanner() {
         } else if (state.step === 2) {
             liveBar.style.display = "flex";
             let html = `
-                <<div class="controls-area">
-    <div class="search-wrapper">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search or scan UPC..." oninput="filterProducts()">
-        <button class="scan-btn" onclick="startScanner()">📷</button>
-    </div>
-    </div>
+                <div class="controls-area">
+                    <div class="search-wrapper">
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search or scan UPC..." oninput="filterProducts()">
+                        <button class="scan-btn" onclick="startScanner()">📷</button>
+                    </div>
+                    <div class="cat-bar">
+                        <button class="btn btn-outline cat-btn active" onclick="setCategory('All')">All</button>
+                        <button class="btn btn-outline cat-btn" onclick="setCategory('Core')">Core</button>
+                        <button class="btn btn-outline cat-btn" onclick="setCategory('Seasonal')">Seasonal</button>
+                        <button class="btn btn-outline cat-btn" onclick="setCategory('Rotating')">Rotating</button>
+                    </div>
+                </div>
                 <div class="product-grid">`;
             for (const key in groupedProducts) {
                 const p = groupedProducts[key];
@@ -492,9 +496,10 @@ async function stopScanner() {
         const query = document.getElementById("searchInput").value.toLowerCase();
         const cards = document.querySelectorAll(".product-card");
         cards.forEach(card => {
-            const match = card.dataset.name.toLowerCase().includes(query) || card.dataset.upc.toLowerCase().includes(query);
+            const nameMatch = card.dataset.name.toLowerCase().includes(query);
+            const upcMatch = card.dataset.upc && card.dataset.upc.toLowerCase().includes(query);
             const catMatch = (state.category === 'All' || card.dataset.lifecycle === state.category);
-            card.style.display = (match && catMatch) ? "flex" : "none";
+            card.style.display = ((nameMatch || upcMatch) && catMatch) ? "flex" : "none";
         });
     }
 
@@ -511,22 +516,19 @@ async function stopScanner() {
             const item = state.cart[k];
             const lineTotal = item.price * item.qty;
             sub += lineTotal;
-            if (item.type.toLowerCase().includes("keg")) {
-                kegs += item.qty;
-            } else if (item.type.toLowerCase().includes("case")) {
+            if (item.type.toLowerCase().includes("keg")) kegs += item.qty;
+            else if (item.type.toLowerCase().includes("case")) {
                 caseTotal += lineTotal;
                 casesCount += item.qty;
             }
         }
-        
         let discount = (casesCount >= 10) ? (caseTotal * 0.10) : 0;
         let dep = kegs * 30;
-
         return { 
-          subtotal: sub.toFixed(2), 
-          discount: discount.toFixed(2), 
-          deposits: dep.toFixed(2), 
-          grandTotal: (sub + dep - discount).toFixed(2) 
+            subtotal: sub.toFixed(2), 
+            discount: discount.toFixed(2), 
+            deposits: dep.toFixed(2), 
+            grandTotal: (sub + dep - discount).toFixed(2) 
         };
     }
 
@@ -561,7 +563,8 @@ async function stopScanner() {
 
     init();
 </script>
-    <div id="scanner-container">
+
+<div id="scanner-container">
     <div id="reader"></div>
     <button class="scanner-close" onclick="stopScanner()">Close Camera</button>
 </div>
