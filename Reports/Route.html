@@ -5,17 +5,18 @@
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
-
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
     })();
-</script>
+  </script>
   <base target="_top">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Daily Route | Suburban Brewing Co.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
     /* --- SHARED THEME VARIABLES --- */
     :root {
@@ -24,20 +25,18 @@
       --card-bg: #1e293b;
       --text: #f8fafc;
       --text-dim: #94a3b8;
-      --delivery: #10b981;
-      --sales: #3b82f6;
-      --scout: #8b5cf6;
-      --overdue: #ef4444;
-      --sidebar-w: 260px;
       --sidebar: #0f172a;
+      --sidebar-w: 260px;
     }
 
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       font-family: 'Inter', sans-serif;
       background-color: var(--bg);
       color: var(--text);
       margin: 0;
       display: flex;
+      min-height: 100vh;
     }
 
     /* --- SIDEBAR STYLES --- */
@@ -49,7 +48,6 @@
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; letter-spacing: 1px; }
 
-    /* COLLAPSIBLE HEADERS */
     .nav-section-title {
       font-size: 11px; text-transform: uppercase; color: var(--text-dim); 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
@@ -62,18 +60,16 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 500px; overflow: hidden;
+      max-height: 800px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    /* LINKS */
     .nav-link { 
       display: flex; align-items: center; padding: 10px 24px; 
       color: var(--text-dim); text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
-      margin-bottom: 0;
     }
     .nav-link:hover, .nav-link.active { background: var(--primary); color: #fff; }
     .nav-link.active { border-left-color: #fff; font-weight: 600; }
@@ -92,7 +88,9 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 30px;
+      gap: 15px;
     }
+    .header-flex h1 { font-size: 28px; font-weight: 800; margin: 0; }
 
     .date-picker {
       background: var(--card-bg);
@@ -101,6 +99,7 @@
       padding: 10px 15px;
       border-radius: 8px;
       font-family: inherit;
+      font-size: 14px;
     }
 
     /* --- ROUTE CARDS --- */
@@ -115,35 +114,23 @@
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
-    .stop-num {
-      font-size: 20px;
-      font-weight: 700;
-      width: 40px;
-      color: var(--text-dim);
-    }
-
+    .stop-num { font-size: 20px; font-weight: 700; width: 40px; color: var(--text-dim); }
     .stop-info { flex-grow: 1; }
     
     .badge {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 4px 8px;
-      border-radius: 4px;
-      margin-bottom: 8px;
-      display: inline-block;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      padding: 4px 8px; border-radius: 4px; margin-bottom: 8px; display: inline-block;
     }
 
     .stop-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
     .stop-addr { font-size: 14px; color: var(--text-dim); }
 
-    /* --- POLESTAR FOOTER --- */
+    /* --- FOOTER ACTION --- */
     .footer-action {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      left: 290px; /* Aligned with sidebar */
-      transition: left 0.3s ease;
+      position: sticky;
+      bottom: 20px;
+      margin-top: 30px;
+      z-index: 10;
     }
 
     .push-btn {
@@ -160,109 +147,75 @@
       align-items: center;
       gap: 10px;
       box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4);
+      font-size: 16px;
     }
 
-    #loading { text-align: center; padding: 50px; color: var(--text-dim); }
+    /* ============================================================
+       RESPONSIVE HAMBURGER MENU & MOBILE DRAWER LOGIC
+       ============================================================ */
+    #menu-toggle { display: none; }
 
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
-      .sidebar h2, .nav-section-title { display: none; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
+    @media (max-width: 1024px) {
+      .sidebar {
+        left: -260px;
+        z-index: 10001;
+        box-shadow: 10px 0 20px rgba(0,0,0,0.3);
+      }
+      .sidebar.open { left: 0; }
       .main-content { margin-left: 0; padding: 20px; }
-      .footer-action { left: 20px; right: 20px; }
+
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 60px; height: 60px; background: var(--primary);
+        color: white; border-radius: 50%; justify-content: center;
+        align-items: center; font-size: 24px; z-index: 10002;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; border: none;
+      }
+      
+      .menu-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 10000; backdrop-filter: blur(2px);
+      }
+      .menu-overlay.active { display: block; }
+      
+      .sidebar h2, .nav-section-title, .sidebar span { display: block !important; }
+      .header-flex { flex-direction: column; align-items: flex-start; }
+      .header-flex h1 { font-size: 24px; }
+      .date-picker { width: 100%; }
     }
-    /* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
+    @media (max-width: 480px) {
+      .stop-card { padding: 15px; }
+      .stop-name { font-size: 16px; }
+      .stop-addr { font-size: 12px; }
+      input { font-size: 16px !important; } /* Fix iOS auto-zoom */
+    }
 
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
+    /* System Styling */
+    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
+    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
   </style>
 </head>
 <body>
 
-  <aside class="sidebar">
-    <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-  <span>System</span>
-</div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
+  <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
 
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
-    
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
-    
+  <aside class="sidebar">
+    <h2>SBC PORTAL</h2>
+    <div class="nav-section-title"><span>System</span></div>
+    <div class="collapsible-content">
+      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+        <span class="icon">🚪</span> <span>Logout</span>
+      </a>
+    </div>
+
     <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
     </div>
     <div id="grp-main" class="collapsible-content">
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    </div>
-    
-    <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
-      <span>Samplings</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-sample" class="collapsible-content">
-      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-    </div>
-    
-    <div class="nav-section-title" onclick="toggleGroup('grp-sales', this)">
-      <span>Sales</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-sales" class="collapsible-content">
-      <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
-      <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-      <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-      <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-      <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
-    </div>
-
-    <div class="nav-section-title" onclick="toggleGroup('grp-inv', this)">
-      <span>Inventory</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-inv" class="collapsible-content">
-      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-    </div>
-    
-    <div class="nav-section-title" onclick="toggleGroup('grp-brew', this)">
-      <span>Brewing</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-brew" class="collapsible-content">
-      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
-      <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-      <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-      <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-      <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
-      <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
     </div>
     
     <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)">
@@ -281,7 +234,7 @@
       <input type="date" id="routeDate" class="date-picker" onchange="fetchRoute()">
     </div>
 
-    <div id="loading">Optimizing stops...</div>
+    <div id="loading" style="text-align: center; padding: 50px; color: var(--text-dim);">Optimizing stops...</div>
     <div id="routeList"></div>
 
     <div class="footer-action">
@@ -292,30 +245,29 @@
   </div>
 
   <script>
-    // --- SIDEBAR TOGGLE ---
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+    let currentRoute = [];
+    document.getElementById('routeDate').valueAsDate = new Date();
+
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        btn.innerText = sidebar.classList.contains('open') ? '✕' : '☰';
+    }
+
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
       content.classList.toggle('collapsed');
       headerEl.classList.toggle('collapsed');
     }
 
-    // --- INITIALIZE SIDEBAR ---
-    window.addEventListener('DOMContentLoaded', () => {
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) header.classList.remove('collapsed');
-        }
-      }
-    });
-
-    let currentRoute = [];
-    document.getElementById('routeDate').valueAsDate = new Date();
-
-    const scriptURL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+    function handleLogout() {
+        sessionStorage.removeItem("sbc_auth");
+        window.location.replace("/Suburban-Brewing-Company-Portal/login.html");
+    }
 
     async function fetchRoute() {
       const date = document.getElementById('routeDate').value;
@@ -324,19 +276,13 @@
       
       loader.style.display = "block";
       list.innerHTML = "";
+      document.getElementById('mainNavBtn').style.display = "none";
 
       const proxyUrl = "https://api.allorigins.win/get?url=";
       const targetUrl = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}`;
 
       try {
         const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
-        
-        if (response.status === 502) {
-          loader.innerText = "Google is busy. Retrying in 3 seconds...";
-          setTimeout(fetchRoute, 3000);
-          return;
-        }
-
         const data = await response.json();
         const result = JSON.parse(data.contents); 
 
@@ -344,11 +290,9 @@
           loader.innerText = "Error: " + result.error;
           return;
         }
-
         renderStops(result);
       } catch (err) {
         loader.innerText = "Connection lost. Please refresh.";
-        console.error(err);
       }
     }
 
@@ -358,7 +302,7 @@
       currentRoute = stops;
 
       if (!stops || stops.length === 0) {
-        list.innerHTML = "<div style='text-align:center; color:#666;'>No stops for this date.</div>";
+        list.innerHTML = "<div style='text-align:center; color:#64748b; padding: 40px;'>No stops for this date.</div>";
         return;
       }
 
@@ -366,7 +310,7 @@
         const card = document.createElement('div');
         card.className = 'stop-card';
         card.style.borderLeftColor = stop.color;
-        let bat = stop.batteryMsg ? `<div style="color:#34c759; font-size:12px; font-weight:bold;">${stop.batteryMsg}</div>` : "";
+        let bat = stop.batteryMsg ? `<div style="color:#34c759; font-size:12px; font-weight:bold; margin-top:5px;">${stop.batteryMsg}</div>` : "";
         
         card.innerHTML = `
           <div class="stop-num">${i + 1}</div>
@@ -384,12 +328,20 @@
     }
 
     function pushToPolestar() {
+      if (currentRoute.length === 0) return;
       const origin = encodeURIComponent(currentRoute[0].address);
       const dest = encodeURIComponent(currentRoute[currentRoute.length - 1].address);
       const waypoints = currentRoute.slice(1, -1).map(s => encodeURIComponent(s.address)).join('|');
-      const url = 'https://www.google.com/maps/dir/?api=1&origin=' + origin + '&destination=' + dest + '&waypoints=' + waypoints + '&travelmode=driving';
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypoints}&travelmode=driving`;
       window.open(url, '_blank');
     }
+
+    // Auto-close menu on link click
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) toggleMobileMenu();
+        });
+    });
 
     fetchRoute();
   </script>
