@@ -35,7 +35,7 @@
       --text: #1f2937;
     }
     
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
     /* --- SIDEBAR STYLES --- */
@@ -43,7 +43,7 @@
       width: 260px; background: var(--sidebar); color: #fff; 
       padding: 24px 0; flex-shrink: 0; position: fixed; 
       height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
@@ -60,7 +60,7 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 500px; overflow: hidden;
+      max-height: 2000px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
@@ -83,6 +83,7 @@
       height: 100vh; 
       overflow-y: auto; 
       transition: all 0.3s ease;
+      width: 100%;
     }
     
     .header { 
@@ -130,7 +131,7 @@
     
     .vessel-grid { 
       display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
       gap: 15px; 
     }
     
@@ -185,7 +186,7 @@
       top: 0; left: 0; 
       width: 100%; height: 100%; 
       background: rgba(0,0,0,0.7); 
-      z-index: 999; 
+      z-index: 1500; 
     }
     
     #vessel-modal { 
@@ -196,29 +197,37 @@
       background: white; 
       padding: 0; 
       border-radius: 15px; 
-      z-index: 1000; 
-      width: 90%; max-width: 1000px;
+      z-index: 1600; 
+      width: 95%; max-width: 1000px;
+      max-height: 90vh;
       box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     
     .modal-header { 
       background: #f9fafb; 
-      padding: 20px 25px; 
+      padding: 15px 20px; 
       border-bottom: 1px solid #e5e7eb; 
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
+      flex-shrink: 0;
     }
     
     .modal-tabs { 
       display: flex; 
       background: #f3f4f6; 
       border-bottom: 1px solid #e5e7eb; 
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      flex-shrink: 0;
     }
     
     .tab-btn { 
       flex: 1; 
+      min-width: 120px;
       padding: 15px; 
       border: none; 
       background: none; 
@@ -227,10 +236,11 @@
       color: #6b7280; 
       border-bottom: 3px solid transparent; 
       transition: 0.2s; 
+      white-space: nowrap;
     }
     
     .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: white; }
-    .modal-content-area { padding: 25px; }
+    .modal-content-area { padding: 20px; overflow-y: auto; flex-grow: 1; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
@@ -247,15 +257,16 @@
     
     .form-group input, .form-group select, .form-group textarea { 
       width: 100%; 
-      padding: 10px; 
+      padding: 12px; 
       border: 1px solid #d1d5db; 
       border-radius: 6px; 
       box-sizing: border-box; 
+      font-size: 16px; /* Prevents mobile zoom */
     }
     
     .btn-action { 
       width: 100%; 
-      padding: 12px; 
+      padding: 14px; 
       border: none; 
       border-radius: 6px; 
       font-weight: bold; 
@@ -268,53 +279,42 @@
     .btn-blue { background: var(--accent); }
     .btn-orange { background: var(--accent-orange); }
 
-    .qc-section-title {
-      font-size: 10px;
-      color: var(--accent);
-      font-weight: 800;
-      margin-bottom: 10px;
-      letter-spacing: 1px;
-      display: block;
+    /* ============================================================
+       MOBILE & TABLET DRAWER OVERRIDES
+       ============================================================ */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
+
+    @media (max-width: 1024px) {
+      .sidebar { left: -260px; z-index: 2000; }
+      .sidebar.open { left: 0; }
+      .main-content { margin-left: 0 !important; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 65px; height: 65px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 28px; z-index: 2100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+
+      .header { padding: 10px 20px; }
+      .container { padding: 15px; }
+      .dashboard-row { grid-template-columns: 1fr; }
+      
+      #vessel-modal { width: 98%; height: 95vh; }
+      .modal-content-area > div { flex-direction: column !important; gap: 20px !important; }
+      .modal-content-area div[style*="border-right"] { border-right: none !important; padding-right: 0 !important; }
     }
 
-    .aa-calculator-box {
-      background: #fffbeb;
-      border: 1px solid #fef3c7;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 15px;
-      display: none;
-    }
-
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
-      .sidebar h2, .nav-section-title { display: none; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
-      .main-content { margin-left: 0; padding: 20px 20px 90px; }
-    }
-     /* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
-
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
+    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
   </style>
 </head>
 <body>
-
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+<div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
@@ -611,15 +611,32 @@
   </div>
 
   <script>
-    // --- SIDEBAR TOGGLE ---
+    // --- SIDEBAR TOGGLE (Desktop/Tablet Subgroups) ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
       content.classList.toggle('collapsed');
       headerEl.classList.toggle('collapsed');
     }
 
-    // --- INITIALIZE SIDEBAR ---
+    // --- MOBILE DRAWER TOGGLE (Slide-out menu for Phones) ---
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
+        
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        
+        // Prevent background scrolling on phone while menu is open
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        
+        // Switch icon between Hamburger and X
+        btn.innerText = isOpen ? '✕' : '☰';
+    }
+
+    // --- INITIALIZE SIDEBAR & MOBILE AUTO-CLOSE ---
     window.addEventListener('DOMContentLoaded', () => {
+      // 1. Auto-expand the active section in the sidebar
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -629,10 +646,20 @@
           if (header) header.classList.remove('collapsed');
         }
       }
+
+      // 2. Ensure menu auto-closes when a link is clicked on mobile
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) {
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar.classList.contains('open')) toggleMobileMenu();
+            }
+        });
+      });
     });
 
+    // --- CELLAR API CONFIGURATION ---
     const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
-    
     const KNOWN_VESSELS = [ "FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6", "Pilot 1", "Pilot 2", "BT 1", "BT 2" ];
 
     let currentBatchId = null;
@@ -640,9 +667,11 @@
     let currentBrand = null;
     let currentAdditionMode = 'DH';
 
+    // --- QR & INITIAL LOAD LOGIC ---
     window.onload = function() {
       refreshGrid();
       
+      // Handle Google Apps Script URL context or standard URL params
       if (typeof google !== 'undefined' && google.script && google.script.url) {
         google.script.url.getLocation(function(location) {
           if (location.parameter && location.parameter.vessel) {
@@ -654,19 +683,9 @@
         const qrVessel = urlParams.get('vessel');
         if (qrVessel) processQRContext(qrVessel);
       }
-      
-      // Init sidebar logic again if needed for specific load order
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) header.classList.remove('collapsed');
-        }
-      }
     };
 
+    // --- QR PROCESSING ENGINE ---
     async function processQRContext(qrVessel) {
       const decodedQR = decodeURIComponent(qrVessel);
       const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
@@ -717,6 +736,7 @@
       }
     }
 
+    // --- GRID REFRESH & DATA MAPPING ---
     async function refreshGrid() {
       const productionTanks = KNOWN_VESSELS.filter(n => n.startsWith("FV"));
       const pilotTanks = KNOWN_VESSELS.filter(n => n.startsWith("Pilot"));
@@ -772,6 +792,7 @@
       } catch (e) { console.error("Grid Load Error:", e); }
     }
 
+    // --- MODAL & DATA TAB LOGIC ---
     async function openModal(vessel, batchId, beerName, status) {
       currentVessel = vessel;
       currentBatchId = batchId;
@@ -806,6 +827,7 @@
     function closeModal() { 
       document.getElementById('vessel-modal').style.display = 'none'; 
       document.getElementById('overlay').style.display = 'none'; 
+      document.body.style.overflow = ''; // Re-enable scroll
     }
 
     async function loadInventoryLots() {
@@ -988,6 +1010,6 @@
       const opt = select.options[select.selectedIndex];
       document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
     }
-  </script>
+</script>
 </body>
 </html>
