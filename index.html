@@ -435,20 +435,25 @@
     const userName = sessionStorage.getItem("user_name");
     const userRole = sessionStorage.getItem("user_role");
     
-    // Target our new specific ID
+    // Automation: Check for custom pic, otherwise use default logo
+    const storedPic = sessionStorage.getItem("user_pic");
+    const userPic = (storedPic && storedPic !== "null" && storedPic !== "") ? storedPic : "../SBC-Logo.png";
+    
     const welcomeTarget = document.getElementById('welcome-target');
     
     if (userName && welcomeTarget) {
         welcomeTarget.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                <span style="color: #1f2937; font-weight: 800; font-size: 1.1rem;">Welcome, ${userName}</span>
-                <span style="font-size: 0.75rem; background: #eef2ff; color: #4338ca; padding: 2px 10px; border-radius: 12px; margin-top: 4px; font-weight: bold; text-transform: uppercase;">
-                    ${userRole}
-                </span>
+            <div style="display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s;" 
+                 onclick="openProfileModal()" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                <div style="text-align: right;">
+                    <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
+                    <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userRole}</span>
+                </div>
+                <img id="user-avatar" src="${userPic}" style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;">
             </div>
         `;
     }
-
+    
     const dateEl = document.getElementById('current-date');
     if (dateEl) {
         const d = new Date();
@@ -468,7 +473,67 @@
         refreshCellarTanks();
         refreshMLEngine();
     }
+// --- Updated Profile Modal with Password Support ---
+async function openProfileModal() {
+    const { value: formValues } = await Swal.fire({
+        title: 'Edit Profile & Security',
+        background: '#1e293b',
+        color: '#ffffff',
+        confirmButtonColor: '#2563eb',
+        showCancelButton: true,
+        html: `
+            <div style="text-align: left; padding: 10px;">
+                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Contact Information</label>
+                <input id="swal-email" class="swal2-input" placeholder="Email" value="${sessionStorage.getItem('user_email') || ''}" style="margin-bottom: 10px;">
+                <input id="swal-phone" class="swal2-input" placeholder="Phone Number" value="${sessionStorage.getItem('user_phone') || ''}">
+                
+                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase; margin-top: 20px; display: block;">Custom Avatar URL</label>
+                <input id="swal-pic" class="swal2-input" placeholder="Link to photo (e.g., Imgur)" value="${sessionStorage.getItem('user_pic') || ''}">
+                
+                <label style="font-size: 11px; color: #ef4444; text-transform: uppercase; margin-top: 20px; display: block;">Security</label>
+                <input id="swal-pass" type="password" class="swal2-input" placeholder="Enter new password to change">
+            </div>
+        `,
+        preConfirm: () => {
+            return {
+                email: document.getElementById('swal-email').value,
+                phone: document.getElementById('swal-phone').value,
+                pic: document.getElementById('swal-pic').value,
+                pass: document.getElementById('swal-pass').value
+            }
+        }
+    });
 
+    if (formValues) {
+        Swal.fire({ title: 'Updating Database...', didOpen: () => { Swal.showLoading(); } });
+        
+        const username = sessionStorage.getItem("user_login_id");
+        // Automation: Build params including the new password field
+        const params = new URLSearchParams({
+            action: 'updateProfile',
+            user: username,
+            email: formValues.email,
+            phone: formValues.phone,
+            pic: formValues.pic,
+            pass: formValues.pass
+        });
+
+        try {
+            const res = await fetch(`${MASTER_API_URL}?${params.toString()}`);
+            const result = await res.json();
+            if (result.status === "success") {
+                // Update local session
+                sessionStorage.setItem("user_email", formValues.email);
+                sessionStorage.setItem("user_phone", formValues.phone);
+                sessionStorage.setItem("user_pic", formValues.pic);
+                
+                Swal.fire('Success', 'Profile and security settings updated.', 'success').then(() => location.reload());
+            }
+        } catch (e) {
+            Swal.fire('Error', 'Update failed. Check connection.', 'error');
+        }
+    }
+}
     // --- 1. ZONE 1 & 2 SYNC ---
     async function syncZone1() {
         try {
