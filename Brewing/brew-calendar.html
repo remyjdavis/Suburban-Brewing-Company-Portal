@@ -41,30 +41,36 @@
     }
 
     /* --- SIDEBAR FIX: FORCED VERTICAL FLOW --- */
+    /* This forces every section (System, Main Menu, etc.) to wait for the one above to end */
     .sidebar {
       width: 240px; 
-      background: #0f172a; 
+      background: #0f172a !important; 
       height: 100vh; 
       color: white; 
       display: flex !important;           /* Enables flex stacking */
-      flex-direction: column !important;  /* Forces vertical flow */
+      flex-direction: column !important;  /* Forces elements to stack vertically */
       overflow-y: auto; 
       position: fixed; 
       z-index: 1000;
+      flex-shrink: 0;
     }
     
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 800; color: #fff; padding-top: 20px; }
 
-    /* COLLAPSIBLE HEADERS: Added position relative to stop overlapping */
+    /* COLLAPSIBLE HEADERS: Position relative stops the 'floating' overlap */
     .nav-section-title {
-      font-size: 11px; text-transform: uppercase; color: #9ca3af; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #9ca3af; 
+      margin: 18px 24px 8px !important; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
       user-select: none;
-      position: relative !important;
-    display: flex !important;
-    z-index: 5;
-    background: inherit;
+      position: relative !important; /* FIX: Prevents floating overlap */
     }
     .nav-section-title:hover { color: #fff; }
 
@@ -72,25 +78,51 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 500px; overflow: hidden;
+      max-height: 2500px; 
+      overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
-      position: relative !important;
-    display: block !important;
-    width: 100% !important;
-}
+      position: relative !important; /* FIX: Forces content to take up physical space */
+    }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
     /* LINKS */
     .nav-link { 
-      display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent;
-      position: relative !important; /* FIX: Prevents floating overlap */
+      display: block; 
+      padding: 10px 24px; 
+      color: #d1d5db; 
+      text-decoration: none; 
+      font-size: 14px; 
+      transition: 0.2s; 
+      border-left: 4px solid transparent;
+      position: relative !important; /* FIX: Standardizes positioning */
     }
+    
     /* Matching the "Command Center" active state color */
     .nav-link:hover, .nav-link.active { 
       background: #1e293b; 
       color: #fff; 
+    }
+
+    /* LOGOUT BUTTON: Integrated into the vertical stack */
+    .logout-link {
+        color: #f87171 !important; 
+        border-left: 4px solid transparent;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: flex !important;
+        align-items: center;
+    }
+
+    .logout-link:hover {
+        background: #450a0a !important; 
+        color: #fee2e2 !important;
+        border-left-color: #ef4444;
+    }
+
+    .logout-link span.icon {
+        margin-right: 12px;
+        font-size: 16px;
     }
 
     /* --- MAIN CONTENT --- */
@@ -122,12 +154,7 @@
       font-weight: 600;
     }
 
-    .dot {
-      height: 10px; width: 10px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 5px;
-    }
+    .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
 
     /* --- CALENDAR CONTAINER --- */
     #calendar-container {
@@ -185,10 +212,8 @@
       align-items: center;
     }
     
-    .alert-item {
+    .alert-item, .suggestion-item {
       padding: 12px;
-      background: #fef2f2;
-      border-left: 4px solid #ef4444;
       margin-bottom: 10px;
       font-size: 0.9rem;
       display: flex;
@@ -196,31 +221,8 @@
       align-items: center;
       border-radius: 4px;
     }
-
-    .suggestion-item {
-      padding: 12px;
-      background: #eff6ff;
-      border-left: 4px solid #3b82f6;
-      margin-bottom: 10px;
-      font-size: 0.9rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: 4px;
-    }
-
-    .btn-approve {
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 6px 12px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 0.75rem;
-      transition: 0.2s;
-    }
-    .btn-approve:hover { background: #2563eb; }
+    .alert-item { background: #fef2f2; border-left: 4px solid #ef4444; }
+    .suggestion-item { background: #eff6ff; border-left: 4px solid #3b82f6; }
 
     @media (max-width: 768px) {
       .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
@@ -229,45 +231,25 @@
       .main-content { margin-left: 0; padding: 20px 20px 90px; }
       .action-panel { grid-template-columns: 1fr; }
     }
-    
-    /* Styling to match the existing sidebar theme */
-    .logout-link {
-        color: #f87171 !important; /* A soft red to indicate an exit action */
-        border-left: 4px solid transparent;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        position: relative !important; /* FIX: Added relative to stop overlap */
-    }
-
-    .logout-link:hover {
-        background: #450a0a !important; /* Dark red background on hover */
-        color: #fee2e2 !important;
-        border-left-color: #ef4444;
-    }
-
-    .logout-link span.icon {
-        margin-right: 12px;
-        font-size: 16px;
-    }
 </style>
 </head>
 <body>
 
   <aside class="sidebar">
-  <div class="sidebar-header">
+  <div class="sidebar-header" style="padding-top:20px; margin-left:20px; margin-bottom:20px;">
     <h2>SUBURBAN BREWING</h2>
   </div>
 
-  <div class="nav-section-title" onclick="toggleGroup('grp-system', this)">
-    <span>System</span><span class="chevron">▼</span>
+  <div class="nav-section-title">
+    <span>System</span>
   </div>
-  <div id="grp-system" class="collapsible-content">
+  <div class="collapsible-content">
     <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-      <span class="icon">󰗼</span>
+      <span class="icon" style="margin-right:12px;">󰗼</span>
       <span>Logout of Portal</span>
     </a>
   </div>
-   
+
   <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
     <span>Main Menu</span><span class="chevron">▼</span>
   </div>
