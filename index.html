@@ -427,11 +427,30 @@
 
     // --- ON LOAD ---
     window.addEventListener('DOMContentLoaded', () => {
-      const d = new Date();
-      document.getElementById('current-date').innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      runAllSyncs();
-      setInterval(runAllSyncs, AUTO_REFRESH_MS);
-    });
+    // 1. Greet Employee
+    const userName = sessionStorage.getItem("user_name");
+    const userRole = sessionStorage.getItem("user_role");
+    
+    if (userName) {
+        const headerTitle = document.querySelector('.header span');
+        if (headerTitle) {
+            headerTitle.innerHTML = `Brewing Portal | <strong>Welcome, ${userName}</strong> (${userRole})`;
+        }
+    }
+
+    // 2. Set Current Date
+    const d = new Date();
+    const dateEl = document.getElementById('current-date');
+    if (dateEl) {
+        dateEl.innerText = d.toLocaleDateString('en-US', { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
+    }
+
+    // 3. Start Data Sync
+    runAllSyncs();
+    setInterval(runAllSyncs, AUTO_REFRESH_MS);
+});
 
     function runAllSyncs() {
         console.log("Starting Dashboard Sync...");
