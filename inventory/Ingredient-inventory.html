@@ -34,12 +34,12 @@
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: var(--text-main); font-family: 'Inter', -apple-system, sans-serif; display: flex; min-height: 100vh; }
 
-    /* --- SIDEBAR STYLES --- */
+    /* --- SIDEBAR (Desktop Default) --- */
     .sidebar { 
       width: 260px; background: var(--sidebar); color: #fff; 
       padding: 24px 0; flex-shrink: 0; position: fixed; 
       height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: all 0.3s ease;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
@@ -56,7 +56,7 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 500px; overflow: hidden;
+      max-height: 1000px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
@@ -91,51 +91,55 @@
     .add-card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 32px; border: 1px solid #e2e8f0; border-top: 4px solid var(--accent); }
     .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
     .form-group label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
-    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+    .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 16px; }
     
-    .btn-scan { background: var(--sidebar); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-    .btn-save { background: var(--accent-green); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: 700; }
+    .btn-scan { background: var(--sidebar); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .btn-save { background: var(--accent-green); color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: 700; font-size: 16px; }
     
     /* --- MODAL --- */
     #inventory-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
-    .modal-content { background: white; margin: 5% auto; padding: 30px; width: 90%; max-width: 900px; border-radius: 20px; max-height: 80vh; overflow-y: auto; }
+    .modal-content { background: white; margin: 5% auto; padding: 20px; width: 95%; max-width: 900px; border-radius: 20px; max-height: 85vh; overflow-y: auto; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); padding-bottom: 15px; margin-bottom: 20px; }
-    .inventory-table { width: 100%; border-collapse: collapse; }
+    
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .inventory-table { width: 100%; border-collapse: collapse; min-width: 600px; }
     .inventory-table th { text-align: left; padding: 12px; background: #f8fafc; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
     .inventory-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
     .close-btn { font-size: 28px; cursor: pointer; color: var(--text-muted); }
 
-    /* --- MOBILE LOGIC --- */
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
-      .sidebar h2, .nav-section-header { display: none; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
-      #main-content { margin-left: 0; padding: 20px 20px 90px; }
-      .header-bar h1 { font-size: 20px; }
+    /* ============================================================
+       MOBILE DRAWER & GRID LOGIC 
+       ============================================================ */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
+
+    @media (max-width: 1024px) {
+      .sidebar { left: -260px; z-index: 2001; }
+      .sidebar.open { left: 0; }
+      #main-content { margin-left: 0 !important; padding: 20px; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 65px; height: 65px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 28px; z-index: 2002; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+
+      .header-bar { flex-direction: column; align-items: flex-start; gap: 15px; }
+      .btn-scan { width: 100%; }
+      .inventory-grid { grid-template-columns: 1fr; }
+      .modal-content { margin: 2% auto; width: 98%; height: 96vh; border-radius: 12px; }
     }
-    /* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
-
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
-  </style>
+    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
+</style>
 </head>
 <body>
-
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
@@ -308,198 +312,227 @@
   </div>
 
   <script>
-    // --- SIDEBAR TOGGLE ---
-    function toggleGroup(contentId, headerEl) {
-      const content = document.getElementById(contentId);
-      content.classList.toggle('collapsed');
-      headerEl.classList.toggle('collapsed');
-    }
-
-    // --- INITIALIZE SIDEBAR ---
-    window.addEventListener('DOMContentLoaded', () => {
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) header.classList.remove('collapsed');
-        }
-      }
-    });
-
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxA6EQy6w8k6VSevKLS9Dis0egMQ--k7mHKy9kBJ5u9XsDhk46jDun46w02rs1hcT5iLQ/exec';
     const form = document.getElementById('inventoryForm');
+    let html5QrCode;
 
-    // --- 1. SEND DATA (POST) ---
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const originalText = submitBtn.innerText;
-      submitBtn.innerText = "Syncing with Brewery Sheet...";
-      submitBtn.disabled = true;
+    // --- 1. NAVIGATION & UI LOGIC ---
+    
+    function toggleGroup(contentId, headerEl) {
+        const content = document.getElementById(contentId);
+        content.classList.toggle('collapsed');
+        headerEl.classList.toggle('collapsed');
+    }
 
-      fetch(scriptURL, { 
-        method: 'POST', 
-        body: new FormData(form),
-        mode: 'no-cors' 
-      })
-      .then(() => {
-        alert('Success: Inventory Record Updated!');
-        form.reset();
-        document.getElementById('coa-fields-container').innerHTML = "";
-      })
-      .catch(error => {
-        alert('Connection Error. Check console.');
-        console.error('Error!', error.message);
-      })
-      .finally(() => {
-        submitBtn.innerText = originalText;
-        submitBtn.disabled = false;
-      });
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
+        
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        
+        // Prevent background scrolling on phone while menu is open
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        
+        // Switch icon between Hamburger and X
+        btn.innerText = isOpen ? '✕' : '☰';
+    }
+
+    // Consolidated Initializer
+    window.addEventListener('DOMContentLoaded', () => {
+        // 1. Sidebar Auto-expand active group
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+            const parentGroup = activeLink.closest('.collapsible-content');
+            if (parentGroup) {
+                parentGroup.classList.remove('collapsed');
+                const header = parentGroup.previousElementSibling;
+                if (header) header.classList.remove('collapsed');
+            }
+        }
+
+        // 2. Mobile Link Auto-close Listener
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 1024) {
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar.classList.contains('open')) toggleMobileMenu();
+                }
+            });
+        });
     });
 
-    // --- 2. FETCH DATA (GET) ---
+    // --- 2. DATA SUBMISSION (POST) ---
+    
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerText;
+        submitBtn.innerText = "Syncing with Brewery Sheet...";
+        submitBtn.disabled = true;
+
+        fetch(scriptURL, { 
+            method: 'POST', 
+            body: new FormData(form),
+            mode: 'no-cors' 
+        })
+        .then(() => {
+            alert('Success: Inventory Record Updated!');
+            form.reset();
+            document.getElementById('coa-fields-container').innerHTML = "";
+        })
+        .catch(error => {
+            alert('Connection Error. Check console.');
+            console.error('Error!', error.message);
+        })
+        .finally(() => {
+            submitBtn.innerText = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+
+    // --- 3. DATA FETCHING (GET) ---
+    
     function fetchRealData(cat) {
-      const tbody = document.getElementById('inventory-details-rows');
-      tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Syncing with Suburban API...</td></tr>";
+        const tbody = document.getElementById('inventory-details-rows');
+        tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Syncing with Suburban API...</td></tr>";
 
-      const url = `${scriptURL}?category=${encodeURIComponent(cat)}`;
+        const url = `${scriptURL}?category=${encodeURIComponent(cat)}`;
 
-      fetch(url, {
-        method: "GET",
-        mode: "cors", 
-        redirect: "follow" 
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('API returned status ' + response.status);
-        return response.json();
-      })
-      .then(items => {
-        renderInventoryRows(items);
-      })
-      .catch(err => {
-        console.error("Fetch Error:", err);
-        tbody.innerHTML = `<tr><td colspan='5' style='color:red; text-align:center;'>
-          <strong>SYNC FAILED</strong><br>
-          ${err.message}<br>
-          <small>Ensure Script is deployed as 'Anyone'.</small>
-        </td></tr>`;
-      });
+        fetch(url, {
+            method: "GET",
+            mode: "cors", 
+            redirect: "follow" 
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('API returned status ' + response.status);
+            return response.json();
+        })
+        .then(items => {
+            renderInventoryRows(items);
+        })
+        .catch(err => {
+            console.error("Fetch Error:", err);
+            tbody.innerHTML = `<tr><td colspan='5' style='color:red; text-align:center;'>
+                <strong>SYNC FAILED</strong><br>
+                ${err.message}<br>
+                <small>Ensure Script is deployed as 'Anyone'.</small>
+            </td></tr>`;
+        });
     }
 
     function renderInventoryRows(items) {
-      const tbody = document.getElementById('inventory-details-rows');
-      if (!items || items.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No stock found.</td></tr>";
-        return;
-      }
+        const tbody = document.getElementById('inventory-details-rows');
+        if (!items || items.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No stock found.</td></tr>";
+            return;
+        }
 
-      tbody.innerHTML = items.map((item) => {
-        const specsHtml = Object.entries(item.specs || {})
-          .map(([key, val]) => `
-            <span style="display:inline-block; background:#f1f5f9; border:1px solid #e2e8f0; 
-                        padding:2px 6px; margin:2px; border-radius:4px; font-size:10px; font-weight:600;">
-              <span style="color:var(--accent)">${key.toUpperCase()}:</span> ${val}
-            </span>
-          `).join('');
+        tbody.innerHTML = items.map((item) => {
+            const specsHtml = Object.entries(item.specs || {})
+                .map(([key, val]) => `
+                    <span style="display:inline-block; background:#f1f5f9; border:1px solid #e2e8f0; 
+                                padding:2px 6px; margin:2px; border-radius:4px; font-size:10px; font-weight:600;">
+                        <span style="color:var(--accent)">${key.toUpperCase()}:</span> ${val}
+                    </span>
+                `).join('');
 
-        const lowStockClass = item.isLow ? 'qty-low' : '';
-        const warningLabel = item.isLow ? '<br><small style="color:#ef4444; font-weight:800;">⚠️ REORDER</small>' : '';
+            const lowStockClass = item.isLow ? 'qty-low' : '';
+            const warningLabel = item.isLow ? '<br><small style="color:#ef4444; font-weight:800;">⚠️ REORDER</small>' : '';
 
-        return `
-          <tr>
-            <td>
-              <div style="font-weight:700; color:var(--text-main);">${item.name}</div>
-              <div style="font-size:11px; color:var(--text-muted);">${item.source || ''}</div>
-            </td>
-            <td style="font-family:monospace; font-size:12px;">${item.lot}</td>
-            <td class="${lowStockClass}" style="font-weight:700;">
-              ${item.qty} ${item.unit || ''} ${warningLabel}
-            </td>
-            <td>
-              <div style="display:flex; flex-wrap:wrap; max-width:300px;">
-                ${specsHtml || '<span style="color:#cbd5e1; font-style:italic; font-size:12px;">No specs</span>'}
-              </div>
-            </td>
-            <td>
-              <button class="btn-scan" style="padding:6px 12px; font-size:11px;" onclick="useItemForEntry('${item.name}', '${item.lot}')">SELECT</button>
-            </td>
-          </tr>
-        `;
-      }).join('');
+            return `
+                <tr>
+                    <td>
+                        <div style="font-weight:700; color:var(--text-main);">${item.name}</div>
+                        <div style="font-size:11px; color:var(--text-muted);">${item.source || ''}</div>
+                    </td>
+                    <td style="font-family:monospace; font-size:12px;">${item.lot}</td>
+                    <td class="${lowStockClass}" style="font-weight:700;">
+                        ${item.qty} ${item.unit || ''} ${warningLabel}
+                    </td>
+                    <td>
+                        <div style="display:flex; flex-wrap:wrap; max-width:300px;">
+                            ${specsHtml || '<span style="color:#cbd5e1; font-style:italic; font-size:12px;">No specs</span>'}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-scan" style="padding:6px 12px; font-size:11px;" onclick="useItemForEntry('${item.name}', '${item.lot}')">SELECT</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
-    // --- 3. DYNAMIC FIELD GENERATOR ---
+    // --- 4. FORM DYNAMICS & UTILS ---
+    
     function renderDynamicFields() {
-      const cat = document.getElementById('inv-cat').value;
-      const container = document.getElementById('coa-fields-container');
-      container.innerHTML = ""; 
-      
-      if (cat === "Hops") {
-        container.innerHTML = `
-          <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
-          <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
-          <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
-      } else if (cat === "Malt") {
-        container.innerHTML = `
-          <div class="form-group"><label>Extract %</label><input type="number" step="0.1" name="extract"></div>
-          <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
-          <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
-          <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
-      } else if (cat === "Water") {
-        container.innerHTML = `
-          <div class="form-group"><label>Strength/Purity %</label><input type="number" step="0.01" name="strength" placeholder="e.g. 0.88"></div>
-          <div class="form-group">
-            <label>Unit</label>
-            <select name="unit">
-              <option value="gal">Gallons</option>
-              <option value="lbs">lbs</option>
-              <option value="kg">kg</option>
-              <option value="ml">ml</option>
-            </select>
-          </div>
-          <div class="form-group"><label>COA Notes</label><input type="text" name="notes"></div>`;
-      } else if (cat === "Yeast") {
-        container.innerHTML = `
-          <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
-          <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
-      }
+        const cat = document.getElementById('inv-cat').value;
+        const container = document.getElementById('coa-fields-container');
+        container.innerHTML = ""; 
+        
+        if (cat === "Hops") {
+            container.innerHTML = `
+                <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
+                <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
+                <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
+        } else if (cat === "Malt") {
+            container.innerHTML = `
+                <div class="form-group"><label>Extract %</label><input type="number" step="0.1" name="extract"></div>
+                <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
+                <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
+                <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
+        } else if (cat === "Water") {
+            container.innerHTML = `
+                <div class="form-group"><label>Strength/Purity %</label><input type="number" step="0.01" name="strength" placeholder="e.g. 0.88"></div>
+                <div class="form-group">
+                    <label>Unit</label>
+                    <select name="unit">
+                        <option value="gal">Gallons</option>
+                        <option value="lbs">lbs</option>
+                        <option value="kg">kg</option>
+                        <option value="ml">ml</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>COA Notes</label><input type="text" name="notes"></div>`;
+        } else if (cat === "Yeast") {
+            container.innerHTML = `
+                <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
+                <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
+        }
     }
 
-    // --- 4. UTILS ---
-    let html5QrCode;
     function toggleScanner() {
-      const readerDiv = document.getElementById('reader');
-      if (readerDiv.style.display === 'none') {
-        readerDiv.style.display = 'block';
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-          document.getElementById('inv-lot').value = txt;
-          toggleScanner();
-        });
-      } else {
-        readerDiv.style.display = 'none';
-        if(html5QrCode) html5QrCode.stop();
-      }
+        const readerDiv = document.getElementById('reader');
+        if (readerDiv.style.display === 'none') {
+            readerDiv.style.display = 'block';
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                document.getElementById('inv-lot').value = txt;
+                toggleScanner();
+            });
+        } else {
+            readerDiv.style.display = 'none';
+            if(html5QrCode) html5QrCode.stop();
+        }
     }
 
     function setCategoryAndOpenModal(cat) {
-      document.getElementById('inv-cat').value = cat;
-      renderDynamicFields();
-      document.getElementById('modal-title').innerText = cat + " Stock Control";
-      document.getElementById('inventory-modal').style.display = "block";
-      fetchRealData(cat); 
+        document.getElementById('inv-cat').value = cat;
+        renderDynamicFields();
+        document.getElementById('modal-title').innerText = cat + " Stock Control";
+        document.getElementById('inventory-modal').style.display = "block";
+        fetchRealData(cat); 
     }
 
     function useItemForEntry(name, lot) {
-      document.getElementById('inv-name').value = name;
-      document.getElementById('inv-lot').value = lot;
-      closeModal();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('inv-name').value = name;
+        document.getElementById('inv-lot').value = lot;
+        closeModal();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function closeModal() { document.getElementById('inventory-modal').style.display = "none"; }
-  </script>
+</script>
 </body>
 </html>
