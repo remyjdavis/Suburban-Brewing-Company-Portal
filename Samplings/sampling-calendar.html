@@ -204,136 +204,130 @@
   </main>
 
   <script>
-    // --- SIDEBAR TOGGLE LOGIC ---
+    // --- 1. CORE UI FUNCTIONS (Outside Listeners) ---
+    
     function toggleGroup(contentId, headerEl) {
-      const content = document.getElementById(contentId);
-      content.classList.toggle('collapsed');
-      headerEl.classList.toggle('collapsed');
+        const content = document.getElementById(contentId);
+        content.classList.toggle('collapsed');
+        headerEl.classList.toggle('collapsed');
     }
-// --- MOBILE DRAWER TOGGLE ---
-function toggleMobileMenu() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('menu-overlay');
-    const btn = document.getElementById('menu-toggle');
-    
-    // Toggle the 'open' class for sidebar and 'active' for overlay
-    const isOpen = sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
-    
-    // Prevent the background content from scrolling while menu is open
-    document.body.style.overflow = isOpen ? 'hidden' : '';
-    
-    // Swap icon text between Hamburger and X
-    btn.innerText = isOpen ? '✕' : '☰';
-}
-    // --- CALENDAR LOGIC ---
-    document.addEventListener("DOMContentLoaded", () => {
-  // 1. Sidebar Folder Expansion (Keep active group open)
-  const activeLink = document.querySelector('.nav-link.active');
-  if (activeLink) {
-    const parentGroup = activeLink.closest('.collapsible-content');
-    if (parentGroup) {
-      parentGroup.classList.remove('collapsed');
-      const header = parentGroup.previousElementSibling;
-      if (header) header.classList.remove('collapsed');
-    }
-  }
 
-  // 2. Auto-close Sidebar on Mobile after clicking a link
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-        // If screen is mobile size, trigger the toggle to close drawer
-        if (window.innerWidth <= 1024) {
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar.classList.contains('open')) toggleMobileMenu();
-        }
-    });
-  });
-});
-      const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-      const calendarEl = document.getElementById('calendar');
-      const loader = document.getElementById('loading-overlay');
-
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,listMonth'
-        },
-        themeSystem: 'standard',
-        eventColor: '#2563eb',
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
         
-       events: async function(info, successCallback, failureCallback) {
-  const loader = document.getElementById('loading-overlay');
-  loader.style.display = 'block';
-  
-  try {
-    const response = await fetch(`${API_URL}?action=getSamplingEvents`, { 
-      method: 'GET',
-      mode: 'cors',      // Ensure CORS mode is on
-      redirect: 'follow' // Required for Google Apps Script redirects
-    });
-    
-    const rawEvents = await response.json();
-    
-    // SAFETY CHECK: Prevent ".map is not a function" error
-    if (!Array.isArray(rawEvents)) {
-      console.error("API Error: Expected array, got:", rawEvents);
-      successCallback([]); 
-      loader.style.display = 'none';
-      return;
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        
+        // Prevent background content from scrolling while menu is open
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        
+        // Swap icon text between Hamburger and X
+        btn.innerText = isOpen ? '✕' : '☰';
     }
+
+    // --- 2. INITIALIZATION & CALENDAR LOGIC ---
     
-    const events = rawEvents.map(ev => ({
-      title: ev.name || "Unknown",
-      start: ev.date, 
-      allDay: true,
-      extendedProps: {
-        items: ev.items || "",
-        notes: ev.notes || "",
-        time: ev.time || ""
-      }
-    }));
-    
-    loader.style.display = 'none';
-    successCallback(events);
-  } catch (err) {
-    console.error("Calendar Load Error:", err);
-    loader.innerHTML = "Sync Error";
-    failureCallback(err);
-  }
-},
-
-        eventClick: function(info) {
-          const props = info.event.extendedProps;
-          const details = `
-            CUSTOMER: ${info.event.title}
-            TIME: ${props.time || 'Not Set'}
-
-            PACKING LIST:
-            ${props.items || 'No specific items selected'}
-
-            NOTES:
-            ${props.notes || 'None'}
-          `;
-          alert(details);
+    document.addEventListener("DOMContentLoaded", () => {
+        // A. Sidebar Folder Expansion & Mobile Auto-close
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+            const parentGroup = activeLink.closest('.collapsible-content');
+            if (parentGroup) {
+                parentGroup.classList.remove('collapsed');
+                const header = parentGroup.previousElementSibling;
+                if (header) header.classList.remove('collapsed');
+            }
         }
-      });
 
-      calendar.render();
-      
-      // Initialize Sidebar State (Open Active Group)
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) header.classList.remove('collapsed');
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 1024) {
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar.classList.contains('open')) toggleMobileMenu();
+                }
+            });
+        });
+
+        // B. Calendar Setup
+        const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+        const calendarEl = document.getElementById('calendar');
+        const loader = document.getElementById('loading-overlay');
+
+        // Check if FullCalendar is loaded
+        if (typeof FullCalendar === 'undefined') {
+            console.error("FullCalendar library not loaded.");
+            return;
         }
-      }
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: window.innerWidth < 768 ? 'listMonth' : 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: window.innerWidth < 768 ? 'listMonth,dayGridMonth' : 'dayGridMonth,timeGridWeek,listMonth'
+            },
+            themeSystem: 'standard',
+            eventColor: '#2563eb',
+            
+            events: async function(info, successCallback, failureCallback) {
+                if (loader) loader.style.display = 'block';
+                
+                try {
+                    const response = await fetch(`${API_URL}?action=getSamplingEvents`, { 
+                        method: 'GET',
+                        mode: 'cors',
+                        redirect: 'follow'
+                    });
+                    
+                    const rawEvents = await response.json();
+                    
+                    if (!Array.isArray(rawEvents)) {
+                        console.error("API Error: Expected array, got:", rawEvents);
+                        successCallback([]); 
+                        if (loader) loader.style.display = 'none';
+                        return;
+                    }
+                    
+                    const events = rawEvents.map(ev => ({
+                        title: ev.name || "Unknown",
+                        start: ev.date, 
+                        allDay: true,
+                        extendedProps: {
+                            items: ev.items || "",
+                            notes: ev.notes || "",
+                            time: ev.time || ""
+                        }
+                    }));
+                    
+                    if (loader) loader.style.display = 'none';
+                    successCallback(events);
+                } catch (err) {
+                    console.error("Calendar Load Error:", err);
+                    if (loader) loader.innerHTML = "Sync Error";
+                    failureCallback(err);
+                }
+            },
+
+            eventClick: function(info) {
+                const props = info.event.extendedProps;
+                const details = `
+CUSTOMER: ${info.event.title}
+TIME: ${props.time || 'Not Set'}
+
+PACKING LIST:
+${props.items || 'No specific items selected'}
+
+NOTES:
+${props.notes || 'None'}
+                `;
+                alert(details);
+            }
+        });
+
+        calendar.render();
     });
-  </script>
+</script>
 </body>
 </html>
