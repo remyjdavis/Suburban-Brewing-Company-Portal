@@ -23,18 +23,17 @@
       --accent: #2563eb;
       --text: #1f2937;
     }
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
 
     /* --- SIDEBAR --- */
     .sidebar { 
       width: 240px; background: var(--sidebar); color: #fff; padding: 20px 0; 
       flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; color: #fff; letter-spacing: 1px; }
     
-    /* COLLAPSIBLE HEADERS */
     .nav-section-header {
       font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; 
       font-weight: 700; letter-spacing: 0.5px;
@@ -47,19 +46,18 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 500px; overflow: hidden;
+      max-height: 1000px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    /* LINKS */
     .nav-link { 
       display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
     }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
-    .nav-link.active { border-left: 4px solid var(--accent); }
+    .nav-link.active { border-left-color: var(--accent); }
 
     /* --- MAIN WRAPPER --- */
     .main-wrapper { flex: 1; margin-left: 240px; display: flex; flex-direction: column; min-width: 0; transition: all 0.3s ease; }
@@ -71,7 +69,6 @@
     }
     .logo { height: 60px; }
     .company-name { font-size: 20px; font-weight: 700; }
-    .company-address { font-size: 13px; opacity: 0.9; }
     .header-right { margin-left: auto; text-align: right; font-size: 13px; }
 
     main { padding: 30px; max-width: 1100px; width: 100%; margin: 0 auto; }
@@ -81,48 +78,62 @@
     /* --- FORM & TABLES --- */
     .form-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px; }
     label { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: block; color: #6b7280; }
-    input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
-    input:disabled { background: #f3f4f6; }
+    input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; }
 
-    .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.2s; }
+    .btn { padding: 12px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 700; transition: 0.2s; }
     .btn-primary { background: var(--accent); color: white; }
     .btn-secondary { background: #e5e7eb; color: #374151; }
 
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
     th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; text-align: left; }
     th { background: #f9fafb; color: #6b7280; font-weight: 600; }
     tr.selected { background: #eff6ff; border-left: 4px solid var(--accent); }
-    .preview-box { background: #fafafa; padding: 16px; border-left: 4px solid var(--accent); border-radius: 8px; }
+
+    /* ============================================================
+       MOBILE DRAWER LOGIC
+       ============================================================ */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
     @media (max-width: 1024px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
-      .sidebar h2, .nav-section-header { display: none; }
+      .sidebar { left: -260px; z-index: 10001; }
+      .sidebar.open { left: 0; }
       .main-wrapper { margin-left: 0; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 65px; height: 65px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 28px; z-index: 10002; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+      .app-header { flex-direction: column; text-align: center; }
+      .header-right { display: none; }
     }
-    /* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
+    @media (max-width: 600px) {
+      /* Card-Stacking Table for Mobile Search */
+      table, thead, tbody, th, td, tr { display: block; }
+      thead tr { position: absolute; top: -9999px; left: -9999px; }
+      tr { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; padding: 10px; background: #fff; }
+      td { border: none; position: relative; padding-left: 45%; text-align: right; border-bottom: 1px solid #f1f1f1; display: flex; align-items: center; justify-content: flex-end; min-height: 40px; }
+      td:before { 
+        position: absolute; left: 10px; width: 40%; padding-right: 10px; 
+        content: attr(data-label); font-weight: 800; text-align: left; 
+        font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+      }
+      .btn { width: 100%; margin-bottom: 8px; }
+    }
 
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
-  </style>
+    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
+</style>
 </head>
 <body>
-
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+<div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
@@ -273,7 +284,7 @@
   </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwHgZeSFsMCbj0I4eUHuDxfs9DX6YZBhkzm26dWlWoyRX0EH0v7Csnnqm1unOdbwEjj/exec";
 
 let debounceTimer = null;
 let selectedInvoice = null;
@@ -293,20 +304,38 @@ function toggleGroup(contentId, headerEl) {
   headerEl.classList.toggle('collapsed');
 }
 
-// Initialize Sidebar State
-window.addEventListener('DOMContentLoaded', () => {
-  const activeLink = document.querySelector('.nav-link.active');
-  if (activeLink) {
-    const parentGroup = activeLink.closest('.collapsible-content');
-    if (parentGroup) {
-      parentGroup.classList.remove('collapsed');
-      const header = parentGroup.previousElementSibling;
-      if (header) header.classList.remove('collapsed');
+// --- MOBILE DRAWER TOGGLE ---
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('menu-overlay');
+    const btn = document.getElementById('menu-toggle');
+    const isOpen = sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+    btn.innerText = isOpen ? '✕' : '☰';
+}
+
+// --- INITIALIZE ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Mobile Link Auto-closing logic
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => { if (window.innerWidth <= 1024) toggleMobileMenu(); });
+    });
+
+    // Sidebar Auto-expansion logic
+    const activeLink = document.querySelector('.nav-link.active');
+    if (activeLink) {
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) {
+            parentGroup.classList.remove('collapsed');
+            const header = parentGroup.previousElementSibling;
+            if (header) header.classList.remove('collapsed');
+        }
     }
-  }
 });
 
-// --- INVOICE LOGIC ---
+// --- INVOICE SEARCH LOGIC ---
 function debouncedLoadInvoices() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
@@ -317,7 +346,7 @@ function debouncedLoadInvoices() {
 }
 
 async function loadInvoices(customer) {
-  historyBody.innerHTML = "<tr><td colspan='4'>Loading invoices...</td></tr>";
+  historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Loading invoices...</td></tr>";
 
   try {
     const res = await fetch(`${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`);
@@ -328,24 +357,25 @@ async function loadInvoices(customer) {
     historyBody.innerHTML = "";
 
     if (!invoiceHistory.length) {
-      historyBody.innerHTML = "<tr><td colspan='4'>No invoices found.</td></tr>";
+      historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found.</td></tr>";
       return;
     }
 
     invoiceHistory.forEach(inv => {
       const tr = document.createElement("tr");
+      // ADDED: data-labels for mobile card-stacking view
       tr.innerHTML = `
-        <td>${inv.invoiceNumber}</td>
-        <td>${inv.date}</td>
-        <td>$${Number(inv.total).toFixed(2)}</td>
-        <td><button class="btn btn-secondary" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button></td>
+        <td data-label="Invoice #">${inv.invoiceNumber}</td>
+        <td data-label="Date">${inv.date}</td>
+        <td data-label="Total">$${Number(inv.total).toFixed(2)}</td>
+        <td data-label="Action"><button class="btn btn-secondary" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button></td>
       `;
       historyBody.appendChild(tr);
     });
 
   } catch (err) {
     console.error(err);
-    historyBody.innerHTML = "<tr><td colspan='4'>Failed to load invoices.</td></tr>";
+    historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Failed to load invoices.</td></tr>";
   }
 }
 
@@ -385,7 +415,7 @@ function renderPreview() {
 
   const itemsHtml = selectedInvoice.items.length
     ? selectedInvoice.items.map(item => `
-        <div style="margin-bottom:6px;">
+        <div style="margin-bottom:6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
          ${item.qty} × <strong>${item.product}</strong> (${item.type}) — $${item.lineTotal.toFixed(2)}
         </div>
       `).join("")
@@ -394,15 +424,21 @@ function renderPreview() {
   const deliveryStatus = selectedInvoice.status && String(selectedInvoice.status).trim() === "Delivered" ? "Delivered" : "Undelivered";
 
   previewContent.innerHTML = `
-    <strong>Invoice #:</strong> ${selectedInvoice.invoiceNumber}<br>
-    <strong>Date:</strong> ${selectedInvoice.date}<br>
-    <strong>Status:</strong> ${deliveryStatus}<br>
-    <strong>Total:</strong> $${Number(selectedInvoice.total).toFixed(2)}<br><br>
-    <strong>Items:</strong><br>
-    ${itemsHtml}
+    <div style="line-height: 1.6;">
+        <strong>Invoice #:</strong> ${selectedInvoice.invoiceNumber}<br>
+        <strong>Date:</strong> ${selectedInvoice.date}<br>
+        <strong>Status:</strong> ${deliveryStatus}<br>
+        <strong>Total:</strong> $${Number(selectedInvoice.total).toFixed(2)}<br><br>
+        <strong>Items:</strong><br>
+        <div style="margin-top: 10px;">${itemsHtml}</div>
+    </div>
   `;
 
   previewPanel.style.display = "block";
+  // Smooth scroll to preview on mobile
+  if (window.innerWidth <= 768) {
+      previewPanel.scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
 function editInvoice() {
