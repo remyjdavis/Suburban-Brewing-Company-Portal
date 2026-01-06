@@ -30,19 +30,18 @@
       --text-muted: #6b7280;
     }
 
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow: hidden; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
 
     /* --- SIDEBAR STYLES --- */
     .sidebar { 
       width: 260px; background: var(--sidebar); color: #fff; 
       padding: 24px 0; flex-shrink: 0; position: fixed; 
       height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-    /* SIDEBAR HEADERS */
     .nav-section-title {
       font-size: 11px; text-transform: uppercase; color: #9ca3af; 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
@@ -54,95 +53,102 @@
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
 
-    /* SIDEBAR CONTENT GROUP (Fixed Name Conflict) */
     .nav-group {
-      max-height: 500px; overflow: hidden;
+      max-height: 2000px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
     .nav-group.collapsed { max-height: 0; opacity: 0; }
 
-    /* LINKS */
     .nav-link { 
       display: flex; align-items: center; padding: 10px 24px; 
       color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
-      margin-bottom: 0;
     }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; background: #374151; font-weight: 600; }
 
     /* --- MAIN LAYOUT --- */
-    .main-content { margin-left: 260px; flex-grow: 1; height: 100vh; display: flex; flex-direction: column; width: calc(100% - 260px); transition: all 0.3s ease; }
-    .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
-    .container { padding: 30px; flex-grow: 1; overflow-y: auto; }
+    .main-content { margin-left: 260px; flex-grow: 1; display: flex; flex-direction: column; width: 100%; transition: all 0.3s ease; }
+    .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 900; }
+    .container { padding: 20px; flex-grow: 1; overflow-y: auto; }
     
     /* --- EDITOR STYLES --- */
-    .editor-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 2px solid var(--accent); }
-    
-    /* Editor Accordions (Distinct from Sidebar) */
-    .collapsible-header { background: #f8f9fa; padding: 12px 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: #374151; }
-    .collapsible-content { padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; display: none; background: white; }
+    .editor-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 2px solid var(--accent); }
+    .collapsible-header { background: #f8f9fa; padding: 12px 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: #374151; display: flex; justify-content: space-between; }
+    .collapsible-content { padding: 15px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; display: none; background: white; }
     .collapsible-content.active { display: block; }
     
-    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px; }
-    .ingredient-entry { display: grid; gap: 10px; margin-bottom: 8px; align-items: center; }
-    input, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 15px; }
+    .ingredient-entry { display: grid; gap: 8px; margin-bottom: 12px; align-items: center; background: #f9fafb; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+    input, select { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px; }
     
     /* Calc Bar */
-    .calc-bar { background: #eef2ff; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 20px; align-items: center; justify-content: space-around; }
-    .color-swatch { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #e5e7eb; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .calc-bar { background: #eef2ff; border: 1px solid #c7d2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-around; }
+    .color-swatch { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #e5e7eb; }
     
     /* Buttons */
-    .btn-add-line { background: #f3f4f6; border: 1px solid #d1d5db; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
+    .btn-add-line { background: var(--primary-dark); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
     .btn-save { background: var(--accent-green); color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 25px; }
     .btn-edit { background: var(--accent-orange); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
-    .btn-cancel { background: #6b7280; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
-    .btn-delete { color: #ef4444; background: none; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
-    
-    /* DRY HOP SECTION VISUAL FIX */
-    #dry-hop-wrapper { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; }
-    .dh-toggle-label { display: flex; align-items: center; gap: 10px; font-weight: bold; color: #374151; cursor: pointer; width: auto; }
-    .dh-toggle-label input { width: auto; margin: 0; }
+    .btn-delete { color: #ef4444; background: #fee2e2; border: none; height: 40px; width: 40px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; justify-content: center; align-items: center; }
 
     /* PORTFOLIO LIST */
     .category-group { margin-bottom: 30px; }
     .category-header { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 15px; border-left: 5px solid var(--accent); padding-left: 10px; text-transform: uppercase; }
-    .horizontal-scroll-container { display: flex; gap: 20px; overflow-x: auto; padding: 10px 5px 25px 5px; scrollbar-width: none; cursor: grab; }
-    .horizontal-scroll-container::-webkit-scrollbar { display: none; }
-    .horizontal-scroll-container.active { cursor: grabbing; }
-    .recipe-card { background: white; border-radius: 15px; border: 1px solid #ddd; padding: 25px; min-width: 320px; max-width: 320px; flex-shrink: 0; transition: 0.2s; user-select: none; }
-    .recipe-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .horizontal-scroll-container { display: flex; gap: 20px; overflow-x: auto; padding: 10px 5px 25px 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .recipe-card { background: white; border-radius: 15px; border: 1px solid #ddd; padding: 20px; min-width: 280px; max-width: 280px; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
 
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
-      .sidebar h2, .nav-section-title { display: none; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
-      .main-content { margin-left: 0; width: 100%; padding: 20px 20px 90px; }
+    /* ============================================================
+       MOBILE DRAWER LOGIC 
+       ============================================================ */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
+
+    @media (max-width: 1024px) {
+      .sidebar { left: -260px; z-index: 1001; }
+      .sidebar.open { left: 0; }
+      .main-content { margin-left: 0; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 65px; height: 65px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 28px; z-index: 1002; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+      .header { padding: 10px 20px; }
+      .header span { display: none; } /* Hide "Brewing Portal" text on mobile */
     }
-     /* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
+    @media (max-width: 600px) {
+    /* Stack the ingredient fields vertically for easy thumb-typing */
+    .ingredient-entry { 
+        grid-template-columns: 1fr !important; 
+        gap: 5px;
+        padding: 15px;
+        border: 1px solid #cbd5e1;
+    }
 
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
+    /* Make the delete button full-width at the bottom of the entry */
+    .btn-delete { 
+        width: 100%; 
+        height: 44px; 
+        margin-top: 5px;
+    }
+
+    /* Ensure labels don't disappear in the editor */
+    .input-group label {
+        font-size: 12px;
+    }
 }
-  </style>
+</style>
+  
 </head>
 <body>
-
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+<div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
    <div class="nav-section-title" onclick="toggleGroup('grp-system', this)">
@@ -361,19 +367,29 @@
     headerEl.classList.toggle('collapsed');
   }
 
-  // --- INITIALIZE SIDEBAR ---
-  window.addEventListener('DOMContentLoaded', () => {
-    const activeLink = document.querySelector('.nav-link.active');
-    if (activeLink) {
-      const parentGroup = activeLink.closest('.nav-group');
-      if (parentGroup) {
-        parentGroup.classList.remove('collapsed');
-        const header = parentGroup.previousElementSibling;
-        if (header) header.classList.remove('collapsed');
-      }
-    }
-  });
+  // --- MOBILE DRAWER TOGGLE ---
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('menu-overlay');
+    const btn = document.getElementById('menu-toggle');
+    
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    
+    btn.innerText = sidebar.classList.contains('open') ? '✕' : '☰';
+}
 
+// --- UPDATE YOUR DOMContentLoaded ---
+window.addEventListener('DOMContentLoaded', () => {
+    // Ensure menu auto-closes on link click (mobile)
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) toggleMobileMenu();
+        });
+    });
+
+    loadPageData();
+});
   const RECIPE_API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
   
   let refYeast = [], refGrains = [], refWaterAdditions = [], refHops = [], refBoilMisc = [];
@@ -455,10 +471,15 @@
   function addGrainLine(name='', lbs='', pct='') {
     const div = document.createElement('div');
     div.className = 'ingredient-entry';
-    div.style.gridTemplateColumns = "3fr 1fr 1fr 30px";
-    div.innerHTML = `<input list="grain-list" class="grain-search" placeholder="Malt Name" value="${name}" onchange="calculateStats()"><input type="number" class="grain-weight" placeholder="Lbs" value="${lbs}" onchange="calculateStats()"><input type="text" class="grain-pct" placeholder="%" readonly value="${pct}" style="background:#f9fafb;"><button class="btn-delete" onclick="this.parentElement.remove(); calculateStats()">×</button>`;
+    // Remove the hardcoded gridTemplateColumns so the CSS Media Query can control it
+    div.innerHTML = `
+        <input list="grain-list" class="grain-search" placeholder="Malt Name" value="${name}" onchange="calculateStats()">
+        <input type="number" class="grain-weight" placeholder="Lbs" value="${lbs}" onchange="calculateStats()">
+        <input type="text" class="grain-pct" placeholder="%" readonly value="${pct}" style="background:#f9fafb;">
+        <button class="btn-delete" onclick="this.parentElement.remove(); calculateStats()">×</button>
+    `;
     document.getElementById('grain-container').appendChild(div);
-  }
+}
   
   function addSaltLine(name='', mash='', sparge='', notes='') {
     const div = document.createElement('div');
@@ -479,10 +500,16 @@
   function addBoilLine(name='', aa='', oz='', min='', type='') {
     const div = document.createElement('div');
     div.className = 'ingredient-entry';
-    div.style.gridTemplateColumns = "2fr 1fr 1fr 1fr 1fr 30px";
-    div.innerHTML = `<input list="boil-ingredients-list" class="boil-name" placeholder="Item Name" value="${name}"><input class="boil-aa" type="number" placeholder="AA%" value="${aa}"><input class="boil-oz" type="number" placeholder="Amount" value="${oz}"><input class="boil-min" type="number" placeholder="Min" value="${min}"><input class="boil-type" placeholder="Type" value="${type}"><button class="btn-delete" onclick="this.parentElement.remove()">×</button>`;
+    div.innerHTML = `
+        <input list="boil-ingredients-list" class="boil-name" placeholder="Item Name" value="${name}">
+        <input class="boil-aa" type="number" placeholder="AA%" value="${aa}">
+        <input class="boil-oz" type="number" placeholder="Amount" value="${oz}">
+        <input class="boil-min" type="number" placeholder="Min" value="${min}">
+        <input class="boil-type" placeholder="Type" value="${type}">
+        <button class="btn-delete" onclick="this.parentElement.remove()">×</button>
+    `;
     document.getElementById('boil-container').appendChild(div);
-  }
+}
 
   function addDryHopLine(step='', variety='', aa='', lbs='', day='', temp='') {
     const div = document.createElement('div');
@@ -508,6 +535,9 @@
   function openEditor(mode, name = '', data = null) {
     document.getElementById('recipe-list-view').style.display = 'none';
     document.getElementById('master-editor').style.display = 'block';
+    
+    // Auto-scroll to top so the user sees the start of the editor on mobile
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     
     document.getElementById('grain-container').innerHTML = ''; 
     document.getElementById('salt-container').innerHTML = '';
@@ -567,10 +597,9 @@
         document.getElementById('has-dry-hop').checked = false;
       }
       toggleDryHop();
-      
       calculateStats();
     }
-  }
+}
 
   function closeEditor() {
     document.getElementById('master-editor').style.display = 'none';
