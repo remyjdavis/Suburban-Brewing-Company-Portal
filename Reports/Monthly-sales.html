@@ -5,17 +5,18 @@
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
-
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
     })();
-</script>
+  </script>
   <meta charset="UTF-8" />
   <title>Sales Reports | Suburban Brewing Co.</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <style>
     /* --- SHARED THEME VARIABLES --- */
     :root {
@@ -39,7 +40,6 @@
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; letter-spacing: 1px; }
 
-    /* COLLAPSIBLE HEADERS */
     .nav-section-title {
       font-size: 11px; text-transform: uppercase; color: var(--text-muted); 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
@@ -52,18 +52,16 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 500px; overflow: hidden;
+      max-height: 800px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    /* LINKS */
     .nav-link { 
       display: flex; align-items: center; padding: 10px 24px; 
       color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
-      margin-bottom: 0;
     }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; background: #374151; font-weight: 600; }
@@ -83,67 +81,76 @@
     /* --- GRID --- */
     .report-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; }
     .card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    
+    /* Table Responsive Wrapper */
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 500px; }
     th { text-align: left; font-size: 12px; color: #6b7280; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #f3f4f6; }
     td { padding: 12px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
 
     .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-    .btn { padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; border: none; transition: 0.2s; text-align: center; text-decoration: none; display: block; }
+    .btn { padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; border: none; transition: 0.2s; text-align: center; text-decoration: none; display: block; font-size: 14px; }
     .btn-primary { background: var(--accent); color: white; }
     .btn-secondary { background: #e5e7eb; color: var(--text); }
 
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
-      .sidebar h2, .nav-section-title { display: none; }
-      .nav-link { display: inline-flex; padding: 0 20px; height: 100%; align-items: center; border: none; }
-      .main { margin-left: 0; padding: 20px 20px 90px; }
-      .report-grid { grid-template-columns: 1fr; }
+    /* --- RESPONSIVE HAMBURGER MENU & MOBILE DRAWER --- */
+    #menu-toggle { display: none; }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        left: -260px;
+        z-index: 10001;
+        box-shadow: 10px 0 20px rgba(0,0,0,0.3);
+      }
+      .sidebar.open { left: 0; }
+      .main { margin-left: 0; padding: 20px; }
+
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 60px; height: 60px; background: var(--accent);
+        color: white; border-radius: 50%; justify-content: center;
+        align-items: center; font-size: 24px; z-index: 10002;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; border: none;
+      }
+      
+      .menu-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 10000; backdrop-filter: blur(2px);
+      }
+      .menu-overlay.active { display: block; }
     }
-    /* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 20px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
+    @media (max-width: 768px) {
+      .commission-header { padding: 25px 15px; }
+      .sales-val { font-size: 32px; }
+      .report-grid { grid-template-columns: 1fr; }
+      .card { padding: 15px; }
+      
+      /* Force inputs to be readable without zooming on iPhone */
+      input, select, textarea { font-size: 16px !important; }
+    }
 
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
+    /* System Styling */
+    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
+    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
   </style>
 </head>
 <body>
 
-  <aside class="sidebar">
-    <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-  <span>System</span>
-</div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
+  <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
 
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
+  <aside class="sidebar">
+    <h2>SBC PORTAL</h2>
     
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
-    
+    <div class="nav-section-title"><span>System</span></div>
+    <div class="collapsible-content">
+      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+        <span class="icon">🚪</span> <span>Logout</span>
+      </a>
+    </div>
+
     <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
     </div>
@@ -164,7 +171,7 @@
       <span>Sales</span><span class="chevron">▼</span>
     </div>
     <div id="grp-sales" class="collapsible-content">
-      <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="../sales/sales-opportunities.html" class="nav-link"><span>Opportunities</span></a>
       <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
       <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
       <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
@@ -175,31 +182,16 @@
       <span>Inventory</span><span class="chevron">▼</span>
     </div>
     <div id="grp-inv" class="collapsible-content">
-      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredients</span></a>
       <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-    </div>
-    
-    <div class="nav-section-title" onclick="toggleGroup('grp-brew', this)">
-      <span>Brewing</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-brew" class="collapsible-content">
-      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
-      <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-      <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-      <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-      <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
-      <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
     </div>
     
     <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)">
-      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+      <span>Reporting</span><span class="chevron">▼</span>
     </div>
     <div id="grp-rep" class="collapsible-content">
       <a href="Monthly-sales.html" class="nav-link active"><span>Monthly Sales Report</span></a>
-      <a href="ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
-      <a href="Route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+      <a href="ProfitAnalysis.html" class="nav-link"><span>Profit Analysis</span></a>
     </div>
   </aside>
 
@@ -223,13 +215,14 @@
     <div class="report-grid">
       <div class="card">
         <h3>Current Month Invoices</h3>
-        <table>
-          <thead>
-            <tr><th>Invoice #</th><th>Customer</th><th>Amount</th><th>Status</th></tr>
-          </thead>
-          <tbody id="invoiceList">
-            </tbody>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Invoice #</th><th>Customer</th><th>Amount</th><th>Status</th></tr>
+            </thead>
+            <tbody id="invoiceList"></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card">
@@ -257,8 +250,26 @@
       headerEl.classList.toggle('collapsed');
     }
 
-    // --- INITIALIZE SIDEBAR ---
+    // --- MOBILE DRAWER TOGGLE ---
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        btn.innerText = sidebar.classList.contains('open') ? '✕' : '☰';
+    }
+
+    // --- LOGOUT ---
+    function handleLogout() {
+        sessionStorage.removeItem("sbc_auth");
+        const repoPath = "/Suburban-Brewing-Company-Portal/";
+        window.location.replace(repoPath + "login.html");
+    }
+
+    // --- INITIALIZE ---
     window.addEventListener('DOMContentLoaded', () => {
+      // Auto-open active menu
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -268,7 +279,15 @@
           if (header) header.classList.remove('collapsed');
         }
       }
-      loadData(); // Load Data on DOM Ready
+
+      // Close menu on link click (mobile)
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth <= 1024) toggleMobileMenu();
+        });
+      });
+
+      loadData(); 
     });
 
     const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec"; 
@@ -278,19 +297,14 @@
         const response = await fetch(`${API_URL}?action=getMonthlySalesData`, { redirect: "follow" });
         const data = await response.json();
 
-        // Populate Main Stats
         document.getElementById('grossSales').innerText = `$${data.totalSales.toLocaleString()}`;
         document.getElementById('commissionValue').innerText = `$${data.commission.toLocaleString()}`;
         document.getElementById('currentRate').innerText = `Current Rate: ${data.rate}`;
         
-        // Progress Bar Math
         const currentSales = data.totalSales;
-        const tiers = Math.floor(currentSales / 100000);
         const progressPercent = ((currentSales % 100000) / 100000) * 100;
         document.getElementById('progressFill').style.width = progressPercent + '%';
-        document.getElementById('nextTierLabel').innerText = `Goal: $${((tiers + 1) * 100000).toLocaleString()} (${parseInt(data.rate) + 1}%)`;
 
-        // Populate Table
         const list = document.getElementById('invoiceList');
         list.innerHTML = data.invoices.map(inv => `
           <tr>
