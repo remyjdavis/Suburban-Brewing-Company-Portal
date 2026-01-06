@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
- <script>
-    (function() {
-        const auth = sessionStorage.getItem("sbc_auth");
-        const isLoginPage = window.location.pathname.includes("login.html");
-
-        if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
-            const repoPath = "/Suburban-Brewing-Company-Portal/";
-            window.location.replace(repoPath + "login.html");
-        }
-    })();
-</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Production Schedule | Suburban Brewing Co.</title>
@@ -23,11 +11,10 @@
   <style>
     :root {
       --sidebar-width: 240px;
-      /* Original Sidebar Color */
-      --primary-dark: #0f172a; 
+      --primary-dark: #111827;
       --accent: #2563eb;
-      --bg-light: #f8fafc;
-      --text-main: #1e293b;
+      --bg-light: #f3f4f6;
+      --text-main: #1f2937;
     }
 
     body {
@@ -40,95 +27,42 @@
       color: var(--text-main);
     }
 
-    /* --- SIDEBAR FIX: FORCED VERTICAL FLOW --- */
-    /* This forces every section (System, Main Menu, etc.) to wait for the one above to end */
+    /* --- SIDEBAR --- */
     .sidebar {
-      width: 240px; 
-      background: #0f172a !important; 
-      height: 100vh; 
-      color: white; 
-      display: flex !important;           
-      flex-direction: column !important;  
-      overflow-y: auto; 
-      position: fixed; 
-      z-index: 1000;
-      flex-shrink: 0;
-      padding: 0; /* Remove padding here to prevent the 'push down' effect */
+      width: 240px; background: var(--primary-dark); height: 100vh; color: white; 
+      display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; 
+      position: fixed; z-index: 1000;
+      transition: all 0.3s ease;
     }
     
     .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 800; color: #fff; padding-top: 20px; }
 
-    /* COLLAPSIBLE HEADERS: Position relative stops the 'floating' overlap */
-    nav-section-title {
-      font-size: 11px; 
-      text-transform: uppercase; 
-      color: #9ca3af; 
-      margin: 18px 24px 8px !important; 
-      font-weight: 700; 
-      letter-spacing: 1px; 
-      cursor: pointer; 
-      display: flex !important; /* Force space occupancy */
-      justify-content: space-between; 
-      align-items: center;
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-title {
+      font-size: 11px; text-transform: uppercase; color: #9ca3af; 
+      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
       user-select: none;
-      position: relative !important; /* Prevents floating */
     }
     .nav-section-title:hover { color: #fff; }
 
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
 
-.collapsible-content {
-      max-height: 2500px; 
-      overflow: hidden;
+    .collapsible-content {
+      max-height: 500px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
-      position: relative !important; /* Prevents the 'Main Menu' from sliding up */
-      display: block !important;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
     /* LINKS */
     .nav-link { 
-      display: block; 
-      padding: 10px 24px; 
-      color: #d1d5db; 
-      text-decoration: none; 
-      font-size: 14px; 
-      transition: 0.2s; 
-      border-left: 4px solid transparent;
-      position: relative !important; /* FIX: Standardizes positioning */
+      display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
+      transition: 0.2s; border-left: 4px solid transparent;
     }
-    
-    /* Matching the "Command Center" active state color */
-    .nav-link:hover, .nav-link.active { 
-      background: #1e293b; 
-      color: #fff; 
-    }
-
-    /* LOGOUT BUTTON: Integrated into the vertical stack */
-    .logout-link {
-    color: #f87171 !important; 
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    display: flex !important;
-    align-items: center;
-    position: relative !important; /* Ensures it stays in the vertical stack */
-    width: 100%;
-    box-sizing: border-box;
-}
-
-    .logout-link:hover {
-        background: #450a0a !important; 
-        color: #fee2e2 !important;
-        border-left-color: #ef4444;
-    }
-
-    .logout-link span.icon {
-        margin-right: 12px;
-        font-size: 16px;
-    }
+    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; background: #374151; }
 
     /* --- MAIN CONTENT --- */
     .main-content {
@@ -159,7 +93,12 @@
       font-weight: 600;
     }
 
-    .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    .dot {
+      height: 10px; width: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
 
     /* --- CALENDAR CONTAINER --- */
     #calendar-container {
@@ -217,8 +156,10 @@
       align-items: center;
     }
     
-    .alert-item, .suggestion-item {
+    .alert-item {
       padding: 12px;
+      background: #fef2f2;
+      border-left: 4px solid #ef4444;
       margin-bottom: 10px;
       font-size: 0.9rem;
       display: flex;
@@ -226,8 +167,31 @@
       align-items: center;
       border-radius: 4px;
     }
-    .alert-item { background: #fef2f2; border-left: 4px solid #ef4444; }
-    .suggestion-item { background: #eff6ff; border-left: 4px solid #3b82f6; }
+
+    .suggestion-item {
+      padding: 12px;
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 4px;
+    }
+
+    .btn-approve {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.75rem;
+      transition: 0.2s;
+    }
+    .btn-approve:hover { background: #2563eb; }
 
     @media (max-width: 768px) {
       .sidebar { position: fixed; bottom: 0; top: auto; left: 0; right: 0; height: 60px; width: 100%; display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
@@ -236,84 +200,72 @@
       .main-content { margin-left: 0; padding: 20px 20px 90px; }
       .action-panel { grid-template-columns: 1fr; }
     }
-</style>
+  </style>
 </head>
 <body>
 
   <aside class="sidebar">
-  <div class="sidebar-header" style="padding-top:20px; margin-left:20px; margin-bottom:20px;">
     <h2>SUBURBAN BREWING</h2>
-  </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
+      <span>Main Menu</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-main" class="collapsible-content">
+      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+      <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    </div>
 
-  <div class="nav-section-title">
-    <span>System</span>
-  </div>
-  <div class="collapsible-content">
-    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-      <span class="icon" style="margin-right:12px;">󰗼</span>
-      <span>Logout of Portal</span>
-    </a>
-  </div>
+    <div class="nav-section-title" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="brew-calendar.html" class="nav-link active"><span>Brew Calendar</span></a>
+      <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="../Reports/Route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    </div>
+  </aside>
 
-  <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
-    <span>Main Menu</span><span class="chevron">▼</span>
-  </div>
-  <div id="grp-main" class="collapsible-content">
-    <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-  </div>
-  
-  <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
-    <span>Samplings</span><span class="chevron">▼</span>
-  </div>
-  <div id="grp-sample" class="collapsible-content">
-    <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-    <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-    <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-  </div>
-
-  <div class="nav-section-title" onclick="toggleGroup('grp-sales', this)">
-    <span>Sales</span><span class="chevron">▼</span>
-  </div>
-  <div id="grp-sales" class="collapsible-content">
-    <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
-    <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-    <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-    <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-    <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
-  </div>
-
-  <div class="nav-section-title" onclick="toggleGroup('grp-inv', this)">
-    <span>Inventory</span><span class="chevron">▼</span>
-  </div>
-  <div id="grp-inv" class="collapsible-content">
-    <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-    <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-    <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-    <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-  </div>
-  
-  <div class="nav-section-title" onclick="toggleGroup('grp-brew', this)">
-    <span>Brewing</span><span class="chevron">▼</span>
-  </div>
-  <div id="grp-brew" class="collapsible-content">
-    <a href="brew-calendar.html" class="nav-link active"><span>Brew Calendar</span></a>
-    <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-    <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-    <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
-    <a href="qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
-    <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
-  </div>
-  
-  <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)">
-    <span>Reporting & Analytics</span><span class="chevron">▼</span>
-  </div>
-  <div id="grp-rep" class="collapsible-content">
-    <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-    <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
-    <a href="../Reports/Route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-  </div>
-</aside>
- 
   <main class="main-content">
     <div class="header">
       <div>
@@ -354,10 +306,6 @@
   </main>
 
   <script>
-   function handleLogout() {
-    sessionStorage.removeItem("sbc_auth");
-    window.location.replace("https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/login.html");
-}
     // --- SIDEBAR TOGGLE ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
@@ -450,8 +398,6 @@
       const alertContainer = document.getElementById('alert-list');
       const suggestContainer = document.getElementById('suggestion-list');
       
-      if (!alertContainer || !suggestContainer) return;
-
       alertContainer.innerHTML = "";
       suggestContainer.innerHTML = "";
 
