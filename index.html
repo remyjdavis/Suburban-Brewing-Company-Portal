@@ -273,9 +273,14 @@
 
   <main class="main">
     <header class="header-bar">
-      <h1>Command Center</h1>
+  <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+    <div>
+      <h1 id="portal-title">Command Center</h1>
       <div id="current-date" style="color: var(--text-muted); font-size: 14px; font-weight: 500;"></div>
-    </header>
+    </div>
+    <span id="welcome-target" style="font-weight: 600; color: #6b7280; text-align: right;"></span>
+  </div>
+</header>
 
     <div class="section-heading" onclick="toggleGroup('sect-sales', this)">
       <span>Zone 1: Sales Intelligence</span><span class="chevron">▼</span>
@@ -427,42 +432,31 @@
 
     // --- ON LOAD ---
     window.addEventListener('DOMContentLoaded', () => {
-    // 1. DATA RECOVERY: Check if we have the user info
     const userName = sessionStorage.getItem("user_name");
     const userRole = sessionStorage.getItem("user_role");
     
-    console.log("Logged in user:", userName); // Debug check in F12 console
-
-    if (userName) {
-        // This targets the specific span in your header
-        const headerTitle = document.querySelector('.header span');
-        
-        if (headerTitle) {
-            headerTitle.style.display = "flex";
-            headerTitle.style.alignItems = "center";
-            headerTitle.style.gap = "10px";
-            
-            // Injects the Welcome message alongside the portal title
-            headerTitle.innerHTML = `
-                <span style="color: #6b7280;">Command Center</span>
-                <span style="color: #e5e7eb; margin: 0 10px;">|</span>
-                <span style="color: #1f2937; font-weight: 800;">Welcome, ${userName}</span>
-                <span style="font-size: 0.75rem; background: #eef2ff; color: #4338ca; padding: 2px 8px; border-radius: 12px; margin-left: 5px;">${userRole}</span>
-            `;
-        }
+    // Target our new specific ID
+    const welcomeTarget = document.getElementById('welcome-target');
+    
+    if (userName && welcomeTarget) {
+        welcomeTarget.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                <span style="color: #1f2937; font-weight: 800; font-size: 1.1rem;">Welcome, ${userName}</span>
+                <span style="font-size: 0.75rem; background: #eef2ff; color: #4338ca; padding: 2px 10px; border-radius: 12px; margin-top: 4px; font-weight: bold; text-transform: uppercase;">
+                    ${userRole}
+                </span>
+            </div>
+        `;
     }
 
-    // 2. DATE & SYNC (Preserved)
     const dateEl = document.getElementById('current-date');
     if (dateEl) {
         const d = new Date();
         dateEl.innerText = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     }
     
-    if (typeof runAllSyncs === "function") {
-        runAllSyncs();
-        setInterval(runAllSyncs, 300000);
-    }
+    runAllSyncs();
+    setInterval(runAllSyncs, 300000);
 });
 
     function runAllSyncs() {
