@@ -7,12 +7,11 @@
         const isLoginPage = window.location.pathname.includes("login.html");
 
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
     })();
-</script>
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sales Activity | Suburban Brewing Co.</title>
@@ -137,10 +136,7 @@
 
 <script>
  function handleLogout() {
-    // Clear the authentication session
     sessionStorage.removeItem("sbc_auth");
-    
-    // Redirect to the login page relative to your GitHub repo root
     const repoPath = "/Suburban-Brewing-Company-Portal/";
     window.location.replace(repoPath + "login.html");
 }
@@ -321,16 +317,14 @@
         });
       });
 
-      // 4. Load Customers (SAFE MODE)
+      // 4. Load Customers
       try {
         const resp = await fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" });
         const json = await resp.json();
         
-        // SAFETY CHECK: Extract array from response
         const data = Array.isArray(json) ? json : (json.data || []);
 
         const dl = document.getElementById('customers');
-        // Safely map only if we have data
         if (data.length > 0) {
             const uniqueNames = [...new Set(data.map(item => item.name))];
             uniqueNames.forEach(n => { 
@@ -356,7 +350,7 @@
       checkExisting(); 
     }
 
-    // --- AUTO-FILL LOGIC (FIXED) ---
+    // --- AUTO-FILL LOGIC ---
     async function checkExisting() {
         const nameInput = document.getElementById("name").value.trim();
         if (!nameInput) return;
@@ -365,18 +359,15 @@
             const response = await fetch(`${API_URL}?action=getSalesLeads`); 
             const json = await response.json();
             
-            // 🔴 FIX: Ensure 'leads' is always an array
             let leads = [];
             if (Array.isArray(json)) {
                 leads = json;
             } else if (json.data && Array.isArray(json.data)) {
                 leads = json.data;
             } else {
-                console.warn("API returned unexpected format:", json);
                 return;
             }
 
-            // Now safe to use .find()
             const match = leads.find(l => l.name && l.name.toLowerCase() === nameInput.toLowerCase());
 
             if (match) {
@@ -387,7 +378,6 @@
                 document.getElementById("name").style.borderColor = "#34c759";
                 setVisitType('Follow-up');
                 
-                // Show a helpful toast if found
                 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
                 Toast.fire({ icon: 'success', title: 'Account Found: Info Auto-filled' });
             } else {
@@ -425,13 +415,14 @@
         if (res.success) {
           await Swal.fire({
             title: 'Activity Saved',
-            text: res.nextDate ? `AI Scheduled Follow-up: ${res.nextDate}` : 'Activity Logged Successfully',
+            // SHOW THE AI REASON HERE
+            text: res.nextDate ? `AI Suggested: ${res.nextDate}\nReason: ${res.aiReason}` : 'Activity Logged Successfully',
             icon: 'success',
             confirmButtonColor: '#111827'
           });
 
           if (res.redirect) {
-            window.location.href = "new invoices.html?customer=" + encodeURIComponent(payload.name);
+            window.location.href = "new%20invoices.html?customer=" + encodeURIComponent(payload.name);
           } else {
             location.reload();
           }
@@ -444,6 +435,6 @@
         btn.innerText = "Save Activity & Analyze";
       }
     };
-</script>
+  </script>
 </body>
 </html>
