@@ -260,19 +260,21 @@
 
       <div class="section">
         <h2>Invoice History</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Invoice #</th>
-              <th>Date</th>
-              <th>Total</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="historyBody">
-            <tr><td colspan="4">Search a customer to load invoices.</td></tr>
-          </tbody>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="invoice-history-body">
+              <tr><td colspan="4" style="text-align:center;">Search a customer to load invoices.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="section preview" id="previewPanel" style="display:none;">
@@ -345,38 +347,42 @@ function debouncedLoadInvoices() {
   }, 300);
 }
 
-async function loadInvoices(customerName) {
-    const historyBody = document.getElementById("invoice-history-body"); // Ensure this ID matches your HTML
-    historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Searching...</td></tr>";
+async function loadInvoices(customerNameValue) {
+    const historyBodyElement = document.getElementById("invoice-history-body");
+    
+    // Safety check: if element doesn't exist, stop here
+    if (!historyBodyElement) {
+        console.error("Missing HTML element: invoice-history-body");
+        return;
+    }
+
+    historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Searching...</td></tr>";
 
     try {
-        // 1. Force the URL to be a 'Simple' GET request
-        const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerName)}`;
+        const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerNameValue)}`;
         
-        // 2. Fetch with 'follow' to handle Google's 302 Redirect
         const res = await fetch(url, {
             method: "GET",
-            // We remove 'mode: cors' and let the browser defaults handle the redirect
             redirect: "follow" 
         });
 
-        // 3. Handle the response
         if (!res.ok) throw new Error('Network response was not ok');
         
         const data = await res.json();
         
-        // 4. Clear and Render
-        historyBody.innerHTML = ""; 
+        // IMPORTANT: Store data globally so the 'selectInvoice' function can find it later
+        invoiceHistory = data || []; 
         
-        if (!data || data.length === 0) {
-            historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found.</td></tr>";
+        historyBodyElement.innerHTML = ""; 
+        
+        if (invoiceHistory.length === 0) {
+            historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found.</td></tr>";
             return;
         }
 
-        data.forEach(inv => {
+        invoiceHistory.forEach(inv => {
             const tr = document.createElement("tr");
-            // Standard formatting for dates and currency
-            const dateStr = new Date(inv.date).toLocaleDateString();
+            const dateStr = inv.date ? new Date(inv.date).toLocaleDateString() : "N/A";
             const totalVal = Number(inv.total || 0).toFixed(2);
 
             tr.innerHTML = `
@@ -387,15 +393,14 @@ async function loadInvoices(customerName) {
                     <button class="btn btn-secondary" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button>
                 </td>
             `;
-            historyBody.appendChild(tr);
+            historyBodyElement.appendChild(tr);
         });
 
     } catch (err) {
-        console.error("CORS or Fetch Error:", err);
-        historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Access Denied: Ensure Script is deployed to 'Anyone'.</td></tr>";
+        console.error("Fetch Error:", err);
+        historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Error loading data. Check console.</td></tr>";
     }
 }
-
 async function selectInvoice(invNum, btn) {
   selectedInvoice = invoiceHistory.find(i => i.invoiceNumber === invNum);
   if (!selectedInvoice) return;
