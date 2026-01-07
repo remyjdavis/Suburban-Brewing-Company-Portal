@@ -354,17 +354,18 @@ async function loadInvoices(customerNameValue) {
     historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Searching...</td></tr>";
 
     try {
-        // Construct URL with encoded parameter
         const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerNameValue)}`;
         
-        // Simple GET request is the most stable for Google Apps Script
+        // FIX: We must use a simple GET and allow the redirect to 'follow'
         const res = await fetch(url, {
             method: "GET",
-            // DO NOT use mode: 'cors' here, it often triggers the error you see
+            // DO NOT use mode: "cors" here; it triggers stricter checks that GAS fails.
+            // Leaving it as default or "no-cors" (if you don't need to read the body) 
+            // is safer, but for data, standard fetch with redirect follow is best.
             redirect: "follow" 
         });
 
-        // If you still get a pattern mismatch, it means the script is sending HTML (Login page)
+        // If the browser blocked it, this line won't even run.
         const data = await res.json();
         invoiceHistory = data || []; 
         
@@ -389,8 +390,8 @@ async function loadInvoices(customerNameValue) {
 
     } catch (err) {
         console.error("Fetch Error:", err);
-        // If this displays, the script is likely returning an HTML Login page
-        historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Access Denied. Ensure Script is deployed to 'Anyone'.</td></tr>";
+        // This usually triggers if the script returns HTML (a login page) instead of JSON
+        historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>CORS Blocked: Check Script Deployment Settings.</td></tr>";
     }
 }
 async function selectInvoice(invNum, btn) {
