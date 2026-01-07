@@ -80,7 +80,9 @@
     
     button { padding: 10px 18px; border: none; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; font-weight: 600; }
     button.secondary { background: #e5e7eb; color: #374151; }
-    button.small { padding: 6px 12px; font-size: 12px; }
+    /* Smaller button for adjustment */
+    button.small { padding: 4px 10px; font-size: 11px; border-radius: 4px; }
+    
     input, select { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; }
 
     /* ============================================================
@@ -109,19 +111,21 @@
 
     .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
-/* --- INVENTORY GRID SYSTEM --- */
+
+    /* --- COMPACT INVENTORY GRID SYSTEM --- */
     .inventory-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
+        /* REDUCED Min-Width to 220px to fit more cards */
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px; /* Reduced gap */
         padding-bottom: 40px;
     }
 
     .inv-card {
         background: white;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-radius: 8px; /* Slightly smaller radius */
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         transition: transform 0.2s ease, border-color 0.2s ease;
         display: flex;
         flex-direction: column;
@@ -129,14 +133,14 @@
     }
 
     .inv-card:hover {
-        transform: translateY(-3px);
+        transform: translateY(-2px);
         border-color: var(--accent);
-        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        box-shadow: 0 8px 12px -3px rgba(0,0,0,0.1);
     }
 
     .inv-card-header {
         background: #f8fafc;
-        padding: 12px 16px;
+        padding: 8px 12px; /* COMPACT PADDING */
         border-bottom: 1px solid #e2e8f0;
         display: flex;
         justify-content: space-between;
@@ -146,21 +150,25 @@
     .inv-card-title {
         font-weight: 800;
         color: #1e293b;
-        font-size: 0.95rem;
+        font-size: 0.85rem; /* Smaller font */
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis;
+        max-width: 140px;
     }
 
     .lifecycle-badge {
-        font-size: 10px;
+        font-size: 9px; /* Smaller font */
         text-transform: uppercase;
-        padding: 3px 8px;
-        border-radius: 12px;
+        padding: 2px 6px;
+        border-radius: 8px;
         font-weight: 700;
         background: #e2e8f0;
         color: #64748b;
     }
 
     .inv-card-body {
-        padding: 0 16px;
+        padding: 0 12px; /* COMPACT PADDING */
         flex-grow: 1;
     }
 
@@ -168,34 +176,32 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 10px 0;
+        padding: 6px 0; /* COMPACT PADDING */
         border-bottom: 1px dashed #f1f5f9;
-        font-size: 13px;
+        font-size: 12px; /* Smaller font */
     }
     .inv-row:last-child { border-bottom: none; }
 
-    .pkg-name { display: flex; align-items: center; gap: 8px; color: #475569; font-weight: 500; }
+    .pkg-name { display: flex; align-items: center; gap: 6px; color: #475569; font-weight: 600; }
     
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; }
     .status-ok { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
     .status-low { background: #ef4444; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2); }
 
     .qty-badge {
         background: #f1f5f9;
-        padding: 4px 8px;
-        border-radius: 6px;
+        padding: 2px 6px;
+        border-radius: 4px;
         font-weight: 700;
         color: #0f172a;
-        min-width: 30px;
+        min-width: 24px;
         text-align: center;
+        font-size: 11px;
     }
 
-    .inv-card-footer {
-        padding: 12px 16px;
-        background: #fff;
-        border-top: 1px solid #f1f5f9;
-        text-align: right;
-    }
+    /* Modal Grid Updates */
+    .modal-grid-row { display: grid; grid-template-columns: 80px 1fr 1fr 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
+    .modal-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
   </style>
 </head>
 <body>
@@ -309,38 +315,44 @@
     <div id="productModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:999;">
         <div style="background:#fff; padding:24px; border-radius:8px; width:550px; max-height: 90vh; overflow-y: auto;">
         <h3 style="border:none;">Add Brewery Product</h3>
-        <label>Product Name</label><input id="prodName" placeholder="e.g. Suburban IPA" style="margin-bottom:10px;" />
-        <label>Lifecycle</label>
-        <select id="prodLifecycle" style="margin-bottom:15px;">
-            <option value="Core">Core</option>
-            <option value="Seasonal">Seasonal</option>
-            <option value="Rotating">Rotating</option>
-        </select>
         
+        <div style="margin-bottom: 15px;">
+            <label class="modal-label">Product Name</label>
+            <input id="prodName" placeholder="e.g. Suburban IPA" style="margin-bottom:10px;" />
+        </div>
+        <div style="margin-bottom: 20px;">
+            <label class="modal-label">Lifecycle</label>
+            <select id="prodLifecycle" style="margin-bottom:15px;">
+                <option value="Core">Core</option>
+                <option value="Seasonal">Seasonal</option>
+                <option value="Rotating">Rotating</option>
+            </select>
+        </div>
+
         <div style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
             <div style="display:grid; grid-template-columns: 70px 1fr 1fr 1fr; gap:10px; margin-bottom:5px;">
                 <span></span>
-                <label style="font-size:11px; font-weight:700; color:#64748b;">QTY</label>
-                <label style="font-size:11px; font-weight:700; color:#64748b;">PRICE</label>
-                <label style="font-size:11px; font-weight:700; color:#64748b;">SKU / UPC</label>
+                <label class="modal-label">QTY</label>
+                <label class="modal-label">PRICE</label>
+                <label class="modal-label">SKU / UPC</label>
             </div>
 
-            <div style="display:grid; grid-template-columns: 70px 1fr 1fr 1fr; gap:10px; align-items:center; margin-bottom:10px;">
-                <label style="font-size:12px; font-weight:600;">1/2 BBL</label>
+            <div class="modal-grid-row">
+                <span style="font-size:12px; font-weight:600;">1/2 BBL</span>
                 <input id="halfQty" type="number" placeholder="0" />
                 <input id="halfPrice" type="number" placeholder="0.00" />
                 <input id="halfSku" type="text" placeholder="Optional" />
             </div>
 
-            <div style="display:grid; grid-template-columns: 70px 1fr 1fr 1fr; gap:10px; align-items:center; margin-bottom:10px;">
-                <label style="font-size:12px; font-weight:600;">1/6 BBL</label>
+            <div class="modal-grid-row">
+                <span style="font-size:12px; font-weight:600;">1/6 BBL</span>
                 <input id="sixthQty" type="number" placeholder="0" />
                 <input id="sixthPrice" type="number" placeholder="0.00" />
                 <input id="sixthSku" type="text" placeholder="Optional" />
             </div>
 
-            <div style="display:grid; grid-template-columns: 70px 1fr 1fr 1fr; gap:10px; align-items:center;">
-                <label style="font-size:12px; font-weight:600;">Case</label>
+            <div class="modal-grid-row">
+                <span style="font-size:12px; font-weight:600;">Case</span>
                 <input id="caseQty" type="number" placeholder="0" />
                 <input id="casePrice" type="number" placeholder="0.00" />
                 <input id="caseSku" type="text" placeholder="UPC Code" />
@@ -489,7 +501,7 @@
     }
 
     async function saveProduct() {
-      // 🔴 FIX: Added SKU fields to payload
+      // 🔴 FIX: Added the missing Price and SKU fields to the payload object
       const payload = {
         action: "addBreweryProduct",
         product: document.getElementById("prodName").value,
@@ -508,10 +520,10 @@
         caseSku: document.getElementById("caseSku").value // <--- SKU
       };
       
-      // JSON POST method
+      // JSON POST method (more reliable than URLSearchParams for large data)
       await fetch(API_URL, { 
           method: "POST", 
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload) // Send as JSON string
       });
       
       closeProductModal(); 
