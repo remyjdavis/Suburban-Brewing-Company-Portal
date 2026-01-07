@@ -346,44 +346,54 @@ function debouncedLoadInvoices() {
 }
 
 async function loadInvoices(customerName) {
+    const historyBody = document.getElementById("invoice-history-body"); // Ensure this ID matches your HTML
+    historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Searching...</td></tr>";
+
     try {
+        // 1. Force the URL to be a 'Simple' GET request
         const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerName)}`;
         
+        // 2. Fetch with 'follow' to handle Google's 302 Redirect
         const res = await fetch(url, {
             method: "GET",
-            mode: "cors", // Explicitly ask for CORS
-            redirect: "follow" // CRITICAL: This allows the browser to follow Google's redirect to the data
+            // We remove 'mode: cors' and let the browser defaults handle the redirect
+            redirect: "follow" 
         });
 
-        // Use the global fix we added earlier to ensure it's JSON
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-             console.error("CORS/Auth Error: Received HTML instead of JSON. Check Script Deployment.");
-             return;
+        // 3. Handle the response
+        if (!res.ok) throw new Error('Network response was not ok');
+        
+        const data = await res.json();
+        
+        // 4. Clear and Render
+        historyBody.innerHTML = ""; 
+        
+        if (!data || data.length === 0) {
+            historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found.</td></tr>";
+            return;
         }
 
-        const data = await res.json();
-        renderInvoices(data);
-    } catch (err) {
-        console.error("Fetch Error:", err);
-    }
-}
-    invoiceHistory.forEach(inv => {
-      const tr = document.createElement("tr");
-      // ADDED: data-labels for mobile card-stacking view
-      tr.innerHTML = `
-        <td data-label="Invoice #">${inv.invoiceNumber}</td>
-        <td data-label="Date">${inv.date}</td>
-        <td data-label="Total">$${Number(inv.total).toFixed(2)}</td>
-        <td data-label="Action"><button class="btn btn-secondary" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button></td>
-      `;
-      historyBody.appendChild(tr);
-    });
+        data.forEach(inv => {
+            const tr = document.createElement("tr");
+            // Standard formatting for dates and currency
+            const dateStr = new Date(inv.date).toLocaleDateString();
+            const totalVal = Number(inv.total || 0).toFixed(2);
 
-  } catch (err) {
-    console.error(err);
-    historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Failed to load invoices.</td></tr>";
-  }
+            tr.innerHTML = `
+                <td data-label="Invoice #">${inv.invoiceNumber}</td>
+                <td data-label="Date">${dateStr}</td>
+                <td data-label="Total">$${totalVal}</td>
+                <td data-label="Action">
+                    <button class="btn btn-secondary" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button>
+                </td>
+            `;
+            historyBody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error("CORS or Fetch Error:", err);
+        historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Access Denied: Ensure Script is deployed to 'Anyone'.</td></tr>";
+    }
 }
 
 async function selectInvoice(invNum, btn) {
