@@ -23,14 +23,27 @@
       --text: #1f2937;
     }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+    
+    /* FIX 1: Prevent horizontal scroll causing overlap issues */
+    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
 
-    /* --- SIDEBAR FIX --- */
+    /* --- SIDEBAR --- */
     .sidebar { 
-      width: 240px; background: var(--sidebar); color: #fff; padding: 0; 
-      flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
-      display: flex !important; flex-direction: column !important;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 240px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
+      display: flex !important; 
+      flex-direction: column !important;
+      transition: transform 0.3s ease, left 0.3s ease;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     }
     .sidebar h2 { margin: 24px 20px 10px; font-size: 18px; color: #fff; letter-spacing: 1px; }
     
@@ -57,8 +70,18 @@
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
     .nav-link.active { border-left-color: var(--accent); }
 
-    /* --- MAIN WRAPPER --- */
-    .main-wrapper { flex: 1; margin-left: 240px; display: flex; flex-direction: column; min-width: 0; transition: all 0.3s ease; }
+    /* --- MAIN WRAPPER (FIXED OVERLAP) --- */
+    .main-wrapper { 
+      flex: 1; 
+      margin-left: 240px; 
+      /* FIX 2: Explicitly calculate width to prevent content sliding under sidebar */
+      width: calc(100% - 240px); 
+      display: flex; 
+      flex-direction: column; 
+      min-width: 0; 
+      transition: all 0.3s ease; 
+      position: relative;
+    }
 
     /* --- BLACK HEADER --- */
     .app-header {
@@ -76,7 +99,6 @@
     /* --- FORM & TABLES --- */
     .form-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px; }
     label { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: block; color: #6b7280; }
-    /* Updated Select Styling */
     select, input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; background-color: white; }
 
     .btn { padding: 12px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 700; transition: 0.2s; }
@@ -100,7 +122,10 @@
     @media (max-width: 1024px) {
       .sidebar { left: -260px; z-index: 10001; }
       .sidebar.open { left: 0; }
-      .main-wrapper { margin-left: 0; }
+      
+      /* FIX 3: Reset margins and width on mobile */
+      .main-wrapper { margin-left: 0; width: 100%; } 
+      
       .menu-overlay.active { display: block; }
       
       #menu-toggle {
@@ -318,10 +343,8 @@ function toggleMobileMenu() {
 
 // --- INITIALIZE ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Fetch Customers immediately
     fetchCustomers();
 
-    // 2. Sidebar Logic
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => { if (window.innerWidth <= 1024) toggleMobileMenu(); });
     });
@@ -336,45 +359,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- NEW FUNCTION: FETCH CUSTOMERS ---
+// --- FETCH CUSTOMERS ---
 async function fetchCustomers() {
     try {
         const response = await fetch(`${API_URL}?action=getCustomers`, { redirect: "follow" });
         const data = await response.json();
-
-        // Clear loading message
         customerSelect.innerHTML = '<option value="" disabled selected>Select a Customer</option>';
-
-        // Sort Alphabetically
         data.sort((a, b) => a.name.localeCompare(b.name));
-
         data.forEach(cust => {
             const opt = document.createElement("option");
             opt.value = cust.name; 
             opt.textContent = cust.name;
             customerSelect.appendChild(opt);
         });
-
     } catch (error) {
         console.error('Error fetching customers:', error);
         customerSelect.innerHTML = '<option>Error loading customers</option>';
     }
 }
 
-// --- INVOICE SEARCH LOGIC (Updated for Dropdown) ---
+// --- INVOICE SEARCH LOGIC ---
 async function loadInvoices(customerNameValue) {
     if (!historyBody) return;
-
     historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Searching...</td></tr>";
 
     try {
         const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerNameValue)}`;
-        
-        const res = await fetch(url, {
-            method: "GET",
-            redirect: "follow" 
-        });
-
+        const res = await fetch(url, { method: "GET", redirect: "follow" });
         const data = await res.json();
         invoiceHistory = data || []; 
         
@@ -385,7 +396,6 @@ async function loadInvoices(customerNameValue) {
         }
 
         invoiceHistory.forEach(inv => {
-            // Format Date Helper
             let dateDisplay = inv.date;
             try { dateDisplay = new Date(inv.date).toLocaleDateString(); } catch(e){}
 
@@ -401,7 +411,6 @@ async function loadInvoices(customerNameValue) {
             `;
             historyBody.appendChild(tr);
         });
-
     } catch (err) {
         console.error("Fetch Error:", err);
         historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Error loading invoices.</td></tr>";
@@ -416,17 +425,11 @@ async function selectInvoice(invNum, btn) {
   btn.closest("tr").classList.add("selected");
 
   invoiceNumber.value = selectedInvoice.invoiceNumber || "";
-  
-  // Format Date for Input
   let d = new Date(selectedInvoice.date);
   invoiceDate.value = !isNaN(d) ? d.toLocaleDateString() : selectedInvoice.date;
 
   try {
-    const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`, {
-        method: "GET",
-        redirect: "follow"
-    });
-    
+    const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`, { method: "GET", redirect: "follow" });
     if (!res.ok) throw new Error("Failed to load items");
 
     const items = await res.json();
@@ -442,13 +445,11 @@ async function selectInvoice(invNum, btn) {
     console.error("Failed to load invoice items", err);
     selectedInvoice.items = [];
   }
-
   renderPreview();
 }
 
 function renderPreview() {
   if (!selectedInvoice) return;
-
   const itemsHtml = selectedInvoice.items.length
     ? selectedInvoice.items.map(item => `
         <div style="margin-bottom:6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
@@ -456,10 +457,7 @@ function renderPreview() {
         </div>
       `).join("")
     : "<em>No line items found.</em>";
-    
   const deliveryStatus = selectedInvoice.status && String(selectedInvoice.status).trim() === "Delivered" ? "Delivered" : "Undelivered";
-  
-  // Date formatting for preview
   let d = new Date(selectedInvoice.date);
   const dateStr = !isNaN(d) ? d.toLocaleDateString() : selectedInvoice.date;
 
@@ -473,11 +471,8 @@ function renderPreview() {
         <div style="margin-top: 10px;">${itemsHtml}</div>
     </div>
   `;
-
   previewPanel.style.display = "block";
-  if (window.innerWidth <= 768) {
-      previewPanel.scrollIntoView({ behavior: 'smooth' });
-  }
+  if (window.innerWidth <= 768) previewPanel.scrollIntoView({ behavior: 'smooth' });
 }
 
 function editInvoice() {
