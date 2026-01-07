@@ -349,32 +349,26 @@ function debouncedLoadInvoices() {
 
 async function loadInvoices(customerNameValue) {
     const historyBodyElement = document.getElementById("invoice-history-body");
-    
-    // Safety check: if element doesn't exist, stop here
-    if (!historyBodyElement) {
-        console.error("Missing HTML element: invoice-history-body");
-        return;
-    }
+    if (!historyBodyElement) return;
 
     historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Searching...</td></tr>";
 
     try {
+        // Construct URL with encoded parameter
         const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerNameValue)}`;
         
+        // Simple GET request is the most stable for Google Apps Script
         const res = await fetch(url, {
             method: "GET",
+            // DO NOT use mode: 'cors' here, it often triggers the error you see
             redirect: "follow" 
         });
 
-        if (!res.ok) throw new Error('Network response was not ok');
-        
+        // If you still get a pattern mismatch, it means the script is sending HTML (Login page)
         const data = await res.json();
-        
-        // IMPORTANT: Store data globally so the 'selectInvoice' function can find it later
         invoiceHistory = data || []; 
         
         historyBodyElement.innerHTML = ""; 
-        
         if (invoiceHistory.length === 0) {
             historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found.</td></tr>";
             return;
@@ -382,13 +376,10 @@ async function loadInvoices(customerNameValue) {
 
         invoiceHistory.forEach(inv => {
             const tr = document.createElement("tr");
-            const dateStr = inv.date ? new Date(inv.date).toLocaleDateString() : "N/A";
-            const totalVal = Number(inv.total || 0).toFixed(2);
-
             tr.innerHTML = `
                 <td data-label="Invoice #">${inv.invoiceNumber}</td>
-                <td data-label="Date">${dateStr}</td>
-                <td data-label="Total">$${totalVal}</td>
+                <td data-label="Date">${inv.date}</td>
+                <td data-label="Total">$${Number(inv.total || 0).toFixed(2)}</td>
                 <td data-label="Action">
                     <button class="btn btn-secondary" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button>
                 </td>
@@ -398,7 +389,8 @@ async function loadInvoices(customerNameValue) {
 
     } catch (err) {
         console.error("Fetch Error:", err);
-        historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Error loading data. Check console.</td></tr>";
+        // If this displays, the script is likely returning an HTML Login page
+        historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Access Denied. Ensure Script is deployed to 'Anyone'.</td></tr>";
     }
 }
 async function selectInvoice(invNum, btn) {
