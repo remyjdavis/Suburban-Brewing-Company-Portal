@@ -307,23 +307,46 @@
     </section>
 
     <div id="productModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:999;">
-        <div style="background:#fff; padding:24px; border-radius:8px; width:480px; max-height: 90vh; overflow-y: auto;">
+        <div style="background:#fff; padding:24px; border-radius:8px; width:550px; max-height: 90vh; overflow-y: auto;">
         <h3 style="border:none;">Add Brewery Product</h3>
-        <label>Product Name</label><input id="prodName" placeholder="e.g. Suburban IPA" />
+        <label>Product Name</label><input id="prodName" placeholder="e.g. Suburban IPA" style="margin-bottom:10px;" />
         <label>Lifecycle</label>
-        <select id="prodLifecycle">
+        <select id="prodLifecycle" style="margin-bottom:15px;">
             <option value="Core">Core</option>
             <option value="Seasonal">Seasonal</option>
             <option value="Rotating">Rotating</option>
         </select>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:10px;">
-            <div><label>1/2 Keg Qty</label><input id="halfQty" type="number" /></div>
-            <div><label>1/2 Keg Price</label><input id="halfPrice" type="number" /></div>
-            <div><label>1/6 Keg Qty</label><input id="sixthQty" type="number" /></div>
-            <div><label>1/6 Keg Price</label><input id="sixthPrice" type="number" /></div>
-            <div><label>Case Qty</label><input id="caseQty" type="number" /></div>
-            <div><label>Case Price</label><input id="casePrice" type="number" /></div>
+        
+        <div style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
+            <div style="display:grid; grid-template-columns: 70px 1fr 1fr 1fr; gap:10px; margin-bottom:5px;">
+                <span></span>
+                <label style="font-size:11px; font-weight:700; color:#64748b;">QTY</label>
+                <label style="font-size:11px; font-weight:700; color:#64748b;">PRICE</label>
+                <label style="font-size:11px; font-weight:700; color:#64748b;">SKU / UPC</label>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 70px 1fr 1fr 1fr; gap:10px; align-items:center; margin-bottom:10px;">
+                <label style="font-size:12px; font-weight:600;">1/2 BBL</label>
+                <input id="halfQty" type="number" placeholder="0" />
+                <input id="halfPrice" type="number" placeholder="0.00" />
+                <input id="halfSku" type="text" placeholder="Optional" />
+            </div>
+
+            <div style="display:grid; grid-template-columns: 70px 1fr 1fr 1fr; gap:10px; align-items:center; margin-bottom:10px;">
+                <label style="font-size:12px; font-weight:600;">1/6 BBL</label>
+                <input id="sixthQty" type="number" placeholder="0" />
+                <input id="sixthPrice" type="number" placeholder="0.00" />
+                <input id="sixthSku" type="text" placeholder="Optional" />
+            </div>
+
+            <div style="display:grid; grid-template-columns: 70px 1fr 1fr 1fr; gap:10px; align-items:center;">
+                <label style="font-size:12px; font-weight:600;">Case</label>
+                <input id="caseQty" type="number" placeholder="0" />
+                <input id="casePrice" type="number" placeholder="0.00" />
+                <input id="caseSku" type="text" placeholder="UPC Code" />
+            </div>
         </div>
+
         <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
             <button class="secondary" onclick="closeProductModal()">Cancel</button>
             <button onclick="saveProduct()">Save Product</button>
@@ -466,23 +489,29 @@
     }
 
     async function saveProduct() {
-      // 🔴 FIX: Added the missing Price fields to the payload object
+      // 🔴 FIX: Added SKU fields to payload
       const payload = {
         action: "addBreweryProduct",
         product: document.getElementById("prodName").value,
         lifecycle: document.getElementById("prodLifecycle").value,
+        
         halfKegQty: document.getElementById("halfQty").value,
-        halfKegPrice: document.getElementById("halfPrice").value, // <--- ADDED
+        halfKegPrice: document.getElementById("halfPrice").value,
+        halfSku: document.getElementById("halfSku").value, // <--- SKU
+
         sixthKegQty: document.getElementById("sixthQty").value,
-        sixthKegPrice: document.getElementById("sixthPrice").value, // <--- ADDED
+        sixthKegPrice: document.getElementById("sixthPrice").value,
+        sixthSku: document.getElementById("sixthSku").value, // <--- SKU
+
         caseQty: document.getElementById("caseQty").value,
-        casePrice: document.getElementById("casePrice").value // <--- ADDED
+        casePrice: document.getElementById("casePrice").value,
+        caseSku: document.getElementById("caseSku").value // <--- SKU
       };
       
-      // JSON POST method (more reliable than URLSearchParams for large data)
+      // JSON POST method
       await fetch(API_URL, { 
           method: "POST", 
-          body: JSON.stringify(payload) // Send as JSON string
+          body: JSON.stringify(payload)
       });
       
       closeProductModal(); 
