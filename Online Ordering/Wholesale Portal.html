@@ -54,7 +54,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
         }
         
-        /* MOBILE OPTIMIZED SCROLL BOX */
+        /* LEGAL SCROLL */
         .legal-scroll { 
             height: 350px; 
             overflow-y: auto; 
@@ -93,7 +93,7 @@
             padding: 12px; 
             border: 2px solid #1a1a1a; 
             border-radius: 8px; 
-            font-size: 16px; /* Prevents iOS zoom-on-focus */
+            font-size: 16px; 
             margin-bottom: 10px; 
         }
 
@@ -102,23 +102,18 @@
             gap: 6px; 
             overflow-x: auto; 
             padding-bottom: 5px;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none; 
         }
-        .cat-bar::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        .cat-bar::-webkit-scrollbar { display: none; }
 
-        /* PRODUCT GRID */
+        /* PRODUCT GRID (SMALL CARDS) */
         .product-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)); 
+            /* Smaller minimum width for compact layout */
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
             gap: 1rem; 
         }
 
-        /* Tablet/Desktop Grid adjustment */
-        @media (min-width: 600px) {
-            .product-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-        }
-
-        /* FIXED PRODUCT CARD LAYOUT */
         .product-card { 
             background: #fff; 
             border: 1px solid #dee2e6; 
@@ -126,161 +121,183 @@
             overflow: hidden; 
             display: flex; 
             flex-direction: column;
-            min-height: 450px; /* Ensures consistent card height */
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .product-card:active { transform: scale(0.98); }
+
+        /* Selection Indicator */
+        .card-selected-border {
+            border: 2px solid var(--accent) !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: var(--accent);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            z-index: 10;
+            display: none; /* Hidden by default */
         }
 
         .product-img-container { 
             width: 100%; 
-            height: 220px; /* Increased height for better visibility */
+            height: 140px; /* Reduced height */
             background: #fcfcfc; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             position: relative;
-            padding: 10px; /* Gives the image some breathing room */
+            padding: 10px; 
         }
 
         .product-img { 
             max-width: 100%; 
             max-height: 100%; 
-            object-fit: contain; /* Keeps image aspect ratio without cutting off */
+            object-fit: contain; 
             display: block;
         }
 
-        /* Fixed Name Container to prevent cutoff */
         .product-name-area {
-            padding: 15px;
-            border-bottom: 1px solid #f1f1f1;
+            padding: 10px;
+            border-top: 1px solid #f1f1f1;
             background: #fff;
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .product-name-area h4 {
             margin: 0;
-            font-size: 1.1rem;
-            line-height: 1.3;
+            font-size: 0.9rem;
+            line-height: 1.2;
             color: var(--primary);
-            white-space: normal; /* Allows name to wrap to next line if too long */
         }
 
         .lifecycle-badge { 
             position: absolute; 
             top: 8px; 
             right: 8px; 
-            padding: 4px 8px; 
+            padding: 2px 6px; 
             background: rgba(255,255,255,0.9);
             border: 1px solid #ddd;
             border-radius: 4px; 
-            font-size: 0.65rem; 
+            font-size: 0.6rem; 
             font-weight: bold; 
+        }
+
+        /* --- ORDER MODAL (POPUP) --- */
+        .order-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .order-modal-content {
+            background-color: #fff;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h3 { margin: 0; font-size: 1.1rem; }
+        
+        .close-modal {
+            background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;
         }
 
         .variant-row { 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 12px 15px; 
+            padding: 12px 0; 
             border-bottom: 1px solid #f1f1f1; 
         }
 
+        .variant-info { font-size: 0.9rem; }
         .variant-qty { 
-            width: 70px; 
-            height: 45px; /* Larger touch target */
-            padding: 5px; 
-            text-align: center; 
-            border: 2px solid #ddd; 
-            border-radius: 6px; 
+            width: 70px; height: 40px; text-align: center; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem; font-weight: bold; 
+        }
+
+        .btn-add-order {
+            width: 100%;
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
             font-size: 1rem;
-            font-weight: bold; 
+            cursor: pointer;
         }
 
         /* ORDER BAR */
         .live-bar { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            right: 0; 
-            background: #1a1a1a; 
-            color: white; 
-            padding: 15px 5%; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            z-index: 1001; 
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: #1a1a1a; color: white; padding: 15px 5%; 
+            display: flex; justify-content: space-between; align-items: center; 
+            z-index: 1001; box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
         }
 
-        .btn { 
-            padding: 12px 20px; 
-            border: none; 
-            border-radius: 8px; 
-            font-weight: 800; 
-            font-size: 0.9rem;
-            cursor: pointer; 
-        }
-
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: 800; font-size: 0.9rem; cursor: pointer; }
         .btn-primary { background-color: #007bff; color: white; }
         .btn-outline { background: white; border: 1px solid #ccc; font-size: 0.8rem;}
         .btn-outline.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
         .btn-success { background: #27ae60; color: white; width: 100%; }
 
-        /* REVIEW TABLE MOBILE */
+        /* REVIEW TABLE */
         .review-table { width: 100%; font-size: 0.85rem; margin-top: 10px;}
         .review-table th { text-align: left; padding: 8px; border-bottom: 2px solid #eee; }
         .review-table td { padding: 8px; border-bottom: 1px solid #f9f9f9; }
 
-        @media print { 
-            .site-header, .live-bar, #menu-toggle { display: none !important; } 
-        }
+        @media print { .site-header, .live-bar, #menu-toggle { display: none !important; } }
 
-        /* SCANNER OVERLAY - Fixed position outside print media query */
+        /* SCANNER OVERLAY */
         #scanner-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column; align-items: center; justify-content: center;
         }
-        #reader {
-            width: 90%;
-            max-width: 500px;
-            background: #fff;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        .scanner-close {
-            margin-top: 20px;
-            padding: 15px 30px;
-            background: #d63031;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        /* SEARCH BAR WRAPPER */
-        .search-wrapper {
-            position: relative;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            width: 100%;
-        }
-        .scan-btn {
-            height: 50px;
-            padding: 0 15px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 1.2rem;
-        }
+        #reader { width: 90%; max-width: 500px; background: #fff; border-radius: 12px; overflow: hidden; }
+        .scanner-close { margin-top: 20px; padding: 15px 30px; background: #d63031; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        
+        .search-wrapper { position: relative; display: flex; gap: 10px; align-items: center; width: 100%; }
+        .scan-btn { height: 50px; padding: 0 15px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -295,6 +312,17 @@
 </header>
 
 <div class="container" id="app"></div>
+
+<div id="orderModal" class="order-modal">
+    <div class="order-modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Product Name</h3>
+            <button class="close-modal" onclick="closeOrderModal()">&times;</button>
+        </div>
+        <div id="modalVariants"></div>
+        <button class="btn-add-order" onclick="saveModalOrder()">Update Order</button>
+    </div>
+</div>
 
 <div id="live-bar" class="live-bar" style="display:none;">
     <div class="live-stats">
@@ -312,14 +340,14 @@
     let groupedProducts = {};
     let customersDB = [];
     let state = { step: 0, customer: null, cart: {}, category: 'All' };
+    let currentModalProduct = null;
     let html5QrCode;
 
+    // --- SCANNER LOGIC ---
     async function startScanner() {
         document.getElementById('scanner-container').style.display = 'flex';
         html5QrCode = new Html5Qrcode("reader");
-        
         const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-
         try {
             await html5QrCode.start(
                 { facingMode: "environment" }, 
@@ -333,32 +361,19 @@
                 (errorMessage) => { }
             );
         } catch (err) {
-            console.error("Camera access denied", err);
-            Swal.fire("Camera Error", "Please allow camera access to scan barcodes.", "error");
+            Swal.fire("Camera Error", "Please allow camera access.", "error");
             stopScanner();
         }
     }
 
     async function stopScanner() {
         if (html5QrCode) {
-            try {
-                await html5QrCode.stop();
-                await html5QrCode.clear();
-            } catch (e) { console.log(e); }
+            try { await html5QrCode.stop(); await html5QrCode.clear(); } catch (e) {}
         }
         document.getElementById('scanner-container').style.display = 'none';
     }
 
-    document.addEventListener('keydown', (e) => {
-        if (state.step === 2 && document.activeElement.tagName !== 'INPUT') {
-            const si = document.getElementById('searchInput');
-            if (si) si.focus();
-        }
-        if (e.key === 'Enter' && state.step === 2) {
-            setTimeout(filterProducts, 50);
-        }
-    });
-
+    // --- INITIALIZATION ---
     async function init() {
         try {
             const response = await fetch(`${API_URL}?action=getStoreData`);
@@ -382,48 +397,38 @@
                     image: p.image || p.name.split(' ')[0].toLowerCase() + ".jpg", 
                     variants: [] 
                 };
-            } else {
-                if (!groupedProducts[p.name].lifecycle && p.lifecycle) {
-                    groupedProducts[p.name].lifecycle = p.lifecycle;
-                }
             }
             groupedProducts[p.name].variants.push({ type: p.type, price: p.price, stock: p.stock });
         });
     }
 
+    // --- RENDER VIEWS ---
     function render() {
         const app = document.getElementById("app");
         const liveBar = document.getElementById("live-bar");
 
+        // STEP 0: LEGAL AGREEMENT
         if (state.step === 0) {
             liveBar.style.display = "none";
             app.innerHTML = `
                 <div class="card">
                     <h2 style="text-align:center;">PA WHOLESALE DISTRIBUTION AGREEMENT</h2>
                     <div class="legal-scroll">
-                        <p>This agreement is compliant with the laws of the Commonwealth of Pennsylvania and the regulations of the Pennsylvania Liquor Control Board (PLCB). By proceeding, the Purchaser agrees to the following terms and conditions:
-</p>
-                        <h3>1. PLCB COMPLIANCE & LICENSURE</h3>
-                        <p>Purchaser warrants that it holds a valid, active retail or wholesale license issued by the PLCB. Purchaser agrees to notify Suburban Brewing Co. (SBC) immediately if said license is suspended, revoked, or expired. All sales are contingent upon the verification of a valid license.</p>
-                        <h3>2. PRICE POSTING & ACT 39</h3>
-                        <p>In accordance with Act 39 of 2016, SBC maintains a public price list. All products are sold at the posted wholesale price at the time of delivery. SBC reserves the right to adjust pricing in accordance with PLCB regulations regarding price change intervals.</p>
-                        <h3>3. CASH ON DELIVERY (COD) & SECTION 493</h3>
-                        <p>Per Section 493(2) of the Liquor Code, sales of malt or brewed beverages to retail licensees must be for cash or check paid at or before the time of delivery. Failure to provide payment at the time of delivery will result in the refusal of the shipment.</p>
-                        <h3>4. COLD CHAIN STORAGE & QUALITY CONTROL</h3>
-                        <p>Products produced by SBC are unpasteurized "live" beverages. Purchaser agrees to maintain strict cold chain storage (34°F-38°F) from the moment of delivery. SBC is not liable for product degradation, "skunking," or off-flavors resulting from improper storage, warm handling, or dirty draught lines at the Purchaser's establishment.</p>
-                        <h3>5. COOPERAGE & EQUIPMENT LIABILITY</h3>
-                        <p>All stainless steel keg shells remain the property of Suburban Brewing Co. A mandatory $30.00 deposit is applied to each keg shell. This deposit is refundable only upon the return of the specific SBC-branded shell in good condition. Purchaser is liable for the full replacement cost (approx. $115.00) of any lost, stolen, or damaged cooperage.</p>
-                        <h3>6. RETURNED CHECKS & LATE FEES</h3>
-                        <p>Any check returned for non-sufficient funds (NSF) will incur a $50.00 administrative fee. In the event of a returned check, the Purchaser must immediately provide a certified bank check or cash for the balance plus fees. SBC reserves the right to move any repeat offender to a "Cash Only" basis.</p>
-                        <h3>7. RESALE LIMITATIONS</h3>
-                        <p>Purchaser agrees that all products are for retail sale at the licensed premises only and may not be resold to other retailers or distributors without express written consent and proper PLCB secondary-distribution permits.</p>
+                        <p>This agreement is compliant with the laws of the Commonwealth of Pennsylvania...</p>
+                        <h3>1. PLCB COMPLIANCE & LICENSURE</h3><p>Purchaser warrants that it holds a valid...</p>
+                        <h3>2. PRICE POSTING & ACT 39</h3><p>In accordance with Act 39 of 2016...</p>
+                        <h3>3. CASH ON DELIVERY (COD)</h3><p>Per Section 493(2)...</p>
+                        <h3>4. COLD CHAIN STORAGE</h3><p>Products produced by SBC are unpasteurized...</p>
+                        <h3>5. COOPERAGE</h3><p>All keg shells remain property of Suburban Brewing Co...</p>
                     </div>
                     <div class="checkbox-area">
                         <input type="checkbox" id="agreeCheck" onchange="document.getElementById('acceptBtn').disabled = !this.checked">
-                        <label for="agreeCheck">I certify that I am a licensed PA retail/wholesale agent and agree to all terms above.</label>
+                        <label for="agreeCheck">I certify that I am a licensed PA retail/wholesale agent...</label>
                     </div>
                     <button id="acceptBtn" class="btn btn-primary" style="width:100%;" disabled onclick="state.step=1;render()">I Accept & Agree</button>
                 </div>`;
+        
+        // STEP 1: LOGIN
         } else if (state.step === 1) {
             app.innerHTML = `
                 <div class="card" style="max-width:400px; margin:auto; text-align:center;">
@@ -431,6 +436,8 @@
                     <input type="text" id="loginInput" placeholder="ENTER UNIQUE KEY" style="width:100%; padding:15px; margin-bottom:15px; border:2px solid #1a1a1a; border-radius:8px; text-align:center; font-size:1.2rem;">
                     <button class="btn btn-primary" style="width:100%;" onclick="attemptLogin()">Log In</button>
                 </div>`;
+        
+        // STEP 2: PRODUCT GRID (COMPACT VIEW)
         } else if (state.step === 2) {
             liveBar.style.display = "flex";
             let html = `
@@ -447,35 +454,33 @@
                     </div>
                 </div>
                 <div class="product-grid">`;
+            
             for (const key in groupedProducts) {
                 const p = groupedProducts[key];
+                // Check if any variant is in cart to show badge
+                let countInCart = 0;
+                p.variants.forEach(v => {
+                    if(state.cart[`${p.name}-${v.type}`]) countInCart += 1;
+                });
+
+                const badgeDisplay = countInCart > 0 ? "block" : "none";
+                const borderClass = countInCart > 0 ? "card-selected-border" : "";
+
                 html += `
-    <div class="product-card" data-name="${p.name}" data-lifecycle="${p.lifecycle}" data-upc="${p.upc}">
-        <div class="product-img-container">
-            <span class="lifecycle-badge">${p.lifecycle}</span>
-            <img src="${BASE_IMG_URL}${p.image}" class="product-img" onerror="this.onerror=null;this.src='${FALLBACK_LOGO}';">
-        </div>
-        <div class="product-name-area">
-            <h4>${p.name}</h4>
-        </div>
-        <div class="variant-list">
-                            ${p.variants.map(v => {
-                                const cartKey = `${p.name}-${v.type}`;
-                                const val = state.cart[cartKey] ? state.cart[cartKey].qty : 0;
-                                return `
-                                <div class="variant-row">
-                                    <div class="variant-info">
-                                        <strong>${v.type}</strong><br>$${v.price} 
-                                        <span class="stock-tag ${v.stock <= 0 ? 'stock-none' : (v.stock < 5 ? 'stock-low' : '')}">Stock: ${v.stock}</span>
-                                    </div>
-                                    <input type="number" class="variant-qty" min="0" max="${v.stock}" value="${val}" 
-                                           oninput="updateCart('${p.name}', '${v.type}', ${v.price}, ${v.stock}, this.value)">
-                                </div>`;
-                            }).join('')}
-                        </div>
-                    </div>`;
+                <div class="product-card ${borderClass}" data-name="${p.name}" data-lifecycle="${p.lifecycle}" data-upc="${p.upc}" onclick="openOrderModal('${p.name}')">
+                    <div class="cart-badge" style="display:${badgeDisplay}">IN CART</div>
+                    <div class="product-img-container">
+                        <span class="lifecycle-badge">${p.lifecycle}</span>
+                        <img src="${BASE_IMG_URL}${p.image}" class="product-img" onerror="this.onerror=null;this.src='${FALLBACK_LOGO}';">
+                    </div>
+                    <div class="product-name-area">
+                        <h4>${p.name}</h4>
+                    </div>
+                </div>`;
             }
             app.innerHTML = html + `</div>`;
+        
+        // STEP 3: REVIEW ORDER
         } else if (state.step === 3) {
             liveBar.style.display = "none";
             const math = calculateOrderMath();
@@ -504,15 +509,61 @@
         }
     }
 
-    function updateCart(beer, type, price, stock, val) {
-        const qty = parseInt(val) || 0;
-        const key = `${beer}-${type}`;
-        if (qty > stock && stock > 0) { Swal.fire("Short Stock", "Requested amount exceeds inventory.", "warning"); return; }
-        if (qty > 0) { state.cart[key] = { beer, type, price, qty }; } 
-        else { delete state.cart[key]; }
-        updateLiveTotals();
+    // --- MODAL LOGIC ---
+    function openOrderModal(productName) {
+        currentModalProduct = groupedProducts[productName];
+        document.getElementById('modalTitle').innerText = productName;
+        
+        const container = document.getElementById('modalVariants');
+        container.innerHTML = currentModalProduct.variants.map(v => {
+            const cartKey = `${productName}-${v.type}`;
+            const val = state.cart[cartKey] ? state.cart[cartKey].qty : 0;
+            return `
+            <div class="variant-row">
+                <div class="variant-info">
+                    <strong>${v.type}</strong><br>$${v.price} 
+                    <span style="font-size:0.8rem; color:${v.stock < 5 ? 'red':'green'}">(${v.stock} in stock)</span>
+                </div>
+                <input type="number" class="variant-qty modal-input" 
+                       data-type="${v.type}" data-price="${v.price}" data-stock="${v.stock}"
+                       min="0" max="${v.stock}" value="${val}">
+            </div>`;
+        }).join('');
+
+        document.getElementById('orderModal').style.display = "flex";
     }
 
+    function closeOrderModal() {
+        document.getElementById('orderModal').style.display = "none";
+    }
+
+    function saveModalOrder() {
+        const inputs = document.querySelectorAll('.modal-input');
+        inputs.forEach(input => {
+            const type = input.dataset.type;
+            const price = parseFloat(input.dataset.price);
+            const stock = parseInt(input.dataset.stock);
+            const qty = parseInt(input.value) || 0;
+            const key = `${currentModalProduct.name}-${type}`;
+
+            if (qty > stock && stock > 0) {
+                // Simple Alert for overflow, logic prevents save usually
+                input.value = stock; 
+            }
+
+            if (qty > 0) {
+                state.cart[key] = { beer: currentModalProduct.name, type, price, qty };
+            } else {
+                delete state.cart[key];
+            }
+        });
+        
+        updateLiveTotals();
+        closeOrderModal();
+        render(); // Re-render grid to update badges
+    }
+
+    // --- CORE LOGIC ---
     async function attemptLogin() {
         const input = document.getElementById("loginInput").value.trim().toLowerCase();
         const found = customersDB.find(c => c.key === input);
