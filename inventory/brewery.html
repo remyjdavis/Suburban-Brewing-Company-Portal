@@ -399,7 +399,7 @@
       } catch (err) { console.error("Failed to load inventory", err); }
     }
 
-    function renderInventoryGrid() {
+   function renderInventoryGrid() {
       const categories = ["Core", "Seasonal", "Rotating"];
       
       categories.forEach(lc => {
@@ -408,13 +408,51 @@
         
         container.innerHTML = ""; // Clear existing content
         
-        const products = inventory.filter(i => String(i.lifecycle).toLowerCase() === lc.toLowerCase());
+        // FILTER AND SORT ALPHABETICALLY
+        const products = inventory
+            .filter(i => String(i.lifecycle).toLowerCase() === lc.toLowerCase())
+            .sort((a, b) => a.product.localeCompare(b.product)); // <--- This sorts A-Z
         
         if (products.length === 0) {
             container.innerHTML = `<div style="color:#94a3b8; font-style:italic;">No products in this category.</div>`;
             return;
         }
 
+        products.forEach(item => {
+          // Build Package Rows
+          const rows = item.packages.map(pkg => {
+            const isLow = Number(pkg.qty) <= 5; 
+            return `
+              <div class="inv-row">
+                <div class="pkg-name">
+                  <span class="status-dot ${isLow ? 'status-low' : 'status-ok'}"></span>
+                  ${pkg.type}
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                   <span class="qty-badge">${pkg.qty}</span>
+                   <button class="small secondary" style="padding:4px 8px;" onclick="adjustQty('${item.product}','${pkg.type}',${pkg.qty})">Adj</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          // Create Card
+          const card = document.createElement('div');
+          card.className = 'inv-card';
+          card.innerHTML = `
+            <div class="inv-card-header">
+              <span class="inv-card-title">${item.product}</span>
+              <span class="lifecycle-badge">${item.lifecycle}</span>
+            </div>
+            <div class="inv-card-body">
+              ${rows}
+            </div>
+          `;
+          
+          container.appendChild(card);
+        });
+      });
+    }
         products.forEach(item => {
           // Build Package Rows
           const rows = item.packages.map(pkg => {
