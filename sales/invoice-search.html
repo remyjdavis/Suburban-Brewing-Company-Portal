@@ -5,7 +5,6 @@
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
-
         if (auth !== "true" && !isLoginPage) {
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
@@ -22,82 +21,85 @@
       --accent: #2563eb;
       --text: #1f2937;
     }
+    
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     
-    /* FIX 1: Prevent horizontal scroll causing overlap issues */
-    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
+    /* LAYOUT REFACTOR: Dashboard Style (No Window Scroll) */
+    body { 
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text); 
+      display: flex; 
+      height: 100vh;      /* Locks app to window height */
+      overflow: hidden;   /* Prevents double scrollbars */
+      width: 100%;
+    }
 
-    /* --- SIDEBAR --- */
+    /* --- SIDEBAR (Desktop) --- */
     .sidebar { 
       width: 240px; 
       background: var(--sidebar); 
       color: #fff; 
-      padding: 0; 
-      flex-shrink: 0; 
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      height: 100vh; 
-      overflow-y: auto; 
-      z-index: 1000;
-      display: flex !important; 
-      flex-direction: column !important;
-      transition: transform 0.3s ease, left 0.3s ease;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      flex-shrink: 0;        /* Prevents sidebar from shrinking */
+      display: flex; 
+      flex-direction: column;
+      overflow-y: auto;      /* Internal scrolling */
+      position: relative;    /* Sits in flow, NOT fixed */
+      z-index: 100;
+      border-right: 1px solid rgba(255,255,255,0.1);
     }
+
+    /* --- MAIN WRAPPER --- */
+    .main-wrapper { 
+      flex: 1;               /* Takes all remaining space */
+      display: flex; 
+      flex-direction: column;
+      overflow-y: auto;      /* Internal scrolling */
+      overflow-x: hidden;
+      position: relative;
+      background: var(--bg);
+      /* No margins needed - Flexbox handles the spacing */
+    }
+
+    /* --- NAVIGATION ITEMS --- */
     .sidebar h2 { margin: 24px 20px 10px; font-size: 18px; color: #fff; letter-spacing: 1px; }
     
     .nav-section-header {
       font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 18px 20px 8px !important; 
       font-weight: 700; letter-spacing: 0.5px;
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      user-select: none; position: relative !important;
+      user-select: none;
     }
     .nav-section-header:hover { color: #fff; opacity: 1; }
 
     .collapsible-content {
-      position: relative !important; display: block;
-      max-height: 1000px; overflow: hidden;
-      transition: max-height 0.4s ease, opacity 0.4s ease;
-      opacity: 1;
+      display: block; overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
     }
-    .collapsible-content.collapsed { max-height: 0; opacity: 0; display: none; }
+    .collapsible-content.collapsed { max-height: 0 !important; opacity: 0; }
 
-    /* FIX 2: Ensure text decoration is off to fix 'strikethrough' glitch */
     .nav-link { 
       display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none !important; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent; position: relative !important;
+      transition: 0.2s; border-left: 4px solid transparent;
     }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
     .nav-link.active { border-left-color: var(--accent); }
 
-    /* --- MAIN WRAPPER (FIXED OVERLAP) --- */
-    .main-wrapper { 
-      flex: 1; 
-      margin-left: 240px; 
-      /* FIX 3: Explicitly calculate width to prevent content sliding under sidebar or off screen */
-      width: calc(100% - 240px); 
-      display: flex; 
-      flex-direction: column; 
-      min-width: 0; 
-      transition: all 0.3s ease; 
-      position: relative;
-    }
-
-    /* --- BLACK HEADER --- */
+    /* --- HEADER & CONTENT --- */
     .app-header {
       display: flex; align-items: center; gap: 20px; padding: 16px 24px; 
       background: #000000; color: white;
+      flex-shrink: 0; /* Keeps header from vanishing on scroll */
     }
     .logo { height: 60px; }
     .company-name { font-size: 20px; font-weight: 700; }
     .header-right { margin-left: auto; text-align: right; font-size: 13px; }
 
-    main { padding: 30px; max-width: 1100px; width: 100%; margin: 0 auto; }
+    main { padding: 30px; max-width: 1200px; width: 100%; margin: 0 auto; }
     .section { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 24px; }
     h2 { margin: 0 0 16px; font-size: 18px; color: #374151; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
 
-    /* --- FORM & TABLES --- */
+    /* --- FORMS --- */
     .form-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px; }
     label { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: block; color: #6b7280; }
     select, input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; background-color: white; }
@@ -106,26 +108,33 @@
     .btn-primary { background: var(--accent); color: white; }
     .btn-secondary { background: #e5e7eb; color: #374151; }
 
-    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* --- TABLES --- */
+    .table-container { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
     th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; text-align: left; }
     th { background: #f9fafb; color: #6b7280; font-weight: 600; }
     tr.selected { background: #eff6ff; border-left: 4px solid var(--accent); }
 
-    /* LOGOUT BUTTON */
-    .logout-link { color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    /* LOGOUT */
+    .logout-link { color: #f87171 !important; border-left: 4px solid transparent; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
 
-    /* MOBILE DRAWER LOGIC */
+    /* --- MOBILE RESPONSIVENESS --- */
     #menu-toggle { display: none; }
-    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; backdrop-filter: blur(2px); }
 
     @media (max-width: 1024px) {
-      .sidebar { left: -260px; z-index: 10001; }
+      /* On mobile, Sidebar becomes fixed/absolute again */
+      .sidebar { 
+        position: fixed; 
+        top: 0; 
+        left: -260px; /* Hide by default */
+        height: 100%; 
+        z-index: 2000; 
+        transition: left 0.3s ease;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.2);
+      }
       .sidebar.open { left: 0; }
-      
-      /* FIX 4: Reset margins and width on mobile */
-      .main-wrapper { margin-left: 0; width: 100%; } 
       
       .menu-overlay.active { display: block; }
       
@@ -133,8 +142,9 @@
         display: flex; position: fixed; bottom: 25px; right: 25px;
         width: 65px; height: 65px; background: var(--accent); color: white;
         border-radius: 50%; justify-content: center; align-items: center;
-        font-size: 28px; z-index: 10002; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+        font-size: 28px; z-index: 2001; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
       }
+      
       .app-header { flex-direction: column; text-align: center; }
       .header-right { display: none; }
     }
