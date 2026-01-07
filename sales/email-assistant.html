@@ -3,36 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Suburban Brewing Co. | Sales Assistant</title>
+  <title>Sales Assistant | Suburban Brewing Co.</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <style>
-    /* --- REUSING YOUR EXISTING THEME VARIABLES --- */
+    /* --- SHARED THEME VARIABLES --- */
     :root {
-      --bg: #f4f6f8; --sidebar: #0f172a; --accent: #2563eb; --text: #1f2937; --text-muted: #6b7280;
+      --bg: #f4f6f8;
+      --sidebar: #0f172a;
+      --accent: #2563eb;
+      --text: #1f2937;
+      --text-muted: #6b7280;
       --green-accent: #10b981;
     }
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
     
-    /* --- MOCK SIDEBAR (For Visual Context Only) --- */
-    .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px; flex-shrink: 0; height: 100vh; }
-    .sidebar h2 { margin: 0 0 32px; font-size: 20px; }
-    .mock-link { display: block; padding: 10px 15px; color: #94a3b8; text-decoration: none; border-radius: 6px; margin-bottom: 5px; }
-    .mock-link.active { background: #374151; color: #fff; border-left: 4px solid var(--accent); }
+    /* --- SIDEBAR STYLES (Matches Main App) --- */
+    .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
+
+    .nav-section-header { font-size: 11px; text-transform: uppercase; color: #9ca3af; margin: 18px 24px 8px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; }
+    .nav-section-header:hover { color: #fff; }
+    
+    .collapsible-content { max-height: 2000px; overflow: hidden; transition: max-height 0.4s ease; }
+    .collapsible-content.collapsed { max-height: 0; }
+    
+    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; border-left: 4px solid transparent; }
+    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
+    .nav-link.active { border-left-color: var(--accent); }
 
     /* --- MAIN CONTENT AREA --- */
-    .main { flex: 1; display: flex; flex-direction: column; }
+    .main { flex: 1; margin-left: 260px; display: flex; flex-direction: column; }
     .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
     .content { padding: 30px; flex-grow: 1; }
 
-    /* --- EMAIL ASSISTANT GRID LAYOUT --- */
+    /* --- EMAIL ASSISTANT GRID --- */
     .assistant-grid {
         display: grid;
-        grid-template-columns: 350px 1fr; /* Fixed width controls, flexible preview */
+        grid-template-columns: 350px 1fr;
         gap: 30px;
-        height: calc(100vh - 150px); /* Fill remaining height */
+        height: calc(100vh - 140px);
     }
 
-    /* Panels */
     .panel {
         background: #fff;
         border-radius: 12px;
@@ -42,9 +57,9 @@
         flex-direction: column;
     }
     
-    .panel h3 { margin: 0 0 20px; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; color: #1e293b; }
+    .panel h3 { margin: 0 0 20px; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; color: #1e293b; font-size: 16px; }
 
-    /* Controls (Left Panel) */
+    /* Form Elements */
     .form-group { margin-bottom: 20px; }
     .form-label { display: block; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
     .form-select, .form-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; color: #334155; }
@@ -54,24 +69,16 @@
     }
     .client-card-preview.active { display: block; animation: fadeIn 0.3s ease; }
 
-    /* Preview & Editor (Right Panel) */
+    /* Editor */
     .email-editor-container { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; }
     .email-header-field { display: flex; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
     .email-header-label { width: 80px; font-weight: 600; color: #94a3b8; }
     .email-header-value { font-weight: 500; color: #1e293b; flex-grow: 1; }
     
     .email-body-textarea {
-        flex-grow: 1;
-        width: 100%;
-        padding: 20px;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        resize: none;
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 15px;
-        line-height: 1.6;
-        color: #334155;
-        background: #fff;
+        flex-grow: 1; width: 100%; padding: 20px;
+        border: 1px solid #e2e8f0; border-radius: 8px;
+        resize: none; font-family: 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.6; color: #334155;
     }
     .email-body-textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
 
@@ -80,30 +87,51 @@
     .btn-gen:hover { background: #1d4ed8; }
 
     .btn-send {
-        padding: 15px 30px; background: var(--green-accent); color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-left: auto; transition: 0.2s;
+        padding: 12px 24px; background: var(--green-accent); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;
     }
-    .btn-send:hover { background: #059669; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+    .btn-send:hover { background: #059669; }
 
     @keyframes fadeIn { from { opacity:0; transform: translateY(5px); } to { opacity:1; transform: translateY(0); } }
+    
+    /* Mobile Responsive */
+    @media (max-width: 1024px) {
+        .sidebar { display: none; } /* Hide sidebar for simple mobile view */
+        .main { margin-left: 0; }
+        .assistant-grid { grid-template-columns: 1fr; height: auto; }
+        .email-body-textarea { min-height: 300px; }
+    }
   </style>
 </head>
 <body>
 
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div style="margin-top: 40px;">
-        <span class="mock-link">Command Center</span>
-        <span class="mock-link">Sales Opportunities</span>
-        <span class="mock-link active">Sales AI Assistant</span>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span></div>
+    <div id="grp-main" class="collapsible-content">
+      <a href="index.html" class="nav-link"><span>Command Center</span></a>
+      <a href="sales-assistant.html" class="nav-link active"><span>Sales Assistant</span></a>
+    </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)"><span>Sales</span></div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+    </div>
+
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)"><span>Inventory</span></div>
+    <div id="grp-inv" class="collapsible-content">
+       <a href="inventory/brewery.html" class="nav-link"><span>Master Inventory</span></a>
     </div>
   </aside>
 
   <main class="main">
     <header class="topbar">
       <h1>Sales Follow-Up Assistant</h1>
-      <div>
-          <span style="font-size: 13px; color: var(--text-muted);">Drafts use professional, pre-approved templates.</span>
-      </div>
+      <span style="font-size: 13px; color: var(--text-muted); display:none; @media(min-width:768px){display:inline;}">
+        Drafts use professional, pre-approved templates.
+      </span>
     </header>
 
     <section class="content">
@@ -113,31 +141,38 @@
             <h3>1. Drafting Options</h3>
             
             <div class="form-group">
-                <label class="form-label">Select Client / Lead</label>
+                <label class="form-label">Select Client</label>
                 <select class="form-select" id="clientSelect" onchange="showClientInfo()">
-                    <option value="">-- Choose a Contact --</option>
-                    <option value="brickhouse">The Brickhouse (Due for Contact)</option>
+                    <option value="">-- Choose Contact --</option>
+                    <option value="brickhouse">The Brickhouse (Due Now)</option>
                     <option value="taproom24">Taproom 24</option>
-                    <option value="pizzaco">City Pizza Co. (New Lead)</option>
+                    <option value="pizzaco">City Pizza Co. (Lead)</option>
+                    <option value="pa_dist">PA Wholesalers Inc.</option>
                 </select>
+                
                 <div id="clientInfo" class="client-card-preview">
-                    <div style="font-weight: 700;">Contact: Sarah Johnson (Mgr)</div>
-                    <div style="font-size: 13px; color: #64748b;">Last Contact: 18 days ago via In-Person</div>
+                    <div id="contactNameDisplay" style="font-weight: 700;">--</div>
+                    <div style="font-size: 13px; color: #64748b;">Last Contact: 18 days ago</div>
                 </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Choose Goal / Tone</label>
+                <label class="form-label">Select Goal / Template</label>
                 <select class="form-select" id="templateSelect">
-                    <option value="casual">Casual Tap Check-in (Existing)</option>
-                    <option value="seasonal">Introduce Summer Seasonal (Excited)</option>
-                    <option value="formal">Formal Meeting Follow-up</option>
-                    <option value="invoice">Friendly Invoice Reminder</option>
+                    <option value="">-- What is the goal? --</option>
+                    <option value="inventory">Weekly Inventory Check (Soft)</option>
+                    <option value="seasonal">New Seasonal Release (Hype)</option>
+                    <option value="sample">Post-Sample Follow Up</option>
+                    <option value="event">Tap Takeover / Event Pitch</option>
+                    <option value="invoice">Gentle Invoice Reminder</option>
+                    <option value="winback">"Miss You" / Re-Engagement</option>
+                    <option disabled>--- Special Scenarios ---</option>
+                    <option value="manager_missed">Missed You (Spoke to Bartender)</option>
+                    <option value="wholesaler_restock">Wholesaler: Restock Check</option>
                 </select>
             </div>
 
             <button class="btn-gen" onclick="generateDraft()">Generate Professional Draft ✨</button>
-            <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 15px;">AI generates the base; you add the personal touch.</p>
         </div>
 
         <div class="panel">
@@ -150,15 +185,15 @@
                 </div>
                 <div class="email-header-field">
                     <span class="email-header-label">Subject:</span>
-                    <input type="text" class="form-input" id="previewSubject" placeholder="Subject will appear here..." style="border:none; padding: 0; font-weight: 500;">
+                    <input type="text" class="form-input" id="previewSubject" placeholder="Subject..." style="border:none; padding: 0; font-weight: 500; font-size:16px;">
                 </div>
                 
-                <textarea class="email-body-textarea" id="previewBody" placeholder="Select options on the left and click 'Generate Draft'. The professional template will appear here for you to review and customize before sending."></textarea>
+                <textarea class="email-body-textarea" id="previewBody" placeholder="Select a client and goal, then click 'Generate Draft'."></textarea>
 
-                <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 10px;">
-                    <div style="margin-right: 20px; font-size: 13px; color: #64748b; font-style: italic;">Sending will update "Last Contact Date" automatically.</div>
-                    <button class="btn-send" onclick="alert('Simulated Send: Email sent via Gmail API and Google Sheet updated!')">
-                        <span>🚀 Send Email Now</span>
+                <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                    <div style="font-size: 12px; color: #64748b; font-style: italic;">Sending updates "Last Contact Date"</div>
+                    <button class="btn-send" onclick="sendEmail()">
+                        <span>🚀 Send Email</span>
                     </button>
                 </div>
             </div>
@@ -169,39 +204,111 @@
   </main>
 
   <script>
-    // --- MOCK JAVASCRIPT FOR VISUALIZATION ---
+    function toggleGroup(contentId, headerEl) {
+       const content = document.getElementById(contentId);
+       if(content) content.classList.toggle('collapsed');
+    }
+
+    // --- MOCK CLIENT DATA ---
+    const clients = {
+        'brickhouse': { contact: 'Sarah Johnson', email: 'sarah@brickhouse.com' },
+        'taproom24': { contact: 'Mike Davis', email: 'mike@taproom24.com' },
+        'pizzaco': { contact: 'Manager', email: 'info@citypizzaco.com' },
+        'pa_dist': { contact: 'Jim (Buyer)', email: 'orders@padist.com' }
+    };
+
     function showClientInfo() {
         const val = document.getElementById('clientSelect').value;
         const infoBox = document.getElementById('clientInfo');
-        infoBox.classList.toggle('active', val !== "");
+        const nameDisplay = document.getElementById('contactNameDisplay');
+        
+        if (val && clients[val]) {
+            infoBox.classList.add('active');
+            nameDisplay.innerText = "Contact: " + clients[val].contact;
+            document.getElementById('previewTo').innerText = clients[val].email;
+        } else {
+            infoBox.classList.remove('active');
+            document.getElementById('previewTo').innerText = "...";
+        }
     }
 
     function generateDraft() {
-        const client = document.getElementById('clientSelect').value;
+        const clientKey = document.getElementById('clientSelect').value;
         const template = document.getElementById('templateSelect').value;
         
-        if(!client) { alert("Please select a client first."); return; }
+        if(!clientKey) { 
+            Swal.fire('Step 1', 'Please select a client first.', 'warning'); 
+            return; 
+        }
 
-        document.getElementById('previewTo').innerText = "Sarah Johnson <sarah@thebrickhouse.com>";
-
-        // Simulated Template Logic (In real life, this happens in Google Apps Script)
+        const contactName = clients[clientKey].contact.split(' ')[0]; // First name only
+        const companyName = "their venue"; // Generic for demo
+        
         let subject = "";
         let body = "";
 
-        if(template === 'casual') {
-            subject = "Checking in on taps at The Brickhouse";
-            body = `Hi Sarah,\n\nHope things are going well at The Brickhouse this week.\n\nJust wanted to quickly check in and see how the Suburban IPA is moving. Are you running low or looking to rotate anything soon?\n\n[Add personal note here]\n\nCheers,\nRemy\nSuburban Brewing Co.`;
-        } else if (template === 'seasonal') {
-            subject = "Exciting News: Summer Seasonal is Ready! ☀️";
-            body = `Hi Sarah,\n\nI'm reaching out because our highly anticipated Summer Ale is finally kegged and ready to go.\n\nGiven how well your customers liked our previous lighter options, I think this would crush it on your patio tap this month.\n\nDo you have an open line for a sample this week?\n\nBest,\nRemy\nSuburban Brewing Co.`;
+        switch (template) {
+            case 'inventory':
+                subject = `Quick stock check: Suburban Brewing`;
+                body = `Hi ${contactName},\n\nHope the weekend rush treated you well!\n\nI'm looking at my delivery route for later this week and wanted to check your inventory levels. Are you running low on IPA or need to rotate any handles soon?\n\nLet me know by tomorrow morning and I can get you on the truck.\n\nCheers,\nRemy`;
+                break;
+
+            case 'seasonal':
+                subject = `First Dibs: [Seasonal Name] is ready 🍺`;
+                body = `Hi ${contactName},\n\nI wanted to give you a heads up before I blast this to the wider list.\n\nOur new [Seasonal Name] (ABV %) is finally kegged. It's tasting incredible—[insert 3-word flavor profile, e.g., crisp, piney, and dank].\n\nGiven the vibe at ${companyName}, I think this would move fast on your patio tap.\n\nAllocations are tight on this one—want me to reserve a 1/2 bbl for you?\n\nBest,\nRemy`;
+                break;
+
+            case 'sample':
+                subject = `Feedback on those samples?`;
+                body = `Hey ${contactName},\n\nJust following up on the samples I dropped off earlier this week. Did you or the bar manager get a chance to crack them open?\n\nI'd love to hear your thoughts, specifically on the [Beer Name]. I think it fits that gap in your current tap list we talked about.\n\nTalk soon,\nRemy`;
+                break;
+
+            case 'event':
+                subject = `Event Idea: Tap Takeover`;
+                body = `Hi ${contactName},\n\nI've been thinking about ways we can help drive some extra foot traffic to your place next month.\n\nWhat if we set up a "Meet the Brewer" or Tap Takeover night? We can bring some limited-release swag, maybe a firkin of something special, and promote it on our social media channels to get our crowd through your doors.\n\nDo you have a slow Tuesday or Wednesday coming up that needs a boost?\n\nLet me know,\nRemy`;
+                break;
+
+            case 'invoice':
+                subject = `Invoice #1234 Reminder - Suburban Brewing`;
+                body = `Hi ${contactName},\n\nHope you're having a good week.\n\nThis is just a friendly bump on Invoice #1234 (attached). It looks like it's just past due.\n\nIf you've already sent the check, please disregard! Otherwise, if you need me to resend the PDF, just let me know.\n\nThanks,\nRemy`;
+                break;
+
+            case 'winback':
+                subject = `Long time no see!`;
+                body = `Hey ${contactName},\n\nI was just looking through my logs and realized it's been a little while since we had Suburban on tap.\n\nWe've actually adjusted our pricing on [Core Beer] and released a few new hazies that I think your regulars would love.\n\nI'll be in your area on Thursday—mind if I swing by for 5 minutes to drop off some fresh liquid?\n\nCheers,\nRemy`;
+                break;
+                
+            case 'manager_missed':
+                subject = `Sorry I missed you today`;
+                body = `Hi ${contactName},\n\nI stopped by earlier today to drop off some info on our new releases, but I know you were out/busy.\n\n[Bartender Name] behind the bar took great care of me—I left a few samples with them for you to try when you have a moment.\n\nI'd love to connect for 5 minutes next week to see if any of those fit your upcoming rotation.\n\nIs Tuesday morning usually good for you?\n\nBest,\nRemy`;
+                break;
+
+            case 'wholesaler_restock':
+                subject = `Suburban Brewing | Inventory & Next PO`;
+                body = `Hi ${contactName},\n\nHope the team is having a good week.\n\nI'm looking at our production schedule and seeing inventory moving quickly on [Core Brand]. I wanted to check your current warehouse levels to ensure we don't gap the market.\n\nDo you need to cut a PO this week to top off for the weekend?\n\nAlso, are you hearing any specific feedback from the reps on the street regarding the new seasonal?\n\nThanks,\nRemy`;
+                break;
+
+            default:
+                body = "Please select a template goal from the dropdown.";
         }
 
-        // Populate the editor
         document.getElementById('previewSubject').value = subject;
         document.getElementById('previewBody').value = body;
-        
-        // Focus the textarea so they know they can edit it
         document.getElementById('previewBody').focus();
+    }
+
+    function sendEmail() {
+        const body = document.getElementById('previewBody').value;
+        if(body.length < 10) { Swal.fire('Error', 'Draft is empty.', 'error'); return; }
+
+        // Simulate Sending
+        Swal.fire({
+            title: 'Sent!',
+            text: 'Email sent and CRM updated.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false
+        });
     }
   </script>
 </body>
