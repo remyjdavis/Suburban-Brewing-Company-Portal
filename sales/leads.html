@@ -276,14 +276,14 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
     
-    // --- SIDEBAR TOGGLE LOGIC (Desktop/Tablet Subgroups) ---
+    // --- SIDEBAR TOGGLE LOGIC ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
       content.classList.toggle('collapsed');
       headerEl.classList.toggle('collapsed');
     }
 
-    // --- MOBILE DRAWER TOGGLE (Slide-out menu for Phones) ---
+    // --- MOBILE DRAWER TOGGLE ---
     function toggleMobileMenu() {
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.getElementById('menu-overlay');
@@ -292,19 +292,15 @@
         const isOpen = sidebar.classList.toggle('open');
         overlay.classList.toggle('active');
         
-        // Prevent background scrolling on phone while menu is open
         document.body.style.overflow = isOpen ? 'hidden' : '';
-        
-        // Switch icon between Hamburger and X
         btn.innerText = isOpen ? '✕' : '☰';
     }
 
-    // --- CONSOLIDATED INITIAL LOAD & MOBILE AUTO-CLOSE ---
+    // --- INITIAL LOAD ---
     window.onload = async () => {
-      // 1. Set Date Display
       document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-      // 2. Sidebar Active State Logic
+      // Sidebar Active State
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -315,7 +311,7 @@
         }
       }
 
-      // 3. Mobile Link Auto-close Listener
+      // Mobile Link Auto-close
       document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => {
             if (window.innerWidth <= 1024) {
@@ -325,17 +321,24 @@
         });
       });
 
-      // 4. Load Customers for Datalist
+      // 4. Load Customers (SAFE MODE)
       try {
         const resp = await fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" });
-        const data = await resp.json();
+        const json = await resp.json();
+        
+        // SAFETY CHECK: Extract array from response
+        const data = Array.isArray(json) ? json : (json.data || []);
+
         const dl = document.getElementById('customers');
-        const uniqueNames = [...new Set(data.map(item => item.name))];
-        uniqueNames.forEach(n => { 
-          let o = document.createElement('option'); 
-          o.value = n; 
-          dl.appendChild(o); 
-        });
+        // Safely map only if we have data
+        if (data.length > 0) {
+            const uniqueNames = [...new Set(data.map(item => item.name))];
+            uniqueNames.forEach(n => { 
+                let o = document.createElement('option'); 
+                o.value = n; 
+                dl.appendChild(o); 
+            });
+        }
       } catch (e) { console.error("Customer Load Error:", e); }
     };
 
@@ -353,14 +356,27 @@
       checkExisting(); 
     }
 
-    // --- AUTO-FILL LOGIC ---
+    // --- AUTO-FILL LOGIC (FIXED) ---
     async function checkExisting() {
         const nameInput = document.getElementById("name").value.trim();
         if (!nameInput) return;
 
         try {
             const response = await fetch(`${API_URL}?action=getSalesLeads`); 
-            const leads = await response.json();
+            const json = await response.json();
+            
+            // 🔴 FIX: Ensure 'leads' is always an array
+            let leads = [];
+            if (Array.isArray(json)) {
+                leads = json;
+            } else if (json.data && Array.isArray(json.data)) {
+                leads = json.data;
+            } else {
+                console.warn("API returned unexpected format:", json);
+                return;
+            }
+
+            // Now safe to use .find()
             const match = leads.find(l => l.name && l.name.toLowerCase() === nameInput.toLowerCase());
 
             if (match) {
@@ -370,6 +386,10 @@
                 document.getElementById("email").value = match.email || "";
                 document.getElementById("name").style.borderColor = "#34c759";
                 setVisitType('Follow-up');
+                
+                // Show a helpful toast if found
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+                Toast.fire({ icon: 'success', title: 'Account Found: Info Auto-filled' });
             } else {
                 document.getElementById("name").style.borderColor = "#d1d5db";
             }
@@ -405,7 +425,7 @@
         if (res.success) {
           await Swal.fire({
             title: 'Activity Saved',
-            text: `AI Scheduled Follow-up: ${res.nextDate}`,
+            text: res.nextDate ? `AI Scheduled Follow-up: ${res.nextDate}` : 'Activity Logged Successfully',
             icon: 'success',
             confirmButtonColor: '#111827'
           });
@@ -415,6 +435,8 @@
           } else {
             location.reload();
           }
+        } else {
+            throw new Error(res.message || "Unknown error occurred");
         }
       } catch (err) {
         Swal.fire('Sync Error', err.toString(), 'error');
