@@ -3,323 +3,363 @@
 <head>
   <base target="_top">
   <meta charset="UTF-8">
-  <title>Blind Sensory Panel</title>
+  <title>Blind Sensory Panel | SBC</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    /* --- SHARED THEME --- */
+    /* --- THEME & RESET --- */
     :root { 
-      --bg: #f8fafc; 
-      --primary: #0f172a; 
-      --accent: #2563eb; 
-      --card: #ffffff; 
-      --text: #1e293b; 
-      --danger: #ef4444; 
+      --bg: #f1f5f9; 
+      --primary: #1e293b; 
+      --accent: #3b82f6; 
+      --accent-hover: #2563eb;
+      --card-bg: #ffffff; 
+      --text-main: #334155; 
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --success: #10b981;
     }
     
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body { 
-      font-family: 'Inter', system-ui, sans-serif; 
+      font-family: 'Inter', sans-serif; 
       background: var(--bg); 
-      color: var(--text); 
+      color: var(--text-main); 
       margin: 0; 
       display: flex; 
       flex-direction: column; 
+      min-height: 100vh;
     }
     
-    /* HEADER (Mobile First) */
+    /* --- HEADER & SIDEBAR --- */
     .mobile-header {
       background: var(--primary);
       color: white;
-      padding: 15px 20px;
+      padding: 16px;
       font-weight: 800;
-      font-size: 18px;
       text-align: center;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      position: sticky; top: 0; z-index: 100;
     }
     
-    /* SIDEBAR (Desktop Only) */
     .sidebar { 
-      width: 240px; 
+      width: 260px; 
       background: var(--primary); 
       color: white; 
       height: 100vh; 
       position: fixed; 
-      padding-top: 20px; 
-      display: none; /* Hidden on mobile */
+      padding: 30px; 
+      display: none; 
+      flex-direction: column;
     }
-
-    /* MAIN CONTENT */
+    
+    .brand { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 40px; color: #fff; }
+    
+    /* --- MAIN LAYOUT --- */
     .main { 
-      padding: 20px; 
+      padding: 24px; 
       width: 100%; 
-      max-width: 900px; 
+      max-width: 800px; 
       margin: 0 auto; 
+      flex: 1;
     }
     
-    h1 { margin: 10px 0 5px 0; font-size: 24px; font-weight: 800; color: var(--primary); }
-    .subtitle { color: #64748b; font-size: 14px; margin-bottom: 20px; }
+    h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+    .subtitle { color: var(--text-light); font-size: 15px; margin-bottom: 30px; line-height: 1.5; }
 
-    /* PANEL SETUP CARD */
-    .setup-card { 
-      background: white; 
-      padding: 15px; 
-      border-radius: 12px; 
-      border: 1px solid #e2e8f0; 
-      margin-bottom: 20px; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    /* --- CARDS --- */
+    .card { 
+      background: var(--card-bg); 
+      padding: 24px; 
+      border-radius: 16px; 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
     
-    /* SAMPLE GRID */
-    .sample-grid { 
-      display: grid; 
-      grid-template-columns: 1fr; 
-      gap: 15px; 
+    /* --- INPUTS --- */
+    label { display: block; font-size: 12px; font-weight: 700; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    input, select, textarea { 
+      width: 100%; 
+      padding: 14px; 
+      border: 1px solid var(--border); 
+      border-radius: 10px; 
+      font-size: 15px; 
+      background: #f8fafc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
     }
     
-    /* BLIND SAMPLE CARD */
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      background: #fff;
+    }
+
+    /* --- SETUP AREA --- */
+    .setup-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 12px; }
+    
+    #userStatus { 
+      font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; background: #f1f5f9; border-radius: 8px; color: var(--text-light);
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; }
+    .status-dot.active { background: var(--success); box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+
+    /* --- SAMPLE CARDS --- */
     .blind-card {
-      background: white; 
-      border: 1px solid #e2e8f0; 
-      border-radius: 12px; 
-      padding: 15px;
-      transition: all 0.2s; 
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 16px;
     }
-    .blind-card.active { border: 2px solid var(--accent); background: #fff; }
     
-    .blind-code { font-size: 20px; font-weight: 800; color: var(--accent); }
-    .blind-status { font-size: 11px; text-transform: uppercase; font-weight: 700; color: #94a3b8; }
-    
-    /* RATING FORM */
-    .rating-form { display: none; margin-top: 15px; border-top: 1px dashed #e2e8f0; padding-top: 15px; }
+    .blind-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .blind-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+
+    .card-header {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to right, #ffffff, #f8fafc);
+    }
+
+    .blind-code { font-size: 18px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+    .code-badge { background: var(--primary); color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; letter-spacing: 1px; }
+    .blind-type { font-size: 13px; color: var(--text-light); font-weight: 600; text-transform: uppercase; margin-top: 4px; }
+
+    /* --- RATING FORM --- */
+    .rating-form { 
+      padding: 0 24px 24px 24px; 
+      display: none; 
+      animation: slideDown 0.3s ease-out;
+      border-top: 1px solid var(--border);
+      background: #fafbfd;
+    }
     .blind-card.active .rating-form { display: block; }
 
-    /* INPUTS */
-    label { display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 5px; text-transform: uppercase; }
-    input, textarea, select { 
-      width: 100%; 
-      padding: 12px; 
-      border: 1px solid #cbd5e1; 
-      border-radius: 8px; 
-      font-size: 16px; /* Prevents iOS auto-zoom */
-      margin-bottom: 15px; 
-      background: #fff; 
-    }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* SLIDERS (Thumb Friendly) */
-    .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
-    input[type=range] { 
-      flex: 1; 
-      height: 30px; /* Larger hit area */
-      accent-color: var(--accent); 
+    /* --- CUSTOM SLIDER --- */
+    .slider-container { background: white; padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
+    
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; height: 6px; background: #e2e8f0; border-radius: 5px; outline: none; margin: 15px 0; border: none; padding: 0;
     }
-    .score-val { font-weight: 800; color: var(--accent); font-size: 18px; width: 35px; text-align: right; }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; 
+      background: var(--accent); cursor: pointer; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+      transition: transform 0.1s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); }
 
-    /* TAGS */
-    .tag-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+    .score-display { 
+      display: flex; justify-content: space-between; align-items: center; 
+      font-weight: 700; color: var(--text-main); font-size: 14px;
+    }
+    .current-score { font-size: 24px; color: var(--accent); }
+
+    /* --- TAGS --- */
+    .tag-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
     .tag-check { display: none; }
     .tag-label { 
-      padding: 10px 16px; /* Larger touch targets */
-      background: #f1f5f9; 
-      border-radius: 8px; 
-      font-size: 13px; 
-      font-weight: 600; 
-      color: #64748b; 
-      cursor: pointer; 
-      border: 1px solid transparent;
+      padding: 8px 16px; background: white; border: 1px solid var(--border); border-radius: 20px; 
+      font-size: 13px; font-weight: 600; color: var(--text-light); cursor: pointer; 
+      transition: all 0.2s; user-select: none;
     }
-    .tag-check:checked + .tag-label { background: #dbeafe; color: var(--accent); border-color: var(--accent); }
+    .tag-label:hover { border-color: var(--accent); color: var(--accent); }
+    .tag-check:checked + .tag-label { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
 
+    /* --- BUTTONS --- */
+    .btn { 
+      border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; transition: all 0.2s;
+    }
+    .btn-rate { background: #e2e8f0; color: var(--text-main); }
+    .btn-rate:hover { background: #cbd5e1; }
+    
     .btn-submit { 
-      width: 100%; 
-      padding: 15px; 
-      background: var(--primary); 
-      color: white; 
-      border: none; 
-      border-radius: 8px; 
-      font-weight: 700; 
-      font-size: 16px;
-      cursor: pointer; 
+      width: 100%; padding: 16px; font-size: 16px; 
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover)); 
+      color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
     }
-    .btn-complete { background: #10b981; pointer-events: none; }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3); }
+    .btn-submit:active { transform: translateY(0); }
 
-    /* MODAL */
-    #consentModal {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center;
-        padding: 20px;
+    /* --- MODAL --- */
+    .modal-overlay { 
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); 
+      z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px;
     }
+    .modal-box { 
+      background: white; width: 100%; max-width: 480px; border-radius: 20px; padding: 30px; 
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-    /* DESKTOP ADJUSTMENTS */
-    @media (min-width: 769px) {
+    /* --- RESPONSIVE --- */
+    @media (min-width: 768px) {
       body { flex-direction: row; }
       .mobile-header { display: none; }
       .sidebar { display: flex; }
-      .main { margin-left: 240px; padding: 40px; }
-      .sample-grid { grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); }
+      .main { margin-left: 260px; padding: 40px; }
     }
-</style>
+  </style>
 </head>
 <body>
+
   <header class="mobile-header">SBC SENSORY</header>
 
   <aside class="sidebar">
-    <div style="padding: 20px; font-weight: 800; font-size: 18px;">SBC SENSORY</div>
+    <div class="brand">SBC SENSORY</div>
+    <div style="opacity: 0.6; font-size: 13px;">Panel Version 2.0</div>
   </aside>
 
   <main class="main">
     <h1>Sensory Panel</h1>
-    <div class="subtitle">Select your role to view today's samples.</div>
+    <div class="subtitle">Validate product quality by assessing blind samples below.</div>
 
-    <div class="setup-card">
-      <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-        <div style="flex: 1;">
-            <label>I am a...</label>
-            <select id="userRole" onchange="resetLogin()">
-                <option value="Staff">Staff Member</option>
-                <option value="Patron">Taproom Guest</option>
-            </select>
+    <div class="card">
+      <div class="setup-grid">
+        <div>
+          <label>Role</label>
+          <select id="userRole" onchange="resetLogin()">
+            <option value="Staff">Staff</option>
+            <option value="Patron">Guest</option>
+          </select>
         </div>
-        <div style="flex: 2;">
-            <label>Name</label>
-            <input type="text" id="panelistName" list="panelistOptions" placeholder="Enter Name..." onchange="verifyUser()">
-            <datalist id="panelistOptions"></datalist>
+        <div>
+          <label>Panelist Name</label>
+          <input type="text" id="panelistName" list="panelistOptions" placeholder="Start typing..." onchange="verifyUser()">
+          <datalist id="panelistOptions"></datalist>
         </div>
       </div>
-      <div id="userStatus" style="font-size: 12px; margin-top: 5px; color: var(--accent); font-weight: 600;">Please log in to see samples.</div>
+      <div id="userStatus">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Awaiting Login...</span>
+      </div>
     </div>
     
-    <div id="loading" style="text-align: center; color: #64748b; display: none;">Loading active samples...</div>
-    <div id="sampleGrid" class="sample-grid"></div>
+    <div id="loading" style="text-align: center; color: var(--text-light); display: none; padding: 20px;">
+      <div style="display:inline-block; width: 24px; height: 24px; border: 3px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <div style="margin-top:10px; font-size:13px; font-weight:600;">Loading Samples...</div>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
+    <div id="sampleGrid"></div>
   </main>
 
-  <div id="consentModal">
-    <div style="background:white; width:90%; max-width:500px; padding:30px; border-radius:12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
-      <h2 id="modalTitle" style="margin-top:0; color:#0f172a;">Panelist Agreement</h2>
-      
-      <div id="agreementText" style="height:200px; overflow-y:auto; background:#f8fafc; padding:15px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px; color:#475569; margin-bottom:20px;">
-        </div>
-      
-      <div style="display:flex; gap:10px;">
-        <button class="btn-submit" style="background:#e2e8f0; color:#475569; margin-top:0;" onclick="declineConsent()">Cancel</button>
-        <button class="btn-submit" style="margin-top:0;" onclick="acceptConsent()">I Understand & Agree</button>
+  <div id="consentModal" class="modal-overlay">
+    <div class="modal-box">
+      <h2 id="modalTitle" style="margin-top:0; color:var(--primary);">Protocol Agreement</h2>
+      <div id="agreementText" style="height:180px; overflow-y:auto; background:#f8fafc; padding:16px; border-radius:10px; border:1px solid var(--border); font-size:13px; line-height:1.6; color:var(--text-main); margin-bottom:24px;"></div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <button class="btn" style="background:#f1f5f9; color:var(--text-light);" onclick="declineConsent()">Cancel</button>
+        <button class="btn" style="background:var(--accent); color:white;" onclick="acceptConsent()">I Agree</button>
       </div>
     </div>
   </div>
 
   <script>
-    // 🔴 UPDATE API URL
     const API_URL = "https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec";
 
     let panelistName = "";
     let panelistRole = "Staff";
     let isRegistered = false;
 
-    // 1. ON LOAD: Only load names, DO NOT load samples
-    window.onload = function() {
-        loadPanelists();
-    };
+    window.onload = loadPanelists;
 
     function resetLogin() {
-        document.getElementById('panelistName').value = "";
-        document.getElementById('userStatus').innerText = "Please log in to see samples.";
-        document.getElementById('userStatus').style.color = "var(--text)";
-        document.getElementById('sampleGrid').innerHTML = ""; // Clear Grid
-        isRegistered = false;
-        loadPanelists();
+      document.getElementById('panelistName').value = "";
+      setStatus("Awaiting Login...", false);
+      document.getElementById('sampleGrid').innerHTML = "";
+      isRegistered = false;
+      loadPanelists();
     }
 
-    // 2. CHECK USER
+    function setStatus(msg, active) {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      text.innerText = msg;
+      if(active) { dot.classList.add('active'); text.style.color = 'var(--text-main)'; }
+      else { dot.classList.remove('active'); text.style.color = 'var(--text-light)'; }
+    }
+
     async function verifyUser() {
-        const name = document.getElementById('panelistName').value;
-        const role = document.getElementById('userRole').value;
-        
-        if(name.length < 2) return;
+      const name = document.getElementById('panelistName').value;
+      const role = document.getElementById('userRole').value;
+      if(name.length < 2) return;
 
-        document.getElementById('userStatus').innerText = "Checking profile...";
-        
-        try {
-            const res = await fetch(API_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: 'checkUserConsent', name: name }) 
-            });
-            const json = await res.json();
+      setStatus("Verifying Profile...", false);
+      
+      try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'checkUserConsent', name: name }) });
+        const json = await res.json();
 
-            if (json.status === 'exists') {
-                isRegistered = true;
-                panelistName = name;
-                panelistRole = role; 
-                document.getElementById('userStatus').innerText = `Welcome back, ${name}. Loading samples...`;
-                document.getElementById('userStatus').style.color = "#10b981";
-                
-                // 🟢 TRIGGER SAMPLE LOAD ONLY HERE
-                loadSamples();
-            } else {
-                // New User -> Show Modal
-                showConsentModal(role);
-            }
-        } catch(e) { console.error(e); }
+        if (json.status === 'exists') {
+          isRegistered = true;
+          panelistName = name;
+          panelistRole = role;
+          setStatus(`Logged in as ${name}`, true);
+          loadSamples();
+        } else {
+          showConsentModal(role);
+        }
+      } catch(e) { console.error(e); }
     }
 
     function showConsentModal(role) {
-        const title = document.getElementById('modalTitle');
-        const textDiv = document.getElementById('agreementText');
-        const modal = document.getElementById('consentModal');
-
-        if (role === 'Staff') {
-            title.innerText = "Staff Sensory Protocol";
-            textDiv.innerHTML = `
-                <p><strong>1. Purpose:</strong> This application tracks sensory acuity data to maintain product quality at Suburban Brewing Co.</p>
-                <p><strong>2. Metrics:</strong> You acknowledge that your performance metrics (accuracy, blind spot detection) will be recorded for QA validation.</p>
-                <p><strong>3. Usage:</strong> Data is used for calibration training. Consistent inability to detect off-flavors may result in removal from the active sensory roster.</p>
-                <p><strong>4. Confidentiality:</strong> Do not discuss blind samples until the session is closed.</p>
-                <p><strong>5. Health:</strong> You confirm you are fit to taste and of legal drinking age.</p>
-            `;
-        } else {
-            title.innerText = "Guest Taster Waiver";
-            textDiv.innerHTML = `
-                <p><strong>1. Voluntary Participation:</strong> I am participating in this tasting voluntarily to help Suburban Brewing Co. improve beer quality.</p>
-                <p><strong>2. Age Verification:</strong> I certify that I am at least 21 years of age.</p>
-                <p><strong>3. Feedback:</strong> I understand my feedback will be anonymized and used for quality control analysis.</p>
-                <p><strong>4. Responsible Consumption:</strong> I agree to sample responsibly and understand that sample sizes are limited.</p>
-            `;
-        }
-        modal.style.display = 'flex';
+      const title = document.getElementById('modalTitle');
+      const textDiv = document.getElementById('agreementText');
+      
+      if (role === 'Staff') {
+        title.innerText = "Staff Protocol";
+        textDiv.innerHTML = `
+          <p><strong>1. Purpose:</strong> Tracking sensory acuity for QA validation.</p>
+          <p><strong>2. Metrics:</strong> Your accuracy will be recorded.</p>
+          <p><strong>3. Usage:</strong> Data determines active sensory roster eligibility.</p>
+          <p><strong>4. Confidentiality:</strong> No discussion until session close.</p>
+          <p><strong>5. Fit for Duty:</strong> Confirm you are fit to taste.</p>`;
+      } else {
+        title.innerText = "Guest Waiver";
+        textDiv.innerHTML = `
+          <p><strong>1. Voluntary:</strong> Participation is voluntary.</p>
+          <p><strong>2. Age:</strong> Must be 21+ years of age.</p>
+          <p><strong>3. Data:</strong> Feedback is anonymized for QA.</p>`;
+      }
+      document.getElementById('consentModal').style.display = 'flex';
     }
 
-    // 3. REGISTER NEW USER
     async function acceptConsent() {
-        const name = document.getElementById('panelistName').value;
-        const role = document.getElementById('userRole').value;
-        const btn = document.querySelector('#consentModal .btn-submit:last-child');
-        
-        btn.innerText = "Registering...";
-        
-        await fetch(API_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ action: 'registerNewPanelist', name: name, role: role }) 
-        });
+      const name = document.getElementById('panelistName').value;
+      const role = document.getElementById('userRole').value;
+      
+      // Visual feedback on button
+      const btns = document.querySelectorAll('#consentModal button');
+      btns[1].innerText = "Registering...";
+      
+      await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'registerNewPanelist', name: name, role: role }) });
 
-        isRegistered = true;
-        panelistName = name;
-        panelistRole = role;
-        
-        document.getElementById('consentModal').style.display = 'none';
-        document.getElementById('userStatus').innerText = "Registered. Loading samples...";
-        document.getElementById('userStatus').style.color = "#10b981";
-        btn.innerText = "I Understand & Agree";
-        
-        // 🟢 TRIGGER SAMPLE LOAD HERE TOO
-        loadSamples();
+      isRegistered = true;
+      panelistName = name;
+      panelistRole = role;
+      
+      document.getElementById('consentModal').style.display = 'none';
+      setStatus(`Logged in as ${name}`, true);
+      btns[1].innerText = "I Agree"; // Reset
+      loadSamples();
     }
 
     function declineConsent() {
-        document.getElementById('consentModal').style.display = 'none';
-        resetLogin();
+      document.getElementById('consentModal').style.display = 'none';
+      resetLogin();
     }
 
     async function loadPanelists() {
@@ -327,89 +367,111 @@
         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getPanelistList' }) });
         const json = await res.json();
         if (json.status === 'success') {
-            const list = document.getElementById('panelistOptions');
-            list.innerHTML = "";
-            json.data.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                list.appendChild(option);
-            });
+          const list = document.getElementById('panelistOptions');
+          list.innerHTML = "";
+          json.data.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            list.appendChild(opt);
+          });
         }
       } catch(e) {}
     }
 
-    // 4. LOAD SAMPLES (Called only after login)
     async function loadSamples() {
-        document.getElementById('loading').style.display = 'block';
-        
-        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getBlindSamples' }) });
-        const json = await res.json();
-        
-        document.getElementById('loading').style.display = 'none';
-        
-        if (json.status === 'success') renderSamples(json.data);
+      document.getElementById('loading').style.display = 'block';
+      const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getBlindSamples' }) });
+      const json = await res.json();
+      document.getElementById('loading').style.display = 'none';
+      if (json.status === 'success') renderSamples(json.data);
     }
 
     function renderSamples(samples) {
-        const grid = document.getElementById('sampleGrid');
-        grid.innerHTML = "";
-        samples.forEach(s => {
-            const div = document.createElement('div');
-            div.className = 'blind-card';
-            div.id = `card-${s.code}`;
-            div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div><div class="blind-code">SAMPLE ${s.code}</div><div class="blind-status">${s.type}</div></div>
-                    <button class="btn-submit" style="width:auto; padding:8px 16px;" onclick="toggleRate('${s.code}')">Rate</button>
-                </div>
-                <div class="rating-form" id="form-${s.code}">
-                    <label>True-to-Brand Score (1-5)</label>
-                    <div class="slider-row">
-                        <span style="font-size:10px;">Poor</span>
-                        <input type="range" id="score-${s.code}" min="1" max="5" step="0.5" value="3" oninput="document.getElementById('disp-${s.code}').innerText=this.value">
-                        <span id="disp-${s.code}" class="score-val">3</span>
-                    </div>
-                    <label style="margin-top:15px;">Descriptors</label>
-                    <div class="tag-container" id="tags-${s.code}">${renderTags()}</div>
-                    <label>Sensory Notes</label>
-                    <textarea id="notes-${s.code}" placeholder="Notes..."></textarea>
-                    <button class="btn-submit" onclick="submitSample('${s.code}')">Submit</button>
-                </div>`;
-            grid.appendChild(div);
-        });
+      const grid = document.getElementById('sampleGrid');
+      grid.innerHTML = "";
+      
+      if(samples.length === 0) {
+        grid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-light);">No active samples found. Check back later!</div>`;
+        return;
+      }
+
+      samples.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'blind-card';
+        div.id = `card-${s.code}`;
+        div.innerHTML = `
+          <div class="card-header">
+            <div>
+              <div class="blind-code"><span class="code-badge">#</span> ${s.code}</div>
+              <div class="blind-type">${s.type} Test</div>
+            </div>
+            <button class="btn btn-rate" onclick="toggleRate('${s.code}')">Evaluate</button>
+          </div>
+          
+          <div class="rating-form" id="form-${s.code}">
+            <div class="slider-container">
+              <label>True-to-Brand Score</label>
+              <div class="score-display">
+                <span style="color:var(--text-light); font-size:12px;">Flawed</span>
+                <span id="disp-${s.code}" class="current-score">3.0</span>
+                <span style="color:var(--text-light); font-size:12px;">Perfect</span>
+              </div>
+              <input type="range" id="score-${s.code}" min="1" max="5" step="0.5" value="3" 
+                oninput="document.getElementById('disp-${s.code}').innerText=Number(this.value).toFixed(1)">
+            </div>
+
+            <label>Sensory Descriptors (Select all that apply)</label>
+            <div class="tag-container" id="tags-${s.code}">${renderTags()}</div>
+
+            <label>Tasting Notes</label>
+            <textarea id="notes-${s.code}" rows="3" placeholder="Describe aroma, flavor, mouthfeel..."></textarea>
+            
+            <button class="btn btn-submit" style="margin-top:15px;" onclick="submitSample('${s.code}')">Submit Assessment</button>
+          </div>`;
+        grid.appendChild(div);
+      });
     }
 
     function renderTags() {
-        const tags = ["Hoppy", "Malty", "Bitter", "Fruity", "Floral", "Diacetyl?", "Oxidized?", "Sulfur?"];
-        return tags.map(t => `<label><input type="checkbox" class="tag-check" value="${t}"><span class="tag-label">${t}</span></label>`).join('');
+      const tags = ["Citrus", "Piney", "Tropical", "Malty", "Roasty", "Bitter", "Diacetyl", "Oxidized", "Sulfur", "Metallic", "DMS", "Acetaldehyde"];
+      return tags.map(t => `<label><input type="checkbox" class="tag-check" value="${t}"><span class="tag-label">${t}</span></label>`).join('');
     }
 
     function toggleRate(code) {
-        if(!isRegistered) return alert("Please enter your name and accept the agreement.");
-        document.getElementById(`card-${code}`).classList.toggle('active');
+      if(!isRegistered) return alert("Please log in first.");
+      document.getElementById(`card-${code}`).classList.toggle('active');
     }
 
     async function submitSample(code) {
-        const score = document.getElementById(`score-${code}`).value;
-        const notes = document.getElementById(`notes-${code}`).value;
-        const tags = [];
-        document.querySelectorAll(`#tags-${code} .tag-check:checked`).forEach(cb => tags.push(cb.value));
+      const score = document.getElementById(`score-${code}`).value;
+      const notes = document.getElementById(`notes-${code}`).value;
+      const tags = [];
+      document.querySelectorAll(`#tags-${code} .tag-check:checked`).forEach(cb => tags.push(cb.value));
 
-        const btn = document.querySelector(`#card-${code} .btn-submit:last-child`);
-        btn.innerText = "Processing..."; btn.disabled = true;
+      const btn = document.querySelector(`#card-${code} .btn-submit`);
+      const originalText = btn.innerText;
+      btn.innerText = "Submitting..."; btn.disabled = true;
+      btn.style.opacity = "0.7";
 
-        await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'submitSensory',
-                panelist: panelistName,
-                role: panelistRole, 
-                samples: [{ brand: `Blind-${code}`, score: score, tags: tags.join(", "), notes: notes }]
-            })
-        });
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'submitSensory',
+          panelist: panelistName,
+          role: panelistRole,
+          samples: [{ brand: `Blind-${code}`, score: score, tags: tags.join(", "), notes: notes }]
+        })
+      });
 
-        btn.innerText = "Submitted ✔";
-        document.getElementById(`card-${code}`).classList.remove('active');
+      btn.innerText = "Assessment Complete ✓";
+      btn.style.background = "var(--success)";
+      setTimeout(() => {
+        document.getElementById(`card-${code}`).remove(); // Remove card after successful submit
+        // If no cards left
+        if(document.getElementById('sampleGrid').children.length === 0) {
+           document.getElementById('sampleGrid').innerHTML = `<div style="text-align:center; padding:40px; color:var(--success); font-weight:600;">All samples completed. Great job!</div>`;
+        }
+      }, 1000);
     }
   </script>
 </body>
