@@ -1280,8 +1280,9 @@
 
       fetch(`${API_URL}?action=addCustomer`, {
           method: "POST",
+          // FIX: Change to text/plain to bypass Preflight 405 error
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "text/plain"
           },
           body: JSON.stringify(newCustomer)
         })
@@ -1479,7 +1480,10 @@
 
       fetch(API_URL + "?action=emailInvoice", {
           method: "POST",
-          contentType: "application/json",
+          // FIX: Change to text/plain to bypass Preflight 405 error
+          headers: {
+            "Content-Type": "text/plain"
+          },
           body: JSON.stringify({
             fileId: window.currentInvoiceFileId,
             invoiceNumber: window.currentInvoiceNumber
