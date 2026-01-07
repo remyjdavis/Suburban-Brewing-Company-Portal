@@ -21,7 +21,7 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
     
-    /* --- SIDEBAR STYLES (Matches Main App) --- */
+    /* --- SIDEBAR STYLES --- */
     .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
@@ -35,12 +35,12 @@
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
     .nav-link.active { border-left-color: var(--accent); }
 
-    /* --- MAIN CONTENT AREA --- */
+    /* --- MAIN CONTENT --- */
     .main { flex: 1; margin-left: 260px; display: flex; flex-direction: column; }
     .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
     .content { padding: 30px; flex-grow: 1; }
 
-    /* --- EMAIL ASSISTANT GRID --- */
+    /* --- ASSISTANT GRID --- */
     .assistant-grid {
         display: grid;
         grid-template-columns: 350px 1fr;
@@ -64,6 +64,16 @@
     .form-label { display: block; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
     .form-select, .form-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; color: #334155; }
     
+    /* Toggle Buttons */
+    .toggle-btn {
+        flex: 1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; 
+        text-align: center; cursor: pointer; background: #fff; font-weight: 600; color: #64748b;
+        transition: all 0.2s ease;
+    }
+    .toggle-btn.active-email { border-color: var(--accent); color: var(--accent); background: #eff6ff; }
+    .toggle-btn.active-sms { border-color: var(--green-accent); color: var(--green-accent); background: #f0fdf4; }
+    .toggle-btn input { display: none; }
+
     .client-card-preview {
         background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 10px; display: none;
     }
@@ -89,13 +99,12 @@
     .btn-send {
         padding: 12px 24px; background: var(--green-accent); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;
     }
-    .btn-send:hover { background: #059669; }
+    .btn-send:hover { filter: brightness(90%); }
 
     @keyframes fadeIn { from { opacity:0; transform: translateY(5px); } to { opacity:1; transform: translateY(0); } }
     
-    /* Mobile Responsive */
     @media (max-width: 1024px) {
-        .sidebar { display: none; } /* Hide sidebar for simple mobile view */
+        .sidebar { display: none; }
         .main { margin-left: 0; }
         .assistant-grid { grid-template-columns: 1fr; height: auto; }
         .email-body-textarea { min-height: 300px; }
@@ -106,83 +115,23 @@
 
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-  <span>System</span>
-</div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
-
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
     
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
-      <span>Main Menu</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span></div>
     <div id="grp-main" class="collapsible-content">
-      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+      <a href="index.html" class="nav-link"><span>Command Center</span></a>
+      <a href="sales-assistant.html" class="nav-link active"><span>Sales Assistant</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
-      <span>Samplings</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-sample" class="collapsible-content">
-      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-    </div>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
-      <span>Sales</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)"><span>Sales</span></div>
     <div id="grp-sales" class="collapsible-content">
-      <a href="sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
-      <a href="leads.html" class="nav-link"><span>AI Sales Leads</span></a>
-      <a href="invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-      <a href="deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-      <a href="new invoices.html" class="nav-link"><span>New Invoice</span></a>
-      <a href="email-assistant.html" class="nav-link active"><span>Sales Assistant</span></a>
+      <a href="sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
     </div>
 
-    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
-      <span>Inventory</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)"><span>Inventory</span></div>
     <div id="grp-inv" class="collapsible-content">
-      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-    </div>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
-      <span>Brewing</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-brew" class="collapsible-content">
-      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
-      <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-      <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-      <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-      <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
-      <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
-    </div>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
-      <span>Reporting & Analytics</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-rep" class="collapsible-content">
-      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
-      <a href="../Reports/Route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+       <a href="inventory/brewery.html" class="nav-link"><span>Master Inventory</span></a>
     </div>
   </aside>
 
@@ -201,6 +150,20 @@
             <h3>1. Drafting Options</h3>
             
             <div class="form-group">
+                <label class="form-label">Communication Channel</label>
+                <div style="display: flex; gap: 10px;">
+                    <label class="toggle-btn active-email" id="btn-email">
+                        <input type="radio" name="channel" value="email" checked onclick="toggleChannel('email')"> 
+                        📧 Email
+                    </label>
+                    <label class="toggle-btn" id="btn-sms">
+                        <input type="radio" name="channel" value="sms" onclick="toggleChannel('sms')"> 
+                        💬 Text
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label">Select Client</label>
                 <select class="form-select" id="clientSelect" onchange="showClientInfo()">
                     <option value="">-- Choose Contact --</option>
@@ -212,7 +175,7 @@
                 
                 <div id="clientInfo" class="client-card-preview">
                     <div id="contactNameDisplay" style="font-weight: 700;">--</div>
-                    <div style="font-size: 13px; color: #64748b;">Last Contact: 18 days ago</div>
+                    <div style="font-size: 13px; color: #64748b;">Phone: <span id="contactPhoneDisplay">--</span></div>
                 </div>
             </div>
 
@@ -232,27 +195,27 @@
                 </select>
             </div>
 
-            <button class="btn-gen" onclick="generateDraft()">Generate Professional Draft ✨</button>
+            <button class="btn-gen" onclick="generateDraft()">Generate Draft ✨</button>
         </div>
 
         <div class="panel">
             <h3>2. Review & Customize</h3>
             
             <div class="email-editor-container">
-                <div class="email-header-field">
+                <div class="email-header-field" id="row-to">
                     <span class="email-header-label">To:</span>
                     <span class="email-header-value" id="previewTo">...</span>
                 </div>
-                <div class="email-header-field">
+                <div class="email-header-field" id="row-subject">
                     <span class="email-header-label">Subject:</span>
                     <input type="text" class="form-input" id="previewSubject" placeholder="Subject..." style="border:none; padding: 0; font-weight: 500; font-size:16px;">
                 </div>
                 
-                <textarea class="email-body-textarea" id="previewBody" placeholder="Select a client and goal, then click 'Generate Draft'."></textarea>
+                <textarea class="email-body-textarea" id="previewBody" placeholder="Select a channel, client, and goal, then click 'Generate Draft'."></textarea>
 
                 <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
                     <div style="font-size: 12px; color: #64748b; font-style: italic;">Sending updates "Last Contact Date"</div>
-                    <button class="btn-send" onclick="sendEmail()">
+                    <button class="btn-send" id="mainSendBtn" onclick="sendAction()">
                         <span>🚀 Send Email</span>
                     </button>
                 </div>
@@ -264,111 +227,176 @@
   </main>
 
   <script>
+    // --- SIDEBAR TOGGLE ---
     function toggleGroup(contentId, headerEl) {
        const content = document.getElementById(contentId);
        if(content) content.classList.toggle('collapsed');
     }
 
-    // --- MOCK CLIENT DATA ---
+    // --- DATA ---
     const clients = {
-        'brickhouse': { contact: 'Sarah Johnson', email: 'sarah@brickhouse.com' },
-        'taproom24': { contact: 'Mike Davis', email: 'mike@taproom24.com' },
-        'pizzaco': { contact: 'Manager', email: 'info@citypizzaco.com' },
-        'pa_dist': { contact: 'Jim (Buyer)', email: 'orders@padist.com' }
+        'brickhouse': { contact: 'Sarah Johnson', email: 'sarah@brickhouse.com', phone: '610-555-0101' },
+        'taproom24': { contact: 'Mike Davis', email: 'mike@taproom24.com', phone: '484-555-0102' },
+        'pizzaco': { contact: 'Manager', email: 'info@citypizzaco.com', phone: '610-555-0999' },
+        'pa_dist': { contact: 'Jim (Buyer)', email: 'orders@padist.com', phone: '215-555-8888' }
     };
+
+    let currentMode = 'email';
+
+    // --- UI LOGIC ---
+    function toggleChannel(mode) {
+        currentMode = mode;
+        
+        // Visuals
+        const btnEmail = document.getElementById('btn-email');
+        const btnSms = document.getElementById('btn-sms');
+        
+        if (mode === 'email') {
+            btnEmail.className = 'toggle-btn active-email';
+            btnSms.className = 'toggle-btn';
+            document.getElementById('row-subject').style.display = 'flex';
+            document.getElementById('mainSendBtn').style.background = 'var(--accent)';
+            document.getElementById('mainSendBtn').innerHTML = '<span>🚀 Send Email</span>';
+        } else {
+            btnEmail.className = 'toggle-btn';
+            btnSms.className = 'toggle-btn active-sms';
+            document.getElementById('row-subject').style.display = 'none';
+            document.getElementById('mainSendBtn').style.background = 'var(--green-accent)';
+            document.getElementById('mainSendBtn').innerHTML = '<span>💬 Open Messages</span>';
+        }
+        
+        // Refresh info if client selected
+        showClientInfo();
+    }
 
     function showClientInfo() {
         const val = document.getElementById('clientSelect').value;
         const infoBox = document.getElementById('clientInfo');
         const nameDisplay = document.getElementById('contactNameDisplay');
-        
+        const phoneDisplay = document.getElementById('contactPhoneDisplay');
+        const toDisplay = document.getElementById('previewTo');
+
         if (val && clients[val]) {
             infoBox.classList.add('active');
             nameDisplay.innerText = "Contact: " + clients[val].contact;
-            document.getElementById('previewTo').innerText = clients[val].email;
+            phoneDisplay.innerText = clients[val].phone;
+            
+            // Update "To" field based on mode
+            toDisplay.innerText = (currentMode === 'email') ? clients[val].email : clients[val].phone;
         } else {
             infoBox.classList.remove('active');
-            document.getElementById('previewTo').innerText = "...";
+            toDisplay.innerText = "...";
         }
     }
 
+    // --- GENERATION ENGINE ---
     function generateDraft() {
         const clientKey = document.getElementById('clientSelect').value;
         const template = document.getElementById('templateSelect').value;
         
-        if(!clientKey) { 
-            Swal.fire('Step 1', 'Please select a client first.', 'warning'); 
-            return; 
-        }
+        if(!clientKey) { Swal.fire('Error', 'Please select a client first.', 'warning'); return; }
 
-        const contactName = clients[clientKey].contact.split(' ')[0]; // First name only
-        const companyName = "their venue"; // Generic for demo
-        
+        const contactName = clients[clientKey].contact.split(' ')[0]; 
         let subject = "";
         let body = "";
 
-        switch (template) {
-            case 'inventory':
-                subject = `Quick stock check: Suburban Brewing`;
-                body = `Hi ${contactName},\n\nHope the weekend rush treated you well!\n\nI'm looking at my delivery route for later this week and wanted to check your inventory levels. Are you running low on IPA or need to rotate any handles soon?\n\nLet me know by tomorrow morning and I can get you on the truck.\n\nCheers,\nRemy`;
-                break;
-
-            case 'seasonal':
-                subject = `First Dibs: [Seasonal Name] is ready 🍺`;
-                body = `Hi ${contactName},\n\nI wanted to give you a heads up before I blast this to the wider list.\n\nOur new [Seasonal Name] (ABV %) is finally kegged. It's tasting incredible—[insert 3-word flavor profile, e.g., crisp, piney, and dank].\n\nGiven the vibe at ${companyName}, I think this would move fast on your patio tap.\n\nAllocations are tight on this one—want me to reserve a 1/2 bbl for you?\n\nBest,\nRemy`;
-                break;
-
-            case 'sample':
-                subject = `Feedback on those samples?`;
-                body = `Hey ${contactName},\n\nJust following up on the samples I dropped off earlier this week. Did you or the bar manager get a chance to crack them open?\n\nI'd love to hear your thoughts, specifically on the [Beer Name]. I think it fits that gap in your current tap list we talked about.\n\nTalk soon,\nRemy`;
-                break;
-
-            case 'event':
-                subject = `Event Idea: Tap Takeover`;
-                body = `Hi ${contactName},\n\nI've been thinking about ways we can help drive some extra foot traffic to your place next month.\n\nWhat if we set up a "Meet the Brewer" or Tap Takeover night? We can bring some limited-release swag, maybe a firkin of something special, and promote it on our social media channels to get our crowd through your doors.\n\nDo you have a slow Tuesday or Wednesday coming up that needs a boost?\n\nLet me know,\nRemy`;
-                break;
-
-            case 'invoice':
-                subject = `Invoice #1234 Reminder - Suburban Brewing`;
-                body = `Hi ${contactName},\n\nHope you're having a good week.\n\nThis is just a friendly bump on Invoice #1234 (attached). It looks like it's just past due.\n\nIf you've already sent the check, please disregard! Otherwise, if you need me to resend the PDF, just let me know.\n\nThanks,\nRemy`;
-                break;
-
-            case 'winback':
-                subject = `Long time no see!`;
-                body = `Hey ${contactName},\n\nI was just looking through my logs and realized it's been a little while since we had Suburban on tap.\n\nWe've actually adjusted our pricing on [Core Beer] and released a few new hazies that I think your regulars would love.\n\nI'll be in your area on Thursday—mind if I swing by for 5 minutes to drop off some fresh liquid?\n\nCheers,\nRemy`;
-                break;
-                
-            case 'manager_missed':
-                subject = `Sorry I missed you today`;
-                body = `Hi ${contactName},\n\nI stopped by earlier today to drop off some info on our new releases, but I know you were out/busy.\n\n[Bartender Name] behind the bar took great care of me—I left a few samples with them for you to try when you have a moment.\n\nI'd love to connect for 5 minutes next week to see if any of those fit your upcoming rotation.\n\nIs Tuesday morning usually good for you?\n\nBest,\nRemy`;
-                break;
-
-            case 'wholesaler_restock':
-                subject = `Suburban Brewing | Inventory & Next PO`;
-                body = `Hi ${contactName},\n\nHope the team is having a good week.\n\nI'm looking at our production schedule and seeing inventory moving quickly on [Core Brand]. I wanted to check your current warehouse levels to ensure we don't gap the market.\n\nDo you need to cut a PO this week to top off for the weekend?\n\nAlso, are you hearing any specific feedback from the reps on the street regarding the new seasonal?\n\nThanks,\nRemy`;
-                break;
-
-            default:
-                body = "Please select a template goal from the dropdown.";
+        if (currentMode === 'email') {
+            // --- EMAIL TEMPLATES ---
+            switch (template) {
+                case 'inventory':
+                    subject = `Quick stock check: Suburban Brewing`;
+                    body = `Hi ${contactName},\n\nHope the weekend rush treated you well!\n\nI'm looking at my delivery route for later this week and wanted to check your inventory levels. Are you running low on IPA or need to rotate any handles soon?\n\nLet me know by tomorrow morning and I can get you on the truck.\n\nCheers,\nRemy`;
+                    break;
+                case 'seasonal':
+                    subject = `First Dibs: [Seasonal Name] is ready 🍺`;
+                    body = `Hi ${contactName},\n\nI wanted to give you a heads up before I blast this to the wider list.\n\nOur new [Seasonal Name] (ABV %) is finally kegged. It's tasting incredible—[insert flavor profile].\n\nGiven the vibe at your place, I think this would move fast on your patio tap.\n\nAllocations are tight on this one—want me to reserve a 1/2 bbl for you?\n\nBest,\nRemy`;
+                    break;
+                case 'sample':
+                    subject = `Feedback on those samples?`;
+                    body = `Hey ${contactName},\n\nJust following up on the samples I dropped off earlier this week. Did you or the bar manager get a chance to crack them open?\n\nI'd love to hear your thoughts, specifically on the [Beer Name]. I think it fits that gap in your current tap list we talked about.\n\nTalk soon,\nRemy`;
+                    break;
+                case 'event':
+                    subject = `Event Idea: Tap Takeover`;
+                    body = `Hi ${contactName},\n\nI've been thinking about ways we can help drive some extra foot traffic to your place next month.\n\nWhat if we set up a "Meet the Brewer" or Tap Takeover night? We can bring some limited-release swag, maybe a firkin of something special, and promote it on our social media channels to get our crowd through your doors.\n\nDo you have a slow Tuesday or Wednesday coming up that needs a boost?\n\nLet me know,\nRemy`;
+                    break;
+                case 'invoice':
+                    subject = `Invoice #1234 Reminder - Suburban Brewing`;
+                    body = `Hi ${contactName},\n\nHope you're having a good week.\n\nThis is just a friendly bump on Invoice #1234 (attached). It looks like it's just past due.\n\nIf you've already sent the check, please disregard! Otherwise, if you need me to resend the PDF, just let me know.\n\nThanks,\nRemy`;
+                    break;
+                case 'winback':
+                    subject = `Long time no see!`;
+                    body = `Hey ${contactName},\n\nI was just looking through my logs and realized it's been a little while since we had Suburban on tap.\n\nWe've actually adjusted our pricing on [Core Beer] and released a few new hazies that I think your regulars would love.\n\nI'll be in your area on Thursday—mind if I swing by for 5 minutes to drop off some fresh liquid?\n\nCheers,\nRemy`;
+                    break;
+                case 'manager_missed':
+                    subject = `Sorry I missed you today`;
+                    body = `Hi ${contactName},\n\nI stopped by earlier today to drop off some info on our new releases, but I know you were out/busy.\n\n[Bartender Name] behind the bar took great care of me—I left a few samples with them for you to try.\n\nI'd love to connect next week. Is Tuesday morning usually good for you?\n\nBest,\nRemy`;
+                    break;
+                case 'wholesaler_restock':
+                    subject = `Suburban Brewing | Inventory & Next PO`;
+                    body = `Hi ${contactName},\n\nHope the team is having a good week.\n\nI'm looking at our production schedule and seeing inventory moving quickly on [Core Brand]. I wanted to check your current warehouse levels to ensure we don't gap the market.\n\nDo you need to cut a PO this week to top off for the weekend?\n\nAlso, are you hearing any specific feedback from the reps on the street regarding the new seasonal?\n\nThanks,\nRemy`;
+                    break;
+                default:
+                    body = "Please select a template goal.";
+            }
+        } else {
+            // --- SMS TEMPLATES (Short) ---
+            switch (template) {
+                case 'inventory':
+                    body = `Hey ${contactName}, Remy from Suburban here. Route planning for the week—you good on stock or need me to add anything to the truck?`;
+                    break;
+                case 'seasonal':
+                    body = `Hi ${contactName}, just a heads up: our new [Seasonal Name] is kegged and tasting awesome. Think it would kill it on your patio. Want me to save you a keg? -Remy`;
+                    break;
+                case 'sample':
+                    body = `Hey ${contactName}, did you get a chance to try those samples I dropped off? I'd love to get your thoughts on the [Beer Name] when you have a sec.`;
+                    break;
+                case 'event':
+                    body = `Hi ${contactName}, I have a fun idea for a Tap Takeover next month to drive some traffic your way. You around for a 5-min call tomorrow?`;
+                    break;
+                case 'invoice':
+                    body = `Hey ${contactName}, friendly nudge on Inv #1234. I think it might have slipped through the cracks. Let me know if you need me to resend the PDF! -Remy`;
+                    break;
+                case 'winback':
+                    body = `Hey ${contactName}, long time no see! We have some new hazies I think your crowd would love. Can I swing by Thursday with some samples? -Remy`;
+                    break;
+                case 'manager_missed':
+                    body = `Hey ${contactName}, sorry I missed you today! Left some fresh samples with the bartender for you. Let me know if you like them! -Remy (Suburban Brewing)`;
+                    break;
+                case 'wholesaler_restock':
+                    body = `Hi ${contactName}, checking Wholesaler inventory. Seeing [Core Brand] moving fast—do we need to cut a PO to keep you stocked for the weekend?`;
+                    break;
+                default:
+                    body = "Please select a goal.";
+            }
         }
 
         document.getElementById('previewSubject').value = subject;
         document.getElementById('previewBody').value = body;
-        document.getElementById('previewBody').focus();
     }
 
-    function sendEmail() {
+    // --- SEND ACTION ---
+    function sendAction() {
+        const clientKey = document.getElementById('clientSelect').value;
         const body = document.getElementById('previewBody').value;
-        if(body.length < 10) { Swal.fire('Error', 'Draft is empty.', 'error'); return; }
+        
+        if(!clientKey) { Swal.fire('Missing Info', 'Select a client first.', 'error'); return; }
+        if(body.length < 5) { Swal.fire('Empty Draft', 'Generate a draft first.', 'error'); return; }
 
-        // Simulate Sending
-        Swal.fire({
-            title: 'Sent!',
-            text: 'Email sent and CRM updated.',
-            icon: 'success',
-            timer: 2000,
-            showConfirmButton: false
-        });
+        if (currentMode === 'sms') {
+            // Open Native SMS App
+            const phone = clients[clientKey].phone.replace(/\D/g,''); // Strip non-numbers
+            const smsLink = `sms:${phone}?&body=${encodeURIComponent(body)}`;
+            window.location.href = smsLink;
+        } else {
+            // Simulate Email Send
+            Swal.fire({
+                title: 'Sent!',
+                text: 'Email sent successfully via Gmail API.',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
     }
   </script>
 </body>
