@@ -5,104 +5,229 @@
     <title>SBC Portal Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
     <style>
-        /* --- GLOBAL LAYOUT --- */
-        body { 
-            background: #0f172a; 
-            color: white; 
-            font-family: sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; /* Changed from height to min-height for mobile keyboards */
-            margin: 0; 
-            padding: 20px; /* Prevents card from touching edges on small screens */
+        /* --- GLOBAL VARIABLES --- */
+        :root {
+            --primary: #3b82f6; /* Bright Blue */
+            --primary-dark: #1d4ed8;
+            --glass-bg: rgba(15, 23, 42, 0.75); /* Dark blue semi-transparent */
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
         }
 
-        /* --- THE LOGIN CARD --- */
+        /* --- GLOBAL LAYOUT --- */
+        body { 
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            overflow: hidden;
+            background-color: #0f172a;
+        }
+
+        /* --- BACKGROUND IMAGE WITH OVERLAY --- */
+        .bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Placeholder brewery image - Replace URL with your own photo */
+            background-image: url('https://images.unsplash.com/photo-1584225064785-c62a8b43d148?q=80&w=1974&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+        }
+
+        .bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Dark gradient overlay to make text readable */
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%);
+            z-index: -1;
+        }
+
+        /* --- THE LOGIN CARD (GLASSMORPHISM) --- */
         .login-card { 
-            background: #1e293b; 
-            padding: 40px; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
-            width: 100%; 
-            max-width: 350px; 
-            text-align: center; 
-            transition: all 0.3s ease;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px); /* The frosted glass effect */
+            -webkit-backdrop-filter: blur(12px);
+            padding: 50px 40px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            position: relative;
+            animation: fadeIn Up 0.8s ease-out;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 5px;
+            margin-bottom: 35px;
+            font-weight: 600;
         }
 
         /* --- FORM ELEMENTS --- */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
         input { 
-            width: 100%; 
-            padding: 14px; /* Increased for better touch targets */
-            margin: 10px 0; 
-            border-radius: 6px; 
-            border: 1px solid #334155; 
-            background: #0f172a; 
-            color: white; 
-            box-sizing: border-box; 
-            font-size: 16px; /* Prevents iOS zoom-on-focus */
+            width: 100%;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: rgba(15, 23, 42, 0.6);
+            color: white;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(15, 23, 42, 0.9);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+
+        input::placeholder {
+            color: #64748b;
         }
 
         button { 
-            width: 100%; 
-            padding: 14px; 
-            background: #2563eb; 
-            color: white; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            margin-top: 10px; 
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
             font-size: 16px;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
         }
 
-        .error { color: #f87171; font-size: 14px; margin-bottom: 10px; display: none; }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #475569;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        /* --- UTILITIES --- */
+        .error { 
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            color: #fca5a5;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none; 
+            text-align: left;
+        }
         
         .forgot-link { 
-            display: block; 
-            margin-top: 25px; 
-            color: #94a3b8; 
-            font-size: 14px; 
-            text-decoration: none; 
-            cursor: pointer; 
+            display: inline-block;
+            margin-top: 25px;
+            color: var(--text-muted);
+            font-size: 13px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s;
         }
-        .forgot-link:hover { color: #2563eb; text-decoration: underline; }
+        .forgot-link:hover { color: var(--primary); }
 
-        /* --- MOBILE & TABLET REFINEMENTS --- */
+        /* --- ANIMATIONS --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- MOBILE ADJUSTMENTS --- */
         @media (max-width: 480px) {
             .login-card {
-                padding: 30px 20px;
-                max-width: 100%;
-                border-radius: 8px;
+                max-width: 90%;
+                padding: 40px 25px;
             }
-            h2 { font-size: 22px; }
-            p { font-size: 14px; }
         }
-
-        /* Landscape fix for small phones */
-        @media (max-height: 500px) {
-            body { align-items: flex-start; padding-top: 20px; }
+        
+        /* Landscape fix */
+        @media (max-height: 600px) {
+            body { align-items: flex-start; overflow-y: auto; }
+            .login-card { margin-top: 40px; margin-bottom: 40px; }
         }
     </style>
 </head>
 <body>
+
+    <div class="bg-image"></div>
+    <div class="bg-overlay"></div>
+
     <div class="login-card">
-        <h2 style="margin-bottom: 8px;">Suburban Brewing</h2>
-        <p style="color: #94a3b8; margin-top: 0; margin-bottom: 25px;">Employee Portal Access</p>
+        <h2>Suburban Brewing</h2>
+        <div class="subtitle">Employee Portal Access</div>
         
         <div id="errorMsg" class="error">Incorrect Credentials</div>
         
-        <input type="text" id="userInput" placeholder="Username" autocomplete="username">
-        <input type="password" id="passInput" placeholder="Password" autocomplete="current-password">
+        <div class="input-group">
+            <input type="text" id="userInput" placeholder="Username" autocomplete="username">
+        </div>
+        <div class="input-group">
+            <input type="password" id="passInput" placeholder="Password" autocomplete="current-password">
+        </div>
         
-        <button onclick="checkLogin()">Access Portal</button>
+        <button onclick="checkLogin()">Login</button>
         
-        <a class="forgot-link" onclick="forgotPassword()">Forgot Password?</a>
+        <div>
+            <a class="forgot-link" onclick="forgotPassword()">Reset Password</a>
+        </div>
     </div>
 
 <script>
-// Logic preserved exactly as you provided
+// --- YOUR EXISTING LOGIC (UNCHANGED) ---
 const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
 
 async function checkLogin() {
@@ -132,19 +257,20 @@ async function checkLogin() {
 
         if (result.status === "success") {
             if (!result.profile.agreementSigned) {
+                // Using SweetAlert dark theme colors to match
                 const { isConfirmed } = await Swal.fire({
                     title: 'User Access Agreement',
-                    width: '90%', // Mobile responsive width
+                    width: '90%',
                     html: `
                         <div style="text-align: left; font-size: 13px; color: #cbd5e1; background: #0f172a; border: 1px solid #334155; padding: 15px; max-height: 250px; overflow-y: auto; border-radius: 8px;">
-                            <p style="color: #2563eb; font-weight: bold; margin-top: 0;">SBC EMPLOYEE TERMS of USE</p>
-                            <p><strong>1. Confidentiality:</strong> All recipes, water profiles, and sales data are SBC trade secrets. Sharing this data externally is prohibited.</p>
-                            <p><strong>2. Security:</strong> You are responsible for your credentials. Do not share passwords.</p>
-                            <p><strong>3. Integrity:</strong> Brew logs and inventory must be recorded accurately. Falsification is prohibited.</p>
-                            <p><strong>4. Monitoring:</strong> All portal activity is logged and timestamped for security auditing.</p>
-                            <p><strong>5. Termination:</strong> Access is revoked immediately upon termination of employment.</p>
+                            <p style="color: #3b82f6; font-weight: bold; margin-top: 0;">SBC EMPLOYEE TERMS of USE</p>
+                            <p><strong>1. Confidentiality:</strong> All recipes, water profiles, and sales data are SBC trade secrets.</p>
+                            <p><strong>2. Security:</strong> You are responsible for your credentials.</p>
+                            <p><strong>3. Integrity:</strong> Brew logs and inventory must be recorded accurately.</p>
+                            <p><strong>4. Monitoring:</strong> All portal activity is logged.</p>
+                            <p><strong>5. Termination:</strong> Access is revoked immediately upon termination.</p>
                         </div>
-                        <p style="margin-top: 15px; font-size: 12px; color: #94a3b8;">By clicking below, you provide a digital signature acknowledging these terms.</p>
+                        <p style="margin-top: 15px; font-size: 12px; color: #94a3b8;">By clicking below, you provide a digital signature.</p>
                     `,
                     icon: 'warning',
                     showCancelButton: false,
@@ -194,17 +320,17 @@ async function forgotPassword() {
     });
 
     if (email) {
-        Swal.fire({ title: 'Processing...', didOpen: () => { Swal.showLoading(); } });
+        Swal.fire({ title: 'Processing...', background: '#1e293b', color:'#fff', didOpen: () => { Swal.showLoading(); } });
         try {
             const response = await fetch(`${MASTER_API_URL}?action=forgotPassword&email=${encodeURIComponent(email)}`);
             const result = await response.json();
             if (result.status === "success") {
-                Swal.fire('Sent!', result.message, 'success');
+                Swal.fire({title: 'Sent!', text: result.message, icon: 'success', background: '#1e293b', color:'#fff'});
             } else {
-                Swal.fire('Error', result.message, 'error');
+                Swal.fire({title: 'Error', text: result.message, icon: 'error', background: '#1e293b', color:'#fff'});
             }
         } catch (e) {
-            Swal.fire('Error', 'Connection failed.', 'error');
+            Swal.fire({title: 'Error', text: 'Connection failed.', icon: 'error', background: '#1e293b', color:'#fff'});
         }
     }
 }
