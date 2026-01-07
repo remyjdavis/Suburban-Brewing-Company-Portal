@@ -26,35 +26,34 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
 
-    /* --- SIDEBAR --- */
+    /* --- SIDEBAR FIX: FORCED VERTICAL STACK --- */
     .sidebar { 
-      width: 240px; background: var(--sidebar); color: #fff; padding: 20px 0; 
+      width: 240px; background: var(--sidebar); color: #fff; padding: 0; 
       flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
+      display: flex !important; flex-direction: column !important; /* Fixes overlapping */
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; color: #fff; letter-spacing: 1px; }
+    .sidebar h2 { margin: 24px 20px 10px; font-size: 18px; color: #fff; letter-spacing: 1px; }
     
     .nav-section-header {
-      font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; 
+      font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 18px 20px 8px !important; 
       font-weight: 700; letter-spacing: 0.5px;
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      user-select: none;
+      user-select: none; position: relative !important;
     }
     .nav-section-header:hover { color: #fff; opacity: 1; }
 
-    .chevron { transition: transform 0.3s ease; font-size: 10px; }
-    .collapsed .chevron { transform: rotate(-90deg); }
-
     .collapsible-content {
+      position: relative !important; display: block;
       max-height: 1000px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
-    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; display: none; }
 
     .nav-link { 
       display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent;
+      transition: 0.2s; border-left: 4px solid transparent; position: relative !important;
     }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
     .nav-link.active { border-left-color: var(--accent); }
@@ -89,6 +88,10 @@
     th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; text-align: left; }
     th { background: #f9fafb; color: #6b7280; font-weight: 600; }
     tr.selected { background: #eff6ff; border-left: 4px solid var(--accent); }
+
+    /* LOGOUT BUTTON */
+    .logout-link { color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
 
     /* ============================================================
        MOBILE DRAWER LOGIC
@@ -125,36 +128,36 @@
       }
       .btn { width: 100%; margin-bottom: 8px; }
     }
-
-    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
-    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
-</style>
+  </style>
 </head>
 <body>
 <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
 <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
   
   <aside class="sidebar">
-    <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-  <span>System</span>
-</div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
-
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
+    <div style="padding-top:20px; margin-left:20px; margin-bottom:20px;">
+        <h2 style="margin:0;">SUBURBAN BREWING</h2>
+    </div>
     
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
+    <div class="nav-section-header">
+      <span>System</span>
+    </div>
+    <div class="collapsible-content">
+      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+        <span class="icon">󰗼</span> <span>Logout of Portal</span>
+      </a>
+    </div>
+
+    <script>
+    function handleLogout() {
+      // Clear the authentication session
+      sessionStorage.removeItem("sbc_auth");
+      
+      // Redirect to the login page relative to your GitHub repo root
+      const repoPath = "/Suburban-Brewing-Company-Portal/";
+      window.location.replace(repoPath + "login.html");
+    }
+    </script>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
@@ -270,7 +273,7 @@
                 <th>Action</th>
               </tr>
             </thead>
-            <tbody id="invoice-history-body">
+            <tbody id="historyBody">
               <tr><td colspan="4" style="text-align:center;">Search a customer to load invoices.</td></tr>
             </tbody>
           </table>
@@ -286,6 +289,7 @@
   </div>
 
 <script>
+// IMPORTANT: Ensure this Script URL is deployed as "Who has access: Anyone" 
 const API_URL = "https://script.google.com/macros/s/AKfycbwHgZeSFsMCbj0I4eUHuDxfs9DX6YZBhkzm26dWlWoyRX0EH0v7Csnnqm1unOdbwEjj/exec";
 
 let debounceTimer = null;
@@ -293,7 +297,8 @@ let selectedInvoice = null;
 let invoiceHistory = [];
 
 const customerName = document.getElementById("customerName");
-const historyBody = document.getElementById("historyBody");
+// Global variable now matches HTML ID
+const historyBody = document.getElementById("historyBody"); 
 const invoiceNumber = document.getElementById("invoiceNumber");
 const invoiceDate = document.getElementById("invoiceDate");
 const previewPanel = document.getElementById("previewPanel");
@@ -348,10 +353,10 @@ function debouncedLoadInvoices() {
 }
 
 async function loadInvoices(customerNameValue) {
-    const historyBodyElement = document.getElementById("invoice-history-body");
-    if (!historyBodyElement) return;
+    // Use the global variable which is now correctly linked
+    if (!historyBody) return;
 
-    historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Searching...</td></tr>";
+    historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Searching...</td></tr>";
 
     try {
         const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerNameValue)}`;
@@ -360,8 +365,6 @@ async function loadInvoices(customerNameValue) {
         const res = await fetch(url, {
             method: "GET",
             // DO NOT use mode: "cors" here; it triggers stricter checks that GAS fails.
-            // Leaving it as default or "no-cors" (if you don't need to read the body) 
-            // is safer, but for data, standard fetch with redirect follow is best.
             redirect: "follow" 
         });
 
@@ -369,9 +372,9 @@ async function loadInvoices(customerNameValue) {
         const data = await res.json();
         invoiceHistory = data || []; 
         
-        historyBodyElement.innerHTML = ""; 
+        historyBody.innerHTML = ""; 
         if (invoiceHistory.length === 0) {
-            historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found.</td></tr>";
+            historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found.</td></tr>";
             return;
         }
 
@@ -385,19 +388,21 @@ async function loadInvoices(customerNameValue) {
                     <button class="btn btn-secondary" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button>
                 </td>
             `;
-            historyBodyElement.appendChild(tr);
+            historyBody.appendChild(tr);
         });
 
     } catch (err) {
         console.error("Fetch Error:", err);
         // This usually triggers if the script returns HTML (a login page) instead of JSON
-        historyBodyElement.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>CORS Blocked: Check Script Deployment Settings.</td></tr>";
+        historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>CORS Blocked: Check Script Deployment Settings.</td></tr>";
     }
 }
+
 async function selectInvoice(invNum, btn) {
   selectedInvoice = invoiceHistory.find(i => i.invoiceNumber === invNum);
   if (!selectedInvoice) return;
 
+  // Use the correct ID for row highlighting
   document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
   btn.closest("tr").classList.add("selected");
 
@@ -405,7 +410,12 @@ async function selectInvoice(invNum, btn) {
   invoiceDate.value = selectedInvoice.date || "";
 
   try {
-    const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`);
+    // FIX: Added redirect: "follow" here as well to fix the "Load failed" error
+    const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`, {
+        method: "GET",
+        redirect: "follow"
+    });
+    
     if (!res.ok) throw new Error("Failed to load items");
 
     const items = await res.json();
