@@ -109,7 +109,94 @@
 
     .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
-</style>
+/* --- INVENTORY GRID SYSTEM --- */
+    .inventory-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        padding-bottom: 40px;
+    }
+
+    .inv-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease, border-color 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .inv-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--accent);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+
+    .inv-card-header {
+        background: #f8fafc;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .inv-card-title {
+        font-weight: 800;
+        color: #1e293b;
+        font-size: 0.95rem;
+    }
+
+    .lifecycle-badge {
+        font-size: 10px;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-weight: 700;
+        background: #e2e8f0;
+        color: #64748b;
+    }
+
+    .inv-card-body {
+        padding: 0 16px;
+        flex-grow: 1;
+    }
+
+    .inv-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px dashed #f1f5f9;
+        font-size: 13px;
+    }
+    .inv-row:last-child { border-bottom: none; }
+
+    .pkg-name { display: flex; align-items: center; gap: 8px; color: #475569; font-weight: 500; }
+    
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-ok { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+    .status-low { background: #ef4444; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2); }
+
+    .qty-badge {
+        background: #f1f5f9;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        color: #0f172a;
+        min-width: 30px;
+        text-align: center;
+    }
+
+    .inv-card-footer {
+        padding: 12px 16px;
+        background: #fff;
+        border-top: 1px solid #f1f5f9;
+        text-align: right;
+    }
+  </style>
 </head>
 <body>
 <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
@@ -202,69 +289,46 @@
     </header>
 
     <section class="content">
-      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-        <button onclick="openProductModal()">+ Create New Product</button>
-        <span style="font-size: 13px; color: var(--text-muted);">Deductions occur automatically upon Invoice submission.</span>
-      </div>
-
-      <div class="section">
-        <h3>Core Year-Round</h3>
-        <div class="table-container">
-            <table>
-              <thead>
-                <tr><th>Product</th><th>Package</th><th>On Hand</th><th>Unit</th><th>Status</th><th>Actions</th></tr>
-              </thead>
-              <tbody id="coreInventoryBody"><tr><td colspan="6">Loading...</td></tr></tbody>
-            </table>
+      <div style="margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+        <div>
+           <button onclick="openProductModal()">+ Create New Product</button>
         </div>
+        <span style="font-size: 13px; color: var(--text-muted); font-style: italic;">Inventory deducts automatically upon Invoice submission.</span>
       </div>
 
-      <div class="section">
-        <h3>Seasonal Releases</h3>
-        <div class="table-container">
-            <table>
-              <thead>
-                <tr><th>Product</th><th>Package</th><th>On Hand</th><th>Unit</th><th>Status</th><th>Actions</th></tr>
-              </thead>
-              <tbody id="seasonalInventoryBody"><tr><td colspan="6">Loading...</td></tr></tbody>
-            </table>
+      <h3 style="margin-top: 10px;">Core Year-Round</h3>
+      <div id="grid-core" class="inventory-grid"></div>
+
+      <h3 style="margin-top: 30px;">Seasonal Releases</h3>
+      <div id="grid-seasonal" class="inventory-grid"></div>
+
+      <h3 style="margin-top: 30px;">Rotating / Limited</h3>
+      <div id="grid-rotating" class="inventory-grid"></div>
+    </section>
+
+    <div id="productModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:999;">
+        <div style="background:#fff; padding:24px; border-radius:8px; width:480px; max-height: 90vh; overflow-y: auto;">
+        <h3 style="border:none;">Add Brewery Product</h3>
+        <label>Product Name</label><input id="prodName" placeholder="e.g. Suburban IPA" />
+        <label>Lifecycle</label>
+        <select id="prodLifecycle">
+            <option value="Core">Core</option>
+            <option value="Seasonal">Seasonal</option>
+            <option value="Rotating">Rotating</option>
+        </select>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:10px;">
+            <div><label>1/2 Keg Qty</label><input id="halfQty" type="number" /></div>
+            <div><label>1/2 Keg Price</label><input id="halfPrice" type="number" /></div>
+            <div><label>1/6 Keg Qty</label><input id="sixthQty" type="number" /></div>
+            <div><label>1/6 Keg Price</label><input id="sixthPrice" type="number" /></div>
+            <div><label>Case Qty</label><input id="caseQty" type="number" /></div>
+            <div><label>Case Price</label><input id="casePrice" type="number" /></div>
         </div>
-      </div>
-
-      <div class="section">
-        <h3>Rotating / Limited</h3>
-        <div class="table-container">
-            <table>
-              <thead>
-                <tr><th>Product</th><th>Package</th><th>On Hand</th><th>Unit</th><th>Status</th><th>Actions</th></tr>
-              </thead>
-              <tbody id="rotatingInventoryBody"><tr><td colspan="6">Loading...</td></tr></tbody>
-            </table>
+        <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
+            <button class="secondary" onclick="closeProductModal()">Cancel</button>
+            <button onclick="saveProduct()">Save Product</button>
         </div>
-      </div>
-
-  <div id="productModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:999;">
-    <div style="background:#fff; padding:24px; border-radius:8px; width:480px; max-height: 90vh; overflow-y: auto;">
-      <h3 style="border:none;">Add Brewery Product</h3>
-      <label>Product Name</label><input id="prodName" placeholder="e.g. Suburban IPA" />
-      <label>Lifecycle</label>
-      <select id="prodLifecycle">
-        <option value="Core">Core</option>
-        <option value="Seasonal">Seasonal</option>
-        <option value="Rotating">Rotating</option>
-      </select>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:10px;">
-        <div><label>1/2 Keg Qty</label><input id="halfQty" type="number" /></div>
-        <div><label>1/2 Keg Price</label><input id="halfPrice" type="number" /></div>
-        <div><label>1/6 Keg Qty</label><input id="sixthQty" type="number" /></div>
-        <div><label>1/6 Keg Price</label><input id="sixthPrice" type="number" /></div>
-        <div><label>Case Qty</label><input id="caseQty" type="number" /></div>
-        <div><label>Case Price</label><input id="casePrice" type="number" /></div>
-      </div>
-      <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
-        <button class="secondary" onclick="closeProductModal()">Cancel</button>
-        <button onclick="saveProduct()">Save Product</button>
-      </div>
+        </div>
     </div>
   </div>
 
