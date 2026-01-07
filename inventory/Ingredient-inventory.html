@@ -12,7 +12,7 @@
             window.location.replace(repoPath + "login.html");
         }
     })();
-</script>
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Suburban Brewing - Ingredient Inventory</title>
@@ -91,7 +91,7 @@
     .add-card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 32px; border: 1px solid #e2e8f0; border-top: 4px solid var(--accent); }
     .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
     .form-group label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
-    .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 16px; }
+    .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 16px; transition: background-color 0.5s ease; }
     
     .btn-scan { background: var(--sidebar); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
     .btn-save { background: var(--accent-green); color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: 700; font-size: 16px; }
@@ -134,33 +134,32 @@
 
     .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
-</style>
+  </style>
 </head>
 <body>
-<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
   <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
   
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
-  <span>System</span>
-</div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
+      <span>System</span>
+    </div>
+    <div class="collapsible-content">
+      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+        <span class="icon">󰗼</span> <span>Logout of Portal</span>
+      </a>
+    </div>
 
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
-    
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
+    <script>
+     function handleLogout() {
+        // Clear the authentication session
+        sessionStorage.removeItem("sbc_auth");
+        // Redirect to the login page relative to your GitHub repo root
+        const repoPath = "/Suburban-Brewing-Company-Portal/";
+        window.location.replace(repoPath + "login.html");
+    }
+    </script>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
@@ -230,7 +229,7 @@
     <form id="inventoryForm">
       <div class="add-card" id="entry-form">
         <h3 style="margin-top:0; color: var(--accent);">Inventory Entry Portal</h3>
-        <div id="reader" style="display:none; margin-bottom: 15px; border-radius: 12px; overflow: hidden;"></div>
+        <div id="reader" style="display:none; margin-bottom: 15px; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0;"></div>
         
         <div class="form-row">
           <div class="form-group">
@@ -363,7 +362,149 @@
         });
     });
 
-    // --- 2. DATA SUBMISSION (POST) ---
+    // --- 2. SCANNER & AI SCRAPER LOGIC (UPDATED) ---
+
+    function toggleScanner() {
+        const readerDiv = document.getElementById('reader');
+        if (readerDiv.style.display === 'none') {
+            readerDiv.style.display = 'block';
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                // STOP scanning immediately upon finding a code
+                html5QrCode.stop().then(() => {
+                    readerDiv.style.display = 'none';
+                    handleScannedData(txt);
+                });
+            });
+        } else {
+            readerDiv.style.display = 'none';
+            if(html5QrCode) html5QrCode.stop();
+        }
+    }
+
+    function handleScannedData(txt) {
+        // 1. If Text Only (Not a URL), just fill Lot ID
+        if (!txt.startsWith('http')) {
+            document.getElementById('inv-lot').value = txt;
+            return;
+        }
+
+        // 2. Extract Lot ID from URL (e.g., yakimachief.com/lot/123 -> 123)
+        const parts = txt.split('/');
+        const likelyLot = parts[parts.length - 1];
+        document.getElementById('inv-lot').value = likelyLot;
+
+        // 3. UI Feedback
+        const btn = document.querySelector('.btn-scan');
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ AI Analyzing COA...";
+        btn.disabled = true;
+
+        // 4. Send URL to Google Script to Scrape Data
+        fetch(`${scriptURL}?action=scrapeCOA&url=${encodeURIComponent(txt)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const fields = document.getElementById('coa-fields-container');
+                let foundAny = false;
+                
+                // Helper: Find input and set value with green flash
+                const setVal = (name, val) => {
+                    const input = fields.querySelector(`input[name="${name}"]`);
+                    if(input && val) {
+                        input.value = val;
+                        // Flash background color green to indicate AI population
+                        input.style.backgroundColor = '#dcfce7'; 
+                        setTimeout(() => input.style.backgroundColor = '#f8fafc', 2000);
+                        foundAny = true;
+                    }
+                };
+
+                // --- MAP DATA TO FIELDS ---
+                
+                // Malt Mapping
+                setVal('color', data.color);
+                setVal('extract', data.extract);
+                setVal('moisture', data.moisture);
+                setVal('protein', data.protein);
+                setVal('diastatic', data.diastatic);
+                setVal('fan', data.fan);
+                setVal('beta_glucan', data.beta); // Beta works for Hops(Beta) and Malt(Beta-Glucan)
+                setVal('st_ratio', data.st_ratio);
+                setVal('friability', data.friability);
+                setVal('assortment', data.assortment);
+                
+                // Hops Mapping
+                setVal('alpha', data.alpha);
+                setVal('oil', data.oil);
+                
+                if(foundAny) {
+                    alert("Success: Extracted COA Data!");
+                } else {
+                    alert("Connected to COA, but couldn't find fields matching your current Category selection.");
+                }
+            } else {
+                // Fallback
+                if(confirm("Could not auto-read data. Open link to view manually?")) {
+                    window.open(txt, '_blank');
+                }
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            window.open(txt, '_blank');
+        })
+        .finally(() => {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
+    }
+
+    // --- 3. FORM DYNAMICS (UPDATED) ---
+    
+    function renderDynamicFields() {
+        const cat = document.getElementById('inv-cat').value;
+        const container = document.getElementById('coa-fields-container');
+        container.innerHTML = ""; 
+        
+        if (cat === "Malt") {
+            // Updated to match your specific Sheet Headers
+            container.innerHTML = `
+                <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>
+                <div class="form-group"><label>Bag Weight (lbs)</label><input type="number" name="bag_weight" placeholder="50 or 55"></div>
+                
+                <div class="form-group"><label>Extract FGDB %</label><input type="number" step="0.1" name="extract"></div>
+                <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
+                <div class="form-group"><label>Moisture %</label><input type="number" step="0.1" name="moisture"></div>
+                <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
+                
+                <div class="form-group"><label>Diastatic Power</label><input type="number" step="1" name="diastatic"></div>
+                <div class="form-group"><label>Beta-Glucan</label><input type="number" step="1" name="beta_glucan"></div>
+                <div class="form-group"><label>S/T Ratio</label><input type="number" step="0.1" name="st_ratio"></div>
+                <div class="form-group"><label>FAN (mg/L)</label><input type="number" step="1" name="fan"></div>
+                <div class="form-group"><label>Friability %</label><input type="number" step="0.1" name="friability"></div>
+                <div class="form-group"><label>Assortment %</label><input type="number" step="0.1" name="assortment"></div>
+            `;
+        } else if (cat === "Hops") {
+            container.innerHTML = `
+                <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
+                <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
+                <div class="form-group"><label>Beta %</label><input type="number" step="0.1" name="beta"></div>
+                <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
+        } else if (cat === "Water") {
+            container.innerHTML = `
+                <div class="form-group"><label>Strength/Purity %</label><input type="number" step="0.01" name="strength"></div>
+                <div class="form-group"><label>Notes</label><input type="text" name="notes"></div>`;
+        } else if (cat === "Yeast") {
+            container.innerHTML = `
+                <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
+                <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
+        } else if (cat === "Packaging") {
+            container.innerHTML = `<div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
+        }
+    }
+
+    // --- 4. DATA SUBMISSION (POST) ---
     
     form.addEventListener('submit', e => {
         e.preventDefault();
@@ -392,7 +533,7 @@
         });
     });
 
-    // --- 3. DATA FETCHING (GET) ---
+    // --- 5. DATA FETCHING (GET) ---
     
     function fetchRealData(cat) {
         const tbody = document.getElementById('inventory-details-rows');
@@ -464,59 +605,8 @@
         }).join('');
     }
 
-    // --- 4. FORM DYNAMICS & UTILS ---
+    // --- 6. UTILS ---
     
-    function renderDynamicFields() {
-        const cat = document.getElementById('inv-cat').value;
-        const container = document.getElementById('coa-fields-container');
-        container.innerHTML = ""; 
-        
-        if (cat === "Hops") {
-            container.innerHTML = `
-                <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
-                <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
-                <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
-        } else if (cat === "Malt") {
-            container.innerHTML = `
-                <div class="form-group"><label>Extract %</label><input type="number" step="0.1" name="extract"></div>
-                <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
-                <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
-                <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>`;
-        } else if (cat === "Water") {
-            container.innerHTML = `
-                <div class="form-group"><label>Strength/Purity %</label><input type="number" step="0.01" name="strength" placeholder="e.g. 0.88"></div>
-                <div class="form-group">
-                    <label>Unit</label>
-                    <select name="unit">
-                        <option value="gal">Gallons</option>
-                        <option value="lbs">lbs</option>
-                        <option value="kg">kg</option>
-                        <option value="ml">ml</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>COA Notes</label><input type="text" name="notes"></div>`;
-        } else if (cat === "Yeast") {
-            container.innerHTML = `
-                <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
-                <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
-        }
-    }
-
-    function toggleScanner() {
-        const readerDiv = document.getElementById('reader');
-        if (readerDiv.style.display === 'none') {
-            readerDiv.style.display = 'block';
-            html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                document.getElementById('inv-lot').value = txt;
-                toggleScanner();
-            });
-        } else {
-            readerDiv.style.display = 'none';
-            if(html5QrCode) html5QrCode.stop();
-        }
-    }
-
     function setCategoryAndOpenModal(cat) {
         document.getElementById('inv-cat').value = cat;
         renderDynamicFields();
@@ -533,6 +623,6 @@
     }
 
     function closeModal() { document.getElementById('inventory-modal').style.display = "none"; }
-</script>
+  </script>
 </body>
 </html>
