@@ -63,8 +63,9 @@
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; display: none; }
 
+    /* FIX 2: Ensure text decoration is off to fix 'strikethrough' glitch */
     .nav-link { 
-      display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
+      display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none !important; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent; position: relative !important;
     }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
@@ -74,7 +75,7 @@
     .main-wrapper { 
       flex: 1; 
       margin-left: 240px; 
-      /* FIX 2: Explicitly calculate width to prevent content sliding under sidebar */
+      /* FIX 3: Explicitly calculate width to prevent content sliding under sidebar or off screen */
       width: calc(100% - 240px); 
       display: flex; 
       flex-direction: column; 
@@ -123,7 +124,7 @@
       .sidebar { left: -260px; z-index: 10001; }
       .sidebar.open { left: 0; }
       
-      /* FIX 3: Reset margins and width on mobile */
+      /* FIX 4: Reset margins and width on mobile */
       .main-wrapper { margin-left: 0; width: 100%; } 
       
       .menu-overlay.active { display: block; }
