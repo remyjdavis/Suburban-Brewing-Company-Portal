@@ -345,22 +345,29 @@ function debouncedLoadInvoices() {
   }, 300);
 }
 
-async function loadInvoices(customer) {
-  historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Loading invoices...</td></tr>";
+async function loadInvoices(customerName) {
+    try {
+        const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerName)}`;
+        
+        const res = await fetch(url, {
+            method: "GET",
+            mode: "cors", // Explicitly ask for CORS
+            redirect: "follow" // CRITICAL: This allows the browser to follow Google's redirect to the data
+        });
 
-  try {
-    const res = await fetch(`${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customer)}`);
-    if (!res.ok) throw new Error("Request failed");
+        // Use the global fix we added earlier to ensure it's JSON
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+             console.error("CORS/Auth Error: Received HTML instead of JSON. Check Script Deployment.");
+             return;
+        }
 
-    const data = await res.json();
-    invoiceHistory = Array.isArray(data) ? data : [];
-    historyBody.innerHTML = "";
-
-    if (!invoiceHistory.length) {
-      historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found.</td></tr>";
-      return;
+        const data = await res.json();
+        renderInvoices(data);
+    } catch (err) {
+        console.error("Fetch Error:", err);
     }
-
+}
     invoiceHistory.forEach(inv => {
       const tr = document.createElement("tr");
       // ADDED: data-labels for mobile card-stacking view
