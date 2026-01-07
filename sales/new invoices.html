@@ -1279,13 +1279,13 @@
       };
 
       fetch(`${API_URL}?action=addCustomer`, {
-          method: "POST",
-          // FIX: Change to text/plain to bypass Preflight 405 error
-          headers: {
-            "Content-Type": "text/plain"
-          },
-          body: JSON.stringify(newCustomer)
-        })
+    method: "POST",
+    // FIX: Changing this to text/plain stops the browser from sending an OPTIONS request
+    headers: {
+        "Content-Type": "text/plain"
+    },
+    body: JSON.stringify(newCustomer)
+})
         .then(r => r.json())
         .then(res => {
           if (res.success) {
