@@ -1419,19 +1419,14 @@
             alert("Save failed");
             return;
           }
-          // Enable buttons AFTER save
           document.getElementById("print-invoice-btn").disabled = false;
           document.getElementById("email-invoice-btn").disabled = false;
 
-          // ✅ store for later overwrite when delivered
-          window.currentInvoiceFileId = res.fileId;
-
-          // ✅ optional: store invoice number too
+          // FIX: Extract the ID from the URL if fileId is missing
+          window.currentInvoiceFileId = res.fileId || res.pdfUrl.match(/[-\w]{25,}/)[0];
           window.currentInvoiceNumber = res.invoiceNumber;
 
           alert("Invoice saved successfully");
-
-          // ✅ open PDF immediately (or comment out if you prefer)
           if (res.pdfUrl) {
             window.open(res.pdfUrl, "_blank");
           }
@@ -1480,10 +1475,8 @@
 
       fetch(API_URL + "?action=emailInvoice", {
           method: "POST",
-          // FIX: Change to text/plain to bypass Preflight 405 error
-          headers: {
-            "Content-Type": "text/plain"
-          },
+          // FIX: Using text/plain prevents the Preflight (405) error
+          headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({
             fileId: window.currentInvoiceFileId,
             invoiceNumber: window.currentInvoiceNumber
@@ -1493,10 +1486,9 @@
         .then(res => {
           if (!res.success) {
             console.error(res);
-            alert("Email failed");
+            alert("Email failed: " + (res.error || "Unknown error"));
             return;
           }
-
           alert("Invoice emailed successfully");
         })
         .catch(err => {
@@ -1504,7 +1496,6 @@
           alert("Network error emailing invoice");
         });
     }
-
     document
       .getElementById("email-invoice-btn")
       .addEventListener("click", emailInvoice);
