@@ -7,7 +7,6 @@
         const isLoginPage = window.location.pathname.includes("login.html");
 
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
@@ -26,11 +25,11 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
 
-    /* --- SIDEBAR FIX: FORCED VERTICAL STACK --- */
+    /* --- SIDEBAR FIX --- */
     .sidebar { 
       width: 240px; background: var(--sidebar); color: #fff; padding: 0; 
       flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
-      display: flex !important; flex-direction: column !important; /* Fixes overlapping */
+      display: flex !important; flex-direction: column !important;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .sidebar h2 { margin: 24px 20px 10px; font-size: 18px; color: #fff; letter-spacing: 1px; }
@@ -77,7 +76,8 @@
     /* --- FORM & TABLES --- */
     .form-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px; }
     label { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: block; color: #6b7280; }
-    input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; }
+    /* Updated Select Styling */
+    select, input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; background-color: white; }
 
     .btn { padding: 12px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 700; transition: 0.2s; }
     .btn-primary { background: var(--accent); color: white; }
@@ -93,9 +93,7 @@
     .logout-link { color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
 
-    /* ============================================================
-       MOBILE DRAWER LOGIC
-       ============================================================ */
+    /* MOBILE DRAWER LOGIC */
     #menu-toggle { display: none; }
     .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
@@ -116,7 +114,6 @@
     }
 
     @media (max-width: 600px) {
-      /* Card-Stacking Table for Mobile Search */
       table, thead, tbody, th, td, tr { display: block; }
       thead tr { position: absolute; top: -9999px; left: -9999px; }
       tr { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; padding: 10px; background: #fff; }
@@ -150,10 +147,7 @@
 
     <script>
     function handleLogout() {
-      // Clear the authentication session
       sessionStorage.removeItem("sbc_auth");
-      
-      // Redirect to the login page relative to your GitHub repo root
       const repoPath = "/Suburban-Brewing-Company-Portal/";
       window.location.replace(repoPath + "login.html");
     }
@@ -242,8 +236,10 @@
         <h2>Find Customer Invoices</h2>
         <div class="form-grid">
           <div>
-            <label>Customer Name</label>
-            <input id="customerName" placeholder="Type customer name..." oninput="debouncedLoadInvoices()">
+            <label>Select Customer</label>
+            <select id="customerSelect" onchange="loadInvoices(this.value)">
+                <option value="" disabled selected>Loading Customers...</option>
+            </select>
           </div>
           <div>
             <label>Invoice #</label>
@@ -274,7 +270,7 @@
               </tr>
             </thead>
             <tbody id="historyBody">
-              <tr><td colspan="4" style="text-align:center;">Search a customer to load invoices.</td></tr>
+              <tr><td colspan="4" style="text-align:center;">Select a customer to load invoices.</td></tr>
             </tbody>
           </table>
         </div>
@@ -289,15 +285,13 @@
   </div>
 
 <script>
-// IMPORTANT: Ensure this Script URL is deployed as "Who has access: Anyone" 
+// NOTE: Ensure your Google Script is deployed as "Who has access: Anyone" 
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
 
-let debounceTimer = null;
 let selectedInvoice = null;
 let invoiceHistory = [];
 
-const customerName = document.getElementById("customerName");
-// Global variable now matches HTML ID
+const customerSelect = document.getElementById("customerSelect");
 const historyBody = document.getElementById("historyBody"); 
 const invoiceNumber = document.getElementById("invoiceNumber");
 const invoiceDate = document.getElementById("invoiceDate");
@@ -311,7 +305,6 @@ function toggleGroup(contentId, headerEl) {
   headerEl.classList.toggle('collapsed');
 }
 
-// --- MOBILE DRAWER TOGGLE ---
 function toggleMobileMenu() {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('menu-overlay');
@@ -325,12 +318,13 @@ function toggleMobileMenu() {
 
 // --- INITIALIZE ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Mobile Link Auto-closing logic
+    // 1. Fetch Customers immediately
+    fetchCustomers();
+
+    // 2. Sidebar Logic
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => { if (window.innerWidth <= 1024) toggleMobileMenu(); });
     });
-
-    // Sidebar Auto-expansion logic
     const activeLink = document.querySelector('.nav-link.active');
     if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -342,18 +336,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- INVOICE SEARCH LOGIC ---
-function debouncedLoadInvoices() {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    const name = customerName.value.trim();
-    if (name.length < 2) return;
-    loadInvoices(name);
-  }, 300);
+// --- NEW FUNCTION: FETCH CUSTOMERS ---
+async function fetchCustomers() {
+    try {
+        const response = await fetch(`${API_URL}?action=getCustomers`, { redirect: "follow" });
+        const data = await response.json();
+
+        // Clear loading message
+        customerSelect.innerHTML = '<option value="" disabled selected>Select a Customer</option>';
+
+        // Sort Alphabetically
+        data.sort((a, b) => a.name.localeCompare(b.name));
+
+        data.forEach(cust => {
+            const opt = document.createElement("option");
+            opt.value = cust.name; 
+            opt.textContent = cust.name;
+            customerSelect.appendChild(opt);
+        });
+
+    } catch (error) {
+        console.error('Error fetching customers:', error);
+        customerSelect.innerHTML = '<option>Error loading customers</option>';
+    }
 }
 
+// --- INVOICE SEARCH LOGIC (Updated for Dropdown) ---
 async function loadInvoices(customerNameValue) {
-    // Use the global variable which is now correctly linked
     if (!historyBody) return;
 
     historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Searching...</td></tr>";
@@ -361,31 +370,33 @@ async function loadInvoices(customerNameValue) {
     try {
         const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerNameValue)}`;
         
-        // FIX: We must use a simple GET and allow the redirect to 'follow'
         const res = await fetch(url, {
             method: "GET",
-            // DO NOT use mode: "cors" here; it triggers stricter checks that GAS fails.
             redirect: "follow" 
         });
 
-        // If the browser blocked it, this line won't even run.
         const data = await res.json();
         invoiceHistory = data || []; 
         
         historyBody.innerHTML = ""; 
         if (invoiceHistory.length === 0) {
-            historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found.</td></tr>";
+            historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found for this customer.</td></tr>";
             return;
         }
 
         invoiceHistory.forEach(inv => {
+            // Format Date Helper
+            let dateDisplay = inv.date;
+            try { dateDisplay = new Date(inv.date).toLocaleDateString(); } catch(e){}
+
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td data-label="Invoice #">${inv.invoiceNumber}</td>
-                <td data-label="Date">${inv.date}</td>
+                <td data-label="Date">${dateDisplay}</td>
                 <td data-label="Total">$${Number(inv.total || 0).toFixed(2)}</td>
                 <td data-label="Action">
                     <button class="btn btn-secondary" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button>
+                    ${inv.pdfLink ? `<a href="${inv.pdfLink}" target="_blank" style="margin-left:5px; font-size:12px;">PDF</a>` : ''}
                 </td>
             `;
             historyBody.appendChild(tr);
@@ -393,8 +404,7 @@ async function loadInvoices(customerNameValue) {
 
     } catch (err) {
         console.error("Fetch Error:", err);
-        // This usually triggers if the script returns HTML (a login page) instead of JSON
-        historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>CORS Blocked: Check Script Deployment Settings.</td></tr>";
+        historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Error loading invoices.</td></tr>";
     }
 }
 
@@ -402,15 +412,16 @@ async function selectInvoice(invNum, btn) {
   selectedInvoice = invoiceHistory.find(i => i.invoiceNumber === invNum);
   if (!selectedInvoice) return;
 
-  // Use the correct ID for row highlighting
   document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
   btn.closest("tr").classList.add("selected");
 
   invoiceNumber.value = selectedInvoice.invoiceNumber || "";
-  invoiceDate.value = selectedInvoice.date || "";
+  
+  // Format Date for Input
+  let d = new Date(selectedInvoice.date);
+  invoiceDate.value = !isNaN(d) ? d.toLocaleDateString() : selectedInvoice.date;
 
   try {
-    // FIX: Added redirect: "follow" here as well to fix the "Load failed" error
     const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`, {
         method: "GET",
         redirect: "follow"
@@ -447,11 +458,15 @@ function renderPreview() {
     : "<em>No line items found.</em>";
     
   const deliveryStatus = selectedInvoice.status && String(selectedInvoice.status).trim() === "Delivered" ? "Delivered" : "Undelivered";
+  
+  // Date formatting for preview
+  let d = new Date(selectedInvoice.date);
+  const dateStr = !isNaN(d) ? d.toLocaleDateString() : selectedInvoice.date;
 
   previewContent.innerHTML = `
     <div style="line-height: 1.6;">
         <strong>Invoice #:</strong> ${selectedInvoice.invoiceNumber}<br>
-        <strong>Date:</strong> ${selectedInvoice.date}<br>
+        <strong>Date:</strong> ${dateStr}<br>
         <strong>Status:</strong> ${deliveryStatus}<br>
         <strong>Total:</strong> $${Number(selectedInvoice.total).toFixed(2)}<br><br>
         <strong>Items:</strong><br>
@@ -460,7 +475,6 @@ function renderPreview() {
   `;
 
   previewPanel.style.display = "block";
-  // Smooth scroll to preview on mobile
   if (window.innerWidth <= 768) {
       previewPanel.scrollIntoView({ behavior: 'smooth' });
   }
@@ -475,9 +489,10 @@ function clearSelection() {
   selectedInvoice = null;
   invoiceNumber.value = "";
   invoiceDate.value = "";
+  customerSelect.value = "";
   previewPanel.style.display = "none";
   previewContent.innerHTML = "";
-  document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
+  historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Select a customer to load invoices.</td></tr>";
 }
 </script>
 
