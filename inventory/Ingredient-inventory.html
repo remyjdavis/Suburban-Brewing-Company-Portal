@@ -91,7 +91,8 @@
     .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
     .form-group label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
     .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 16px; transition: background-color 0.5s ease; }
-    
+    .form-group input:focus { background-color: #fff; border-color: var(--accent); outline: none; }
+
     .btn-scan { background: var(--sidebar); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
     .btn-save { background: var(--accent-green); color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: 700; font-size: 16px; }
     
@@ -222,7 +223,7 @@
   <main id="main-content">
     <div class="header-bar">
       <h1>Ingredient Inventory</h1>
-      <button class="btn-scan" onclick="toggleScanner()">Toggle QR Scanner</button>
+      <button class="btn-scan" onclick="toggleScanner()">Toggle Scanner (QR & Barcode)</button>
     </div>
 
     <form id="inventoryForm">
@@ -244,16 +245,20 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Item Name / Strain</label>
-            <input type="text" id="inv-name" name="name" required placeholder="e.g. Citra, London III, Gypsum">
+            <label>Item Name</label>
+            <input type="text" id="inv-name" name="name" required placeholder="e.g. 2-Row / Citra">
           </div>
           <div class="form-group">
-            <label>Lot / Harvest ID</label>
+            <label>Lot Number</label>
             <input type="text" id="inv-lot" name="lot" required placeholder="Scan or Type Lot">
           </div>
           <div class="form-group">
-            <label>Current Qty</label>
+            <label>Quantity In</label>
             <input type="number" step="0.01" id="inv-qty" name="qty" required placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label>Unit Price ($)</label>
+            <input type="number" step="0.01" id="inv-price" name="price" placeholder="0.00">
           </div>
         </div>
 
@@ -286,7 +291,7 @@
       </div>
       <div class="section-card" onclick="setCategoryAndOpenModal('Packaging')">
         <div class="section-header">Packaging</div>
-        <ul class="item-list"><li class="item-row"><span>View Packaging Stock</span></li></ul>
+        <ul class="item-list"><li class="item-row"><span>View Cans, Lids, & Boxes</span></li></ul>
       </div>
     </div>
   </main>
@@ -372,8 +377,25 @@
         const readerDiv = document.getElementById('reader');
         if (readerDiv.style.display === 'none') {
             readerDiv.style.display = 'block';
+            
+            // NOTE: Using a verbose config to enable 1D Barcodes + QR
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.QR_CODE,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.CODE_128
+                ]
+            };
+
+            // Re-instantiate to apply new format configs if needed
+            if(html5QrCode) { try{ html5QrCode.clear(); }catch(e){} }
             html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+
+            html5QrCode.start({ facingMode: "environment" }, config, (txt) => {
                 html5QrCode.stop().then(() => {
                     readerDiv.style.display = 'none';
                     handleScannedData(txt);
@@ -386,8 +408,11 @@
     }
 
     function handleScannedData(txt) {
+        // 1. Fill Lot Number
         if (!txt.startsWith('http')) {
             document.getElementById('inv-lot').value = txt;
+            // AUTO-FOCUS QUANTITY so user can type immediately
+            document.getElementById('inv-qty').focus();
             return;
         }
 
@@ -434,15 +459,13 @@
                 // --- BOIL ADDITIONS MAPPING ---
                 setVal('cas_num', data.cas);
                 setVal('purity', data.purity);
-                setVal('ph_impact', data.ph);
                 setVal('heavy_metals', data.heavy_metals);
+                setVal('ph_impact', data.ph);
                 
                 if(foundAny) alert("Success: Extracted COA Data!");
                 else alert("Connected to COA, but couldn't find fields matching your current Category selection.");
             } else {
-                if(confirm("Could not auto-read data. Open link to view manually?")) {
-                    window.open(txt, '_blank');
-                }
+                if(confirm("Could not auto-read. Open link?")) window.open(txt, '_blank');
             }
         })
         .catch(err => {
@@ -452,6 +475,8 @@
         .finally(() => {
             btn.innerText = originalText;
             btn.disabled = false;
+            // AUTO-FOCUS QUANTITY after scraping is done
+            document.getElementById('inv-qty').focus();
         });
     }
 
@@ -459,11 +484,11 @@
     
     function renderDynamicFields() {
         const cat = document.getElementById('inv-cat').value;
-        const c = document.getElementById('coa-fields-container');
-        c.innerHTML = ""; 
+        const container = document.getElementById('coa-fields-container');
+        container.innerHTML = "";
         
         if (cat === "Malt") {
-            c.innerHTML = `
+            container.innerHTML = `
                 <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>
                 <div class="form-group"><label>Bag Weight (lbs)</label><input type="number" name="bag_weight" placeholder="50 or 55"></div>
                 <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
@@ -478,7 +503,7 @@
                 <div class="form-group"><label>Assortment %</label><input type="number" step="0.1" name="assortment"></div>
             `;
         } else if (cat === "Hops") {
-            c.innerHTML = `
+            container.innerHTML = `
                 <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>
                 <div class="form-group"><label>Crop Year</label><input type="number" name="crop_year" placeholder="2024"></div>
                 <div class="form-group"><label>Form</label>
@@ -496,7 +521,7 @@
                 <div class="form-group"><label>Storage Notes</label><input type="text" name="notes"></div>
             `;
         } else if (cat === "Yeast") {
-            c.innerHTML = `
+            container.innerHTML = `
                 <div class="form-group"><label>Source Type</label>
                     <select name="source_type"><option value="Fresh">Fresh Pitch</option><option value="Harvest">Harvest/Slurry</option><option value="Prop">Propagated</option></select>
                 </div>
@@ -513,7 +538,7 @@
                 <div class="form-group"><label>Flocculation (1-5)</label><input type="number" min="1" max="5" name="flocculation"></div>
             `;
         } else if (cat === "Boil") {
-            c.innerHTML = `
+            container.innerHTML = `
                 <div class="form-group"><label>Source/Brand</label><input type="text" name="source"></div>
                 <div class="form-group"><label>CAS Number</label><input type="text" name="cas_num" placeholder="00-00-0"></div>
                 <div class="form-group"><label>Purity/Assay %</label><input type="text" name="purity"></div>
@@ -525,15 +550,11 @@
                 <div class="form-group"><label>Usage Notes</label><input type="text" name="notes"></div>
             `;
         } else if (cat === "Water") {
-            c.innerHTML = `
+            container.innerHTML = `
                 <div class="form-group"><label>Strength/Purity %</label><input type="number" step="0.01" name="strength"></div>
-                <div class="form-group"><label>Notes</label><input type="text" name="notes"></div>
-            `;
+                <div class="form-group"><label>Notes</label><input type="text" name="notes"></div>`;
         } else if (cat === "Packaging") {
-            c.innerHTML = `
-                <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>
-                <div class="form-group"><label>Notes</label><input type="text" name="notes"></div>
-            `;
+            container.innerHTML = `<div class="form-group"><label>Supplier</label><input type="text" name="source"></div><div class="form-group"><label>Notes</label><input type="text" name="notes"></div>`;
         }
     }
 
