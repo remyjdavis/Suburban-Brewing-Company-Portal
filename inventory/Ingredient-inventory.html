@@ -7,7 +7,6 @@
         const isLoginPage = window.location.pathname.includes("login.html");
 
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
@@ -239,20 +238,21 @@
               <option value="Malt">Malt/Grain</option>
               <option value="Hops">Hops</option>
               <option value="Yeast">Yeast</option>
+              <option value="Boil">Boil Additions</option>
               <option value="Water">Water Chemistry</option>
               <option value="Packaging">Packaging</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Item Name</label>
-            <input type="text" id="inv-name" name="name" required placeholder="e.g. Lactic Acid">
+            <label>Item Name / Strain</label>
+            <input type="text" id="inv-name" name="name" required placeholder="e.g. Citra, London III, Gypsum">
           </div>
           <div class="form-group">
-            <label>Lot Number</label>
+            <label>Lot / Harvest ID</label>
             <input type="text" id="inv-lot" name="lot" required placeholder="Scan or Type Lot">
           </div>
           <div class="form-group">
-            <label>Quantity</label>
+            <label>Current Qty</label>
             <input type="number" step="0.01" id="inv-qty" name="qty" required placeholder="0.00">
           </div>
         </div>
@@ -272,13 +272,17 @@
         <div class="section-header">Hops</div>
         <ul class="item-list"><li class="item-row"><span>View Current Hop Stock</span></li></ul>
       </div>
-      <div class="section-card" onclick="setCategoryAndOpenModal('Water')">
-        <div class="section-header">Water Chemistry</div>
-        <ul class="item-list"><li class="item-row"><span>View Acids, Salts & pH Control</span></li></ul>
-      </div>
       <div class="section-card" onclick="setCategoryAndOpenModal('Yeast')">
         <div class="section-header">Yeast</div>
-        <ul class="item-list"><li class="item-row"><span>View Yeast Pitches</span></li></ul>
+        <ul class="item-list"><li class="item-row"><span>View Yeast Library</span></li></ul>
+      </div>
+      <div class="section-card" onclick="setCategoryAndOpenModal('Boil')">
+        <div class="section-header">Boil Additions</div>
+        <ul class="item-list"><li class="item-row"><span>View Salts & Finings</span></li></ul>
+      </div>
+      <div class="section-card" onclick="setCategoryAndOpenModal('Water')">
+        <div class="section-header">Water Chemistry</div>
+        <ul class="item-list"><li class="item-row"><span>View Acids & Salts</span></li></ul>
       </div>
       <div class="section-card" onclick="setCategoryAndOpenModal('Packaging')">
         <div class="section-header">Packaging</div>
@@ -362,7 +366,7 @@
         });
     });
 
-    // --- 2. SCANNER & AI SCRAPER LOGIC (UPDATED) ---
+    // --- 2. SCANNER & AI SCRAPER LOGIC ---
 
     function toggleScanner() {
         const readerDiv = document.getElementById('reader');
@@ -370,7 +374,6 @@
             readerDiv.style.display = 'block';
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                // STOP scanning immediately upon finding a code
                 html5QrCode.stop().then(() => {
                     readerDiv.style.display = 'none';
                     handleScannedData(txt);
@@ -383,24 +386,20 @@
     }
 
     function handleScannedData(txt) {
-        // 1. If Text Only (Not a URL), just fill Lot ID
         if (!txt.startsWith('http')) {
             document.getElementById('inv-lot').value = txt;
             return;
         }
 
-        // 2. Extract Lot ID from URL (e.g., yakimachief.com/lot/123 -> 123)
         const parts = txt.split('/');
         const likelyLot = parts[parts.length - 1];
         document.getElementById('inv-lot').value = likelyLot;
 
-        // 3. UI Feedback
         const btn = document.querySelector('.btn-scan');
         const originalText = btn.innerText;
         btn.innerText = "⏳ AI Analyzing COA...";
         btn.disabled = true;
 
-        // 4. Send URL to Google Script to Scrape Data
         fetch(`${scriptURL}?action=scrapeCOA&url=${encodeURIComponent(txt)}`)
         .then(res => res.json())
         .then(data => {
@@ -408,43 +407,39 @@
                 const fields = document.getElementById('coa-fields-container');
                 let foundAny = false;
                 
-                // Helper: Find input and set value with green flash
                 const setVal = (name, val) => {
                     const input = fields.querySelector(`input[name="${name}"]`);
                     if(input && val) {
                         input.value = val;
-                        // Flash background color green to indicate AI population
                         input.style.backgroundColor = '#dcfce7'; 
                         setTimeout(() => input.style.backgroundColor = '#f8fafc', 2000);
                         foundAny = true;
                     }
                 };
 
-                // --- MAP DATA TO FIELDS ---
+                // --- MALT MAPPING ---
+                setVal('color', data.color); setVal('extract', data.extract);
+                setVal('moisture', data.moisture); setVal('protein', data.protein);
+                setVal('diastatic', data.diastatic); setVal('fan', data.fan);
+                setVal('beta_glucan', data.beta); setVal('st_ratio', data.st_ratio);
+                setVal('friability', data.friability); setVal('assortment', data.assortment);
                 
-                // Malt Mapping
-                setVal('color', data.color);
-                setVal('extract', data.extract);
-                setVal('moisture', data.moisture);
-                setVal('protein', data.protein);
-                setVal('diastatic', data.diastatic);
-                setVal('fan', data.fan);
-                setVal('beta_glucan', data.beta); // Beta works for Hops(Beta) and Malt(Beta-Glucan)
-                setVal('st_ratio', data.st_ratio);
-                setVal('friability', data.friability);
-                setVal('assortment', data.assortment);
+                // --- HOPS MAPPING ---
+                setVal('alpha', data.alpha); setVal('beta', data.beta);
+                setVal('oil', data.oil); setVal('hsi', data.hsi);
+                setVal('myrcene', data.myrcene); setVal('humulene', data.humulene);
+                setVal('caryophyllene', data.caryophyllene); setVal('cohumulone', data.cohumulone);
+                setVal('crop_year', data.crop_year);
+
+                // --- BOIL ADDITIONS MAPPING ---
+                setVal('cas_num', data.cas);
+                setVal('purity', data.purity);
+                setVal('ph_impact', data.ph);
+                setVal('heavy_metals', data.heavy_metals);
                 
-                // Hops Mapping
-                setVal('alpha', data.alpha);
-                setVal('oil', data.oil);
-                
-                if(foundAny) {
-                    alert("Success: Extracted COA Data!");
-                } else {
-                    alert("Connected to COA, but couldn't find fields matching your current Category selection.");
-                }
+                if(foundAny) alert("Success: Extracted COA Data!");
+                else alert("Connected to COA, but couldn't find fields matching your current Category selection.");
             } else {
-                // Fallback
                 if(confirm("Could not auto-read data. Open link to view manually?")) {
                     window.open(txt, '_blank');
                 }
@@ -460,47 +455,85 @@
         });
     }
 
-    // --- 3. FORM DYNAMICS (UPDATED) ---
+    // --- 3. DYNAMIC FORM FIELDS ---
     
     function renderDynamicFields() {
         const cat = document.getElementById('inv-cat').value;
-        const container = document.getElementById('coa-fields-container');
-        container.innerHTML = ""; 
+        const c = document.getElementById('coa-fields-container');
+        c.innerHTML = ""; 
         
         if (cat === "Malt") {
-            // Updated to match your specific Sheet Headers
-            container.innerHTML = `
+            c.innerHTML = `
                 <div class="form-group"><label>Maltster</label><input type="text" name="source"></div>
                 <div class="form-group"><label>Bag Weight (lbs)</label><input type="number" name="bag_weight" placeholder="50 or 55"></div>
-                
-                <div class="form-group"><label>Extract FGDB %</label><input type="number" step="0.1" name="extract"></div>
                 <div class="form-group"><label>Color (°L)</label><input type="number" step="0.1" name="color"></div>
+                <div class="form-group"><label>Extract FGDB %</label><input type="number" step="0.1" name="extract"></div>
                 <div class="form-group"><label>Moisture %</label><input type="number" step="0.1" name="moisture"></div>
                 <div class="form-group"><label>Protein %</label><input type="number" step="0.1" name="protein"></div>
-                
-                <div class="form-group"><label>Diastatic Power</label><input type="number" step="1" name="diastatic"></div>
-                <div class="form-group"><label>Beta-Glucan</label><input type="number" step="1" name="beta_glucan"></div>
-                <div class="form-group"><label>S/T Ratio</label><input type="number" step="0.1" name="st_ratio"></div>
+                <div class="form-group"><label>Diastatic Power (°L)</label><input type="number" step="1" name="diastatic"></div>
                 <div class="form-group"><label>FAN (mg/L)</label><input type="number" step="1" name="fan"></div>
+                <div class="form-group"><label>Beta-Glucan (mg/L)</label><input type="number" step="1" name="beta_glucan"></div>
+                <div class="form-group"><label>S/T Ratio %</label><input type="number" step="0.1" name="st_ratio"></div>
                 <div class="form-group"><label>Friability %</label><input type="number" step="0.1" name="friability"></div>
                 <div class="form-group"><label>Assortment %</label><input type="number" step="0.1" name="assortment"></div>
             `;
         } else if (cat === "Hops") {
-            container.innerHTML = `
-                <div class="form-group"><label>Alpha %</label><input type="number" step="0.1" name="alpha"></div>
-                <div class="form-group"><label>Oil (mL)</label><input type="number" step="0.1" name="oil"></div>
-                <div class="form-group"><label>Beta %</label><input type="number" step="0.1" name="beta"></div>
-                <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>`;
-        } else if (cat === "Water") {
-            container.innerHTML = `
-                <div class="form-group"><label>Strength/Purity %</label><input type="number" step="0.01" name="strength"></div>
-                <div class="form-group"><label>Notes</label><input type="text" name="notes"></div>`;
+            c.innerHTML = `
+                <div class="form-group"><label>Grower/Source</label><input type="text" name="source"></div>
+                <div class="form-group"><label>Crop Year</label><input type="number" name="crop_year" placeholder="2024"></div>
+                <div class="form-group"><label>Form</label>
+                    <select name="form"><option value="Pellet">Pellet T-90</option><option value="Cryo">Cryo/Lupulin</option><option value="Leaf">Leaf/Whole</option><option value="Extract">Extract</option></select>
+                </div>
+                <div class="form-group"><label>Alpha Acid %</label><input type="number" step="0.1" name="alpha"></div>
+                <div class="form-group"><label>Beta Acid %</label><input type="number" step="0.1" name="beta"></div>
+                <div class="form-group"><label>Total Oil (mL/100g)</label><input type="number" step="0.1" name="oil"></div>
+                <div class="form-group"><label>Moisture %</label><input type="number" step="0.1" name="moisture"></div>
+                <div class="form-group"><label>Myrcene %</label><input type="number" step="0.1" name="myrcene"></div>
+                <div class="form-group"><label>Humulene %</label><input type="number" step="0.1" name="humulene"></div>
+                <div class="form-group"><label>Caryophyllene %</label><input type="number" step="0.1" name="caryophyllene"></div>
+                <div class="form-group"><label>Cohumulone %</label><input type="number" step="0.1" name="cohumulone"></div>
+                <div class="form-group"><label>HSI (Index)</label><input type="number" step="0.01" name="hsi"></div>
+                <div class="form-group"><label>Storage Notes</label><input type="text" name="notes"></div>
+            `;
         } else if (cat === "Yeast") {
-            container.innerHTML = `
+            c.innerHTML = `
+                <div class="form-group"><label>Source Type</label>
+                    <select name="source_type"><option value="Fresh">Fresh Pitch</option><option value="Harvest">Harvest/Slurry</option><option value="Prop">Propagated</option></select>
+                </div>
+                <div class="form-group"><label>Supplier / Parent Batch</label><input type="text" name="source" placeholder="e.g. Omega or Batch #102"></div>
                 <div class="form-group"><label>Gen #</label><input type="number" name="gen" value="1"></div>
-                <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
+                <div class="form-group"><label>Harvest Date</label><input type="date" name="harvest_date"></div>
+                <div class="form-group"><label>Expiry Date</label><input type="date" name="expiry_date"></div>
+                <div class="form-group"><label>Viability %</label><input type="number" step="1" name="viability"></div>
+                <div class="form-group"><label>Cell Count</label><input type="text" name="cell_count" placeholder="e.g. 1.2e9"></div>
+                <div class="form-group"><label>Trub Level</label><select name="trub"><option value="Low">Low</option><option value="Med">Medium</option><option value="High">High</option></select></div>
+                <div class="form-group"><label>Diastaticus</label><select name="diastaticus"><option value="Pending">Pending</option><option value="Neg">Negative</option><option value="Pos">Positive</option></select></div>
+                <div class="form-group"><label>Bacteria</label><select name="bacteria"><option value="Pending">Pending</option><option value="Neg">Negative</option><option value="Pos">Positive</option></select></div>
+                <div class="form-group"><label>VDK Potential</label><select name="vdk"><option value="Low">Low</option><option value="Med">Medium</option><option value="High">High</option></select></div>
+                <div class="form-group"><label>Flocculation (1-5)</label><input type="number" min="1" max="5" name="flocculation"></div>
+            `;
+        } else if (cat === "Boil") {
+            c.innerHTML = `
+                <div class="form-group"><label>Source/Brand</label><input type="text" name="source"></div>
+                <div class="form-group"><label>CAS Number</label><input type="text" name="cas_num" placeholder="00-00-0"></div>
+                <div class="form-group"><label>Purity/Assay %</label><input type="text" name="purity"></div>
+                <div class="form-group"><label>Mfg Date</label><input type="date" name="mfg_date"></div>
+                <div class="form-group"><label>Expiry Date</label><input type="date" name="expiry_date"></div>
+                <div class="form-group"><label>Heavy Metals</label><input type="text" name="heavy_metals"></div>
+                <div class="form-group"><label>pH Impact (1% Sol)</label><input type="number" step="0.1" name="ph_impact"></div>
+                <div class="form-group"><label>Solubility Index</label><input type="text" name="solubility"></div>
+                <div class="form-group"><label>Usage Notes</label><input type="text" name="notes"></div>
+            `;
+        } else if (cat === "Water") {
+            c.innerHTML = `
+                <div class="form-group"><label>Strength/Purity %</label><input type="number" step="0.01" name="strength"></div>
+                <div class="form-group"><label>Notes</label><input type="text" name="notes"></div>
+            `;
         } else if (cat === "Packaging") {
-            container.innerHTML = `<div class="form-group"><label>Supplier</label><input type="text" name="source"></div>`;
+            c.innerHTML = `
+                <div class="form-group"><label>Supplier</label><input type="text" name="source"></div>
+                <div class="form-group"><label>Notes</label><input type="text" name="notes"></div>
+            `;
         }
     }
 
