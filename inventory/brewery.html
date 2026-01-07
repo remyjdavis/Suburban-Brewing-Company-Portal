@@ -408,16 +408,18 @@
         
         container.innerHTML = ""; // Clear existing content
         
-        // FILTER AND SORT ALPHABETICALLY
+        // 1. FILTER & SORT LOGIC
         const products = inventory
             .filter(i => String(i.lifecycle).toLowerCase() === lc.toLowerCase())
-            .sort((a, b) => a.product.localeCompare(b.product)); // <--- This sorts A-Z
+            .sort((a, b) => a.product.localeCompare(b.product)); // <--- Sorts A-Z alphabetically
         
+        // 2. EMPTY STATE
         if (products.length === 0) {
             container.innerHTML = `<div style="color:#94a3b8; font-style:italic;">No products in this category.</div>`;
             return;
         }
 
+        // 3. GENERATE CARDS
         products.forEach(item => {
           // Build Package Rows
           const rows = item.packages.map(pkg => {
@@ -436,7 +438,7 @@
             `;
           }).join('');
 
-          // Create Card
+          // Create Card Element
           const card = document.createElement('div');
           card.className = 'inv-card';
           card.innerHTML = `
@@ -453,42 +455,6 @@
         });
       });
     }
-        products.forEach(item => {
-          // Build Package Rows
-          const rows = item.packages.map(pkg => {
-            const isLow = Number(pkg.qty) <= 5; // Low stock threshold
-            return `
-              <div class="inv-row">
-                <div class="pkg-name">
-                  <span class="status-dot ${isLow ? 'status-low' : 'status-ok'}"></span>
-                  ${pkg.type}
-                </div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                   <span class="qty-badge">${pkg.qty}</span>
-                   <button class="small secondary" style="padding:4px 8px;" onclick="adjustQty('${item.product}','${pkg.type}',${pkg.qty})">Adj</button>
-                </div>
-              </div>
-            `;
-          }).join('');
-
-          // Create Card
-          const card = document.createElement('div');
-          card.className = 'inv-card';
-          card.innerHTML = `
-            <div class="inv-card-header">
-              <span class="inv-card-title">${item.product}</span>
-              <span class="lifecycle-badge">${item.lifecycle}</span>
-            </div>
-            <div class="inv-card-body">
-              ${rows}
-            </div>
-          `;
-          
-          container.appendChild(card);
-        });
-      });
-    }
-
     function openProductModal() { document.getElementById("productModal").style.display = "flex"; }
     function closeProductModal() { document.getElementById("productModal").style.display = "none"; }
 
