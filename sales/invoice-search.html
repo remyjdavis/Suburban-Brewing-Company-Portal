@@ -10,156 +10,114 @@
             window.location.replace(repoPath + "login.html");
         }
     })();
-</script>
+  </script>
   <meta charset="UTF-8" />
-  <title>Invoice Search | Suburban Brewing Company</title>
+  <title>Invoice Search | Suburban Brewing Co.</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    /* --- SHARED THEME VARIABLES --- */
     :root {
       --bg: #f4f6f8;
       --sidebar: #0f172a;
       --accent: #2563eb;
       --text: #1f2937;
+      --text-muted: #6b7280;
     }
-    
+
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
     
-    /* LAYOUT REFACTOR: Dashboard Style (No Window Scroll) */
-    body { 
-      margin: 0; 
-      background: var(--bg); 
-      color: var(--text); 
-      display: flex; 
-      height: 100vh;      /* Locks app to window height */
-      overflow: hidden;   /* Prevents double scrollbars */
-      width: 100%;
-    }
-
-    /* --- SIDEBAR (Desktop) --- */
+    /* --- SIDEBAR (Desktop Default) --- */
     .sidebar { 
-      width: 240px; 
-      background: var(--sidebar); 
-      color: #fff; 
-      flex-shrink: 0;        /* Prevents sidebar from shrinking */
-      display: flex; 
-      flex-direction: column;
-      overflow-y: auto;      /* Internal scrolling */
-      position: relative;    /* Sits in flow, NOT fixed */
-      z-index: 100;
-      border-right: 1px solid rgba(255,255,255,0.1);
+      width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; 
+      flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-    /* --- MAIN WRAPPER --- */
-    .main-wrapper { 
-      flex: 1;               /* Takes all remaining space */
-      display: flex; 
-      flex-direction: column;
-      overflow-y: auto;      /* Internal scrolling */
-      overflow-x: hidden;
-      position: relative;
-      background: var(--bg);
-      /* No margins needed - Flexbox handles the spacing */
-    }
-
-    /* --- NAVIGATION ITEMS --- */
-    .sidebar h2 { margin: 24px 20px 10px; font-size: 18px; color: #fff; letter-spacing: 1px; }
-    
     .nav-section-header {
-      font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 18px 20px 8px !important; 
-      font-weight: 700; letter-spacing: 0.5px;
+      font-size: 11px; text-transform: uppercase; color: #9ca3af; 
+      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
       user-select: none;
     }
-    .nav-section-header:hover { color: #fff; opacity: 1; }
+    .nav-section-header:hover { color: #fff; }
+
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      display: block; overflow: hidden;
-      transition: max-height 0.3s ease, opacity 0.3s ease;
+      max-height: 2000px; overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease;
+      opacity: 1;
     }
-    .collapsible-content.collapsed { max-height: 0 !important; opacity: 0; }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
     .nav-link { 
-      display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none !important; font-size: 14px; 
+      display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
     }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
-    .nav-link.active { border-left-color: var(--accent); }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-    /* --- HEADER & CONTENT --- */
-    .app-header {
-      display: flex; align-items: center; gap: 20px; padding: 16px 24px; 
-      background: #000000; color: white;
-      flex-shrink: 0; /* Keeps header from vanishing on scroll */
-    }
-    .logo { height: 60px; }
-    .company-name { font-size: 20px; font-weight: 700; }
-    .header-right { margin-left: auto; text-align: right; font-size: 13px; }
+    /* --- MAIN CONTENT --- */
+    .main { flex: 1; margin-left: 260px; display: flex; flex-direction: column; transition: all 0.3s ease; width: 100%; }
+    .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; position: sticky; top: 0; z-index: 900; }
+    .content { padding: 24px; max-width: 1400px; width: 100%; margin: 0 auto; }
+    .section { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 24px; }
+    h3 { margin: 0 0 15px; color: #111827; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px; }
 
-    main { padding: 30px; max-width: 1200px; width: 100%; margin: 0 auto; }
-    .section { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 24px; }
-    h2 { margin: 0 0 16px; font-size: 18px; color: #374151; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+    /* --- FORMS & INPUTS --- */
+    .form-grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; display: block; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background: #fff; }
+    input:disabled { background: #f3f4f6; cursor: not-allowed; }
 
-    /* --- FORMS --- */
-    .form-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px; }
-    label { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: block; color: #6b7280; }
-    select, input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; background-color: white; }
-
-    .btn { padding: 12px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 700; transition: 0.2s; }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-secondary { background: #e5e7eb; color: #374151; }
+    button { padding: 10px 18px; border: none; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; }
+    button:hover { background: #1d4ed8; }
+    button.secondary { background: #e5e7eb; color: #374151; }
+    button.secondary:hover { background: #d1d5db; }
 
     /* --- TABLES --- */
-    .table-container { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; text-align: left; }
-    th { background: #f9fafb; color: #6b7280; font-weight: 600; }
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    th, td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 14px; text-align: left; }
+    th { background: #f9fafb; font-weight: 600; color: #4b5563; white-space: nowrap; }
+    tr:hover { background: #f8fafc; }
     tr.selected { background: #eff6ff; border-left: 4px solid var(--accent); }
 
-    /* LOGOUT */
-    .logout-link { color: #f87171 !important; border-left: 4px solid transparent; cursor: pointer; }
+    /* --- MOBILE DRAWER LOGIC --- */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
+    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
 
-    /* --- MOBILE RESPONSIVENESS --- */
-    #menu-toggle { display: none; }
-    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; backdrop-filter: blur(2px); }
-
     @media (max-width: 1024px) {
-      /* On mobile, Sidebar becomes fixed/absolute again */
-      .sidebar { 
-        position: fixed; 
-        top: 0; 
-        left: -260px; /* Hide by default */
-        height: 100%; 
-        z-index: 2000; 
-        transition: left 0.3s ease;
-        box-shadow: 4px 0 15px rgba(0,0,0,0.2);
-      }
+      .sidebar { left: -260px; z-index: 2000; }
       .sidebar.open { left: 0; }
-      
+      .main { margin-left: 0 !important; }
       .menu-overlay.active { display: block; }
       
       #menu-toggle {
         display: flex; position: fixed; bottom: 25px; right: 25px;
         width: 65px; height: 65px; background: var(--accent); color: white;
         border-radius: 50%; justify-content: center; align-items: center;
-        font-size: 28px; z-index: 2001; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+        font-size: 28px; z-index: 2100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
       }
+      .content { padding: 15px; }
       
-      .app-header { flex-direction: column; text-align: center; }
-      .header-right { display: none; }
-    }
-
-    @media (max-width: 600px) {
+      /* Mobile Table Card View */
       table, thead, tbody, th, td, tr { display: block; }
       thead tr { position: absolute; top: -9999px; left: -9999px; }
-      tr { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; padding: 10px; background: #fff; }
-      td { border: none; position: relative; padding-left: 45%; text-align: right; border-bottom: 1px solid #f1f1f1; display: flex; align-items: center; justify-content: flex-end; min-height: 40px; }
+      tr { border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px; padding: 12px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+      td { border: none; position: relative; padding-left: 45%; text-align: right; border-bottom: 1px solid #f1f5f9; min-height: 35px; display: flex; align-items: center; justify-content: flex-end; }
+      td:last-child { border-bottom: none; }
       td:before { 
-        position: absolute; left: 10px; width: 40%; padding-right: 10px; 
-        content: attr(data-label); font-weight: 800; text-align: left; 
-        font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+        position: absolute; left: 0; width: 40%; padding-right: 10px; 
+        content: attr(data-label); font-weight: 700; text-align: left; 
+        font-size: 11px; color: #64748b; text-transform: uppercase;
       }
-      .btn { width: 100%; margin-bottom: 8px; }
+      .table-container { border: none; }
     }
   </style>
 </head>
@@ -168,10 +126,7 @@
 <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
   
   <aside class="sidebar">
-    <div style="padding-top:20px; margin-left:20px; margin-bottom:20px;">
-        <h2 style="margin:0;">SUBURBAN BREWING</h2>
-    </div>
-    
+    <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
       <span>System</span>
     </div>
@@ -182,10 +137,10 @@
     </div>
 
     <script>
-    function handleLogout() {
-      sessionStorage.removeItem("sbc_auth");
-      const repoPath = "/Suburban-Brewing-Company-Portal/";
-      window.location.replace(repoPath + "login.html");
+     function handleLogout() {
+       sessionStorage.removeItem("sbc_auth");
+       const repoPath = "/Suburban-Brewing-Company-Portal/";
+       window.location.replace(repoPath + "login.html");
     }
     </script>
     
@@ -248,28 +203,17 @@
     </div>
   </aside>
 
-  <div class="main-wrapper">
-    <header class="app-header">
-      <img src="../background.jpg" class="logo" />
-      <div>
-        <div class="company-name">Suburban Brewing Company</div>
-        <div class="company-address">3041 Horseshoe Pike, Honey Brook, PA 19344</div>
-      </div>
-      <div class="header-right">
-        <div>Sales Rep: Remy Davis</div>
-        <div>📞 908-642-1019</div>
+  <div class="main">
+    <header class="topbar">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h1 style="margin:0; font-size:20px;">Invoice Search</h1>
+          <button onclick="location.href='new invoices.html'">+ New Invoice</button>
       </div>
     </header>
 
-    <main>
-      <div style="margin-bottom:16px;">
-        <button class="btn btn-primary" onclick="location.href='new invoices.html'">
-          Create New Invoice
-        </button>
-      </div>
-
+    <section class="content">
       <div class="section">
-        <h2>Find Customer Invoices</h2>
+        <h3>Find Customer Invoices</h3>
         <div class="form-grid">
           <div>
             <label>Select Customer</label>
@@ -279,22 +223,22 @@
           </div>
           <div>
             <label>Invoice #</label>
-            <input id="invoiceNumber" disabled>
+            <input id="invoiceNumber" disabled placeholder="---">
           </div>
           <div>
             <label>Date</label>
-            <input id="invoiceDate" disabled>
+            <input id="invoiceDate" disabled placeholder="---">
           </div>
         </div>
 
-        <div style="margin-top:16px;">
-          <button class="btn btn-secondary" onclick="clearSelection()">Clear</button>
-          <button class="btn btn-primary" onclick="editInvoice()">Edit Invoice</button>
+        <div style="margin-top:20px; display:flex; gap:10px;">
+          <button class="secondary" onclick="clearSelection()">Clear Selection</button>
+          <button onclick="editInvoice()">Edit Loaded Invoice</button>
         </div>
       </div>
 
       <div class="section">
-        <h2>Invoice History</h2>
+        <h3>Invoice History</h3>
         <div class="table-container">
           <table>
             <thead>
@@ -302,81 +246,89 @@
                 <th>Invoice #</th>
                 <th>Date</th>
                 <th>Total</th>
+                <th>Status</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="historyBody">
-              <tr><td colspan="4" style="text-align:center;">Select a customer to load invoices.</td></tr>
+              <tr><td colspan="5" style="text-align:center; padding:20px; color:#9ca3af;">Select a customer above to view history.</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <div class="section preview" id="previewPanel" style="display:none;">
-        <h2>Invoice Preview</h2>
-        <div id="previewContent"></div>
+      <div class="section" id="previewPanel" style="display:none; background:#f8fafc; border:1px solid #e2e8f0;">
+        <h3>Invoice Preview</h3>
+        <div id="previewContent" style="font-size:14px; color:#334155;"></div>
       </div>
 
-    </main>
+    </section>
   </div>
 
 <script>
-// NOTE: Ensure your Google Script is deployed as "Who has access: Anyone" 
-const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+  // --- SIDEBAR TOGGLE ---
+  function toggleGroup(contentId, headerEl) {
+    const content = document.getElementById(contentId);
+    content.classList.toggle('collapsed');
+    headerEl.classList.toggle('collapsed');
+  }
 
-let selectedInvoice = null;
-let invoiceHistory = [];
+  function toggleMobileMenu() {
+      const sidebar = document.querySelector('.sidebar');
+      const overlay = document.getElementById('menu-overlay');
+      const btn = document.getElementById('menu-toggle');
+      const isOpen = sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+      btn.innerText = isOpen ? '✕' : '☰';
+  }
 
-const customerSelect = document.getElementById("customerSelect");
-const historyBody = document.getElementById("historyBody"); 
-const invoiceNumber = document.getElementById("invoiceNumber");
-const invoiceDate = document.getElementById("invoiceDate");
-const previewPanel = document.getElementById("previewPanel");
-const previewContent = document.getElementById("previewContent");
+  // --- INITIALIZATION ---
+  const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+  let selectedInvoice = null;
+  let invoiceHistory = [];
 
-// --- SIDEBAR TOGGLE ---
-function toggleGroup(contentId, headerEl) {
-  const content = document.getElementById(contentId);
-  content.classList.toggle('collapsed');
-  headerEl.classList.toggle('collapsed');
-}
+  const customerSelect = document.getElementById("customerSelect");
+  const historyBody = document.getElementById("historyBody"); 
+  const invoiceNumber = document.getElementById("invoiceNumber");
+  const invoiceDate = document.getElementById("invoiceDate");
+  const previewPanel = document.getElementById("previewPanel");
+  const previewContent = document.getElementById("previewContent");
 
-function toggleMobileMenu() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('menu-overlay');
-    const btn = document.getElementById('menu-toggle');
-    const isOpen = sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
-    
-    document.body.style.overflow = isOpen ? 'hidden' : '';
-    btn.innerText = isOpen ? '✕' : '☰';
-}
-
-// --- INITIALIZE ---
-document.addEventListener('DOMContentLoaded', () => {
-    fetchCustomers();
-
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => { if (window.innerWidth <= 1024) toggleMobileMenu(); });
-    });
+  document.addEventListener("DOMContentLoaded", () => {
+    // 1. Sidebar Logic
     const activeLink = document.querySelector('.nav-link.active');
     if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-            parentGroup.classList.remove('collapsed');
-            const header = parentGroup.previousElementSibling;
-            if (header) header.classList.remove('collapsed');
-        }
+      const parentGroup = activeLink.closest('.collapsible-content');
+      if (parentGroup) {
+        parentGroup.classList.remove('collapsed');
+        const header = parentGroup.previousElementSibling;
+        if (header) header.classList.remove('collapsed');
+      }
     }
-});
+    
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) {
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar.classList.contains('open')) toggleMobileMenu();
+            }
+        });
+    });
 
-// --- FETCH CUSTOMERS ---
-async function fetchCustomers() {
+    // 2. Fetch Customers
+    fetchCustomers();
+  });
+
+  // --- API FUNCTIONS ---
+  async function fetchCustomers() {
     try {
-        const response = await fetch(`${API_URL}?action=getCustomers`, { redirect: "follow" });
+        const response = await fetch(`${API_URL}?action=getCustomers`);
         const data = await response.json();
+        
         customerSelect.innerHTML = '<option value="" disabled selected>Select a Customer</option>';
         data.sort((a, b) => a.name.localeCompare(b.name));
+        
         data.forEach(cust => {
             const opt = document.createElement("option");
             opt.value = cust.name; 
@@ -387,120 +339,132 @@ async function fetchCustomers() {
         console.error('Error fetching customers:', error);
         customerSelect.innerHTML = '<option>Error loading customers</option>';
     }
-}
+  }
 
-// --- INVOICE SEARCH LOGIC ---
-async function loadInvoices(customerNameValue) {
+  async function loadInvoices(customerNameValue) {
     if (!historyBody) return;
-    historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Searching...</td></tr>";
+    historyBody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Searching...</td></tr>";
 
     try {
         const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerNameValue)}`;
-        const res = await fetch(url, { method: "GET", redirect: "follow" });
+        const res = await fetch(url);
         const data = await res.json();
         invoiceHistory = data || []; 
         
         historyBody.innerHTML = ""; 
         if (invoiceHistory.length === 0) {
-            historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No invoices found for this customer.</td></tr>";
+            historyBody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>No invoices found for this customer.</td></tr>";
             return;
         }
 
         invoiceHistory.forEach(inv => {
             let dateDisplay = inv.date;
             try { dateDisplay = new Date(inv.date).toLocaleDateString(); } catch(e){}
-
+            const isDelivered = String(inv.status).toLowerCase() === 'delivered';
+            
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td data-label="Invoice #">${inv.invoiceNumber}</td>
+                <td data-label="Invoice #"><strong>${inv.invoiceNumber}</strong></td>
                 <td data-label="Date">${dateDisplay}</td>
                 <td data-label="Total">$${Number(inv.total || 0).toFixed(2)}</td>
+                <td data-label="Status"><span style="color:${isDelivered ? '#15803d' : '#b45309'}; font-weight:700; font-size:12px;">${inv.status || 'Pending'}</span></td>
                 <td data-label="Action">
-                    <button class="btn btn-secondary" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button>
-                    ${inv.pdfLink ? `<a href="${inv.pdfLink}" target="_blank" style="margin-left:5px; font-size:12px;">PDF</a>` : ''}
+                    <button class="small secondary" style="padding:6px 12px;" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button>
+                    ${inv.pdfLink ? `<a href="${inv.pdfLink}" target="_blank" style="margin-left:8px; text-decoration:underline; font-size:12px; color:#2563eb;">PDF</a>` : ''}
                 </td>
             `;
             historyBody.appendChild(tr);
         });
     } catch (err) {
         console.error("Fetch Error:", err);
-        historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Error loading invoices.</td></tr>";
+        historyBody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>Error loading invoices.</td></tr>";
     }
-}
-
-async function selectInvoice(invNum, btn) {
-  selectedInvoice = invoiceHistory.find(i => i.invoiceNumber === invNum);
-  if (!selectedInvoice) return;
-
-  document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
-  btn.closest("tr").classList.add("selected");
-
-  invoiceNumber.value = selectedInvoice.invoiceNumber || "";
-  let d = new Date(selectedInvoice.date);
-  invoiceDate.value = !isNaN(d) ? d.toLocaleDateString() : selectedInvoice.date;
-
-  try {
-    const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`, { method: "GET", redirect: "follow" });
-    if (!res.ok) throw new Error("Failed to load items");
-
-    const items = await res.json();
-    selectedInvoice.items = (Array.isArray(items) ? items : []).map(i => ({
-      qty: Number(i.quantity ?? i.qty ?? i.Qty ?? 0),
-      product: String(i.product ?? i.Product ?? "").trim(),
-      type: String(i.type ?? i.Type ?? "").trim(),
-      price: Number(i.price ?? i.Price ?? 0),
-      lineTotal: Number(i.lineTotal ?? i["Line Total"] ?? i.total ?? 0)
-    }));
-
-  } catch (err) {
-    console.error("Failed to load invoice items", err);
-    selectedInvoice.items = [];
   }
-  renderPreview();
-}
 
-function renderPreview() {
-  if (!selectedInvoice) return;
-  const itemsHtml = selectedInvoice.items.length
-    ? selectedInvoice.items.map(item => `
-        <div style="margin-bottom:6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
-         ${item.qty} × <strong>${item.product}</strong> (${item.type}) — $${item.lineTotal.toFixed(2)}
-        </div>
-      `).join("")
-    : "<em>No line items found.</em>";
-  const deliveryStatus = selectedInvoice.status && String(selectedInvoice.status).trim() === "Delivered" ? "Delivered" : "Undelivered";
-  let d = new Date(selectedInvoice.date);
-  const dateStr = !isNaN(d) ? d.toLocaleDateString() : selectedInvoice.date;
+  async function selectInvoice(invNum, btn) {
+    selectedInvoice = invoiceHistory.find(i => i.invoiceNumber === invNum);
+    if (!selectedInvoice) return;
 
-  previewContent.innerHTML = `
-    <div style="line-height: 1.6;">
-        <strong>Invoice #:</strong> ${selectedInvoice.invoiceNumber}<br>
-        <strong>Date:</strong> ${dateStr}<br>
-        <strong>Status:</strong> ${deliveryStatus}<br>
-        <strong>Total:</strong> $${Number(selectedInvoice.total).toFixed(2)}<br><br>
-        <strong>Items:</strong><br>
-        <div style="margin-top: 10px;">${itemsHtml}</div>
-    </div>
-  `;
-  previewPanel.style.display = "block";
-  if (window.innerWidth <= 768) previewPanel.scrollIntoView({ behavior: 'smooth' });
-}
+    // Highlight Row
+    document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
+    btn.closest("tr").classList.add("selected");
 
-function editInvoice() {
-  if (!selectedInvoice) return alert("Select an invoice first.");
-  location.href = `new invoices.html?invoice=${encodeURIComponent(selectedInvoice.invoiceNumber)}`;
-}
+    // Populate Fields
+    invoiceNumber.value = selectedInvoice.invoiceNumber || "";
+    let d = new Date(selectedInvoice.date);
+    invoiceDate.value = !isNaN(d) ? d.toLocaleDateString() : selectedInvoice.date;
+    
+    // Show Loading in Preview
+    previewPanel.style.display = "block";
+    previewContent.innerHTML = "<p>Loading items...</p>";
 
-function clearSelection() {
-  selectedInvoice = null;
-  invoiceNumber.value = "";
-  invoiceDate.value = "";
-  customerSelect.value = "";
-  previewPanel.style.display = "none";
-  previewContent.innerHTML = "";
-  historyBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Select a customer to load invoices.</td></tr>";
-}
+    try {
+      const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`);
+      if (!res.ok) throw new Error("Failed to load items");
+
+      const items = await res.json();
+      selectedInvoice.items = (Array.isArray(items) ? items : []).map(i => ({
+        qty: Number(i.quantity ?? i.qty ?? i.Qty ?? 0),
+        product: String(i.product ?? i.Product ?? "").trim(),
+        type: String(i.type ?? i.Type ?? "").trim(),
+        price: Number(i.price ?? i.Price ?? 0),
+        lineTotal: Number(i.lineTotal ?? i["Line Total"] ?? i.total ?? 0)
+      }));
+
+    } catch (err) {
+      console.error("Failed to load invoice items", err);
+      selectedInvoice.items = [];
+    }
+    renderPreview();
+  }
+
+  function renderPreview() {
+    if (!selectedInvoice) return;
+    
+    const itemsHtml = selectedInvoice.items.length
+      ? selectedInvoice.items.map(item => `
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #e2e8f0; padding-bottom:4px;">
+             <span>${item.qty} × <strong>${item.product}</strong> <span style="font-size:12px; color:#64748b;">(${item.type})</span></span>
+             <span>$${item.lineTotal.toFixed(2)}</span>
+          </div>
+        `).join("")
+      : "<div style='color:#94a3b8; font-style:italic;'>No line items found.</div>";
+
+    previewContent.innerHTML = `
+      <div style="line-height: 1.6;">
+          <div style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #e2e8f0;">
+             <strong>Invoice:</strong> ${selectedInvoice.invoiceNumber} <br>
+             <strong>Status:</strong> ${selectedInvoice.status || 'Pending'}
+          </div>
+          <strong>Items:</strong><br>
+          <div style="margin-top: 10px;">${itemsHtml}</div>
+          <div style="margin-top:15px; text-align:right; font-size:16px; font-weight:800;">
+             Total: $${Number(selectedInvoice.total).toFixed(2)}
+          </div>
+      </div>
+    `;
+    
+    // Auto-scroll on mobile only
+    if (window.innerWidth <= 768) {
+        previewPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function editInvoice() {
+    if (!selectedInvoice) return alert("Please load an invoice from the list first.");
+    // This sends the user to the New Invoice page with ?invoice=INV-123
+    location.href = `new invoices.html?invoice=${encodeURIComponent(selectedInvoice.invoiceNumber)}`;
+  }
+
+  function clearSelection() {
+    selectedInvoice = null;
+    invoiceNumber.value = "";
+    invoiceDate.value = "";
+    customerSelect.value = "";
+    previewPanel.style.display = "none";
+    previewContent.innerHTML = "";
+    historyBody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px; color:#9ca3af;'>Select a customer to view history.</td></tr>";
+  }
 </script>
-
 </body>
 </html>
