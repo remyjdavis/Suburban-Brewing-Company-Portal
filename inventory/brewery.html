@@ -388,31 +388,65 @@
 
     // --- DATA FUNCTIONS (Preserved Logic) ---
 
-    async function loadInventory() {
+   async function loadInventory() {
       try {
+        // Show loading state
+        document.getElementById('grid-core').innerHTML = '<p>Loading...</p>';
+        
         const res = await fetch(`${API_URL}?action=getBreweryInventory`);
         inventory = await res.json();
-        renderInventoryTables();
+        renderInventoryGrid();
       } catch (err) { console.error("Failed to load inventory", err); }
     }
 
-    function renderInventoryTables() {
-      ["Core", "Seasonal", "Rotating"].forEach(lc => {
-        const tbody = document.getElementById(lc.toLowerCase() + "InventoryBody");
-        if (!tbody) return;
-        tbody.innerHTML = "";
+    function renderInventoryGrid() {
+      const categories = ["Core", "Seasonal", "Rotating"];
+      
+      categories.forEach(lc => {
+        const container = document.getElementById(`grid-${lc.toLowerCase()}`);
+        if (!container) return;
+        
+        container.innerHTML = ""; // Clear existing content
+        
         const products = inventory.filter(i => String(i.lifecycle).toLowerCase() === lc.toLowerCase());
+        
+        if (products.length === 0) {
+            container.innerHTML = `<div style="color:#94a3b8; font-style:italic;">No products in this category.</div>`;
+            return;
+        }
+
         products.forEach(item => {
-          let pkgH="", qtyH="", unitH="", statH="", actH="";
-          item.packages.forEach(pkg => {
-            const low = Number(pkg.qty) <= 0;
-            pkgH+=`<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;">${pkg.type}</div>`;
-            qtyH+=`<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;">${pkg.qty}</div>`;
-            unitH+=`<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;">${pkg.unit}</div>`;
-            statH+=`<div style="padding:4px 0; border-bottom:1px solid #f3f4f6;" class="${low?'low':'ok'}">${low?'Low':'OK'}</div>`;
-            actH+=`<div style="padding:2px 0; border-bottom:1px solid #f3f4f6;"><button class="small secondary" onclick="adjustQty('${item.product}','${pkg.type}',${pkg.qty})">Adj</button></div>`;
-          });
-          tbody.insertAdjacentHTML("beforeend", `<tr><td><strong>${item.product}</strong></td><td style="padding:0;">${pkgH}</td><td style="padding:0;">${qtyH}</td><td style="padding:0;">${unitH}</td><td style="padding:0;">${statH}</td><td style="padding:0;">${actH}</td></tr>`);
+          // Build Package Rows
+          const rows = item.packages.map(pkg => {
+            const isLow = Number(pkg.qty) <= 5; // Low stock threshold
+            return `
+              <div class="inv-row">
+                <div class="pkg-name">
+                  <span class="status-dot ${isLow ? 'status-low' : 'status-ok'}"></span>
+                  ${pkg.type}
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                   <span class="qty-badge">${pkg.qty}</span>
+                   <button class="small secondary" style="padding:4px 8px;" onclick="adjustQty('${item.product}','${pkg.type}',${pkg.qty})">Adj</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          // Create Card
+          const card = document.createElement('div');
+          card.className = 'inv-card';
+          card.innerHTML = `
+            <div class="inv-card-header">
+              <span class="inv-card-title">${item.product}</span>
+              <span class="lifecycle-badge">${item.lifecycle}</span>
+            </div>
+            <div class="inv-card-body">
+              ${rows}
+            </div>
+          `;
+          
+          container.appendChild(card);
         });
       });
     }
