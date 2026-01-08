@@ -1599,26 +1599,28 @@ function saveInvoice() {
       .addEventListener("click", printInvoice);
 
     /* ===== PRINT INVOICE FUNCTION ===== */
-    /* ===== FINAL OUTLOOK TRIGGER ===== */
+   /* ===== INTERNAL OUTLOOK TRIGGER ===== */
 function openInOutlook(invoiceData, pdfUrl) {
-    // 1. Get the email from the customer object selected during search
-    const to = selectedCustomer && selectedCustomer.email ? selectedCustomer.email : ""; 
+    // 1. Internal Team Emails
+    const internalRecipients = "eric@suburbanbg.com; lambertj9@gmail.com; cassandra.reeser@gmail.com";
     
-    const subject = encodeURIComponent(`Invoice ${invoiceData.invoiceNumber} – Suburban Brewing Co.`);
+    // 2. Internal Subject Line
+    const subject = encodeURIComponent(`INTERNAL: New Invoice ${invoiceData.invoiceNumber} - ${invoiceData.customer}`);
     
-    // 2. Construct the body with the PDF link
-    // We use invoiceData.total (which is the numeric value)
+    // 3. Construct the body with the PDF link and order summary
     const body = encodeURIComponent(
-        `Hello,\n\n` +
-        `Please find the invoice for your recent order below:\n\n` +
-        `Invoice #: ${invoiceData.invoiceNumber}\n` +
-        `Total: $${Number(invoiceData.total).toFixed(2)}\n\n` +
-        `View/Download PDF: ${pdfUrl}\n\n` +
-        `Thank you,\nSuburban Brewing Company`
+        `Team,\n\n` +
+        `A new invoice has been generated and saved to the portal.\n\n` +
+        `CUSTOMER: ${invoiceData.customer}\n` +
+        `INVOICE #: ${invoiceData.invoiceNumber}\n` +
+        `TOTAL: $${Number(invoiceData.total).toFixed(2)}\n` +
+        `PAYMENT: ${invoiceData.paymentMethod}\n\n` +
+        `VIEW PDF IN DRIVE: ${pdfUrl}\n\n` +
+        `– Suburban Brewery Sales Portal`
     );
 
-    // 3. Trigger the local Outlook App
-    window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+    // 4. Trigger the local Outlook App
+    window.location.href = `mailto:${internalRecipients}?subject=${subject}&body=${body}`;
 }
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
