@@ -23,7 +23,7 @@
     /* --- SHARED THEME VARIABLES --- */
     :root {
       --bg: #f8fafc;
-      --sidebar: #0f172a;
+      --sidebar: #0f172a; /* Dark Navy */
       --accent: #2563eb;
       --text-main: #1e293b;
       --text-muted: #64748b;
@@ -33,6 +33,7 @@
       --ready: #10b981;
     }
 
+    /* --- GLOBAL RESET --- */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body { 
@@ -45,7 +46,7 @@
     }
 
     /* =========================================
-       SIDEBAR STYLES
+       SIDEBAR STYLES (EXACT INDEX MATCH)
        ========================================= */
     .sidebar { 
       width: 260px; 
@@ -60,18 +61,18 @@
       transition: all 0.3s ease;
     }
     
-    /* ⚠️ HEADER MATCH: 20px, No Border, Single Line */
+    /* Header: 20px, 800 weight, Single Line, No Border */
     .sidebar h2 { 
       margin: 0 24px 32px; 
-      font-size: 20px; /* ✅ Matches Index Page */
+      font-size: 20px; 
       font-weight: 800; 
       color: #fff; 
-      white-space: nowrap; /* Forces one line */
-      border-bottom: none; /* Removes underline inherited from generic h2 */
+      white-space: nowrap; 
+      border-bottom: none; 
       padding-bottom: 0;
     }
 
-    /* COLLAPSIBLE HEADERS */
+    /* Collapsible Headers */
     .nav-section-header {
       font-size: 11px; 
       text-transform: uppercase; 
@@ -91,14 +92,14 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 2500px; 
+      max-height: 2000px; 
       overflow: hidden;
       transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
-    /* LINKS */
+    /* Links (Flexbox) */
     .nav-link { 
       display: flex; 
       align-items: center; 
@@ -112,9 +113,9 @@
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-    /* LOGOUT LINK STYLE */
+    /* Logout Link */
     .logout-link { 
-      margin-top: 20px; 
+      margin-top: 12px; 
       color: #f87171 !important; 
       border-left: 4px solid transparent; 
       transition: all 0.2s ease; 
@@ -133,10 +134,13 @@
     .main-wrapper { 
       flex: 1; 
       margin-left: 260px; 
+      /* ⚠️ PADDING: 40px top/sides, 0 bottom (Matches Index logic for sticky footer) */
+      padding: 40px 40px 0 40px;
       display: flex; 
       flex-direction: column; 
       min-width: 0;
       transition: all 0.3s ease;
+      min-height: 100vh;
     }
 
     .app-header {
@@ -146,13 +150,21 @@
       padding: 16px 24px;
       background: #000000;
       color: white;
+      border-radius: 12px 12px 0 0; /* Optional styling since it's inside main padding */
+      margin-bottom: 24px;
     }
 
     .logo { height: 60px; }
     .company-name { font-size: 20px; font-weight: 700; }
     .header-right { margin-left: auto; text-align: right; font-size: 13px; }
 
-    main { padding: 30px; max-width: 1100px; width: 100%; margin: 0 auto; }
+    /* Main container inside the wrapper */
+    main { 
+        width: 100%; 
+        max-width: 1100px; 
+        margin: 0 auto; 
+        flex: 1; /* Pushes footer down */
+    }
 
     .section {
       background: white;
@@ -162,13 +174,13 @@
       margin-bottom: 24px;
     }
 
-    /* Generic H2 for Main Content */
+    /* Content Headers */
     h2 { 
-        margin: 0 0 16px; 
-        font-size: 18px; 
-        color: #1e293b; 
-        border-bottom: 2px solid #e5e7eb; 
-        padding-bottom: 8px; 
+      margin: 0 0 16px; 
+      font-size: 18px; 
+      color: #1e293b; 
+      border-bottom: 2px solid #e5e7eb; 
+      padding-bottom: 8px; 
     }
 
     .action-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: center; }
@@ -190,30 +202,90 @@
 
     #scanner { max-width: 100%; width: 420px; margin: 15px auto; border-radius: 12px; overflow: hidden; border: 1px solid #ddd; background: #000; }
 
+    /* --- GLOBAL FOOTER (EXACT INDEX MATCH) --- */
+    .app-footer {
+        margin-top: auto;
+        /* ⚠️ EXACT INDEX PADDING & LINE HEIGHT */
+        padding: 8px 0 !important; 
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #94a3b8; 
+        font-size: 11px !important;
+        font-weight: 500;
+        line-height: 1.2 !important;
+        min-height: 35px;
+        margin-bottom: 10px;
+        width: 100%;
+    }
+
+    .footer-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        margin-left: 20px;
+        transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .system-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid #cbd5e1;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--ready); 
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
     /* --- MOBILE & TABLET DRAWER LOGIC --- */
     #menu-toggle { display: none; }
     .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
     @media (max-width: 1024px) {
-      .sidebar { left: -260px; z-index: 10001; }
+      .sidebar { left: -260px; z-index: 2000; }
       .sidebar.open { left: 0; }
-      .main-wrapper { margin-left: 0; }
+      .main-wrapper { margin-left: 0; padding: 15px; } /* Mobile padding reset */
       .menu-overlay.active { display: block; }
       
       #menu-toggle {
         display: flex; position: fixed; bottom: 25px; right: 25px;
         width: 65px; height: 65px; background: var(--accent); color: white;
         border-radius: 50%; justify-content: center; align-items: center;
-        font-size: 28px; z-index: 10002; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+        font-size: 28px; z-index: 2100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
       }
       .app-header { flex-direction: column; text-align: center; }
       .header-right { margin: 10px 0 0 0; text-align: center; }
+      
+      /* Footer Stack */
+      .app-footer { flex-direction: column; gap: 15px; text-align: center; }
+      .footer-links a { margin: 0 10px; }
+      .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
 
     @media (max-width: 768px) {
-      main { padding: 15px; }
+      main { padding: 0; } /* Remove extra padding on main since wrapper has it */
       .section { padding: 15px; }
       
+      /* Card-Stacking Table for Drivers */
       table, thead, tbody, th, td, tr { display: block; }
       thead tr { position: absolute; top: -9999px; left: -9999px; }
       tr { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; padding: 8px; background: #fff; }
@@ -232,12 +304,13 @@
   
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header"><span>System</span></div>
-    <div class="collapsible-content">
-      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-        <span class="icon">🚪</span> <span>Logout of Portal</span>
-      </a>
+    <div class="nav-section-header">
+      <span>System</span>
     </div>
+    
+    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+      <span class="icon">󰗼</span> <span>Logout of Portal</span>
+    </a>
 
     <script>
      function handleLogout() {
@@ -247,19 +320,25 @@
     }
     </script>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
+      <span>Main Menu</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-main" class="collapsible-content">
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)"><span>Samplings</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-sample" class="collapsible-content">
       <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
       <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)"><span>Sales</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-sales" class="collapsible-content">
       <a href="sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
       <a href="leads.html" class="nav-link"><span>AI Sales Leads</span></a>
@@ -268,7 +347,9 @@
       <a href="new invoices.html" class="nav-link"><span>New Invoice</span></a>
     </div>
 
-    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)"><span>Inventory</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-inv" class="collapsible-content">
       <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
       <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
@@ -276,7 +357,9 @@
       <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)"><span>Brewing</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-brew" class="collapsible-content">
       <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
       <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
@@ -286,7 +369,9 @@
       <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)"><span>Reporting & Analytics</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-rep" class="collapsible-content">
       <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
       <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
@@ -352,6 +437,27 @@
         </table>
       </div>
     </main>
+    
+    <footer class="app-footer">
+        <div class="footer-left">
+            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
+            <span class="system-status">
+                <span class="status-dot"></span>
+                System Operational
+            </span>
+        </div>
+        <div class="footer-links">
+            <span>Portal v2.5</span>
+            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
+            <a href="#" onclick="Swal.fire({
+                title: 'App Support', 
+                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
+                icon: 'info',
+                confirmButtonColor: 'var(--accent)'
+            })">Support</a>
+            <a href="#" onclick="location.reload()">Refresh Data</a>
+        </div>
+    </footer>
   </div>
 
 <script src="https://unpkg.com/@ericblade/quagga2/dist/quagga.min.js"></script>
@@ -384,6 +490,8 @@ function toggleMobileMenu() {
 }
 /* ===== INITIALIZE ===== */
 document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById('copyright-year').innerText = new Date().getFullYear();
+
   // 1. Sidebar Logic
   const activeLink = document.querySelector('.nav-link.active');
   if (activeLink) {
