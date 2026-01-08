@@ -12,19 +12,21 @@
             window.location.replace(repoPath + "login.html");
         }
     })();
-</script>
+  </script>
   <meta charset="UTF-8">
   <title>Suburban Brewing | Sales Intelligence</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <style>
-    /* --- CORE THEME --- */
+    /* --- CORE THEME (EXACT MATCH TO INDEX) --- */
     :root {
       --bg: #f8fafc;
-      --sidebar: #0f172a;
+      --sidebar: #0f172a; /* Dark Navy */
       --accent: #2563eb;
       --text-main: #1e293b;
       --text-muted: #64748b;
@@ -40,23 +42,48 @@
       margin: 0; 
       background: var(--bg); 
       color: var(--text-main); 
+      /* ⚠️ EXACT FONT MATCH */
       font-family: 'Inter', -apple-system, system-ui, sans-serif;
       display: flex; 
       min-height: 100vh;
     }
 
-    /* --- SIDEBAR (Desktop Default) --- */
+    /* =========================================
+       SIDEBAR STYLES (COPIED FROM INDEX.HTML)
+       ========================================= */
     .sidebar { 
-      width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; 
-      flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 260px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
+      transition: all 0.3s ease;
     }
-    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
     
+    .sidebar h2 { 
+      margin: 0 24px 32px; 
+      font-size: 20px; 
+      font-weight: 800; 
+      color: #fff; 
+      white-space: nowrap; /* Forces one line */
+    }
+    
+    /* COLLAPSIBLE HEADERS */
     .nav-section-header {
-      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #94a3b8; 
+      margin: 18px 24px 8px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
       user-select: none;
     }
     .nav-section-header:hover { color: #fff; }
@@ -65,27 +92,52 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 1000px; overflow: hidden;
-      transition: max-height 0.4s ease, opacity 0.4s ease;
+      max-height: 2000px; 
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
+    /* LINKS */
     .nav-link { 
-      display: flex; align-items: center; padding: 10px 24px; 
-      color: #64748b; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent;
+      display: flex; 
+      align-items: center; 
+      padding: 10px 24px; 
+      color: #64748b; 
+      text-decoration: none; 
+      font-size: 14px; 
+      transition: 0.2s; 
+      border-left: 4px solid transparent;
     }
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
+    /* LOGOUT LINK STYLE */
+    .logout-link { 
+      margin-top: 20px; 
+      color: #f87171 !important; 
+      border-left: 4px solid transparent; 
+      transition: all 0.2s ease; 
+      cursor: pointer; 
+    }
+    .logout-link:hover { 
+      background: #450a0a !important; 
+      color: #fee2e2 !important; 
+      border-left-color: #ef4444; 
+    }
+    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
+
     /* --- MAIN CONTENT AREA --- */
     .main { 
       flex: 1; 
-      margin-left: 260px; 
-      padding: 40px; 
+      margin-left: 260px; /* Matches Sidebar width */
+      /* Padding matches Index logic */
+      padding: 40px 40px 0 40px; 
       transition: all 0.3s ease; 
-      max-width: 1400px;
+      display: flex; 
+      flex-direction: column; 
+      min-height: 100vh;
       width: 100%;
     }
 
@@ -119,6 +171,57 @@
       border: 1px solid #e2e8f0; border-left: 5px solid #cbd5e1;
       transition: transform 0.2s;
     }
+    
+    /* --- FOOTER STYLES (MATCHES INDEX) --- */
+    .app-footer {
+        margin-top: auto;
+        padding: 10px 0; 
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #94a3b8; 
+        font-size: 11px;
+        font-weight: 500;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .footer-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        margin-left: 20px;
+        transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .system-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid #cbd5e1;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--ready); /* Green */
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
 
     /* ============================================================
        MOBILE & TABLET DRAWER LOGIC
@@ -142,11 +245,13 @@
       .header-bar { flex-direction: column; align-items: flex-start; gap: 20px; }
       .dashboard-grid { grid-template-columns: 1fr; }
       .route-selector { width: 100%; }
-      select { width: 100%; font-size: 16px; } /* 16px prevents iOS auto-zoom */
+      select { width: 100%; font-size: 16px; }
+      
+      /* Footer Stack */
+      .app-footer { flex-direction: column; gap: 15px; text-align: center; }
+      .footer-links a { margin: 0 10px; }
+      .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
-
-    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
-    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
   </style>
 </head>
 <body>
@@ -156,23 +261,22 @@
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
-  <span>System</span>
-</div>
-<a href="#" class="nav-link logout-link" onclick="handleLogout()">
-  <span class="icon">󰗼</span>
-  <span>Logout of Portal</span>
-</a>
-
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
+      <span>System</span>
+    </div>
     
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
+    <div class="collapsible-content">
+      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+        <span class="icon">🚪</span> <span>Logout of Portal</span>
+      </a>
+    </div>
+
+    <script>
+     function handleLogout() {
+       sessionStorage.removeItem("sbc_auth");
+       const repoPath = "/Suburban-Brewing-Company-Portal/";
+       window.location.replace(repoPath + "login.html");
+    }
+    </script>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
@@ -271,12 +375,31 @@
         </div>
 
     </div>
-    <script>
-    // 🔴 UPDATE WITH YOUR DEPLOYED SCRIPT URL 🔴
-    const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+    
+    <div style="flex-grow:1;"></div>
+    <footer class="app-footer">
+        <div class="footer-left">
+            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
+            <span class="system-status">
+                <span class="status-dot"></span>
+                System Operational
+            </span>
+        </div>
+        <div class="footer-links">
+            <span>Portal v2.5</span>
+            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
+            <a href="#" onclick="Swal.fire({
+                title: 'App Support', 
+                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
+                icon: 'info',
+                confirmButtonColor: 'var(--accent)'
+            })">Support</a>
+            <a href="#" onclick="location.reload()">Refresh Data</a>
+        </div>
+    </footer>
+  </main>
 
-    let allLeads = []; 
-
+  <script>
     // --- SIDEBAR TOGGLE LOGIC ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
@@ -289,28 +412,30 @@
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.getElementById('menu-overlay');
         const btn = document.getElementById('menu-toggle');
-        
         const isOpen = sidebar.classList.toggle('open');
         overlay.classList.toggle('active');
         
         // Prevent background scrolling on phone while menu is open
         document.body.style.overflow = isOpen ? 'hidden' : '';
-        
-        // Switch icon between Hamburger and X
         btn.innerText = isOpen ? '✕' : '☰';
     }
 
-    // --- CONSOLIDATED INITIAL LOAD ---
+    const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
+    let allLeads = []; 
+
     window.onload = async function() {
-        // 1. Sidebar Active State Logic (Auto-expand relevant section)
+        // Set Year
+        document.getElementById('copyright-year').innerText = new Date().getFullYear();
+
+        // 1. Sidebar Active State Logic
         const activeLink = document.querySelector('.nav-link.active');
         if (activeLink) {
-          const parentGroup = activeLink.closest('.collapsible-content');
-          if (parentGroup) {
-            parentGroup.classList.remove('collapsed');
-            const header = parentGroup.previousElementSibling;
-            if (header) header.classList.remove('collapsed');
-          }
+            const parentGroup = activeLink.closest('.collapsible-content');
+            if (parentGroup) {
+                parentGroup.classList.remove('collapsed');
+                const header = parentGroup.previousElementSibling;
+                if (header) header.classList.remove('collapsed');
+            }
         }
 
         // 2. Mobile Link Auto-close Listener
