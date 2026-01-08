@@ -1425,37 +1425,32 @@
 
       return total;
     }
-    /* ===== OPEN NEW CUSTOMER MODAL FUNCTION ===== */
+    /* ===== MODAL LOGIC ===== */
     function openNewCustomerModal(prefillName = "") {
-  // Only check existence if a name was actually typed/provided
-  if (prefillName !== "") {
-    const exists = customers.some(c => c.name.toLowerCase() === prefillName.toLowerCase());
-    if (exists) {
-      Swal.fire("Note", "This customer is already in your system.", "info");
-      return;
+        if (prefillName !== "") {
+            const exists = customers.some(c => c.name.toLowerCase() === prefillName.toLowerCase());
+            if (exists) {
+                Swal.fire("Note", "This customer is already in your system.", "info");
+                return;
+            }
+        }
+
+        document.getElementById("new-customer-modal").style.display = "block";
+
+        // Only clear/reset if this is a manual add, not a map auto-population
+        if (prefillName !== "") {
+            document.getElementById("new-cust-name").value = prefillName;
+            document.getElementById("new-cust-address").value = "";
+            document.getElementById("new-cust-city").value = "";
+            document.getElementById("new-cust-state").value = "";
+            document.getElementById("new-cust-zip").value = "";
+            document.getElementById("new-cust-type").value = "Restaurant";
+            document.getElementById("new-cust-payment").value = "Check";
+        }
     }
-  }
 
-  document.getElementById("new-customer-modal").style.display = "block";
-
-  // LOGIC: If a name was passed (Manual Add), clear address and set name.
-  // If NO name was passed (Map Search), don't touch the fields!
-  if (prefillName !== "") {
-    document.getElementById("new-cust-name").value = prefillName;
-    document.getElementById("new-cust-address").value = "";
-    document.getElementById("new-cust-city").value = "";
-    document.getElementById("new-cust-state").value = "";
-    document.getElementById("new-cust-zip").value = "";
-    
-    // Default values for new manual entries
-    document.getElementById("new-cust-type").value = "Restaurant";
-    document.getElementById("new-cust-payment").value = "Check";
-  }
-}
-
-    /* ===== CLOSE NEW CUSTROMER MODAL FUNCTION ===== */
     function closeNewCustomerModal() {
-      document.getElementById("new-customer-modal").style.display = "none";
+        document.getElementById("new-customer-modal").style.display = "none";
     }
 
     /* ===== SAVE NEW CUSTOMER FUNCTION ===== */
