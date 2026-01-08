@@ -12,13 +12,17 @@
             window.location.replace(repoPath + "login.html");
         }
     })();
-</script>
+  </script>
   <meta charset="UTF-8">
   <title>Sampling Calendar | Suburban Brewing</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
     /* --- SHARED THEME VARIABLES --- */
     :root {
@@ -28,30 +32,55 @@
       --text-main: #1e293b;
       --text-muted: #64748b;
       --card-bg: #ffffff;
+      --ready: #10b981;
     }
 
     /* --- GLOBAL RESET & LAYOUT --- */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
     body { 
-      margin: 0; background: var(--bg); color: var(--text-main); 
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text-main); 
+      /* ⚠️ EXACT FONT MATCH */
       font-family: 'Inter', -apple-system, system-ui, sans-serif;
-      display: flex; min-height: 100vh;
+      display: flex; 
+      min-height: 100vh; 
     }
 
-    /* --- SIDEBAR (Desktop Default) --- */
+    /* --- SIDEBAR STYLES (MATCHING INDEX) --- */
     .sidebar { 
-      width: 260px; background: var(--sidebar); color: #fff; 
-      padding: 24px 0; flex-shrink: 0; position: fixed; 
-      height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 260px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
+      transition: all 0.3s ease;
     }
-    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
+    
+    .sidebar h2 { 
+      margin: 0 24px 32px; 
+      font-size: 20px; 
+      font-weight: 800; 
+      color: #fff; 
+      white-space: nowrap; 
+    }
 
-    /* COLLAPSIBLE HEADERS */
     .nav-section-header {
-      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #94a3b8; 
+      margin: 18px 24px 8px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
       user-select: none;
     }
     .nav-section-header:hover { color: #fff; }
@@ -60,7 +89,8 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 2000px; overflow: hidden;
+      max-height: 2000px; 
+      overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.4s ease;
       opacity: 1;
     }
@@ -68,18 +98,105 @@
 
     /* LINKS */
     .nav-link { 
-      display: flex; align-items: center; padding: 10px 24px; 
-      color: #64748b; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent;
+      display: flex; 
+      align-items: center; 
+      padding: 10px 24px; 
+      color: #64748b; 
+      text-decoration: none; 
+      font-size: 14px; 
+      transition: 0.2s; 
+      border-left: 4px solid transparent;
     }
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
+    /* LOGOUT LINK STYLE */
+    .logout-link { 
+      margin-top: 20px; 
+      color: #f87171 !important; 
+      border-left: 4px solid transparent; 
+      transition: all 0.2s ease; 
+      cursor: pointer; 
+    }
+    .logout-link:hover { 
+      background: #450a0a !important; 
+      color: #fee2e2 !important; 
+      border-left-color: #ef4444; 
+    }
+    
+    /* ⚠️ THIS WAS MISSING - ADDS SPACE BETWEEN ICON AND TEXT */
+    .logout-link span.icon { 
+      margin-right: 12px; 
+      font-size: 16px; 
+    }
+
     /* --- MAIN AREA --- */
-    .main { flex: 1; margin-left: 260px; padding: 40px; transition: all 0.3s ease; width: 100%; }
-    #calendar-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; min-height: 600px; }
+    .main { 
+        flex: 1; 
+        margin-left: 260px; 
+        /* Match Index Padding Logic */
+        padding: 40px 40px 0 40px; 
+        transition: all 0.3s ease; 
+        display: flex; 
+        flex-direction: column; 
+        min-height: 100vh;
+        width: 100%; 
+    }
+    
+    #calendar-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; min-height: 600px; width: 100%; }
     
     #loading-overlay { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; font-weight: bold; color: var(--accent); }
+
+    /* --- FOOTER STYLES (MATCHES INDEX) --- */
+    .app-footer {
+        margin-top: auto;
+        padding: 10px 0; 
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #94a3b8; 
+        font-size: 11px;
+        font-weight: 500;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .footer-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        margin-left: 20px;
+        transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .system-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid #cbd5e1;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--ready); /* Green */
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
 
     /* ============================================================
        MOBILE & TABLET DRAWER LOGIC 
@@ -105,11 +222,13 @@
       .fc-toolbar-chunk { display: flex; justify-content: center; width: 100%; }
       .fc-button { font-size: 0.85rem !important; padding: 8px !important; }
       #calendar-container { padding: 10px; }
+      
+      /* Footer Stack */
+      .app-footer { flex-direction: column; gap: 15px; text-align: center; }
+      .footer-links a { margin: 0 10px; }
+      .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
-
-    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
-    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
-</style>
+  </style>
 </head>
 <body>
 <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
@@ -118,24 +237,21 @@
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
-  <span>System</span>
-</div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
+      <span>System</span>
+    </div>
+    <div class="collapsible-content">
+      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+        <span class="icon">🚪</span> <span>Logout of Portal</span>
+      </a>
+    </div>
 
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
-    
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
+    <script>
+     function handleLogout() {
+       sessionStorage.removeItem("sbc_auth");
+       const repoPath = "/Suburban-Brewing-Company-Portal/";
+       window.location.replace(repoPath + "login.html");
+    }
+    </script>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
@@ -201,6 +317,28 @@
       <div id="loading-overlay">Syncing with Google Sheets...</div>
       <div id='calendar'></div>
     </div>
+    
+    <div style="flex-grow:1;"></div>
+    <footer class="app-footer">
+        <div class="footer-left">
+            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
+            <span class="system-status">
+                <span class="status-dot"></span>
+                System Operational
+            </span>
+        </div>
+        <div class="footer-links">
+            <span>Portal v2.5</span>
+            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
+            <a href="#" onclick="Swal.fire({
+                title: 'App Support', 
+                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
+                icon: 'info',
+                confirmButtonColor: 'var(--accent)'
+            })">Support</a>
+            <a href="#" onclick="location.reload()">Refresh Data</a>
+        </div>
+    </footer>
   </main>
 
   <script>
@@ -230,6 +368,9 @@
     // --- 2. INITIALIZATION & CALENDAR LOGIC ---
     
     document.addEventListener("DOMContentLoaded", () => {
+        // Set Year
+        document.getElementById('copyright-year').innerText = new Date().getFullYear();
+
         // A. Sidebar Folder Expansion & Mobile Auto-close
         const activeLink = document.querySelector('.nav-link.active');
         if (activeLink) {
