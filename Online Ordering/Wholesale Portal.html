@@ -374,18 +374,30 @@
     }
 
     // --- INITIALIZATION ---
+    // --- INITIALIZATION ---
     async function init() {
         try {
-            const response = await fetch(`${API_URL}?action=getStoreData`);
+            // 🔴 FIX: Changed '?' to '&' because API_URL already has a '?'
+            const response = await fetch(`${API_URL}&action=getStoreData`);
+            
             const data = await response.json();
+            
+            // Debugging: This will show you exactly what the sheet is returning
+            console.log("API Response:", data); 
+
             if(data.status === 'success') {
                 processProducts(data.products);
                 customersDB = data.customers;
                 render();
+            } else {
+                console.error("API returned status:", data.status);
+                // Optional: Alert the user if the backend is not ready
+                Swal.fire("Connection Error", "Could not load store data. Check console.", "error");
             }
-        } catch (error) { console.error(error); }
+        } catch (error) { 
+            console.error("Fetch Error:", error); 
+        }
     }
-
     function processProducts(rawList) {
         groupedProducts = {};
         rawList.forEach(p => {
