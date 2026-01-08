@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    /* --- THEME VARIABLES (EXACT INDEX MATCH) --- */
+    /* --- SHARED THEME VARIABLES --- */
     :root {
       --bg: #f8fafc;
       --sidebar: #0f172a; /* Dark Navy */
@@ -28,22 +28,26 @@
       --text-main: #1e293b;
       --text-muted: #64748b;
       --card-bg: #ffffff;
+      
+      /* Status Colors */
+      --danger: #ef4444;
+      --ready: #10b981;
     }
 
+    /* --- GLOBAL RESET & LAYOUT --- */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body { 
       margin: 0; 
       background: var(--bg); 
       color: var(--text-main); 
-      /* ⚠️ FONT MATCH: Uses Inter first, matches Index */
       font-family: 'Inter', -apple-system, system-ui, sans-serif;
       display: flex; 
       min-height: 100vh; 
     }
 
     /* =========================================
-       SIDEBAR STYLES (EXACT INDEX COPY)
+       SIDEBAR STYLES
        ========================================= */
     .sidebar { 
       width: 260px; 
@@ -60,12 +64,15 @@
     
     .sidebar h2 { 
       margin: 0 24px 32px; 
-      font-size: 20px; /* Matched Index Size */
+      font-size: 20px; 
       font-weight: 800; 
       color: #fff; 
+      /* ⚠️ FIX: REMOVES UNDERLINE FROM SIDEBAR HEADER */
+      border-bottom: none; 
+      padding-bottom: 0;
     }
 
-    /* HEADERS */
+    /* COLLAPSIBLE HEADERS */
     .nav-section-header {
       font-size: 11px; 
       text-transform: uppercase; 
@@ -96,7 +103,7 @@
     .nav-link { 
       display: flex; 
       align-items: center; 
-      padding: 10px 24px; /* Exact padding from Index */
+      padding: 10px 24px; 
       color: #64748b; 
       text-decoration: none; 
       font-size: 14px; 
@@ -106,7 +113,7 @@
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-    /* LOGOUT LINK (EXACT MATCH) */
+    /* LOGOUT LINK STYLE */
     .logout-link { 
       margin-top: 20px; 
       color: #f87171 !important; 
@@ -122,18 +129,17 @@
     .logout-link span.icon { margin-right: 12px; font-size: 16px; }
 
     /* =========================================
-       PAGE CONTENT
+       MAIN CONTENT
        ========================================= */
     .main-wrapper { 
       flex: 1; 
-      margin-left: 260px; /* Matches sidebar width */
+      margin-left: 260px; 
       display: flex; 
       flex-direction: column; 
       min-width: 0;
       transition: all 0.3s ease;
     }
 
-    /* Dark Header Bar for Deliveries Page */
     .app-header {
       display: flex;
       align-items: center;
@@ -157,7 +163,14 @@
       margin-bottom: 24px;
     }
 
-    h2 { margin: 0 0 16px; font-size: 18px; color: #1e293b; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+    /* Generic H2 for Main Content (Keep underline here) */
+    h2 { 
+        margin: 0 0 16px; 
+        font-size: 18px; 
+        color: #1e293b; 
+        border-bottom: 2px solid #e5e7eb; 
+        padding-bottom: 8px; 
+    }
 
     .action-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: center; }
 
@@ -202,6 +215,7 @@
       main { padding: 15px; }
       .section { padding: 15px; }
       
+      /* Card-Stacking Table for Drivers */
       table, thead, tbody, th, td, tr { display: block; }
       thead tr { position: absolute; top: -9999px; left: -9999px; }
       tr { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; padding: 8px; background: #fff; }
