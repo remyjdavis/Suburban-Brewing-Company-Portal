@@ -12,10 +12,14 @@
             window.location.replace(repoPath + "login.html");
         }
     })();
-</script>
+  </script>
   <meta charset="UTF-8" />
   <title>Suburban Brewing Co. | New Invoice</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -24,37 +28,64 @@
     
     :root {
       --bg: #f4f6f8;
-      --sidebar: #0f172a;
+      --sidebar: #0f172a; /* Dark Navy */
       --accent: #2563eb;
       --text: #1f2937;
+      --ready: #10b981;
     }
 
     * {
       box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       margin: 0;
       background: var(--bg);
+      color: var(--text);
+      /* ⚠️ EXACT FONT MATCH */
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
       display: flex;
       min-height: 100vh;
     }
 
-    /* --- SIDEBAR STYLES --- */
+    /* =========================================
+       SIDEBAR STYLES (EXACT INDEX MATCH)
+       ========================================= */
     .sidebar { 
-      width: 260px; background: var(--sidebar); color: #fff; 
-      padding: 24px 0; flex-shrink: 0; position: fixed; 
-      height: 100vh; overflow-y: auto; z-index: 1000;
+      width: 260px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
       transition: all 0.3s ease;
     }
-    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
+    
+    /* ⚠️ HEADER: 20px, Single Line */
+    .sidebar h2 { 
+      margin: 0 24px 32px; 
+      font-size: 20px; 
+      font-weight: 800; 
+      color: #fff; 
+      white-space: nowrap; 
+    }
 
     /* COLLAPSIBLE HEADERS */
     .nav-section-header {
-      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #94a3b8; 
+      margin: 18px 24px 8px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
       user-select: none;
     }
     .nav-section-header:hover { color: #fff; }
@@ -63,28 +94,48 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-  display: block;
-}
-
-.collapsible-content.collapsed {
-  display: none;
-}
+      max-height: 2000px; 
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+      opacity: 1;
+    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
     /* LINKS */
     .nav-link { 
-      display: flex; align-items: center; padding: 10px 24px; 
-      color: #64748b; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent;
+      display: flex; 
+      align-items: center; 
+      padding: 10px 24px; 
+      color: #64748b; 
+      text-decoration: none; 
+      font-size: 14px; 
+      transition: 0.2s; 
+      border-left: 4px solid transparent;
     }
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
+    /* LOGOUT LINK STYLE */
+    .logout-link { 
+      margin-top: 12px; 
+      color: #f87171 !important; 
+      border-left: 4px solid transparent; 
+      transition: all 0.2s ease; 
+      cursor: pointer; 
+    }
+    .logout-link:hover { 
+      background: #450a0a !important; 
+      color: #fee2e2 !important; 
+      border-left-color: #ef4444; 
+    }
+    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
+
     /* ===== MAIN ===== */
     .main {
-      margin-left: 240px;
-      padding: 30px 30px 0 30px;
+      margin-left: 260px;
+      /* ⚠️ PADDING: 40px top/sides, 0 bottom (Matches Index logic) */
+      padding: 40px 40px 0 40px; 
       flex: 1;
-      /* FLEXBOX LAYOUT FOR GLOBAL FOOTER */
       display: flex;
       flex-direction: column;
       min-height: 100vh;
@@ -112,7 +163,6 @@
       margin: 0 auto;
       padding: 0.75in;
       box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-      /* FLEXBOX LAYOUT ADDED */
       display: flex;
       flex-direction: column;
     }
@@ -249,7 +299,8 @@
     .type-checkboxes span {
       font-weight: 600;
     }
-    /* ===== INVOICE FOOTER (UPDATED) ===== */
+    
+    /* ===== INVOICE FOOTER (Inside Paper) ===== */
     .invoice-footer {
       padding-top: 12px;
       border-top: 1px solid #000;
@@ -257,7 +308,6 @@
       font-weight: 700;
       font-size: 13px;
       letter-spacing: 0.5px;
-      /* PUSHES FOOTER TO BOTTOM */
       margin-top: auto; 
     }
 
@@ -265,13 +315,14 @@
       text-transform: uppercase;
     }
     .invoice-action-bar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 20px;
-  margin-bottom: 50px; /* ✅ Adds big breathing room before the footer */
-}
-    /* Base button style (matches Save Invoice) */
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+      margin-bottom: 50px; 
+    }
+
+    /* Base button style */
     .invoice-btn {
       padding: 10px 18px;
       font-size: 14px;
@@ -284,148 +335,48 @@
       appearance: none;
     }
 
-    /* Hover */
     .invoice-btn:hover {
       background: #1d4ed8;
     }
 
-    /* Disabled state (still same shape, muted color) */
     .invoice-btn:disabled {
       background: #9ca3af;
       cursor: not-allowed;
     }
 
-    /* ===== PRINT LAYOUT FIX ===== */
-    @media print {
-      body {
-        margin: 0;
-        background: #fff;
-      }
-
-      .sidebar,
-      .header-bar,
-      #save-invoice-btn,
-      .invoice-action-bar {
-        display: none !important;
-      }
-
-      .main {
-        margin: 0;
-        padding: 0;
-      }
-
-      .invoice-page {
-        width: 7.75in; /* safe printable width */
-        padding: 0.5in;
-        box-shadow: none;
-      }
-
-      table.invoice-table {
-        width: 100%;
-        table-layout: fixed;
-      }
-
-      table.invoice-table th,
-      table.invoice-table td {
-        font-size: 11px;
-        padding: 5px;
-      }
-    }
-    /* ===== BARCODE COLUMN HARD CONSTRAINT ===== */
-    .invoice-table td:nth-child(5),
-    .invoice-table th:nth-child(5) {
-      width: 26%;
-      max-width: 26%;
-      overflow: hidden;
-      text-align: center;
-    }
-
-    /* Force barcode SVG to obey cell width */
-    .invoice-table td:nth-child(5) svg {
-      max-width: 100%;
-      height: 38px;
-      display: block;
-      margin: 0 auto;
-    }
-
-    /* --- MOBILE & TABLET DRAWER LOGIC --- */
-    #menu-toggle { display: none; }
-    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
-
-    @media (max-width: 1024px) {
-      .sidebar { left: -240px; }
-      .sidebar.open { left: 0; }
-      .main { margin-left: 0 !important; padding: 15px !important; width: 100%; }
-      .menu-overlay.active { display: block; }
-      
-      #menu-toggle {
-        display: flex; position: fixed; bottom: 25px; right: 25px;
-        width: 65px; height: 65px; background: var(--accent); color: white;
-        border-radius: 50%; justify-content: center; align-items: center;
-        font-size: 28px; z-index: 2100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
-      }
-
-      /* Protect Invoice Format: Allow horizontal scroll instead of squishing it */
-      .main { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-      .invoice-page { 
-        margin: 0; /* Align to left on mobile so user knows they can scroll */
-        box-shadow: none; 
+    /* ===== PRICE OVERRIDE STYLES ===== */
+    .price-edit-input {
+        width: 70px;
+        padding: 4px;
         border: 1px solid #e5e7eb;
-      }
-      
-      .invoice-action-bar { flex-direction: column; gap: 10px; width: 100%; }
-      .invoice-btn { width: 100%; padding: 15px; }
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #4b5563;
+        background: #f3f4f6; /* Grey/Locked look */
+        cursor: not-allowed;
+        transition: all 0.2s ease;
     }
-/* Styling to match the existing sidebar theme */
-.logout-link {
-    margin-top: 12px;
-    color: #f87171 !important; /* A soft red to indicate an exit action */
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
 
-.logout-link:hover {
-    background: #450a0a !important; /* Dark red background on hover */
-    color: #fee2e2 !important;
-    border-left-color: #ef4444;
-}
+    .price-edit-input.unlocked {
+        background: #ffffff;
+        border-color: #f59e0b; /* Amber warning border */
+        color: #b45309;
+        cursor: text;
+        box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
 
-.logout-link span.icon {
-    margin-right: 12px;
-    font-size: 16px;
-}
-  /* --- PRICE OVERRIDE STYLES --- */
-.price-edit-input {
-    width: 70px;
-    padding: 4px;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #4b5563;
-    background: #f3f4f6; /* Grey/Locked look */
-    cursor: not-allowed;
-    transition: all 0.2s ease;
-}
-
-.price-edit-input.unlocked {
-    background: #ffffff;
-    border-color: #f59e0b; /* Amber warning border */
-    color: #b45309;
-    cursor: text;
-    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
-}
-    /* --- GLOBAL FOOTER STYLES (EXACT MATCH TO INDEX.HTML) --- */
+    /* --- GLOBAL FOOTER STYLES (EXACT INDEX MATCH) --- */
     .app-footer {
         margin-top: auto;
-        padding: 8px 0 !important; /* Exact match to index */
+        /* ⚠️ EXACT INDEX PADDING & SIZE */
+        padding: 8px 0 !important; 
         border-top: 1px solid #e2e8f0;
         display: flex;
         justify-content: space-between;
         align-items: center;
         color: #94a3b8; 
-        font-size: 11px !important; /* Exact match to index */
+        font-size: 11px !important;
         font-weight: 500;
         line-height: 1.2 !important;
         min-height: 35px;
@@ -434,14 +385,14 @@
     }
 
     .footer-links a {
-        color: #64748b;
+        color: #94a3b8;
         text-decoration: none;
         margin-left: 20px;
         transition: color 0.2s ease;
     }
 
     .footer-links a:hover {
-        color: #2563eb; /* accent */
+        color: #2563eb;
         text-decoration: underline;
     }
 
@@ -457,7 +408,7 @@
     .status-dot {
         width: 8px;
         height: 8px;
-        background-color: #10b981; /* ready green */
+        background-color: #10b981; 
         border-radius: 50%;
         box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
         animation: pulse 2s infinite;
@@ -469,37 +420,71 @@
         100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
 
-    /* HIDE GLOBAL FOOTER WHEN PRINTING INVOICE */
+    /* ===== PRINT LAYOUT FIX ===== */
     @media print {
-        .app-footer { display: none !important; }
+      body { margin: 0; background: #fff; }
+      .sidebar, .header-bar, #save-invoice-btn, .invoice-action-bar, #menu-toggle, .app-footer { display: none !important; }
+      .main { margin: 0; padding: 0; }
+      .invoice-page { width: 7.75in; padding: 0.5in; box-shadow: none; display: flex; flex-direction: column; min-height: 10in; }
+      table.invoice-table { width: 100%; table-layout: fixed; }
+      table.invoice-table th, table.invoice-table td { font-size: 11px; padding: 5px; }
+      .price-edit-input { border: none; background: transparent; padding: 0; color: #000; width: auto; text-align: right; }
+      .invoice-footer { margin-top: auto; }
     }
+    
+    /* ===== BARCODE COLUMN HARD CONSTRAINT ===== */
+    .invoice-table td:nth-child(5), .invoice-table th:nth-child(5) { width: 26%; max-width: 26%; overflow: hidden; text-align: center; }
+    .invoice-table td:nth-child(5) svg { max-width: 100%; height: 38px; display: block; margin: 0 auto; }
+
+    /* --- MOBILE & TABLET DRAWER LOGIC --- */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
+
+    @media (max-width: 1024px) {
+      .sidebar { left: -240px; }
+      .sidebar.open { left: 0; }
+      .main { margin-left: 0 !important; padding: 15px !important; width: 100%; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 60px; height: 60px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 24px; z-index: 10001; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+
+      .main { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .invoice-page { margin: 0; box-shadow: none; border: 1px solid #e5e7eb; }
+      .invoice-action-bar { flex-direction: column; gap: 10px; width: 100%; }
+      .invoice-btn { width: 100%; padding: 15px; }
+    }
+    
+    .logout-link { margin-top: 12px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
+    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
   </style>
 </head>
 <body>
-<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
   <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
   
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
-  <span>System</span>
-</div>
-<a href="#" class="nav-link logout-link" onclick="handleLogout()">
-  <span class="icon">󰗼</span>
-  <span>Logout of Portal</span>
-</a>
+      <span>System</span>
+    </div>
+    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+      <span class="icon">󰗼</span>
+      <span>Logout of Portal</span>
+    </a>
 
-
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
-    
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
+    <script>
+     function handleLogout() {
+       sessionStorage.removeItem("sbc_auth");
+       const repoPath = "/Suburban-Brewing-Company-Portal/";
+       window.location.replace(repoPath + "login.html");
+    }
+    </script>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
@@ -575,7 +560,7 @@
         <img src="../background.jpg">
         <div class="invoice-company-info">
           <strong>Suburban Brewing Company</strong><br>
-          3041 Horseshoe Pike Suite 120 &amp; 130<br>
+          3041 Horseshoe Pike Suite 120 & 130<br>
           Honey Brook, PA 19344<br>
           Sales Rep: Remy Davis · 908-642-1019 · Remyjdavis90@gmail.com
         </div>
@@ -619,6 +604,7 @@
         </thead>
         <tbody id="product-body"></tbody>
       </table>
+      
       <div style="margin-top:16px; text-align:right; font-size:13px;">
         <strong>Subtotal:</strong>
         <span id="invoice-subtotal">$0.00</span>
@@ -642,6 +628,7 @@
         <strong>Total:</strong>
         <span id="invoice-total">$0.00</span>
       </div>
+      
       <div id="invoice-footer" class="invoice-footer"></div>
       <div style="margin-top:20px; text-align:right;">  
       </div>
@@ -660,7 +647,8 @@
       </button>
 
     </div>
-<footer class="app-footer">
+    
+    <footer class="app-footer">
         <div class="footer-left">
             <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
             <span class="system-status">
@@ -680,6 +668,7 @@
             <a href="#" onclick="location.reload()">Refresh Data</a>
         </div>
     </footer>
+
   </main>
   <script>
     // ===== GLOBAL =====
@@ -736,13 +725,11 @@
     }
 
     // --- CONSOLIDATED INITIALIZATION ---
-    // --- CONSOLIDATED INITIALIZATION ---
     document.addEventListener("DOMContentLoaded", () => {
       const today = new Date().toLocaleDateString();
       document.getElementById("current-date").textContent = today;
       document.getElementById("invoice-date").textContent = today;
       
-      // ✅ ADD THIS LINE HERE
       document.getElementById('copyright-year').innerText = new Date().getFullYear();
       
       loadCustomers();
@@ -1514,8 +1501,8 @@
       };
     }
     /* ===============================
-       BUTTON STATE CONTROL
-       =============================== */
+       BUTTON STATE CONTROL
+       =============================== */
 
     // Disable Print + Email on load
     document.getElementById("print-invoice-btn").disabled = true;
