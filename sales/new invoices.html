@@ -734,17 +734,48 @@
     document.getElementById("invoice-date").textContent = today;
     
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
-    document.getElementById("email-invoice-btn").addEventListener("click", () => {
-        // 1. Ensure the invoice has been saved and we have a PDF URL
-        if (!window.lastSavedPayload || !window.lastSavedPdfUrl) {
-            Swal.fire("Error", "Please save the invoice first to generate a PDF link.", "error");
-            return;
-        }
+   document.getElementById("email-invoice-btn").addEventListener("click", async () => {
+    // 1. Validation: Ensure the invoice was saved first to get the fileId
+    if (!window.currentInvoiceFileId) {
+        Swal.fire("Save First", "You must save the invoice before emailing the team.", "warning");
+        return;
+    }
 
-        // 2. CHANGE THIS NAME TO: openInternalOutlook
-        openInternalOutlook(window.lastSavedPayload, window.lastSavedPdfUrl);
+    // 2. UI Feedback
+    Swal.fire({
+        title: 'Attaching PDF...',
+        text: 'The backend is fetching the file and notifying Eric, Lambert, and Cassandra.',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
     });
-    
+
+    // 3. Build Payload
+    const payload = {
+        fileId: window.currentInvoiceFileId,
+        invoiceNumber: window.currentInvoiceNumber,
+        customer: selectedCustomer ? selectedCustomer.name : "Internal Order",
+        total: document.getElementById("invoice-total").textContent.replace("$", "")
+    };
+
+    try {
+        // 4. Call the Backend email action
+        const response = await fetch(`${API_URL}?action=emailInvoice&data=${encodeURIComponent(JSON.stringify(payload))}`);
+        const result = await response.json();
+
+        if (result.success) {
+            Swal.fire({
+                title: "Email Sent!",
+                text: "The invoice has been sent as a PDF attachment to the team.",
+                icon: "success",
+                confirmButtonColor: "#2563eb"
+            });
+        } else {
+            throw new Error(result.error || "Server failed to send email");
+        }
+    } catch (err) {
+        Swal.fire("Error", "Failed to send email: " + err.message, "error");
+    }
+});
     loadCustomers();
     loadProducts();
     addProductRow();
@@ -806,10 +837,9 @@
     /* ===== SELECT CUSTOMERS FUNCTION ===== */
     function selectCustomer(c) {
     selectedCustomer = c;
-    selectedCustomer.name = c.name; // <--- ADD THIS LINE
+    selectedCustomer.name = c.name; // <--- ADD THIS LINE to ensure the email payload has the name
 
-    selectedCustomer.paymentMethod =
-        c.Payment || c.payment || c.paymentMethod || "";
+    selectedCustomer.paymentMethod = c.Payment || c.payment || c.paymentMethod || "";
 
     updateInvoiceFooter();
 
@@ -1599,29 +1629,7 @@ function saveInvoice() {
     document
       .getElementById("print-invoice-btn")
       .addEventListener("click", printInvoice);
-/* ===== INTERNAL OUTLOOK TRIGGER ===== */
-function openInternalOutlook(invoiceData, pdfUrl) {
-    // 1. Internal Team Emails
-    const internalRecipients = "eric@suburbanbg.com; lambertj9@gmail.com; cassandra.reeser@gmail.com";
-    
-    // 2. Internal Subject Line
-    const subject = encodeURIComponent(`INTERNAL: New Invoice ${invoiceData.invoiceNumber} - ${invoiceData.customer}`);
-    
-    // 3. Internal Body
-    const body = encodeURIComponent(
-        `Team,\n\n` +
-        `A new invoice has been generated and saved to the portal.\n\n` +
-        `CUSTOMER: ${invoiceData.customer}\n` +
-        `INVOICE #: ${invoiceData.invoiceNumber}\n` +
-        `TOTAL: $${Number(invoiceData.total).toFixed(2)}\n` +
-        `PAYMENT: ${invoiceData.paymentMethod}\n\n` +
-        `VIEW PDF IN DRIVE: ${pdfUrl}\n\n` +
-        `– Suburban Brewery Sales Portal`
-    );
 
-    // 4. Trigger Outlook App
-    window.location.href = `mailto:${internalRecipients}?subject=${subject}&body=${body}`;
-}
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
 
