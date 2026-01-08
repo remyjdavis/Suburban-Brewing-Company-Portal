@@ -7,12 +7,11 @@
         const isLoginPage = window.location.pathname.includes("login.html");
 
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
     })();
-</script>
+  </script>
   <meta charset="UTF-8" />
   <title>Deliveries | Suburban Brewing Company</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -37,22 +36,31 @@
       min-height: 100vh; 
     }
 
-    /* --- SIDEBAR STYLES --- */
+    /* --- SIDEBAR STYLES (UPDATED TO MATCH INDEX) --- */
     .sidebar { 
       width: 260px; background: var(--sidebar); color: #fff; 
       padding: 24px 0; flex-shrink: 0; position: fixed; 
       height: 100vh; overflow-y: auto; z-index: 1000;
       transition: all 0.3s ease;
     }
-    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
     
+    /* ⚠️ HEADER FIX: Single Line, 18px */
+    .sidebar h2 { 
+      margin: 0 24px 32px; 
+      font-size: 18px; 
+      font-weight: 800; 
+      color: #fff; 
+      white-space: nowrap; 
+    }
+    
+    /* ⚠️ NAV HEADER FIX: Spacing & Color */
     .nav-section-header {
-      font-size: 11px; text-transform: uppercase; opacity: 0.5; margin: 20px 20px 8px; 
-      font-weight: 700; letter-spacing: 0.5px;
+      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
+      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
       user-select: none;
     }
-    .nav-section-header:hover { color: #fff; opacity: 1; }
+    .nav-section-header:hover { color: #fff; }
 
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
@@ -64,17 +72,19 @@
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
+    /* ⚠️ NAV LINK FIX: Flexbox & Colors */
     .nav-link { 
-      display: block; padding: 12px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
+      display: flex; align-items: center; padding: 10px 24px; 
+      color: #64748b; text-decoration: none; font-size: 14px; 
       transition: 0.2s; border-left: 4px solid transparent;
     }
-    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
-    .nav-link.active { border-left: 4px solid var(--accent); }
+    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
     /* --- MAIN CONTENT WRAPPER --- */
     .main-wrapper { 
       flex: 1; 
-      margin-left: 240px; 
+      margin-left: 260px; 
       display: flex; 
       flex-direction: column; 
       min-width: 0;
@@ -163,7 +173,7 @@
 
     .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
-</style>
+  </style>
 </head>
 <body>
 <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
@@ -172,22 +182,22 @@
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header">
-  <span>System</span>
-</div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
+      <span>System</span>
+    </div>
+    <div class="collapsible-content">
+      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+        <span class="icon">󰗼</span> <span>Logout of Portal</span>
+      </a>
+    </div>
 
 <script>
  function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
-    
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
+   // Clear the authentication session
+   sessionStorage.removeItem("sbc_auth");
+   
+   // Redirect to the login page relative to your GitHub repo root
+   const repoPath = "/Suburban-Brewing-Company-Portal/";
+   window.location.replace(repoPath + "login.html");
 }
 </script>
     
@@ -252,7 +262,7 @@
 
   <div class="main-wrapper">
     <header class="app-header">
-      <img src="background.jpg" class="logo" />
+      <img src="../background.jpg" class="logo" />
 
       <div>
         <div class="company-name">Suburban Brewing Company</div>
