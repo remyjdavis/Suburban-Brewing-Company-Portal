@@ -23,23 +23,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    /* --- SHARED THEME VARIABLES (EXACT MATCH TO INDEX) --- */
+    /* --- SHARED THEME VARIABLES --- */
     :root {
-      --sidebar-width: 260px; /* MATCHED INDEX */
-      --primary-dark: #111827;
+      --bg: #f8fafc;
+      --sidebar: #0f172a; /* Dark Navy */
       --accent: #2563eb;
-      --bg-light: #f8fafc; /* MATCHED INDEX */
-      --text-main: #1e293b; /* MATCHED INDEX */
-      --sidebar: #0f172a; /* MATCHED INDEX */
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --card-bg: #ffffff;
+      
       --ready: #10b981;
+      --danger: #ef4444;
+      --primary-dark: #111827;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body {
-      /* ⚠️ EXACT FONT MATCH */
       font-family: 'Inter', -apple-system, system-ui, sans-serif;
-      background: var(--bg-light);
+      background: var(--bg);
       margin: 0;
       display: flex;
       height: 100vh;
@@ -48,7 +50,7 @@
     }
 
     /* =========================================
-       SIDEBAR STYLES (COPIED FROM INDEX.HTML)
+       SIDEBAR STYLES (EXACT INDEX MATCH)
        ========================================= */
     .sidebar { 
       width: 260px; 
@@ -64,7 +66,7 @@
       height: 100vh; 
       z-index: 1000;
       transition: all 0.3s ease;
-      padding: 24px 0; /* Padding from Index */
+      padding: 24px 0; 
     }
     
     .sidebar h2 { 
@@ -72,11 +74,13 @@
       font-size: 20px; 
       font-weight: 800; 
       color: #fff; 
-      white-space: nowrap; /* Forces one line */
+      white-space: nowrap; 
+      border-bottom: none;
+      padding-bottom: 0;
     }
 
     /* COLLAPSIBLE HEADERS */
-    .nav-section-title, .nav-section-header {
+    .nav-section-header {
       font-size: 11px; 
       text-transform: uppercase; 
       color: #94a3b8; 
@@ -89,13 +93,13 @@
       align-items: center;
       user-select: none;
     }
-    .nav-section-title:hover { color: #fff; }
+    .nav-section-header:hover { color: #fff; }
 
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 2500px; 
+      max-height: 2000px; 
       overflow: hidden;
       transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
       opacity: 1;
@@ -112,13 +116,14 @@
       font-size: 14px; 
       transition: 0.2s; 
       border-left: 4px solid transparent;
+      margin-bottom: 2px; /* Prevents overlap */
     }
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-    /* LOGOUT LINK STYLE */
+    /* LOGOUT LINK STYLE (FIXED) */
     .logout-link { 
-      margin-top: 20px; 
+      margin-top: 12px; 
       color: #f87171 !important; 
       border-left: 4px solid transparent; 
       transition: all 0.2s ease; 
@@ -134,12 +139,11 @@
     /* --- MAIN CONTENT --- */
     .main-content {
       flex-grow: 1;
-      /* Padding matches Index layout logic */
       padding: 40px 40px 0 40px; 
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      margin-left: var(--sidebar-width);
+      margin-left: 260px; /* Matched Sidebar Width */
       transition: all 0.3s ease;
     }
 
@@ -184,6 +188,9 @@
     .fc-toolbar-title { font-size: 1.5rem !important; font-weight: 800; color: var(--primary-dark); }
     .fc-button-primary { background-color: var(--primary-dark) !important; border-color: var(--primary-dark) !important; }
     .fc-button-primary:hover { background-color: #374151 !important; }
+    
+    /* ⚠️ FIX: Popover Z-Index for "More Events" */
+    .fc-popover { z-index: 10000 !important; }
 
     /* Event Colors */
     .evt-cellar { background-color: #10b981 !important; border-left: 4px solid #065f46 !important; color: white; }
@@ -228,13 +235,13 @@
     /* --- FOOTER STYLES (MATCHES INDEX) --- */
     .app-footer {
         margin-top: auto;
-        padding: 10px 0; 
+        padding: 8px 0 !important; 
         border-top: 1px solid #e2e8f0;
         display: flex;
         justify-content: space-between;
         align-items: center;
         color: #94a3b8; 
-        font-size: 11px;
+        font-size: 11px !important;
         font-weight: 500;
         width: 100%;
         margin-bottom: 10px;
@@ -312,19 +319,20 @@
 
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header"><span>System</span></div>
-    <div class="collapsible-content">
-      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-        <span class="icon">🚪</span> <span>Logout of Portal</span>
-      </a>
+    <div class="nav-section-header">
+      <span>System</span>
     </div>
+    
+    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+      <span class="icon">🚪</span> <span>Logout of Portal</span>
+    </a>
 
     <script>
-      function handleLogout() {
-        sessionStorage.removeItem("sbc_auth");
-        const repoPath = "/Suburban-Brewing-Company-Portal/";
-        window.location.replace(repoPath + "login.html");
-      }
+     function handleLogout() {
+       sessionStorage.removeItem("sbc_auth");
+       const repoPath = "/Suburban-Brewing-Company-Portal/";
+       window.location.replace(repoPath + "login.html");
+    }
     </script>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
@@ -339,7 +347,7 @@
     </div>
     <div id="grp-sample" class="collapsible-content">
       <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="../Samplings/sampling-calendar.html" class="nav-link active"><span>Sampling Calendar</span></a>
       <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
     </div>
     
@@ -368,7 +376,7 @@
       <span>Brewing</span><span class="chevron">▼</span>
     </div>
     <div id="grp-brew" class="collapsible-content">
-      <a href="brew-calendar.html" class="nav-link active"><span>Brew Calendar</span></a>
+      <a href="brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
       <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
       <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
       <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
@@ -423,7 +431,6 @@
       </div>
     </div>
     
-    <div style="flex-grow:1;"></div>
     <footer class="app-footer">
         <div class="footer-left">
             <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
@@ -481,7 +488,7 @@
           if (header) header.classList.remove('collapsed');
         }
       }
-      
+
       // Auto-close menu on link click
       document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => { 
@@ -505,6 +512,7 @@
         height: '100%',
         navLinks: true,
         editable: false, 
+        dayMaxEvents: true, // ⚠️ FIX: Prevents cell stretching by grouping excess events
         events: async function(info, successCallback, failureCallback) {
           try {
             const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`);
