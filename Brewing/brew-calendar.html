@@ -6,7 +6,6 @@
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
@@ -18,20 +17,28 @@
   
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* --- SHARED THEME VARIABLES (EXACT MATCH TO INDEX) --- */
     :root {
-      --sidebar-width: 240px;
+      --sidebar-width: 260px; /* MATCHED INDEX */
       --primary-dark: #111827;
       --accent: #2563eb;
-      --bg-light: #f3f4f6;
-      --text-main: #1f2937;
-      --sidebar: #0f172a;
+      --bg-light: #f8fafc; /* MATCHED INDEX */
+      --text-main: #1e293b; /* MATCHED INDEX */
+      --sidebar: #0f172a; /* MATCHED INDEX */
+      --ready: #10b981;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      /* ⚠️ EXACT FONT MATCH */
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
       background: var(--bg-light);
       margin: 0;
       display: flex;
@@ -40,12 +47,13 @@
       color: var(--text-main);
     }
 
-    /* --- SIDEBAR --- */
-    .sidebar {
-      width: var(--sidebar-width); 
+    /* =========================================
+       SIDEBAR STYLES (COPIED FROM INDEX.HTML)
+       ========================================= */
+    .sidebar { 
+      width: 260px; 
       background: var(--sidebar); 
-      height: 100vh; 
-      color: white; 
+      color: #fff; 
       display: flex; 
       flex-direction: column; 
       overflow-y: auto; 
@@ -53,47 +61,81 @@
       position: fixed; 
       left: 0;
       top: 0;
+      height: 100vh; 
       z-index: 1000;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      padding-bottom: 40px;
+      transition: all 0.3s ease;
+      padding: 24px 0; /* Padding from Index */
     }
     
-    .sidebar h2 { margin: 0 20px 20px; font-size: 18px; font-weight: 800; color: #fff; padding-top: 20px; }
+    .sidebar h2 { 
+      margin: 0 24px 32px; 
+      font-size: 20px; 
+      font-weight: 800; 
+      color: #fff; 
+      white-space: nowrap; /* Forces one line */
+    }
 
     /* COLLAPSIBLE HEADERS */
-    .nav-section-title {
-      font-size: 11px; text-transform: uppercase; color: #9ca3af; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    .nav-section-title, .nav-section-header {
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #94a3b8; 
+      margin: 18px 24px 8px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
       user-select: none;
     }
-    .nav-section-header {
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #9ca3af;
-      margin: 18px 24px 8px;
-      font-weight: 700;
-      letter-spacing: 1px;
-    }
-
     .nav-section-title:hover { color: #fff; }
+
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
-    .collapsible-content { display: block; }
-    .collapsible-content.collapsed { display: none; }
+
+    .collapsible-content {
+      max-height: 2500px; 
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+      opacity: 1;
+    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
     /* LINKS */
     .nav-link { 
-      display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent; line-height: 1.4; white-space: nowrap;
+      display: flex; 
+      align-items: center; 
+      padding: 10px 24px; 
+      color: #64748b; 
+      text-decoration: none; 
+      font-size: 14px; 
+      transition: 0.2s; 
+      border-left: 4px solid transparent;
     }
-    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
-    .nav-link.active { border-left-color: var(--accent); color: #fff; background: #374151; }
+    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; }
+
+    /* LOGOUT LINK STYLE */
+    .logout-link { 
+      margin-top: 20px; 
+      color: #f87171 !important; 
+      border-left: 4px solid transparent; 
+      transition: all 0.2s ease; 
+      cursor: pointer; 
+    }
+    .logout-link:hover { 
+      background: #450a0a !important; 
+      color: #fee2e2 !important; 
+      border-left-color: #ef4444; 
+    }
+    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
 
     /* --- MAIN CONTENT --- */
     .main-content {
       flex-grow: 1;
-      padding: 20px;
+      /* Padding matches Index layout logic */
+      padding: 40px 40px 0 40px; 
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -156,6 +198,7 @@
       grid-template-columns: 1fr 1fr;
       gap: 20px;
       height: 250px;
+      margin-bottom: 20px;
     }
 
     .panel-box {
@@ -182,28 +225,68 @@
     .btn-approve { background: #3b82f6; color: white; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-weight: bold; font-size: 0.75rem; transition: 0.2s; }
     .btn-approve:hover { background: #2563eb; }
 
-    /* System / Logout */
-    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
-    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
-    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
+    /* --- FOOTER STYLES (MATCHES INDEX) --- */
+    .app-footer {
+        margin-top: auto;
+        padding: 10px 0; 
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #94a3b8; 
+        font-size: 11px;
+        font-weight: 500;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .footer-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        margin-left: 20px;
+        transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .system-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid #cbd5e1;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--ready); /* Green */
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        animation: pulse 2s infinite;
+    }
 
     /* ============================================================
        RESPONSIVE HAMBURGER MENU & MOBILE DRAWER LOGIC
        ============================================================ */
-    #menu-toggle { display: none; } /* Hidden on Desktop */
+    #menu-toggle { display: none; }
     .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
     @media (max-width: 1024px) {
-      .sidebar { left: -260px; z-index: 10001; } /* Hide sidebar off-screen */
+      .sidebar { left: -260px; z-index: 10001; } 
       .sidebar.open { left: 0; }
       .main-content { margin-left: 0 !important; padding: 15px; }
       .menu-overlay.active { display: block; }
 
       #menu-toggle {
         display: flex; position: fixed; bottom: 25px; right: 25px;
-        width: 60px; height: 60px; background: var(--accent);
+        width: 65px; height: 65px; background: var(--accent);
         color: white; border-radius: 50%; justify-content: center;
-        align-items: center; font-size: 24px; z-index: 10002;
+        align-items: center; font-size: 28px; z-index: 10002;
         box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; border: none;
       }
       
@@ -214,6 +297,11 @@
       /* Force Calendar into List view on small phones */
       .fc-toolbar { flex-direction: column; gap: 10px; }
       .fc-toolbar-title { font-size: 1.2rem !important; }
+      
+      /* Footer Stack */
+      .app-footer { flex-direction: column; gap: 15px; text-align: center; }
+      .footer-links a { margin: 0 10px; }
+      .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
   </style>
 </head>
@@ -225,9 +313,11 @@
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
     <div class="nav-section-header"><span>System</span></div>
-    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-      <span class="icon">🚪</span> <span>Logout of Portal</span>
-    </a>
+    <div class="collapsible-content">
+      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+        <span class="icon">🚪</span> <span>Logout of Portal</span>
+      </a>
+    </div>
 
     <script>
       function handleLogout() {
@@ -332,6 +422,28 @@
         <div id="suggestion-list"></div>
       </div>
     </div>
+    
+    <div style="flex-grow:1;"></div>
+    <footer class="app-footer">
+        <div class="footer-left">
+            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
+            <span class="system-status">
+                <span class="status-dot"></span>
+                System Operational
+            </span>
+        </div>
+        <div class="footer-links">
+            <span>Portal v2.5</span>
+            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
+            <a href="#" onclick="Swal.fire({
+                title: 'App Support', 
+                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
+                icon: 'info',
+                confirmButtonColor: 'var(--accent)'
+            })">Support</a>
+            <a href="#" onclick="location.reload()">Refresh Data</a>
+        </div>
+    </footer>
   </main>
 
   <script>
@@ -347,14 +459,18 @@
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.getElementById('menu-overlay');
         const btn = document.getElementById('menu-toggle');
-        sidebar.classList.toggle('open');
+        const isOpen = sidebar.classList.toggle('open');
         overlay.classList.toggle('active');
-        btn.innerText = sidebar.classList.contains('open') ? '✕' : '☰';
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        btn.innerText = isOpen ? '✕' : '☰';
     }
 
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
 
     document.addEventListener('DOMContentLoaded', async function() {
+      // Set Year
+      document.getElementById('copyright-year').innerText = new Date().getFullYear();
+
       // Auto-open current group
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
@@ -414,7 +530,12 @@
 
       // Auto-close menu on link click
       document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => { if (window.innerWidth <= 1024) toggleMobileMenu(); });
+        link.addEventListener('click', () => { 
+            if (window.innerWidth <= 1024) {
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar.classList.contains('open')) toggleMobileMenu();
+            }
+        });
       });
     });
 
