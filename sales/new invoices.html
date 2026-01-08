@@ -728,46 +728,46 @@
       return found;
     }
 
-    // --- CONSOLIDATED INITIALIZATION ---
     document.addEventListener("DOMContentLoaded", () => {
-      const today = new Date().toLocaleDateString();
-      document.getElementById("current-date").textContent = today;
-      document.getElementById("invoice-date").textContent = today;
-      
-      document.getElementById('copyright-year').innerText = new Date().getFullYear();
-      document.getElementById("email-invoice-btn").addEventListener("click", () => {
-    // 1. Ensure the invoice has been saved and we have a PDF URL
-    if (!window.lastSavedPayload || !window.lastSavedPdfUrl) {
-        Swal.fire("Error", "Please save the invoice first to generate a PDF link.", "error");
-        return;
-    }
+    const today = new Date().toLocaleDateString();
+    document.getElementById("current-date").textContent = today;
+    document.getElementById("invoice-date").textContent = today;
+    
+    document.getElementById('copyright-year').innerText = new Date().getFullYear();
+    document.getElementById("email-invoice-btn").addEventListener("click", () => {
+        // 1. Ensure the invoice has been saved and we have a PDF URL
+        if (!window.lastSavedPayload || !window.lastSavedPdfUrl) {
+            Swal.fire("Error", "Please save the invoice first to generate a PDF link.", "error");
+            return;
+        }
 
-    // 2. Trigger the Outlook draft
-    openInOutlook(window.lastSavedPayload, window.lastSavedPdfUrl);
-});
-      loadCustomers();
-      loadProducts();
-      addProductRow();
-      loadInventory();
-      
-      // Auto-close menu when a link is clicked on mobile
-      document.querySelectorAll('.nav-link').forEach(link => {
+        // 2. CHANGE THIS NAME TO: openInternalOutlook
+        openInternalOutlook(window.lastSavedPayload, window.lastSavedPdfUrl);
+    });
+    
+    loadCustomers();
+    loadProducts();
+    addProductRow();
+    loadInventory();
+    
+    // Auto-close menu when a link is clicked on mobile
+    document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => {
             if (window.innerWidth <= 1024) toggleMobileMenu();
         });
-      });
+    });
 
-      // Existing Sidebar Logic (Keep active group expanded)
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
+    // Existing Sidebar Logic (Keep active group expanded)
+    const activeLink = document.querySelector('.nav-link.active');
+    if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
         if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) header.classList.remove('collapsed');
+            parentGroup.classList.remove('collapsed');
+            const header = parentGroup.previousElementSibling;
+            if (header) header.classList.remove('collapsed');
         }
-      }
-    });
+    }
+});
 
     /* ===== LOAD CUSTOMERS FUNCTION ===== */
     function loadCustomers() {
@@ -805,47 +805,49 @@
     });
     /* ===== SELECT CUSTOMERS FUNCTION ===== */
     function selectCustomer(c) {
-      selectedCustomer = c;
+    selectedCustomer = c;
+    selectedCustomer.name = c.name; // <--- ADD THIS LINE
 
-      selectedCustomer.paymentMethod =
+    selectedCustomer.paymentMethod =
         c.Payment || c.payment || c.paymentMethod || "";
 
-      updateInvoiceFooter();
+    updateInvoiceFooter();
 
-      document.querySelectorAll(".suggestion").forEach(e => e.remove());
-      document.getElementById("customer-search").style.display = "none";
-      document.getElementById("customer-display").hidden = false;
+    document.querySelectorAll(".suggestion").forEach(e => e.remove());
+    document.getElementById("customer-search").style.display = "none";
+    document.getElementById("customer-display").hidden = false;
 
-      document.getElementById("customer-name").textContent = c.name;
+    document.getElementById("customer-name").textContent = c.name;
 
-      // --- CLEAN ADDRESS ---
-      const rawLines = (c.address || "")
+    // --- CLEAN ADDRESS ---
+    const rawLines = (c.address || "")
         .split(/,|\n/)
         .map(l => l.trim())
         .filter(Boolean);
 
-      const seen = new Set();
-      const cleanLines = rawLines.filter(line => {
+    const seen = new Set();
+    const cleanLines = rawLines.filter(line => {
         const normalized = line.toLowerCase();
         if (
-          normalized === c.name.toLowerCase() ||
-          seen.has(normalized)
+            normalized === c.name.toLowerCase() ||
+            seen.has(normalized)
         ) {
-          return false;
+            return false;
         }
         seen.add(normalized);
         return true;
-      });
+    });
 
-      document.getElementById("customer-address").innerHTML =
+    document.getElementById("customer-address").innerHTML =
         cleanLines.join("<br>");
-      // Toggle sales tax visibility
-      const taxRow = document.getElementById("tax-row");
-      if (taxRow) {
+        
+    // Toggle sales tax visibility
+    const taxRow = document.getElementById("tax-row");
+    if (taxRow) {
         taxRow.style.display = c.type === "Restaurant" ? "block" : "none";
-      }
-      recalcInvoiceTotals();
     }
+    recalcInvoiceTotals();
+}
     /* ===== FOOTER SELECTION FUNCTION ===== */
     function updateInvoiceFooter() {
       const footer = document.getElementById("invoice-footer");
@@ -1600,14 +1602,14 @@ function saveInvoice() {
 
     /* ===== PRINT INVOICE FUNCTION ===== */
    /* ===== INTERNAL OUTLOOK TRIGGER ===== */
-function openInOutlook(invoiceData, pdfUrl) {
+ffunction openInternalOutlook(invoiceData, pdfUrl) {
     // 1. Internal Team Emails
     const internalRecipients = "eric@suburbanbg.com; lambertj9@gmail.com; cassandra.reeser@gmail.com";
     
     // 2. Internal Subject Line
     const subject = encodeURIComponent(`INTERNAL: New Invoice ${invoiceData.invoiceNumber} - ${invoiceData.customer}`);
     
-    // 3. Construct the body with the PDF link and order summary
+    // 3. Internal Body
     const body = encodeURIComponent(
         `Team,\n\n` +
         `A new invoice has been generated and saved to the portal.\n\n` +
@@ -1619,7 +1621,7 @@ function openInOutlook(invoiceData, pdfUrl) {
         `– Suburban Brewery Sales Portal`
     );
 
-    // 4. Trigger the local Outlook App
+    // 4. Trigger Outlook App
     window.location.href = `mailto:${internalRecipients}?subject=${subject}&body=${body}`;
 }
   </script>
