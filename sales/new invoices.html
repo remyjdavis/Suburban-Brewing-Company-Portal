@@ -812,10 +812,13 @@
 
     let searchTimeout;
 document.getElementById("customer-search").addEventListener("input", function() {
-    const resultsBox = document.getElementById("search-results");
+    const resultsBox = document.getElementById("search-results"); // Target the specific box
     const val = this.value.trim();
-    resultsBox.innerHTML = ""; // Clear old results
 
+    // Clear previous results and show the box
+    resultsBox.innerHTML = "";
+    resultsBox.style.display = val ? "block" : "none";
+    
     if (!val) return;
 
     // 1. Local Customer Match
