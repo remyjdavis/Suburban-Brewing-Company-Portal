@@ -807,58 +807,90 @@
         .then(d => customers = d || []);
     }
 
-    /* ===== LOCAL SEARCH + FREE ADDRESS SEARCH (NOMINATIM) ===== */
+    /* ===== IMPROVED FREE ADDRESS SEARCH (NOMINATIM) ===== */
 let searchTimeout;
 document.getElementById("customer-search").addEventListener("input", function() {
-    document.querySelectorAll(".suggestion").forEach(e => e.remove());
+    const parent = this.parentNode;
     const val = this.value.trim();
+
+    // Clear previous suggestions immediately
+    document.querySelectorAll(".suggestion").forEach(e => e.remove());
+    
     if (!val) return;
 
-    // 1. Search existing customers in your sheet
+    // 1. Search existing customers first
     const matches = customers.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
     matches.forEach(c => {
         const div = document.createElement("div");
-        div.textContent = "👤 " + c.name;
         div.className = "suggestion";
-        div.onclick = () => selectCustomer(c);
-        this.parentNode.appendChild(div);
+        div.style.padding = "10px"; div.style.background = "#f0f9ff"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #e2e8f0";
+        div.innerHTML = `👤 <strong>${c.name}</strong> <small>(Existing)</small>`;
+        div.onclick = () => {
+            document.querySelectorAll(".suggestion").forEach(e => e.remove());
+            selectCustomer(c);
+        };
+        parent.appendChild(div);
     });
 
-    // 2. Search real-world addresses using OpenStreetMap (Free)
+    // 2. Global Address Search (Triggers after 5 characters)
     clearTimeout(searchTimeout);
-    if (val.length > 5) {
+    if (val.length >= 5) {
+        // Show a temporary "Searching..." hint
+        const hint = document.createElement("div");
+        hint.id = "search-hint";
+        hint.className = "suggestion";
+        hint.style.padding = "8px"; hint.style.color = "#2563eb"; hint.style.fontSize = "12px";
+        hint.textContent = "🔍 Searching global addresses...";
+        parent.appendChild(hint);
+
         searchTimeout = setTimeout(async () => {
             try {
-                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&addressdetails=1&limit=3`);
+                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&addressdetails=1&limit=4`);
                 const data = await resp.json();
-                data.forEach(item => {
-                    const div = document.createElement("div");
-                    div.className = "suggestion";
-                    div.innerHTML = `📍 ${item.display_name}`;
-                    div.onclick = () => {
-                        const a = item.address;
-                        const street = `${a.house_number || ''} ${a.road || ''}`.trim();
-                        openNewCustomerModal(""); // Business name left blank for you
-                        document.getElementById("new-cust-address").value = street;
-                        document.getElementById("new-cust-city").value = a.city || a.town || a.village || "";
-                        document.getElementById("new-cust-state").value = a.state || "";
-                        document.getElementById("new-cust-zip").value = a.postcode || "";
-                        document.querySelectorAll(".suggestion").forEach(e => e.remove());
-                    };
-                    this.parentNode.appendChild(div);
-                });
-            } catch (e) { console.error("Address Search Error", e); }
-        }, 500);
+                
+                // Remove the "Searching..." hint
+                if(document.getElementById("search-hint")) document.getElementById("search-hint").remove();
+
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        const div = document.createElement("div");
+                        div.className = "suggestion";
+                        div.style.padding = "10px"; div.style.background = "#fff"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #e2e8f0"; div.style.fontSize = "12px";
+                        div.innerHTML = `📍 ${item.display_name}`;
+                        
+                        div.onclick = () => {
+                            const a = item.address;
+                            const street = `${a.house_number || ''} ${a.road || ''}`.trim();
+                            
+                            // Open modal and pre-fill address fields
+                            openNewCustomerModal(""); 
+                            document.getElementById("new-cust-address").value = street;
+                            document.getElementById("new-cust-city").value = a.city || a.town || a.village || "";
+                            document.getElementById("new-cust-state").value = a.state || "";
+                            document.getElementById("new-cust-zip").value = a.postcode || "";
+                            
+                            document.querySelectorAll(".suggestion").forEach(e => e.remove());
+                        };
+                        parent.appendChild(div);
+                    });
+                }
+            } catch (e) { 
+                console.error("Address Search Error", e); 
+            }
+        }, 600);
     }
 
-    // 3. Option to add manually if no customer found
-    if (matches.length === 0) {
+    // 3. Manual Add Option
+    if (matches.length === 0 && val.length < 15) {
         const add = document.createElement("div");
-        add.textContent = `+ Add "${val}" as new customer`;
         add.className = "suggestion";
-        add.style.fontWeight = "600";
-        add.onclick = () => openNewCustomerModal(val);
-        this.parentNode.appendChild(add);
+        add.style.padding = "10px"; add.style.fontWeight = "bold"; add.style.color = "#059669"; add.style.cursor = "pointer";
+        add.textContent = `➕ Add "${val}" as new customer`;
+        add.onclick = () => {
+            document.querySelectorAll(".suggestion").forEach(e => e.remove());
+            openNewCustomerModal(val);
+        };
+        parent.appendChild(add);
     }
 });
     /* ===== SELECT CUSTOMERS FUNCTION ===== */
