@@ -14,42 +14,74 @@
   <meta charset="UTF-8" />
   <title>Deliveries | Suburban Brewing Company</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* --- SHARED THEME VARIABLES (EXACT MATCH TO INDEX) --- */
     :root {
-      --bg: #f4f6f8;
+      --bg: #f8fafc;
       --sidebar: #0f172a;
       --accent: #2563eb;
-      --text: #1f2937;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
       --card-bg: #ffffff;
-      --text-muted: #6b7280;
+      
+      /* Status Colors */
+      --danger: #ef4444;
+      --ready: #10b981;
     }
 
-   /* --- GLOBAL RESET & LAYOUT --- */
+    /* --- GLOBAL RESET & LAYOUT --- */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
     body { 
-      margin: 0; background: var(--bg); color: var(--text-main); 
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text-main); 
+      /* ⚠️ EXACT FONT MATCH */
       font-family: 'Inter', -apple-system, system-ui, sans-serif;
-      display: flex; min-height: 100vh;
+      display: flex; 
+      min-height: 100vh; 
     }
 
     /* =========================================
-       SIDEBAR STYLES (MATCHING INDEX.HTML)
+       SIDEBAR STYLES (COPIED FROM INDEX.HTML)
        ========================================= */
     .sidebar { 
-      width: 260px; background: var(--sidebar); color: #fff; 
-      padding: 24px 0; flex-shrink: 0; position: fixed; 
-      height: 100vh; overflow-y: auto; z-index: 1000;
+      width: 260px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
       transition: all 0.3s ease;
     }
     
-    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
+    .sidebar h2 { 
+      margin: 0 24px 32px; 
+      font-size: 20px; 
+      font-weight: 800; 
+      color: #fff; 
+    }
 
     /* COLLAPSIBLE HEADERS */
     .nav-section-header {
-      font-size: 11px; text-transform: uppercase; color: #94a3b8; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #94a3b8; 
+      margin: 18px 24px 8px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
       user-select: none;
     }
     .nav-section-header:hover { color: #fff; }
@@ -58,7 +90,8 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 2500px; overflow: hidden;
+      max-height: 2500px; 
+      overflow: hidden;
       transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
       opacity: 1;
     }
@@ -66,24 +99,39 @@
 
     /* LINKS */
     .nav-link { 
-      display: flex; align-items: center; padding: 10px 24px; 
-      color: #64748b; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent;
+      display: flex; 
+      align-items: center; 
+      padding: 10px 24px; 
+      color: #64748b; 
+      text-decoration: none; 
+      font-size: 14px; 
+      transition: 0.2s; 
+      border-left: 4px solid transparent;
     }
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
     /* LOGOUT LINK STYLE */
-    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
-    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
+    .logout-link { 
+      margin-top: 20px; 
+      color: #f87171 !important; 
+      border-left: 4px solid transparent; 
+      transition: all 0.2s ease; 
+      cursor: pointer; 
+    }
+    .logout-link:hover { 
+      background: #450a0a !important; 
+      color: #fee2e2 !important; 
+      border-left-color: #ef4444; 
+    }
     .logout-link span.icon { margin-right: 12px; font-size: 16px; }
 
     /* =========================================
-       MAIN CONTENT
+       MAIN CONTENT (DELIVERY SPECIFIC)
        ========================================= */
     .main-wrapper { 
       flex: 1; 
-      margin-left: 260px; 
+      margin-left: 260px; /* Matches Sidebar width */
       display: flex; 
       flex-direction: column; 
       min-width: 0;
@@ -113,7 +161,7 @@
       margin-bottom: 24px;
     }
 
-    h2 { margin: 0 0 16px; font-size: 18px; color: #374151; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+    h2 { margin: 0 0 16px; font-size: 18px; color: #1e293b; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
 
     .action-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: center; }
 
@@ -177,42 +225,34 @@
   
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-      <span>System</span>
-    </div>
+    <div class="nav-section-header"><span>System</span></div>
     <div class="collapsible-content">
       <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-        <span class="icon">󰗼</span> <span>Logout of Portal</span>
+        <span class="icon">🚪</span> <span>Logout of Portal</span>
       </a>
     </div>
 
-<script>
- function handleLogout() {
-   sessionStorage.removeItem("sbc_auth");
-   const repoPath = "/Suburban-Brewing-Company-Portal/";
-   window.location.replace(repoPath + "login.html");
-}
-</script>
+    <script>
+     function handleLogout() {
+       sessionStorage.removeItem("sbc_auth");
+       const repoPath = "/Suburban-Brewing-Company-Portal/";
+       window.location.replace(repoPath + "login.html");
+    }
+    </script>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
-      <span>Main Menu</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span><span class="chevron">▼</span></div>
     <div id="grp-main" class="collapsible-content">
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
-      <span>Samplings</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)"><span>Samplings</span><span class="chevron">▼</span></div>
     <div id="grp-sample" class="collapsible-content">
       <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
       <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
-      <span>Sales</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)"><span>Sales</span><span class="chevron">▼</span></div>
     <div id="grp-sales" class="collapsible-content">
       <a href="sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
       <a href="leads.html" class="nav-link"><span>AI Sales Leads</span></a>
@@ -221,9 +261,7 @@
       <a href="new invoices.html" class="nav-link"><span>New Invoice</span></a>
     </div>
 
-    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
-      <span>Inventory</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)"><span>Inventory</span><span class="chevron">▼</span></div>
     <div id="grp-inv" class="collapsible-content">
       <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
       <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
@@ -231,9 +269,7 @@
       <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
-      <span>Brewing</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)"><span>Brewing</span><span class="chevron">▼</span></div>
     <div id="grp-brew" class="collapsible-content">
       <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
       <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
@@ -243,9 +279,7 @@
       <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
-      <span>Reporting & Analytics</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)"><span>Reporting & Analytics</span><span class="chevron">▼</span></div>
     <div id="grp-rep" class="collapsible-content">
       <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
       <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
@@ -460,7 +494,7 @@ function startScanner() {
 
 /* ===== NAVIGATION ===== */
 function goBack() {
-  window.location.href = "invoices.html";
+  window.location.href = "new invoices.html";
 }
 </script>
 
