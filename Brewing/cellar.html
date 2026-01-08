@@ -12,19 +12,22 @@
             window.location.replace(repoPath + "login.html");
         }
     })();
-</script>
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cellar Management | Suburban Brewing Co.</title>
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    /* --- SHARED THEME VARIABLES --- */
+    /* --- SHARED THEME VARIABLES (EXACT MATCH TO INDEX) --- */
     :root { 
-      --bg: #f3f4f6;
-      --sidebar: #0f172a;
+      --bg: #f8fafc;
+      --sidebar: #0f172a; /* Dark Navy */
       --accent: #2563eb;
       --primary-dark: #111827;
       --accent-green: #27ae60;
@@ -33,25 +36,61 @@
       --status-clean: #10b981;
       --qc-warning: #facc15;
       --text: #1f2937;
+      --text-muted: #6b7280;
+      
+      --ready: #10b981;
     }
     
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
-
-    /* --- SIDEBAR STYLES --- */
-    .sidebar { 
-      width: 260px; background: var(--sidebar); color: #fff; 
-      padding: 24px 0; flex-shrink: 0; position: fixed; 
-      height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* --- GLOBAL RESET & LAYOUT --- */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text); 
+      /* ⚠️ EXACT FONT MATCH */
+      font-family: 'Inter', -apple-system, system-ui, sans-serif; 
+      display: flex; 
+      height: 100vh; 
+      overflow: hidden; 
     }
-    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
+
+    /* =========================================
+       SIDEBAR STYLES (COPIED FROM INDEX.HTML)
+       ========================================= */
+    .sidebar { 
+      width: 260px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar h2 { 
+      margin: 0 24px 32px; 
+      font-size: 20px; 
+      font-weight: 800; 
+      color: #fff; 
+      white-space: nowrap; /* Forces one line */
+    }
 
     /* COLLAPSIBLE HEADERS */
-    .nav-section-title {
-      font-size: 11px; text-transform: uppercase; color: #9ca3af; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
-      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    .nav-section-title, .nav-section-header {
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #94a3b8; 
+      margin: 18px 24px 8px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
       user-select: none;
     }
     .nav-section-title:hover { color: #fff; }
@@ -60,21 +99,42 @@
     .collapsed .chevron { transform: rotate(-90deg); }
 
     .collapsible-content {
-      max-height: 2000px; overflow: hidden;
-      transition: max-height 0.4s ease, opacity 0.4s ease;
+      max-height: 2000px; 
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
       opacity: 1;
     }
     .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
     /* LINKS */
     .nav-link { 
-      display: flex; align-items: center; padding: 10px 24px; 
-      color: #d1d5db; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent;
+      display: flex; 
+      align-items: center; 
+      padding: 10px 24px; 
+      color: #64748b; 
+      text-decoration: none; 
+      font-size: 14px; 
+      transition: 0.2s; 
+      border-left: 4px solid transparent;
       margin-bottom: 0;
     }
-    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; }
-    .nav-link.active { border-left-color: var(--accent); color: #fff; background: #374151; font-weight: 600; }
+    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; font-weight: 600; }
+
+    /* LOGOUT LINK STYLE */
+    .logout-link { 
+      margin-top: 20px; 
+      color: #f87171 !important; 
+      border-left: 4px solid transparent; 
+      transition: all 0.2s ease; 
+      cursor: pointer; 
+    }
+    .logout-link:hover { 
+      background: #450a0a !important; 
+      color: #fee2e2 !important; 
+      border-left-color: #ef4444; 
+    }
+    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
 
     /* --- MAIN CONTENT AREA --- */
     .main-content { 
@@ -84,6 +144,8 @@
       overflow-y: auto; 
       transition: all 0.3s ease;
       width: 100%;
+      display: flex;
+      flex-direction: column;
     }
     
     .header { 
@@ -98,7 +160,7 @@
       z-index: 10; 
     }
     
-    .container { padding: 30px; }
+    .container { padding: 30px; flex: 1; }
 
     /* --- DASHBOARD STATS --- */
     .dashboard-row {
@@ -202,7 +264,6 @@
       max-height: 90vh;
       box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
       overflow: hidden;
-      display: none; /* JS will toggle to flex */
       flex-direction: column;
     }
     
@@ -279,12 +340,62 @@
     .btn-blue { background: var(--accent); }
     .btn-orange { background: var(--accent-orange); }
 
-    /* --- LOGOUT LINK --- */
-    .logout-link { margin-top: 20px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
-    .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
+    /* --- FOOTER STYLES (MATCHES INDEX) --- */
+    .app-footer {
+        margin-top: auto;
+        padding: 10px 0; 
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #94a3b8; 
+        font-size: 11px;
+        font-weight: 500;
+        width: 100%;
+        margin-bottom: 10px;
+        background: #f8fafc; /* Matches page bg */
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .footer-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        margin-left: 20px;
+        transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .system-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid #cbd5e1;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--ready); /* Green */
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
 
     /* ============================================================
-       MOBILE & TABLET DRAWER OVERRIDES
+       MOBILE & TABLET DRAWER LOGIC 
        ============================================================ */
     #menu-toggle { display: none; }
     .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
@@ -306,12 +417,14 @@
       .container { padding: 15px; }
       .dashboard-row { grid-template-columns: 1fr; }
       
-      #vessel-modal { 
-        width: 98%; 
-        height: 95vh; 
-      }
+      #vessel-modal { width: 98%; height: 95vh; }
       .modal-content-area > div { flex-direction: column !important; gap: 20px !important; }
       .modal-content-area div[style*="border-right"] { border-right: none !important; padding-right: 0 !important; }
+      
+      /* Footer Stack */
+      .app-footer { flex-direction: column; gap: 15px; text-align: center; }
+      .footer-links a { margin: 0 10px; }
+      .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
   </style>
 </head>
@@ -321,25 +434,20 @@
   
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-  <span>System</span>
-</div>
-<div class="collapsible-content">
-  <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-    <span class="icon">󰗼</span> <span>Logout of Portal</span>
-  </a>
-</div>
+    <div class="nav-section-title"><span>System</span></div>
+    <div class="collapsible-content">
+      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
+        <span class="icon">🚪</span> <span>Logout of Portal</span>
+      </a>
+    </div>
 
-<script>
- function handleLogout() {
-    // Clear the authentication session
-    sessionStorage.removeItem("sbc_auth");
-    
-    // Redirect to the login page relative to your GitHub repo root
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-</script>
+    <script>
+     function handleLogout() {
+       sessionStorage.removeItem("sbc_auth");
+       const repoPath = "/Suburban-Brewing-Company-Portal/";
+       window.location.replace(repoPath + "login.html");
+    }
+    </script>
     
     <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
       <span>Main Menu</span><span class="chevron">▼</span>
@@ -431,6 +539,28 @@
       <div class="grid-section-title" style="border-color: var(--accent-green);">Brite Tanks (10 BBL)</div>
       <div id="grid-brite" class="vessel-grid"></div>
     </div>
+    
+    <div style="flex-grow:1;"></div>
+    <footer class="app-footer">
+        <div class="footer-left">
+            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
+            <span class="system-status">
+                <span class="status-dot"></span>
+                System Operational
+            </span>
+        </div>
+        <div class="footer-links">
+            <span>Portal v2.5</span>
+            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
+            <a href="#" onclick="Swal.fire({
+                title: 'App Support', 
+                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
+                icon: 'info',
+                confirmButtonColor: 'var(--accent)'
+            })">Support</a>
+            <a href="#" onclick="location.reload()">Refresh Data</a>
+        </div>
+    </footer>
   </main>
 
   <div class="overlay" id="overlay" onclick="closeModal()"></div>
@@ -615,14 +745,14 @@
   </div>
 
   <script>
-    // --- SIDEBAR TOGGLE (Desktop/Tablet Subgroups) ---
+    // --- SIDEBAR TOGGLE ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
       content.classList.toggle('collapsed');
       headerEl.classList.toggle('collapsed');
     }
 
-    // --- MOBILE DRAWER TOGGLE (Slide-out menu for Phones) ---
+    // --- MOBILE DRAWER TOGGLE ---
     function toggleMobileMenu() {
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.getElementById('menu-overlay');
@@ -640,6 +770,9 @@
 
     // --- INITIALIZE SIDEBAR & MOBILE AUTO-CLOSE ---
     window.addEventListener('DOMContentLoaded', () => {
+      // Set Year
+      document.getElementById('copyright-year').innerText = new Date().getFullYear();
+
       // 1. Auto-expand the active section in the sidebar
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
@@ -1022,6 +1155,6 @@
       const opt = select.options[select.selectedIndex];
       document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
     }
-</script>
+  </script>
 </body>
 </html>
