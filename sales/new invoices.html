@@ -843,16 +843,17 @@
                         div.style.padding = "10px"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #eee";
                         div.innerHTML = `📍 ${item.display_name}`;
                         
-                        div.onclick = () => {
+                      div.onclick = () => {
                             const a = item.address;
-                            // Extract Name from map data
+                            
+                            // 1. Extract Business Name from map data
                             const businessName = item.name || a.amenity || a.shop || a.restaurant || "";
                             const street = `${a.house_number || ''} ${a.road || ''}`.trim();
 
-                            // Open modal first (passing empty string prevents clearing)
+                            // 2. Open modal first (empty string stops the clearing logic)
                             openNewCustomerModal(""); 
 
-                            // Populate fields
+                            // 3. Inject data into modal
                             document.getElementById("new-cust-name").value = businessName;
                             document.getElementById("new-cust-address").value = street;
                             document.getElementById("new-cust-city").value = a.city || a.town || a.village || "";
@@ -863,9 +864,9 @@
                             resultsBox.style.display = "none";
                         };
                         resultsBox.appendChild(div);
-                    });
+                    }); // <--- CLOSE FOR-EACH
                 } catch (e) { console.error("Search error", e); }
-            }, 500);
+            }, 500); // <--- CLOSE SET-TIMEOUT
         }
     });
     /* ===== SELECT CUSTOMERS FUNCTION ===== */
@@ -1427,27 +1428,33 @@
     }
     /* ===== MODAL LOGIC ===== */
     function openNewCustomerModal(prefillName = "") {
-        if (prefillName !== "") {
-            const exists = customers.some(c => c.name.toLowerCase() === prefillName.toLowerCase());
-            if (exists) {
-                Swal.fire("Note", "This customer is already in your system.", "info");
-                return;
-            }
-        }
-
-        document.getElementById("new-customer-modal").style.display = "block";
-
-        // Only clear/reset if this is a manual add, not a map auto-population
-        if (prefillName !== "") {
-            document.getElementById("new-cust-name").value = prefillName;
-            document.getElementById("new-cust-address").value = "";
-            document.getElementById("new-cust-city").value = "";
-            document.getElementById("new-cust-state").value = "";
-            document.getElementById("new-cust-zip").value = "";
-            document.getElementById("new-cust-type").value = "Restaurant";
-            document.getElementById("new-cust-payment").value = "Check";
+    // 1. Only check existence if we aren't using map data (prefillName isn't empty)
+    if (prefillName !== "") {
+        const exists = customers.some(c => c.name.toLowerCase() === prefillName.toLowerCase());
+        if (exists) {
+            Swal.fire("Note", "This customer is already in your system.", "info");
+            return;
         }
     }
+
+    // 2. Show the modal
+    document.getElementById("new-customer-modal").style.display = "block";
+
+    // 3. LOGIC: 
+    // If prefillName has a value (Manual Add button), reset fields.
+    // If prefillName is empty (Map Click), keep fields ready for injection.
+    if (prefillName !== "") {
+        document.getElementById("new-cust-name").value = prefillName;
+        document.getElementById("new-cust-address").value = "";
+        document.getElementById("new-cust-city").value = "";
+        document.getElementById("new-cust-state").value = "";
+        document.getElementById("new-cust-zip").value = "";
+    }
+
+    // Always ensure these defaults are set for new entries
+    document.getElementById("new-cust-type").value = "Restaurant";
+    document.getElementById("new-cust-payment").value = "Check";
+}
 
     function closeNewCustomerModal() {
         document.getElementById("new-customer-modal").style.display = "none";
