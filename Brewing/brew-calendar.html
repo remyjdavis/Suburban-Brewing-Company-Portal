@@ -58,7 +58,7 @@
       color: #fff; 
       display: flex; 
       flex-direction: column; 
-      overflow-y: auto; 
+      overflow-y: auto; /* Enable vertical scroll */
       flex-shrink: 0; 
       position: fixed; 
       left: 0;
@@ -69,6 +69,11 @@
       padding: 24px 0; 
     }
     
+    /* ⚠️ FIX: Prevent Flexbox from squishing links when height is small */
+    .sidebar > * {
+        flex-shrink: 0; 
+    }
+
     .sidebar h2 { 
       margin: 0 24px 32px; 
       font-size: 20px; 
@@ -84,7 +89,7 @@
       font-size: 11px; 
       text-transform: uppercase; 
       color: #94a3b8; 
-      margin: 18px 24px 8px; 
+      margin: 24px 24px 8px; /* Increased top margin for spacing */
       font-weight: 700; 
       letter-spacing: 1px; 
       cursor: pointer; 
@@ -116,7 +121,7 @@
       font-size: 14px; 
       transition: 0.2s; 
       border-left: 4px solid transparent;
-      margin-bottom: 2px; /* Prevents overlap */
+      min-height: 40px; /* ⚠️ FIX: Enforce minimum height to prevent squishing */
     }
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
