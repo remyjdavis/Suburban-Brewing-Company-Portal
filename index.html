@@ -103,13 +103,13 @@
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-    /* --- MAIN AREA (UPDATED FOR FOOTER ALIGNMENT) --- */
+    /* --- MAIN AREA (UPDATED) --- */
     .main { 
         flex: 1; 
         margin-left: 260px; 
-        padding: 40px; 
+        /* Change padding to 0 on bottom so it doesn't push the footer up */
+        padding: 40px 40px 0 40px; 
         transition: all 0.3s ease;
-        /* CRITICAL FIX: Make main a flex column to force footer down */
         display: flex; 
         flex-direction: column; 
         min-height: 100vh; 
@@ -303,19 +303,24 @@
       }
       .header-bar h1 { font-size: 22px; }
     }
-/* --- FOOTER STYLES --- */
-.app-footer {
-  margin-top: auto;
-  /* Change padding from 20px 0 to 12px 0 to match the invoice page */
-  padding: 10px 0;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
-}
+/* --- FOOTER STYLES (FORCED SLIM) --- */
+    .app-footer {
+        margin-top: auto;
+        /* !important forces the browser to use these values */
+        padding: 8px 0 !important; 
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #94a3b8; 
+        font-size: 11px !important;
+        font-weight: 500;
+        line-height: 1.2 !important;
+        /* Ensure it doesn't get crushed */
+        min-height: 35px;
+        /* Add some bottom space so it's not glued to the monitor edge */
+        margin-bottom: 10px;
+    }
 
 .footer-links a {
     color: var(--text-muted);
