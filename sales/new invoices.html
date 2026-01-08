@@ -7,7 +7,6 @@
         const isLoginPage = window.location.pathname.includes("login.html");
 
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
@@ -27,7 +26,7 @@
   <style>
     
     :root {
-      --bg: #f4f6f8;
+      --bg: #f8fafc;
       --sidebar: #0f172a; /* Dark Navy */
       --accent: #2563eb;
       --text: #1f2937;
@@ -43,7 +42,6 @@
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      /* ⚠️ EXACT FONT MATCH */
       font-family: 'Inter', -apple-system, system-ui, sans-serif;
       display: flex;
       min-height: 100vh;
@@ -65,13 +63,15 @@
       transition: all 0.3s ease;
     }
     
-    /* ⚠️ HEADER: 20px, Single Line */
+    /* Header: 20px, Single Line */
     .sidebar h2 { 
       margin: 0 24px 32px; 
       font-size: 20px; 
       font-weight: 800; 
       color: #fff; 
       white-space: nowrap; 
+      border-bottom: none;
+      padding-bottom: 0;
     }
 
     /* COLLAPSIBLE HEADERS */
@@ -128,12 +128,16 @@
       color: #fee2e2 !important; 
       border-left-color: #ef4444; 
     }
-    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
+    
+    /* ⚠️ ICON SPACING FIX */
+    .logout-link span.icon { 
+        margin-right: 12px; 
+        font-size: 16px; 
+    }
 
     /* ===== MAIN ===== */
     .main {
       margin-left: 260px;
-      /* ⚠️ PADDING: 40px top/sides, 0 bottom (Matches Index logic) */
       padding: 40px 40px 0 40px; 
       flex: 1;
       display: flex;
@@ -369,7 +373,6 @@
     /* --- GLOBAL FOOTER STYLES (EXACT INDEX MATCH) --- */
     .app-footer {
         margin-top: auto;
-        /* ⚠️ EXACT INDEX PADDING & SIZE */
         padding: 8px 0 !important; 
         border-top: 1px solid #e2e8f0;
         display: flex;
@@ -441,7 +444,7 @@
     .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
     @media (max-width: 1024px) {
-      .sidebar { left: -240px; }
+      .sidebar { left: -260px; }
       .sidebar.open { left: 0; }
       .main { margin-left: 0 !important; padding: 15px !important; width: 100%; }
       .menu-overlay.active { display: block; }
@@ -473,8 +476,9 @@
     <div class="nav-section-header">
       <span>System</span>
     </div>
+    
     <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-      <span class="icon">󰗼</span>
+      <span class="icon">🚪</span>
       <span>Logout of Portal</span>
     </a>
 
