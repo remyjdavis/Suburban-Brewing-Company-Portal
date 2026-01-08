@@ -392,6 +392,27 @@
     margin-right: 12px;
     font-size: 16px;
 }
+  /* --- PRICE OVERRIDE STYLES --- */
+.price-edit-input {
+    width: 70px;
+    padding: 4px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+    background: #f3f4f6; /* Grey/Locked look */
+    cursor: not-allowed;
+    transition: all 0.2s ease;
+}
+
+.price-edit-input.unlocked {
+    background: #ffffff;
+    border-color: #f59e0b; /* Amber warning border */
+    color: #b45309;
+    cursor: text;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
   </style>
 </head>
 <body>
@@ -582,6 +603,9 @@
 
   </main>
   <script>
+    // ===== GLOBAL =====
+    const MANAGER_PIN = "19344"; // 🔒 CHANGE THIS TO YOUR DESIRED PIN
+    let overrideLogs = []; // Stores records of who changed what
     const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
     
     // --- SIDEBAR TOGGLE LOGIC ---
@@ -993,7 +1017,7 @@
       return null;
     }
 
-   /* ===== UPDATE QUANTITIES FUNCTION ===== */
+    /* ===== UPDATE QUANTITIES FUNCTION (WITH SECURE OVERRIDE) ===== */
     function updateQuantities(row, product) {
       const qtyCell = row.querySelector(".qty-group");
       const priceCell = row.querySelector(".price-cell");
@@ -1003,7 +1027,6 @@
 
       checkboxes.forEach(cb => {
         const type = cb.value;
-
         const existingQty = qtyCell.querySelector(`[data-type="${type}"]`);
         const existingPrice = priceCell.querySelector(`[data-type="${type}"]`);
 
@@ -1027,15 +1050,14 @@
           qtyInput.value = 0;
           qtyInput.style.width = "60px";
           qtyInput.style.padding = "8px";
-          qtyInput.style.fontSize = "16px"; // Prevents auto-zoom on mobile
+          qtyInput.style.fontSize = "16px"; 
+          
           qtyInput.oninput = () => {
             const max = inventoryMap[product]?.[type];
-
             if (max !== undefined && Number(qtyInput.value) > max) {
               qtyInput.value = max;
               alert(`Only ${max} units of ${product} (${type}) available`);
             }
-
             recalcLine(row, product);
           };
 
@@ -1043,47 +1065,81 @@
           qtyWrap.appendChild(qtyInput);
           qtyCell.appendChild(qtyWrap);
 
-          /* ---------- PRICE ---------- */
+          /* ---------- PRICE (SECURE OVERRIDE LOGIC) ---------- */
           const priceWrap = document.createElement("div");
           priceWrap.dataset.type = type;
-          priceWrap.textContent =
-            `$${groupedProducts[product][type].price.toFixed(2)}`;
+          priceWrap.style.marginBottom = "4px"; // Align with qty inputs
+          
+          const defaultPrice = groupedProducts[product][type].price;
 
+          const priceInput = document.createElement("input");
+          priceInput.type = "number";
+          priceInput.step = "0.01";
+          priceInput.className = "price-edit-input"; // Default: Locked
+          priceInput.value = defaultPrice.toFixed(2);
+          priceInput.readOnly = true; // Start Locked
+          
+          // Store original for logging purposes later
+          priceInput.dataset.original = defaultPrice;
+          priceInput.dataset.type = type;
+
+          // 🔒 DOUBLE CLICK TO UNLOCK
+          priceInput.ondblclick = async () => {
+              if(!priceInput.readOnly) return; // Already unlocked
+
+              const { value: pin } = await Swal.fire({
+                  title: 'Manager Override',
+                  text: 'Enter PIN to unlock price:',
+                  input: 'password',
+                  inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+                  showCancelButton: true,
+                  confirmButtonColor: '#2563eb',
+                  confirmButtonText: 'Unlock'
+              });
+
+              if (pin === MANAGER_PIN) {
+                  priceInput.readOnly = false;
+                  priceInput.classList.add("unlocked");
+                  priceInput.focus();
+                  priceInput.select();
+                  
+                  const Toast = Swal.mixin({
+                      toast: true, position: 'top-end', showConfirmButton: false, timer: 3000
+                  });
+                  Toast.fire({ icon: 'warning', title: 'Price Unlocked. Change will be logged.' });
+              } else if (pin) {
+                  Swal.fire('Error', 'Incorrect PIN', 'error');
+              }
+          };
+
+          // Recalculate invoice when price changes
+          priceInput.oninput = () => {
+             recalcLine(row, product);
+          };
+
+          priceWrap.appendChild(priceInput);
           priceCell.appendChild(priceWrap);
 
           /* ---------- BARCODE (CASE ONLY) ---------- */
           if (type === "Case") {
             barcodeCell.innerHTML = "";
-
             const sku = groupedProducts[product][type].sku;
-
             if (!sku) {
-              barcodeCell.innerHTML =
-                `<em style="font-size:10px;color:#6b7280;">SKU missing</em>`;
-              return;
+              barcodeCell.innerHTML = `<em style="font-size:10px;color:#6b7280;">SKU missing</em>`;
+            } else {
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.classList.add("line-barcode");
+                barcodeCell.appendChild(svg);
+                JsBarcode(svg, sku, { format: "CODE128", width: 1.2, height: 36, margin: 0, displayValue: false });
             }
-
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.classList.add("line-barcode");
-            barcodeCell.appendChild(svg);
-
-            JsBarcode(svg, sku, {
-              format: "CODE128",
-              width: 1.2,
-              height: 36,
-              margin: 0,
-              displayValue: false
-            });
           }
         }
+        
         // REMOVE TYPE
         if (!cb.checked && existingQty) {
           existingQty.remove();
           if (existingPrice) existingPrice.remove();
-
-          if (type === "Case") {
-            barcodeCell.innerHTML = "";
-          }
+          if (type === "Case") barcodeCell.innerHTML = "";
         }
       });
 
@@ -1097,7 +1153,7 @@
       }
     }
 
-    /* ===== RECALCLINE FUNCTION ===== */
+    /* ===== RECALCLINE FUNCTION (UPDATED) ===== */
     function recalcLine(row, product) {
       const totalCell = row.querySelector(".line-total");
       totalCell.innerHTML = "";
@@ -1106,23 +1162,26 @@
 
       row.querySelectorAll(".qty-group div").forEach(div => {
         const type = div.dataset.type;
+        
+        // 1. Get Quantity
         const qty = Number(div.querySelector("input").value || 0);
-        const price = groupedProducts[product][type].price;
-        const lineTotal = qty * price;
+        
+        // 2. Get Price (From Input Field)
+        const priceInput = row.querySelector(`.price-cell input[data-type="${type}"]`);
+        const price = priceInput ? Number(priceInput.value) : 0;
 
+        const lineTotal = qty * price;
         rowTotal += lineTotal;
 
         const line = document.createElement("div");
         line.textContent = `$${lineTotal.toFixed(2)}`;
+        line.style.padding = "8px 0"; // Visual alignment
         totalCell.appendChild(line);
       });
 
-      // 🔑 THIS IS WHAT WAS MISSING
       totalCell.dataset.value = rowTotal;
-
       recalcInvoiceTotals();
     }
-
     /* ===== RECALC INVOICE TOTAL FUNCTION ===== */
     function recalcInvoiceTotals() {
       let subtotal = 0;
@@ -1305,14 +1364,12 @@
           focusFirstProductRow();
         });
     }
-    /* ===== BUILD INVOICE PAYLOAD FUNCTION ===== */
+    /* ===== BUILD INVOICE PAYLOAD FUNCTION (WITH LOGGING) ===== */
     function buildInvoicePayload() {
-      if (!selectedCustomer) {
-        alert("Select a customer first");
-        return null;
-      }
+      if (!selectedCustomer) { alert("Select a customer first"); return null; }
 
       const items = [];
+      overrideLogs = []; // Reset logs
 
       document.querySelectorAll("#product-body tr").forEach(row => {
         const productInput = row.querySelector(".product-input");
@@ -1326,55 +1383,38 @@
 
           if (qty <= 0) return;
 
+          // GRAB PRICE & CHECK FOR OVERRIDE
+          const priceInput = row.querySelector(`.price-cell input[data-type="${type}"]`);
+          let finalPrice = 0;
+          
+          if(priceInput) {
+              finalPrice = Number(priceInput.value);
+              const originalPrice = Number(priceInput.dataset.original);
+              
+              // 📝 LOGGING: If price differs from original
+              if(finalPrice !== originalPrice) {
+                  const logEntry = `Price Override: ${productName} (${type}) changed from $${originalPrice.toFixed(2)} to $${finalPrice.toFixed(2)}`;
+                  overrideLogs.push(logEntry);
+              }
+          }
+
           items.push({
             product: productName,
             type: type,
             qty: qty,
-            price: groupedProducts[productName][type].price,
+            price: finalPrice,
             sku: groupedProducts[productName][type].sku || ""
           });
         });
       });
 
-      if (items.length === 0) {
-        alert("Add at least one product");
-        return null;
-      }
+      if (items.length === 0) { alert("Add at least one product"); return null; }
 
-      const subtotal = Number(
-        document.getElementById("invoice-subtotal").textContent.replace("$", "")
-      );
-
-      const discount =
-        document.getElementById("discount-row").style.display !== "none" ?
-        Number(
-          document
-          .getElementById("invoice-discount")
-          .textContent.replace(/[^0-9.-]/g, "")
-        ) :
-        0;
-
-      const deposit =
-        document.getElementById("deposit-row").style.display !== "none" ?
-        Number(
-          document
-          .getElementById("invoice-deposit")
-          .textContent.replace("$", "")
-        ) :
-        0;
-
-      const tax =
-        document.getElementById("tax-row").style.display !== "none" ?
-        Number(
-          document
-          .getElementById("invoice-tax")
-          .textContent.replace("$", "")
-        ) :
-        0;
-
-      const total = Number(
-        document.getElementById("invoice-total").textContent.replace("$", "")
-      );
+      const subtotal = Number(document.getElementById("invoice-subtotal").textContent.replace("$", ""));
+      const discount = document.getElementById("discount-row").style.display !== "none" ? Number(document.getElementById("invoice-discount").textContent.replace(/[^0-9.-]/g, "")) : 0;
+      const deposit = document.getElementById("deposit-row").style.display !== "none" ? Number(document.getElementById("invoice-deposit").textContent.replace("$", "")) : 0;
+      const tax = document.getElementById("tax-row").style.display !== "none" ? Number(document.getElementById("invoice-tax").textContent.replace("$", "")) : 0;
+      const total = Number(document.getElementById("invoice-total").textContent.replace("$", ""));
 
       return {
         invoiceNumber: currentInvoiceNumber,
@@ -1382,14 +1422,11 @@
         address: selectedCustomer.address,
         customerType: selectedCustomer.type,
         paymentMethod: selectedCustomer.paymentMethod,
-
-        subtotal,
-        discount,
-        tax,
-        deposit,
-        total,
-
-        items
+        subtotal, discount, tax, deposit, total,
+        items,
+        
+        // 🔒 SEND LOGS TO BACKEND
+        logs: overrideLogs 
       };
     }
     /* ===============================
