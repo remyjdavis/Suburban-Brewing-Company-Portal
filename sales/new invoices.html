@@ -1432,25 +1432,34 @@ if (val.length >= 5) {
     }
     /* ===== OPEN NEW CUSTOMER MODAL FUNCTION ===== */
     function openNewCustomerModal(prefillName = "") {
-      const exists = customers.some(c =>
-        c.name.toLowerCase() === prefillName.toLowerCase()
-      );
+  // 1. Check if the customer already exists in your local Sheet data
+  const exists = customers.some(c =>
+    c.name.toLowerCase() === prefillName.toLowerCase() && prefillName !== ""
+  );
 
-      if (exists) {
-        alert("Customer already exists");
-        return;
-      }
-      document.getElementById("new-customer-modal").style.display = "block";
+  if (exists) {
+    Swal.fire("Note", "This customer is already in your system.", "info");
+    return;
+  }
 
-      document.getElementById("new-cust-name").value = prefillName;
-      document.getElementById("new-cust-address").value = "";
-      document.getElementById("new-cust-city").value = "";
-      document.getElementById("new-cust-state").value = "";
-      document.getElementById("new-cust-zip").value = "";
+  // 2. Open the Modal
+  document.getElementById("new-customer-modal").style.display = "block";
 
-      document.getElementById("new-cust-type").value = "Restaurant";
-      document.getElementById("new-cust-payment").value = "Check";
-    }
+  // 3. Conditional Clearing: 
+  // If we are NOT passing a name (meaning we are using map data), 
+  // do NOT clear the fields so the map data can stay there.
+  if (prefillName !== "") {
+    document.getElementById("new-cust-name").value = prefillName;
+    document.getElementById("new-cust-address").value = "";
+    document.getElementById("new-cust-city").value = "";
+    document.getElementById("new-cust-state").value = "";
+    document.getElementById("new-cust-zip").value = "";
+    
+    // Reset defaults for manual entry
+    document.getElementById("new-cust-type").value = "Restaurant";
+    document.getElementById("new-cust-payment").value = "Check";
+  }
+}
 
     /* ===== CLOSE NEW CUSTROMER MODAL FUNCTION ===== */
     function closeNewCustomerModal() {
