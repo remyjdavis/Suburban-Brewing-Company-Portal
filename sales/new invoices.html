@@ -807,33 +807,60 @@
         .then(d => customers = d || []);
     }
 
-    document.getElementById("customer-search").addEventListener("input", function() {
-      document.querySelectorAll(".suggestion").forEach(e => e.remove());
-      const val = this.value.trim().toLowerCase();
-      if (!val) return;
+    /* ===== LOCAL SEARCH + FREE ADDRESS SEARCH (NOMINATIM) ===== */
+let searchTimeout;
+document.getElementById("customer-search").addEventListener("input", function() {
+    document.querySelectorAll(".suggestion").forEach(e => e.remove());
+    const val = this.value.trim();
+    if (!val) return;
 
-      const matches = customers.filter(c =>
-        c.name.toLowerCase().includes(val)
-      );
-
-      matches.forEach(c => {
+    // 1. Search existing customers in your sheet
+    const matches = customers.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
+    matches.forEach(c => {
         const div = document.createElement("div");
-        div.textContent = c.name;
+        div.textContent = "👤 " + c.name;
         div.className = "suggestion";
         div.onclick = () => selectCustomer(c);
         this.parentNode.appendChild(div);
-      });
+    });
 
-      // 🔹 NO MATCH FOUND → OFFER ADD
-      if (matches.length === 0) {
+    // 2. Search real-world addresses using OpenStreetMap (Free)
+    clearTimeout(searchTimeout);
+    if (val.length > 5) {
+        searchTimeout = setTimeout(async () => {
+            try {
+                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&addressdetails=1&limit=3`);
+                const data = await resp.json();
+                data.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "suggestion";
+                    div.innerHTML = `📍 ${item.display_name}`;
+                    div.onclick = () => {
+                        const a = item.address;
+                        const street = `${a.house_number || ''} ${a.road || ''}`.trim();
+                        openNewCustomerModal(""); // Business name left blank for you
+                        document.getElementById("new-cust-address").value = street;
+                        document.getElementById("new-cust-city").value = a.city || a.town || a.village || "";
+                        document.getElementById("new-cust-state").value = a.state || "";
+                        document.getElementById("new-cust-zip").value = a.postcode || "";
+                        document.querySelectorAll(".suggestion").forEach(e => e.remove());
+                    };
+                    this.parentNode.appendChild(div);
+                });
+            } catch (e) { console.error("Address Search Error", e); }
+        }, 500);
+    }
+
+    // 3. Option to add manually if no customer found
+    if (matches.length === 0) {
         const add = document.createElement("div");
-        add.textContent = `Add "${this.value}" as new customer`;
+        add.textContent = `+ Add "${val}" as new customer`;
         add.className = "suggestion";
         add.style.fontWeight = "600";
-        add.onclick = () => openNewCustomerModal(this.value);
+        add.onclick = () => openNewCustomerModal(val);
         this.parentNode.appendChild(add);
-      }
-    });
+    }
+});
     /* ===== SELECT CUSTOMERS FUNCTION ===== */
     function selectCustomer(c) {
     selectedCustomer = c;
@@ -1646,39 +1673,56 @@ function saveInvoice() {
     document.getElementById("print-invoice-btn").addEventListener("click", printInvoice);
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
+  <div style="background:#fff; width:450px; margin:5% auto; padding:25px; border-radius:8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+    <h3 style="margin-top:0; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px;">Add New Customer</h3>
 
-    <div style="background:#fff; width:420px; margin:10% auto; padding:20px; border-radius:6px;">
-      <h3 style="margin-top:0;">Add New Customer</h3>
+    <div style="margin-bottom:12px;">
+      <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Business Name</label>
+      <input id="new-cust-name" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+    </div>
 
-      <label>Name</label>
-      <input id="new-cust-name" style="width:100%; margin-bottom:8px;">
+    <div style="margin-bottom:12px;">
+      <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Street Address</label>
+      <input id="new-cust-address" placeholder="Street" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+    </div>
 
-      <label>Address</label>
-      <input id="new-cust-address" placeholder="Street Address" style="width:100%; margin-bottom:6px;">
-
-      <div style="display:flex; gap:6px; margin-bottom:6px;">
-        <input id="new-cust-city" placeholder="City" style="flex:2;">
-        <input id="new-cust-state" placeholder="State" style="flex:1;">
-        <input id="new-cust-zip" placeholder="Zip" style="flex:1;">
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <div style="flex:2;">
+        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">City</label>
+        <input id="new-cust-city" placeholder="City" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
       </div>
+      <div style="flex:1;">
+        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">State</label>
+        <input id="new-cust-state" placeholder="PA" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+      </div>
+      <div style="flex:1;">
+        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Zip</label>
+        <input id="new-cust-zip" placeholder="Zip" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+      </div>
+    </div>
 
-      <label>Customer Type</label>
-      <select id="new-cust-type" style="width:100%; margin-bottom:8px;">
+    <div style="margin-bottom:12px;">
+      <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Customer Type</label>
+      <select id="new-cust-type" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
         <option value="Restaurant">Restaurant</option>
         <option value="Wholesaler">Wholesaler</option>
       </select>
+    </div>
 
-      <label>Payment Method</label>
-      <select id="new-cust-payment" style="width:100%; margin-bottom:12px;">
+    <div style="margin-bottom:20px;">
+      <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Payment Method</label>
+      <select id="new-cust-payment" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
         <option value="Check">Check</option>
         <option value="Fintech">Fintech</option>
       </select>
-
-      <div style="text-align:right;">
-        <button onclick="closeNewCustomerModal()">Cancel</button>
-        <button onclick="saveNewCustomer()">Save Customer</button>
-      </div>
     </div>
+
+    <div style="text-align:right; gap:10px; display:flex; justify-content:flex-end;">
+      <button onclick="closeNewCustomerModal()" style="padding:8px 15px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer;">Cancel</button>
+      <button onclick="saveNewCustomer()" style="padding:8px 15px; background:#2563eb; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:600;">Save Customer</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
