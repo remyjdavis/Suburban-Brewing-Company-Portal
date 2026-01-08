@@ -6,7 +6,6 @@
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
@@ -24,17 +23,21 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <style>
-    /* --- SHARED THEME VARIABLES (EXACT MATCH TO INDEX) --- */
+    /* --- SHARED THEME VARIABLES (MATCHING INDEX) --- */
     :root {
-      --bg: #f8fafc;
-      --sidebar: #0f172a; /* Dark Navy */
+      --bg: #f8fafc;        /* Light Background */
+      --sidebar: #0f172a;   /* Dark Navy Sidebar */
       --accent: #2563eb;
-      --text: #f8fafc;
-      --text-dim: #94a3b8;
+      --text: #1e293b;      /* Dark Text */
+      --text-dim: #64748b;
       
       --primary: #2563eb;
-      --card-bg: #1e293b;
+      --card-bg: #ffffff;   /* White Cards */
       --sidebar-w: 260px;
+      --border: #e2e8f0;
+      
+      --ready: #10b981;
+      --danger: #ef4444;
     }
 
     /* --- GLOBAL RESET & LAYOUT --- */
@@ -44,7 +47,6 @@
       margin: 0; 
       background: var(--bg); 
       color: var(--text); 
-      /* ⚠️ EXACT FONT MATCH */
       font-family: 'Inter', sans-serif; 
       display: flex; 
       min-height: 100vh; 
@@ -71,7 +73,7 @@
       font-size: 20px; 
       font-weight: 800; 
       color: #fff; 
-      white-space: nowrap; /* Forces one line */
+      white-space: nowrap; 
     }
 
     /* COLLAPSIBLE HEADERS */
@@ -137,8 +139,8 @@
       width: 100%;
       max-width: 1000px;
       transition: all 0.3s ease;
-      /* Background override for this specific dark theme page */
-      background: #0f172a; 
+      /* ⚠️ FIXED BACKGROUND COLOR */
+      background: var(--bg); 
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -151,16 +153,17 @@
       margin-bottom: 30px;
       gap: 15px;
     }
-    .header-flex h1 { font-size: 28px; font-weight: 800; margin: 0; }
+    .header-flex h1 { font-size: 28px; font-weight: 800; margin: 0; color: var(--text); }
 
     .date-picker {
-      background: var(--card-bg);
-      color: white;
-      border: 1px solid #334155;
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--border);
       padding: 10px 15px;
       border-radius: 8px;
       font-family: inherit;
       font-size: 14px;
+      cursor: pointer;
     }
 
     /* --- ROUTE CARDS --- */
@@ -171,8 +174,9 @@
       margin-bottom: 16px;
       display: flex;
       align-items: center;
-      border-left: 5px solid #444;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      border-left: 5px solid #94a3b8;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
     }
 
     .stop-num { font-size: 20px; font-weight: 700; width: 40px; color: var(--text-dim); }
@@ -183,7 +187,7 @@
       padding: 4px 8px; border-radius: 4px; margin-bottom: 8px; display: inline-block;
     }
 
-    .stop-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    .stop-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
     .stop-addr { font-size: 14px; color: var(--text-dim); }
 
     /* --- FOOTER ACTION --- */
@@ -195,8 +199,8 @@
     }
 
     .push-btn {
-      background: white;
-      color: black;
+      background: var(--accent);
+      color: white;
       width: 100%;
       padding: 18px;
       border-radius: 12px;
@@ -207,19 +211,21 @@
       justify-content: center;
       align-items: center;
       gap: 10px;
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4);
+      box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
       font-size: 16px;
+      transition: transform 0.1s;
     }
+    .push-btn:active { transform: scale(0.98); }
 
-    /* --- FOOTER STYLES (MATCHES INDEX, BUT DARK THEME ADAPTED) --- */
+    /* --- FOOTER STYLES (MATCHES INDEX) --- */
     .app-footer {
         margin-top: auto;
         padding: 10px 0; 
-        border-top: 1px solid #334155;
+        border-top: 1px solid var(--border);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        color: #94a3b8; 
+        color: var(--text-dim); 
         font-size: 11px;
         font-weight: 500;
         width: 100%;
@@ -229,7 +235,7 @@
     }
 
     .footer-links a {
-        color: #94a3b8;
+        color: var(--text-dim);
         text-decoration: none;
         margin-left: 20px;
         transition: color 0.2s ease;
@@ -246,13 +252,13 @@
         gap: 6px;
         margin-left: 15px;
         padding-left: 15px;
-        border-left: 1px solid #334155;
+        border-left: 1px solid var(--border);
     }
 
     .status-dot {
         width: 8px;
         height: 8px;
-        background-color: #10b981; /* Green */
+        background-color: var(--ready); /* Green */
         border-radius: 50%;
         box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
         animation: pulse 2s infinite;
@@ -271,23 +277,18 @@
     .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
     @media (max-width: 1024px) {
-      .sidebar { left: -260px; z-index: 10001; }
+      .sidebar { left: -260px; z-index: 10001; } 
       .sidebar.open { left: 0; }
-      .main-content { margin-left: 0; padding: 20px; }
+      .main-content { margin-left: 0 !important; padding: 20px; }
+      .menu-overlay.active { display: block; }
 
       #menu-toggle {
         display: flex; position: fixed; bottom: 25px; right: 25px;
-        width: 60px; height: 60px; background: var(--primary);
+        width: 65px; height: 65px; background: var(--accent);
         color: white; border-radius: 50%; justify-content: center;
-        align-items: center; font-size: 24px; z-index: 10002;
+        align-items: center; font-size: 28px; z-index: 10002;
         box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; border: none;
       }
-      
-      .menu-overlay {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.5); z-index: 10000; backdrop-filter: blur(2px);
-      }
-      .menu-overlay.active { display: block; }
       
       .header-flex { flex-direction: column; align-items: flex-start; }
       .header-flex h1 { font-size: 24px; }
@@ -303,7 +304,7 @@
       .stop-card { padding: 15px; }
       .stop-name { font-size: 16px; }
       .stop-addr { font-size: 12px; }
-      input { font-size: 16px !important; } /* Fix iOS auto-zoom */
+      input { font-size: 16px !important; } 
     }
   </style>
 </head>
@@ -406,7 +407,7 @@
     <div style="flex-grow:1;"></div>
     <footer class="app-footer">
         <div class="footer-left">
-            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
+            <span>© <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
             <span class="system-status">
                 <span class="status-dot"></span>
                 System Operational
@@ -519,7 +520,7 @@
         const card = document.createElement('div');
         card.className = 'stop-card';
         card.style.borderLeftColor = stop.color;
-        let bat = stop.batteryMsg ? `<div style="color:#34c759; font-size:12px; font-weight:bold; margin-top:5px;">${stop.batteryMsg}</div>` : "";
+        let bat = stop.batteryMsg ? `<div style="color:#10b981; font-size:12px; font-weight:bold; margin-top:5px;">${stop.batteryMsg}</div>` : "";
         
         card.innerHTML = `
           <div class="stop-num">${i + 1}</div>
