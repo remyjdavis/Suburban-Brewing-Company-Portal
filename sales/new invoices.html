@@ -418,6 +418,66 @@
     cursor: text;
     box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
 }
+    /* --- GLOBAL PAGE FOOTER STYLES --- */
+    .main {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh; /* Ensures footer sits at bottom of screen */
+    }
+
+    .app-footer {
+        margin-top: auto; /* Pushes to the very bottom */
+        padding: 20px 0;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #64748b; /* text-muted */
+        font-size: 12px;
+        font-weight: 500;
+        width: 100%;
+    }
+
+    .footer-links a {
+        color: #64748b;
+        text-decoration: none;
+        margin-left: 20px;
+        transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+        color: #2563eb; /* accent */
+        text-decoration: underline;
+    }
+
+    .system-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid #cbd5e1;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #10b981; /* ready green */
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* HIDE GLOBAL FOOTER WHEN PRINTING INVOICE */
+    @media print {
+        .app-footer { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -605,7 +665,26 @@
       </button>
 
     </div>
-
+<footer class="app-footer">
+        <div class="footer-left">
+            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
+            <span class="system-status">
+                <span class="status-dot"></span>
+                System Operational
+            </span>
+        </div>
+        <div class="footer-links">
+            <span>Portal v2.5</span>
+            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
+            <a href="#" onclick="Swal.fire({
+                title: 'App Support', 
+                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
+                icon: 'info',
+                confirmButtonColor: '#2563eb'
+            })">Support</a>
+            <a href="#" onclick="location.reload()">Refresh Data</a>
+        </div>
+    </footer>
   </main>
   <script>
     // ===== GLOBAL =====
@@ -662,10 +741,15 @@
     }
 
     // --- CONSOLIDATED INITIALIZATION ---
+    // --- CONSOLIDATED INITIALIZATION ---
     document.addEventListener("DOMContentLoaded", () => {
       const today = new Date().toLocaleDateString();
       document.getElementById("current-date").textContent = today;
       document.getElementById("invoice-date").textContent = today;
+      
+      // ✅ ADD THIS LINE HERE
+      document.getElementById('copyright-year').innerText = new Date().getFullYear();
+      
       loadCustomers();
       loadProducts();
       addProductRow();
