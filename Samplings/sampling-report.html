@@ -333,10 +333,15 @@
           </div>
 
           <div class="form-group">
-            <label>Inventory Used (for Samples)</label>
-            <textarea placeholder="e.g., 1/6 Keg IPA, 3x Staff Cans" rows="2"></textarea>
-            <div class="helper-text">This will be deducted from Brewery Master Inventory.</div>
-          </div>
+  <label>Inventory Used / Sold (Deducts from Wholesaler Stock)</label>
+  <div id="liveInventoryDeduction" style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #cbd5e1; display: none;">
+    <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #475569;">CURRENT ON-SITE STOCK:</div>
+    <div id="stockCheckboxes" style="display: grid; grid-template-columns: 1fr; gap: 8px;"></div>
+  </div>
+  
+  <textarea id="inventoryUsedManual" placeholder="e.g., 2x IPA 4-packs sold, 1x Stout used for samples" rows="2"></textarea>
+  <div class="helper-text">List the quantity and product to deduct from this account's inventory.</div>
+</div>
 
           <div class="form-group">
             <label>Customer Feedback / Notes</label>
@@ -397,8 +402,9 @@
   }
 
   // --- INITIALIZATION ---
-  window.onload = async () => {
-    // Set Year
+let wholesalerData = []; // Store inventory globally for quick access
+
+window.onload = async () => {
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
     // 1. Mobile Link Auto-close Listener
@@ -411,32 +417,67 @@
         });
     });
 
-    // 2. Sidebar Active State Logic (Auto-expand active group)
+    // 2. Sidebar Active State Logic
     const activeLink = document.querySelector('.nav-link.active');
     if (activeLink) {
-      const parentGroup = activeLink.closest('.collapsible-content');
-      if (parentGroup) {
-        parentGroup.classList.remove('collapsed');
-        const header = parentGroup.previousElementSibling;
-        if (header) header.classList.remove('collapsed');
-      }
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) {
+            parentGroup.classList.remove('collapsed');
+            const header = parentGroup.previousElementSibling;
+            if (header) header.classList.remove('collapsed');
+        }
     }
 
-    // 3. Fetch Scheduled Events
+    // 3. Dual-Fetch: Events AND Wholesaler Inventory
     try {
-      const resp = await fetch(`${API_URL}?action=getSamplingEvents`, { redirect: "follow" });
-      const events = await resp.json();
-      const select = document.getElementById('eventSelect');
-      
-      events.forEach(ev => {
-        let opt = document.createElement('option');
-        opt.value = ev.name; 
-        opt.textContent = `${ev.name} (${new Date(ev.date).toLocaleDateString()})`;
-        opt.setAttribute('data-items', ev.items);
-        select.appendChild(opt);
-      });
-    } catch (e) { console.error("Error loading events", e); }
-  };
+        const [eventResp, invResp] = await Promise.all([
+            fetch(`${API_URL}?action=getSamplingEvents`, { redirect: "follow" }),
+            fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" }) //
+        ]);
+
+        const events = await eventResp.json();
+        wholesalerData = await invResp.json(); // Store for later use
+
+        const select = document.getElementById('eventSelect');
+        
+        events.forEach(ev => {
+            let opt = document.createElement('option');
+            opt.value = ev.name; 
+            opt.textContent = `${ev.name} (${new Date(ev.date).toLocaleDateString()})`;
+            opt.setAttribute('data-items', ev.items);
+            select.appendChild(opt);
+        });
+
+        // Add Change Listener to pull stock levels
+        select.addEventListener('change', displayOnSiteInventory);
+
+    } catch (e) { console.error("Error loading data", e); }
+};
+
+// --- DYNAMIC INVENTORY DISPLAY ---
+function displayOnSiteInventory() {
+    const selectedName = document.getElementById('eventSelect').value;
+    const invSection = document.getElementById('liveInventoryDeduction'); // Make sure this ID exists in your HTML
+    const stockList = document.getElementById('stockCheckboxes'); // Make sure this ID exists in your HTML
+
+    // Find account in Wholesaler Inventory
+    const account = wholesalerData.find(w => w.name.toLowerCase() === selectedName.toLowerCase());
+
+    if (account && account.products) {
+        invSection.style.display = 'block';
+        stockList.innerHTML = account.products.flatMap(p => 
+            p.packages.map(pkg => `
+                <div class="prod-label" style="display: flex; justify-content: space-between; margin-bottom: 5px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                    <span><strong>${p.name}</strong> (${pkg.type})</span>
+                    <span style="color: #2563eb; font-weight: 700;">${pkg.qty} Units</span>
+                </div>
+            `)
+        ).join('');
+    } else {
+        invSection.style.display = 'none';
+        stockList.innerHTML = '<p style="font-size: 13px; color: #64748b;">No inventory data found for this account.</p>';
+    }
+}
 
   function toggleFollowUp() {
     const outcome = document.getElementById('outcome').value;
