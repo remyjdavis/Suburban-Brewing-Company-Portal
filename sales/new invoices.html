@@ -735,7 +735,16 @@
       document.getElementById("invoice-date").textContent = today;
       
       document.getElementById('copyright-year').innerText = new Date().getFullYear();
-      
+      document.getElementById("email-invoice-btn").addEventListener("click", () => {
+    // 1. Ensure the invoice has been saved and we have a PDF URL
+    if (!window.lastSavedPayload || !window.lastSavedPdfUrl) {
+        Swal.fire("Error", "Please save the invoice first to generate a PDF link.", "error");
+        return;
+    }
+
+    // 2. Trigger the Outlook draft
+    openInOutlook(window.lastSavedPayload, window.lastSavedPdfUrl);
+});
       loadCustomers();
       loadProducts();
       addProductRow();
@@ -1513,41 +1522,52 @@
     document.getElementById("email-invoice-btn").disabled = true;
 
     /* ===== SAVE INVOICE FUNCTION ===== */
-    function saveInvoice() {
-      const payload = buildInvoicePayload();
-      if (!payload) return;
+   /* ===== SAVE INVOICE FUNCTION (UPDATED) ===== */
+function saveInvoice() {
+  const payload = buildInvoicePayload();
+  if (!payload) return;
 
-      const url =
-        API_URL +
-        "?action=saveInvoice" +
-        "&data=" +
-        encodeURIComponent(JSON.stringify(payload));
+  const url =
+    API_URL +
+    "?action=saveInvoice" +
+    "&data=" +
+    encodeURIComponent(JSON.stringify(payload));
 
-      fetch(url)
-        .then(r => r.json())
-        .then(res => {
-          if (!res.success) {
-            console.error(res);
-            alert("Save failed");
-            return;
-          }
-          document.getElementById("print-invoice-btn").disabled = false;
-          document.getElementById("email-invoice-btn").disabled = false;
+  fetch(url)
+    .then(r => r.json())
+    .then(res => {
+      if (!res.success) {
+        console.error(res);
+        alert("Save failed");
+        return;
+      }
 
-          // FIX: Extract the ID from the URL if fileId is missing
-          window.currentInvoiceFileId = res.fileId || res.pdfUrl.match(/[-\w]{25,}/)[0];
-          window.currentInvoiceNumber = res.invoiceNumber;
+      // 1. ENABLE BUTTONS
+      document.getElementById("print-invoice-btn").disabled = false;
+      document.getElementById("email-invoice-btn").disabled = false;
 
-          alert("Invoice saved successfully");
-          if (res.pdfUrl) {
-            window.open(res.pdfUrl, "_blank");
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          alert("Network error saving invoice");
-        });
-    }
+      // 2. STORE GLOBALS FOR EMAIL BUTTON
+      window.lastSavedPayload = payload; 
+      window.lastSavedPdfUrl = res.pdfUrl;
+      window.currentInvoiceFileId = res.fileId || res.pdfUrl.match(/[-\w]{25,}/)[0];
+      window.currentInvoiceNumber = res.invoiceNumber;
+
+      Swal.fire({
+        title: "Invoice Saved!",
+        text: `Invoice #${res.invoiceNumber} is ready for Outlook.`,
+        icon: "success",
+        confirmButtonColor: "#2563eb"
+      });
+
+      if (res.pdfUrl) {
+        window.open(res.pdfUrl, "_blank");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Network error saving invoice");
+    });
+}
     document.getElementById("save-invoice-btn").addEventListener("click", saveInvoice);
     /* ===== PRINT INVOICE FUNCTION ===== */
     function printInvoice() {
@@ -1579,38 +1599,27 @@
       .addEventListener("click", printInvoice);
 
     /* ===== PRINT INVOICE FUNCTION ===== */
-    function emailInvoice() {
-      if (!window.currentInvoiceFileId || !window.currentInvoiceNumber) {
-        alert("Invoice must be saved before emailing");
-        return;
-      }
+    /* ===== FINAL OUTLOOK TRIGGER ===== */
+function openInOutlook(invoiceData, pdfUrl) {
+    // 1. Get the email from the customer object selected during search
+    const to = selectedCustomer && selectedCustomer.email ? selectedCustomer.email : ""; 
+    
+    const subject = encodeURIComponent(`Invoice ${invoiceData.invoiceNumber} – Suburban Brewing Co.`);
+    
+    // 2. Construct the body with the PDF link
+    // We use invoiceData.total (which is the numeric value)
+    const body = encodeURIComponent(
+        `Hello,\n\n` +
+        `Please find the invoice for your recent order below:\n\n` +
+        `Invoice #: ${invoiceData.invoiceNumber}\n` +
+        `Total: $${Number(invoiceData.total).toFixed(2)}\n\n` +
+        `View/Download PDF: ${pdfUrl}\n\n` +
+        `Thank you,\nSuburban Brewing Company`
+    );
 
-      fetch(API_URL + "?action=emailInvoice", {
-          method: "POST",
-          // FIX: Using text/plain prevents the Preflight (405) error
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({
-            fileId: window.currentInvoiceFileId,
-            invoiceNumber: window.currentInvoiceNumber
-          })
-        })
-        .then(r => r.json())
-        .then(res => {
-          if (!res.success) {
-            console.error(res);
-            alert("Email failed: " + (res.error || "Unknown error"));
-            return;
-          }
-          alert("Invoice emailed successfully");
-        })
-        .catch(err => {
-          console.error(err);
-          alert("Network error emailing invoice");
-        });
-    }
-    document
-      .getElementById("email-invoice-btn")
-      .addEventListener("click", emailInvoice);
+    // 3. Trigger the local Outlook App
+    window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+}
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
 
