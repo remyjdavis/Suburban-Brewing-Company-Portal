@@ -575,7 +575,10 @@
 
       <section class="invoice-meta-row">
         <div class="customer-block">
-          <input id="customer-search" class="customer-search" placeholder="Search customer..." autocomplete="off">
+          <div style="position: relative;">
+  <input id="customer-search" class="customer-search" placeholder="Search customer or type address..." autocomplete="off" style="width:100%;">
+  <div id="search-results" style="position: absolute; width: 100%; background: white; border: 1px solid #cbd5e1; z-index: 5000; max-height: 300px; overflow-y: auto; box-shadow: 0 10px 15px rgba(0,0,0,0.1);"></div>
+</div>
           <div id="customer-display" hidden>
             <div id="customer-name" class="customer-name"></div>
             <div id="customer-address" class="customer-address"></div>
@@ -807,90 +810,50 @@
         .then(d => customers = d || []);
     }
 
-    /* ===== IMPROVED FREE ADDRESS SEARCH (NOMINATIM) ===== */
-let searchTimeout;
+    let searchTimeout;
 document.getElementById("customer-search").addEventListener("input", function() {
-    const parent = this.parentNode;
+    const resultsBox = document.getElementById("search-results");
     const val = this.value.trim();
+    resultsBox.innerHTML = ""; // Clear old results
 
-    // Clear previous suggestions immediately
-    document.querySelectorAll(".suggestion").forEach(e => e.remove());
-    
     if (!val) return;
 
-    // 1. Search existing customers first
+    // 1. Local Customer Match
     const matches = customers.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
     matches.forEach(c => {
         const div = document.createElement("div");
-        div.className = "suggestion";
-        div.style.padding = "10px"; div.style.background = "#f0f9ff"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #e2e8f0";
-        div.innerHTML = `👤 <strong>${c.name}</strong> <small>(Existing)</small>`;
-        div.onclick = () => {
-            document.querySelectorAll(".suggestion").forEach(e => e.remove());
-            selectCustomer(c);
-        };
-        parent.appendChild(div);
+        div.style.padding = "10px"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #eee";
+        div.innerHTML = `👤 <strong>${c.name}</strong> <small style="color:blue">(In Sheet)</small>`;
+        div.onclick = () => { resultsBox.innerHTML = ""; selectCustomer(c); };
+        resultsBox.appendChild(div);
     });
 
-    // 2. Global Address Search (Triggers after 5 characters)
+    // 2. Global Address Search (OSM)
     clearTimeout(searchTimeout);
     if (val.length >= 5) {
-        // Show a temporary "Searching..." hint
-        const hint = document.createElement("div");
-        hint.id = "search-hint";
-        hint.className = "suggestion";
-        hint.style.padding = "8px"; hint.style.color = "#2563eb"; hint.style.fontSize = "12px";
-        hint.textContent = "🔍 Searching global addresses...";
-        parent.appendChild(hint);
-
         searchTimeout = setTimeout(async () => {
             try {
                 const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&addressdetails=1&limit=4`);
                 const data = await resp.json();
                 
-                // Remove the "Searching..." hint
-                if(document.getElementById("search-hint")) document.getElementById("search-hint").remove();
-
-                if (data.length > 0) {
-                    data.forEach(item => {
-                        const div = document.createElement("div");
-                        div.className = "suggestion";
-                        div.style.padding = "10px"; div.style.background = "#fff"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #e2e8f0"; div.style.fontSize = "12px";
-                        div.innerHTML = `📍 ${item.display_name}`;
-                        
-                        div.onclick = () => {
-                            const a = item.address;
-                            const street = `${a.house_number || ''} ${a.road || ''}`.trim();
-                            
-                            // Open modal and pre-fill address fields
-                            openNewCustomerModal(""); 
-                            document.getElementById("new-cust-address").value = street;
-                            document.getElementById("new-cust-city").value = a.city || a.town || a.village || "";
-                            document.getElementById("new-cust-state").value = a.state || "";
-                            document.getElementById("new-cust-zip").value = a.postcode || "";
-                            
-                            document.querySelectorAll(".suggestion").forEach(e => e.remove());
-                        };
-                        parent.appendChild(div);
-                    });
-                }
-            } catch (e) { 
-                console.error("Address Search Error", e); 
-            }
-        }, 600);
-    }
-
-    // 3. Manual Add Option
-    if (matches.length === 0 && val.length < 15) {
-        const add = document.createElement("div");
-        add.className = "suggestion";
-        add.style.padding = "10px"; add.style.fontWeight = "bold"; add.style.color = "#059669"; add.style.cursor = "pointer";
-        add.textContent = `➕ Add "${val}" as new customer`;
-        add.onclick = () => {
-            document.querySelectorAll(".suggestion").forEach(e => e.remove());
-            openNewCustomerModal(val);
-        };
-        parent.appendChild(add);
+                data.forEach(item => {
+                    const div = document.createElement("div");
+                    div.style.padding = "10px"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #eee";
+                    div.innerHTML = `📍 ${item.display_name}`;
+                    div.onclick = () => {
+                        const a = item.address;
+                        const street = `${a.house_number || ''} ${a.road || ''}`.trim();
+                        openNewCustomerModal(""); 
+                        document.getElementById("new-cust-address").value = street;
+                        document.getElementById("new-cust-city").value = a.city || a.town || a.village || "";
+                        document.getElementById("new-cust-state").value = a.state || "";
+                        document.getElementById("new-cust-zip").value = a.postcode || "";
+                        resultsBox.innerHTML = "";
+                    };
+                    resultsBox.appendChild(div);
+                });
+            } catch (e) { console.error("Search error", e); }
+        }, 500);
     }
 });
     /* ===== SELECT CUSTOMERS FUNCTION ===== */
