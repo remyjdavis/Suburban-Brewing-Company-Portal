@@ -517,8 +517,16 @@ function adjustCount(prodName, change) {
   // 2. Submit the report to the backend
  document.getElementById('reportForm').onsubmit = async (e) => {
     e.preventDefault();
+    
+    // ⏳ LOADING POPUP
+    Swal.fire({
+      title: 'Updating Inventory...',
+      text: 'Calculating case deductions and updating your master sheet.',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
     const submitBtn = e.target.querySelector('button');
-    submitBtn.disabled = true;
 
     // Backend expects 'customerName', 'inventoryUsed', and 'notes'
     const payload = {
@@ -540,14 +548,24 @@ function adjustCount(prodName, change) {
         const result = await response.json();
 
         if (result.success) {
-            Swal.fire("Success", "Report Logged & Inventory Updated!", "success")
-            .then(() => location.reload());
-        }
-    } catch (err) {
-        console.error(err);
-        submitBtn.disabled = false;
-    }
-};
+        // 🚀 SUCCESS POPUP
+        Swal.fire({
+          title: 'Report Logged!',
+          html: `
+            <div style="text-align: left; font-size: 14px;">
+              <b>Account:</b> ${payload.customerName}<br>
+              <b>Outcome:</b> ${payload.outcome}<br>
+              <hr style="margin: 10px 0; border: 0; border-top: 1px solid #eee;">
+              <small style="color: #059669;">✅ Wholesaler inventory updated (Cases deducted)</small>
+            </div>
+          `,
+          icon: 'success',
+          confirmButtonColor: 'var(--accent)',
+          confirmButtonText: 'Great!'
+        }).then(() => {
+          location.reload(); // Refresh to clear form and update "On Hand" counts
+        });
+      }
 </script>
 </body>
 </html>
