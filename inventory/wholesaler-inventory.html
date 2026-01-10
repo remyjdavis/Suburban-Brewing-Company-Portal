@@ -503,53 +503,38 @@
     function closeModal(id) { document.getElementById(id).style.display = "none"; }
 
     async function saveInventoryAdjustments() {
-        const accountName = document.getElementById("adjustTitle").innerText;
-        const rows = document.querySelectorAll(".inventory-row");
-        const btn = document.getElementById("saveBtn");
-        
-        // 1. UI Feedback: Show Loading Spinner
-        Swal.fire({
-            title: 'Syncing Inventory...',
-            text: `Updating stock levels for ${accountName}.`,
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
+    const accountName = document.getElementById("adjustTitle").innerText;
+    const rows = document.querySelectorAll(".inventory-row");
+    const btn = document.getElementById("saveBtn");
+    
+    Swal.fire({
+        title: 'Saving...',
+        text: 'Updating Wholesaler Inventory sheet.',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
 
-        try {
-            // 2. Loop through each row and send the update to the backend
-            for (let row of rows) {
-                const params = new URLSearchParams({
-                    action: "updateStockItem", 
-                    name: accountName, 
-                    product: row.dataset.product, 
-                    package: row.dataset.package,
-                    qty: row.querySelector(".qty-input").value, 
-                    type: "Wholesaler"
-                });
-                
-                const response = await fetch(`${API_URL}?${params.toString()}`);
-                const result = await response.json();
-                
-                if (!result.success) throw new Error(result.error || "Update failed");
-            }
-
-            // 3. Success Feedback
-            Swal.fire({
-                title: 'Success!',
-                text: 'Inventory levels updated successfully.',
-                icon: 'success',
-                confirmButtonColor: 'var(--accent)'
-            }).then(() => {
-                location.reload(); 
+    try {
+        for (let row of rows) {
+            const params = new URLSearchParams({
+                action: "updateStockItem", 
+                name: accountName, 
+                product: row.dataset.product, 
+                package: row.dataset.package,
+                qty: row.querySelector(".qty-input").value, 
+                type: "Wholesaler"
             });
-
-        } catch (err) {
-            console.error("Save Error:", err);
-            Swal.fire('Error', 'Failed to update some inventory items. Please try again.', 'error');
-            btn.disabled = false;
-            btn.innerText = "Save Current Levels";
+            
+            const response = await fetch(`${API_URL}?${params.toString()}`);
+            const result = await response.json();
+            if (!result.success) console.error("Failed to update:", row.dataset.product);
         }
+
+        Swal.fire('Success', 'Stock levels updated!', 'success').then(() => location.reload());
+    } catch (err) {
+        Swal.fire('Error', 'Update failed. Check connection.', 'error');
     }
+}
   </script>
 </body>
 </html>
