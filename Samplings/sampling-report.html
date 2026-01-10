@@ -515,34 +515,39 @@ function adjustCount(prodName, change) {
   }
 
   // 2. Submit the report to the backend
-  document.getElementById('reportForm').onsubmit = async (e) => {
+ document.getElementById('reportForm').onsubmit = async (e) => {
     e.preventDefault();
     const submitBtn = e.target.querySelector('button');
     submitBtn.disabled = true;
-    submitBtn.innerText = "Processing Outcome...";
 
+    // Backend expects 'customerName', 'inventoryUsed', and 'notes'
     const payload = {
-      customerName: document.getElementById('eventSelect').value,
-      outcome: document.getElementById('outcome').value,
-      followUpDate: document.getElementById('followUpDate').value,
-      inventoryUsed: document.getElementById('inventoryUsedPayload').value,
-      notes: e.target.querySelector('textarea[placeholder*="feedback"]').value
+        customerName: document.getElementById('eventSelect').value,
+        outcome: document.getElementById('outcome').value,
+        followUpDate: document.getElementById('followUpDate').value,
+        inventoryUsed: document.getElementById('inventoryUsedPayload').value, // e.g., "2x IPA 4-packs"
+        notes: e.target.querySelector('textarea').value
     };
 
     try {
-      const params = new URLSearchParams({ action: "submitSamplingReport", data: JSON.stringify(payload) });
-      const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
-      const result = await response.json();
+        // We must ensure the action is 'submitSamplingReport'
+        const params = new URLSearchParams({ 
+          action: "submitSamplingReport", 
+          data: JSON.stringify(payload) 
+        });
+        
+        const response = await fetch(`${API_URL}?${params.toString()}`);
+        const result = await response.json();
 
-      if (result.success) {
-        alert("Report Logged! Inventory deducted and Sales Lead updated.");
-        location.reload();
-      }
+        if (result.success) {
+            Swal.fire("Success", "Report Logged & Inventory Updated!", "success")
+            .then(() => location.reload());
+        }
     } catch (err) {
-      alert("Error: " + err);
-      submitBtn.disabled = false;
+        console.error(err);
+        submitBtn.disabled = false;
     }
-  };
+};
 </script>
 </body>
 </html>
