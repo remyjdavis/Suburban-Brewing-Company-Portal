@@ -506,16 +506,49 @@
         const accountName = document.getElementById("adjustTitle").innerText;
         const rows = document.querySelectorAll(".inventory-row");
         const btn = document.getElementById("saveBtn");
-        btn.innerText = "Saving...";
-        btn.disabled = true;
-        for (let row of rows) {
-            const params = new URLSearchParams({
-                action: "updateStockItem", name: accountName, product: row.dataset.product, package: row.dataset.package,
-                qty: row.querySelector(".qty-input").value, type: "Wholesaler"
+        
+        // 1. UI Feedback: Show Loading Spinner
+        Swal.fire({
+            title: 'Syncing Inventory...',
+            text: `Updating stock levels for ${accountName}.`,
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        try {
+            // 2. Loop through each row and send the update to the backend
+            for (let row of rows) {
+                const params = new URLSearchParams({
+                    action: "updateStockItem", 
+                    name: accountName, 
+                    product: row.dataset.product, 
+                    package: row.dataset.package,
+                    qty: row.querySelector(".qty-input").value, 
+                    type: "Wholesaler"
+                });
+                
+                const response = await fetch(`${API_URL}?${params.toString()}`);
+                const result = await response.json();
+                
+                if (!result.success) throw new Error(result.error || "Update failed");
+            }
+
+            // 3. Success Feedback
+            Swal.fire({
+                title: 'Success!',
+                text: 'Inventory levels updated successfully.',
+                icon: 'success',
+                confirmButtonColor: 'var(--accent)'
+            }).then(() => {
+                location.reload(); 
             });
-            await fetch(`${API_URL}?${params.toString()}`);
+
+        } catch (err) {
+            console.error("Save Error:", err);
+            Swal.fire('Error', 'Failed to update some inventory items. Please try again.', 'error');
+            btn.disabled = false;
+            btn.innerText = "Save Current Levels";
         }
-        location.reload();
     }
   </script>
 </body>
