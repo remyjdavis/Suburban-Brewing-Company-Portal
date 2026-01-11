@@ -2,10 +2,15 @@
 <html lang="en">
 <head>
   <script>
-    // Authentication Check (Simulated)
     (function() {
-        // const auth = sessionStorage.getItem("sbc_auth");
-        // if (auth !== "true") window.location.replace("login.html");
+        const auth = sessionStorage.getItem("sbc_auth");
+        const isLoginPage = window.location.pathname.includes("login.html");
+
+        if (auth !== "true" && !isLoginPage) {
+            // This finds the root of your GitHub repo automatically
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            window.location.replace(repoPath + "login.html");
+        }
     })();
   </script>
   <meta charset="UTF-8" />
