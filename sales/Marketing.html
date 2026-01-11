@@ -241,19 +241,23 @@
 
   <div style="display: flex; gap: 40px; flex-wrap: wrap;">
     
-    <div style="flex: 1; min-width: 300px;">
+   <div style="flex: 1; min-width: 300px;">
       <label>Post Caption</label>
       <textarea id="fbCaption" rows="6" placeholder="What's brewing today?" oninput="updateFbPreview()" style="resize: vertical;">Fresh pour of Moon Rocks NEIPA! 🍺🚀 Come grab a 4-pack before they're gone.</textarea>
       
-      <label style="margin-top:20px;">Image URL (Optional)</label>
-      <input id="fbImage" type="text" placeholder="https://..." oninput="updateFbPreview()" value="https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?auto=format&fit=crop&w=700&q=80">
+      <label style="margin-top:20px;">Upload Image</label>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <input type="file" id="fbUpload" accept="image/*" onchange="handleImageUpload(this)" style="background:white; padding:8px;">
+        <button class="secondary" onclick="clearImage()" style="width:auto; padding:8px 12px; margin:0;">❌</button>
+      </div>
+      <div class="helper-text">Supports JPG, PNG, WEBP. Max 5MB.</div>
       
       <div style="margin-top:20px; display:flex; gap:10px;">
         <button onclick="alert('Post published to Facebook!')">🚀 Post Now</button>
         <button class="secondary">📅 Schedule</button>
       </div>
     </div>
-
+    
     <div style="flex: 1; min-width: 300px; display:flex; justify-content:center;">
       <div style="background: #fff; border: 1px solid #ddd; border-radius: 8px; width: 100%; max-width: 400px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <div style="padding: 12px; display:flex; align-items:center; gap:10px;">
@@ -478,24 +482,37 @@ document.addEventListener("DOMContentLoaded", () => {
     
     updateBanner();
 });
-  // --- FACEBOOK PREVIEW LOGIC ---
+ // --- FACEBOOK POST LOGIC ---
+
+  // 1. Handle Text Updates
   function updateFbPreview() {
     const text = document.getElementById('fbCaption').value;
-    const imgUrl = document.getElementById('fbImage').value;
-    
-    // Update Text
     document.getElementById('previewText').innerText = text;
-    
-    // Update Image
-    const imgEl = document.getElementById('previewImg');
+  }
+
+  // 2. Handle Image Uploads (The Magic Part)
+  function handleImageUpload(input) {
     const container = document.getElementById('previewImgContainer');
-    
-    if (imgUrl.trim() !== "") {
-      imgEl.src = imgUrl;
-      container.style.display = "flex";
-    } else {
-      container.style.display = "none";
+    const imgEl = document.getElementById('previewImg');
+
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      
+      // When the file is read, set it as the image source
+      reader.onload = function(e) {
+        imgEl.src = e.target.result;
+        container.style.display = "flex";
+      };
+      
+      reader.readAsDataURL(input.files[0]);
     }
+  }
+
+  // 3. Clear Image Button
+  function clearImage() {
+    document.getElementById('fbUpload').value = ""; // Reset input
+    document.getElementById('previewImgContainer').style.display = "none";
+    document.getElementById('previewImg').src = "";
   }
 </script>
 
