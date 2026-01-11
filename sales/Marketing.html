@@ -48,7 +48,8 @@
 
     /* MAIN CONTENT */
     .main { flex: 1; margin-left: 260px; width: 100%; display: flex; flex-direction: column; }
-    .content { padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
+    /* ⚠️ Updated Padding to 40px */
+    .content { padding: 40px 40px 0 40px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
     .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
     
     /* TABS SYSTEM */
@@ -100,7 +101,27 @@
     .download-btn.secondary { background: #f1f5f9; color: #475569; }
     .download-btn.primary { background: #2563eb; color: white; }
 
-    /* --- MOBILE & PREVIEW --- */
+    /* --- ASSET PREVIEW STYLES --- */
+    .logo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; }
+    .logo-box { background: white; border: 1px solid #e2e8f0; padding: 40px 20px; text-align: center; border-radius: 8px; }
+    .logo-box.dark { background: #0f172a; border-color: #0f172a; }
+    .logo-label { display: block; font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-top: 10px;}
+    .sell-sheet-preview { background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 40px; max-width: 700px; margin: 0 auto; display: flex; gap: 30px; flex-wrap: wrap; }
+    .bottle-mockup { width: 120px; height: 300px; background: #e2e8f0; border-radius: 4px; position: relative; flex-shrink: 0; }
+    .bottle-mockup::after { content: '🍺'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; }
+    .sheet-content { flex: 1; min-width: 250px; }
+    .sheet-content h1 { margin: 0 0 10px 0; color: #0f172a; }
+    .sheet-tags { display: flex; gap: 10px; margin-bottom: 20px; }
+    .sheet-tag { background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+    .sheet-specs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 30px; border-top: 2px solid #f1f5f9; padding-top: 20px; }
+    .price-table { width: 100%; border-collapse: collapse; background: white; }
+    .price-table th { background: #f8fafc; text-transform: uppercase; font-size: 12px; }
+    .price-table td { border-bottom: 1px solid #f1f5f9; }
+    .shelf-talker-container { display: flex; justify-content: center; align-items: center; height: 100%; min-height: 200px; }
+    .shelf-talker { width: 300px; height: 150px; background: #2563eb; color: white; border-radius: 8px; padding: 20px; position: relative; box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4); transform: rotate(-2deg); }
+    .talker-fold { position: absolute; top: -30px; left: 0; width: 100%; height: 30px; background: #1e40af; border-radius: 8px 8px 0 0; opacity: 0.5; }
+    
+    /* MOBILE RESPONSIVENESS */
     #menu-toggle { display: none; }
     .menu-overlay-mobile { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
@@ -129,11 +150,11 @@
     </div>
 
     <script>
-      function handleLogout() {
-        sessionStorage.removeItem("sbc_auth");
-        const repoPath = "/Suburban-Brewing-Company-Portal/";
-        window.location.replace(repoPath + "login.html");
-      }
+     function handleLogout() {
+       sessionStorage.removeItem("sbc_auth");
+       const repoPath = "/Suburban-Brewing-Company-Portal/";
+       window.location.replace(repoPath + "login.html");
+    }
     </script>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span><span class="chevron">▼</span></div>
@@ -192,7 +213,7 @@
             <h1 style="margin:0; font-size: 24px;">Marketing & Outreach</h1>
             <div style="font-size:13px; color:#6b7280;">Manage Campaigns, Assets, and Client Communication</div>
         </div>
-        <button class="secondary" onclick="alert('Synced with Google Sheets!')">🔄 Sync Data</button>
+        <button class="secondary" onclick="alert('Synced with Google Sheets (Invoices)!')">🔄 Sync Data</button>
     </div>
 
     <div class="tabs">
@@ -285,7 +306,7 @@
         </div>
     </div>
 
-    <div id="tab-social" class="card" style="display:none;">
+    <div id="tab-social" class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h3>Social Media Manager</h3>
         <div style="display:flex; gap:10px;">
@@ -362,13 +383,7 @@
 </div>
 
 <script>
-// --- NAVIGATION & MOBILE ---
-function toggleGroup(contentId, headerEl) {
-    const content = document.getElementById(contentId);
-    content.classList.toggle('collapsed');
-    headerEl.classList.toggle('collapsed');
-}
-
+// --- SIDEBAR LOGIC ---
 function toggleMobileMenu() {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.querySelector('.menu-overlay-mobile');
@@ -379,21 +394,20 @@ function toggleMobileMenu() {
     btn.innerText = isOpen ? '✕' : '☰';
 }
 
-document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-        if (window.innerWidth <= 1024) {
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar.classList.contains('open')) toggleMobileMenu();
-        }
-    });
-});
-
-// --- TABS LOGIC ---
-function switchTab(tabId, el) {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
+function toggleGroup(groupId, header) {
+    const content = document.getElementById(groupId);
+    const chevron = header.querySelector('.chevron');
+    
+    // Toggle Max Height
+    if (content.style.maxHeight) {
+        content.style.maxHeight = null;
+        content.classList.add('collapsed');
+        if(chevron) chevron.style.transform = 'rotate(0deg)';
+    } else {
+        content.style.maxHeight = content.scrollHeight + "px";
+        content.classList.remove('collapsed');
+        if(chevron) chevron.style.transform = 'rotate(180deg)';
+    }
 }
 
 // --- DATA DICTIONARY ---
@@ -452,6 +466,14 @@ const ASSET_CONTENT = {
         </ul>
     </div>`
 };
+
+// --- TAB & MODAL LOGIC ---
+function switchTab(tabId, el) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+}
 
 function copyAssetLink(el) {
     const assetName = el.querySelector('.asset-name').innerText.trim();
@@ -570,7 +592,7 @@ function handleSocialPost() {
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
     
-    // Fill Fresh Sheet
+    // NOTE: This mock data should be replaced by a call to Google Sheets (Invoices Sheet)
     const mockInv = [{n:"Suburban IPA",f:"1/2 BBL",p:"$185"}, {n:"Winter Stout",f:"1/6 BBL",p:"$95"}];
     document.getElementById('freshSheetBody').innerHTML = mockInv.map(i => `<tr><td>${i.n}</td><td>${i.f}</td><td>${i.p}</td><td style="color:green;font-weight:bold;">In Stock</td></tr>`).join('');
 
@@ -580,6 +602,16 @@ document.addEventListener("DOMContentLoaded", () => {
     
     updateBanner();
     updateSocialPreview(); // Init social preview
+    
+    // Auto-close menu on link click (Mobile)
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) {
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar.classList.contains('open')) toggleMobileMenu();
+            }
+        });
+    });
 });
 </script>
 
