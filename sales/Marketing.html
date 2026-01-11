@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    // Authentication Check (Simulated)
+    (function() {
+        // const auth = sessionStorage.getItem("sbc_auth");
+        // if (auth !== "true") window.location.replace("login.html");
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <title>Marketing Hub | Suburban Brewing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f172a">
+  
+  <style>
+    :root {
+      --bg: #f4f6f8; --sidebar: #0f172a; --accent: #2563eb; --text: #1f2937;
+      --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+    
+    /* SIDEBAR */
+    .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
+    .nav-section-header { margin: 18px 24px 8px; font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 700; cursor: pointer; }
+    .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; border-left: 4px solid transparent; transition: 0.2s; }
+    .nav-link:hover, .nav-link.active { background: #374151; color: #fff; border-left-color: var(--accent); }
+    .collapsible-content { overflow: hidden; max-height: 2000px; transition: max-height 0.4s; }
+
+    /* MAIN CONTENT */
+    .main { flex: 1; margin-left: 260px; width: 100%; }
+    .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+    
+    /* TABS SYSTEM */
+    .tabs { display: flex; gap: 20px; border-bottom: 2px solid #e5e7eb; margin-bottom: 25px; overflow-x: auto; }
+    .tab { padding: 12px 10px; cursor: pointer; color: #6b7280; font-weight: 700; border-bottom: 3px solid transparent; white-space: nowrap; transition: 0.2s; }
+    .tab:hover { color: var(--accent); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* CARDS & SECTIONS */
+    .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: none; animation: fadeIn 0.3s ease; }
+    .card.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    
+    h3 { margin-top: 0; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px; margin-bottom: 20px; color: #111827; }
+
+    /* UI ELEMENTS */
+    button { padding: 10px 18px; border: none; border-radius: 6px; background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #1d4ed8; }
+    button.secondary { background: #e5e7eb; color: #374151; }
+    button.secondary:hover { background: #d1d5db; }
+    input, textarea, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
+    
+    /* TABLES */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; color: #6b7280; font-weight: 600; padding: 10px; border-bottom: 1px solid #e5e7eb; }
+    td { padding: 10px; border-bottom: 1px solid #f3f4f6; color: #1f2937; }
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+
+    /* ASSET GRID */
+    .asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+    .asset-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; background: #fff; }
+    .asset-item:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .asset-icon { font-size: 32px; margin-bottom: 10px; }
+    .asset-name { font-weight: 600; font-size: 14px; color: #1f2937; }
+
+    /* MODAL STYLES */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.8); z-index: 2000; backdrop-filter: blur(4px);
+      justify-content: center; align-items: center;
+    }
+    .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease-out; }
+
+    .modal-window {
+      background: white; width: 90%; max-width: 900px; height: 85vh;
+      border-radius: 12px; display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+      padding: 20px 30px; border-bottom: 1px solid #e2e8f0;
+      display: flex; justify-content: space-between; align-items: center;
+      background: #f8fafc;
+    }
+    .modal-header h2 { margin: 0; font-size: 18px; color: #0f172a; }
+    .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; }
+
+    .modal-body { flex: 1; overflow-y: auto; padding: 40px; background: #f1f5f9; }
+
+    .modal-footer {
+      padding: 20px 30px; border-top: 1px solid #e2e8f0; background: white;
+      display: flex; justify-content: flex-end; gap: 15px;
+    }
+    .download-btn {
+      padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none;
+    }
+    .download-btn.secondary { background: #f1f5f9; color: #475569; }
+    .download-btn.primary { background: #2563eb; color: white; }
+
+    /* --- ASSET PREVIEW STYLES --- */
+    /* LOGOS */
+    .logo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; }
+    .logo-box { background: white; border: 1px solid #e2e8f0; padding: 40px 20px; text-align: center; border-radius: 8px; }
+    .logo-box.dark { background: #0f172a; border-color: #0f172a; }
+    .logo-label { display: block; font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-top: 10px;}
+
+    /* SELL SHEET */
+    .sell-sheet-preview { background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 40px; max-width: 700px; margin: 0 auto; display: flex; gap: 30px; }
+    .bottle-mockup { width: 120px; height: 300px; background: #e2e8f0; border-radius: 4px; position: relative; }
+    .bottle-mockup::after { content: '🍺'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; }
+    .sheet-content h1 { margin: 0 0 10px 0; color: #0f172a; }
+    .sheet-tags { display: flex; gap: 10px; margin-bottom: 20px; }
+    .sheet-tag { background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+    .sheet-specs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 30px; border-top: 2px solid #f1f5f9; padding-top: 20px; }
+
+    /* PRICE LIST */
+    .price-table { width: 100%; border-collapse: collapse; background: white; }
+    .price-table th { background: #f8fafc; text-transform: uppercase; font-size: 12px; }
+    .price-table td { border-bottom: 1px solid #f1f5f9; }
+
+    /* SHELF TALKER */
+    .shelf-talker-container { display: flex; justify-content: center; align-items: center; height: 100%; }
+    .shelf-talker { width: 300px; height: 150px; background: #2563eb; color: white; border-radius: 8px; padding: 20px; position: relative; box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4); transform: rotate(-2deg); }
+    .talker-fold { position: absolute; top: -30px; left: 0; width: 100%; height: 30px; background: #1e40af; border-radius: 8px 8px 0 0; opacity: 0.5; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <h2>SUBURBAN BREWING</h2>
+  <div class="nav-section-header">Main Menu</div>
+  <div class="collapsible-content">
+      <a href="../index.html" class="nav-link">Command Center</a>
+      <a href="#" class="nav-link active">Marketing Hub</a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="content">
+    
+    <div class="header">
+        <div>
+            <h1 style="margin:0; font-size: 24px;">Marketing & Outreach</h1>
+            <div style="font-size:13px; color:#6b7280;">Manage Campaigns, Assets, and Client Communication</div>
+        </div>
+        <button class="secondary" onclick="alert('Synced with Google Sheets!')">🔄 Sync Data</button>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('tab-email', this)">📧 Fresh Sheet</div>
+        <div class="tab" onclick="switchTab('tab-churn', this)">🚨 Churn Monitor</div>
+        <div class="tab" onclick="switchTab('tab-banner', this)">📢 Portal Banner</div>
+        <div class="tab" onclick="switchTab('tab-events', this)">📅 Events</div>
+        <div class="tab" onclick="switchTab('tab-assets', this)">📂 Assets</div>
+    </div>
+
+    <div id="tab-email" class="card active">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3>Weekly Fresh Sheet Blast</h3>
+            <span class="badge badge-green">42 Active Accounts</span>
+        </div>
+        <div style="border:1px solid #d1d5db; border-radius:8px; overflow:hidden; margin-bottom:20px;">
+            <div style="background:#f3f4f6; padding:10px; border-bottom:1px solid #d1d5db; font-size:12px; font-weight:700; color:#6b7280;">EMAIL PREVIEW</div>
+            <div style="padding:20px; background:#fff;">
+                <p><strong>Subject:</strong> 🍺 Fresh Drops - Week of <span id="currentDate"></span></p>
+                <table style="width:100%; border:1px solid #eee; margin:15px 0;">
+                    <thead style="background:#f9fafb;"><tr><th>Product</th><th>Format</th><th>Price</th><th>Availability</th></tr></thead>
+                    <tbody id="freshSheetBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button class="secondary">Send Test</button>
+            <button>🚀 Send Blast</button>
+        </div>
+    </div>
+
+    <div id="tab-churn" class="card">
+        <h3>🚨 At-Risk Accounts (Churn Monitor)</h3>
+        <table>
+            <thead><tr><th>Customer Name</th><th>Last Order</th><th>Days Inactive</th><th>Last Product</th><th>Action</th></tr></thead>
+            <tbody id="churnBody"></tbody>
+        </table>
+    </div>
+
+    <div id="tab-banner" class="card">
+        <h3>Client Portal Banner</h3>
+        <div style="background:#eff6ff; padding:15px; border-radius:6px; margin-bottom:20px; border:1px solid #bfdbfe; color:#1e40af; text-align:center;">
+            <strong>Live Preview:</strong> <span id="bannerPreviewText">Loading...</span>
+        </div>
+        <textarea id="bannerMsg" rows="2">🍺 Valentine's Special: Get 10% off Chocolate Stout kegs this week only!</textarea>
+        <button onclick="updateBanner()">Update Banner</button>
+    </div>
+
+    <div id="tab-events" class="card">
+        <div style="display:flex; justify-content:space-between;"><h3>Manage Events</h3><button class="secondary">+ Add New</button></div>
+        <table>
+            <thead><tr><th>Date</th><th>Event</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                <tr><td>Feb 14</td><td><strong>Valentine's Vinyl Night</strong></td><td><span class="badge badge-green">Published</span></td><td><button class="secondary">Edit</button></td></tr>
+                <tr><td>Feb 20</td><td><strong>Food Truck: Tacos El Gringo</strong></td><td><span class="badge badge-red">Draft</span></td><td><button>Publish</button></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tab-assets" class="card">
+        <h3>Sales Asset Library</h3>
+        <p style="font-size:13px; color:#6b7280; margin-bottom:20px;">Click any card to preview assets.</p>
+        
+        <div class="asset-grid">
+            <div class="asset-item" onclick="copyAssetLink(this)">
+                <div class="asset-icon">🎨</div>
+                <div class="asset-name">Vector Logos</div>
+            </div>
+            <div class="asset-item" onclick="copyAssetLink(this)">
+                <div class="asset-icon">📄</div>
+                <div class="asset-name">Core Range Sell Sheet</div>
+            </div>
+            <div class="asset-item" onclick="copyAssetLink(this)">
+                <div class="asset-icon">💲</div>
+                <div class="asset-name">2026 Price List</div>
+            </div>
+            <div class="asset-item" onclick="copyAssetLink(this)">
+                <div class="asset-icon">🏷️</div>
+                <div class="asset-name">Shelf Talkers</div>
+            </div>
+            <div class="asset-item" onclick="copyAssetLink(this)">
+                <div class="asset-icon">🍺</div>
+                <div class="asset-name">Tap Handle Request</div>
+            </div>
+            <div class="asset-item" onclick="copyAssetLink(this)">
+                <div class="asset-icon">🧪</div>
+                <div class="asset-name">Tech Sheets (All)</div>
+            </div>
+        </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="asset-modal" class="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-window">
+    <div class="modal-header">
+      <h2 id="modal-title">Asset Name</h2>
+      <button class="close-btn" onclick="closeModal(null)">✕</button>
+    </div>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-footer">
+      <button class="download-btn secondary">Download PDF</button>
+      <button class="download-btn primary">Download Source (Editable)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- DATA DICTIONARY ---
+const ASSET_CONTENT = {
+  'Vector Logos': `
+    <div class="logo-grid">
+      <div class="logo-box"><div style="font-size:40px; margin-bottom:10px;">🍻</div><span class="logo-label">Primary Color</span></div>
+      <div class="logo-box dark"><div style="font-size:40px; margin-bottom:10px; filter: invert(1);">🍻</div><span class="logo-label">White Reverse</span></div>
+      <div class="logo-box"><div style="font-size:40px; margin-bottom:10px; filter: grayscale(1);">🍻</div><span class="logo-label">Black Mono</span></div>
+    </div>`,
+  'Core Range Sell Sheet': `
+    <div class="sell-sheet-preview">
+      <div class="bottle-mockup"></div>
+      <div class="sheet-content">
+        <h1>Moon Rocks NEIPA</h1>
+        <div class="sheet-tags"><span class="sheet-tag">CORE RANGE</span><span class="sheet-tag">YEAR ROUND</span></div>
+        <p style="color:#64748b; line-height:1.6;">A hazy, juicy New England IPA exploded with Citra and Mosaic hops.</p>
+        <div class="sheet-specs">
+          <div><div style="font-size:11px; font-weight:700; color:#94a3b8;">ABV</div><div style="font-size:18px; font-weight:800;">6.5%</div></div>
+          <div><div style="font-size:11px; font-weight:700; color:#94a3b8;">IBU</div><div style="font-size:18px; font-weight:800;">45</div></div>
+        </div>
+      </div>
+    </div>`,
+  '2026 Price List': `
+    <table class="price-table">
+      <thead><tr><th>SKU</th><th>Product</th><th>Format</th><th>Wholesale</th></tr></thead>
+      <tbody>
+        <tr><td>SBC-001</td><td>Moon Rocks NEIPA</td><td>1/2 Keg</td><td>$210.00</td></tr>
+        <tr><td>SBC-003</td><td>Moon Rocks NEIPA</td><td>Case</td><td>$72.00</td></tr>
+        <tr><td>SBC-004</td><td>Suburban Lager</td><td>1/2 Keg</td><td>$185.00</td></tr>
+      </tbody>
+    </table>`,
+  'Shelf Talkers': `
+    <div class="shelf-talker-container">
+      <div class="shelf-talker">
+        <div class="talker-fold"></div>
+        <h2 style="margin:0 0 5px 0;">STAFF PICK!</h2>
+        <h3 style="margin:0; font-size:24px; color:#fbbf24;">Moon Rocks NEIPA</h3>
+        <p style="margin:5px 0 0 0; font-size:13px; opacity:0.9;">"Juicy, Hazy, and out of this world." - 96 pts</p>
+      </div>
+    </div>`,
+  'Tap Handle Request': `
+    <div style="text-align:center; padding:30px;">
+        <div style="font-size:50px; margin-bottom:10px;">🍺</div>
+        <h3>Submit Request</h3>
+        <p>Use this form to request a new tap handle for a client.</p>
+        <input placeholder="Client Name" style="max-width:300px; margin:10px auto; display:block;">
+        <button>Submit Request</button>
+    </div>`,
+  'Tech Sheets (All)': `
+    <div style="padding:20px;">
+        <h3>Technical Brewing Data</h3>
+        <ul style="list-style:none; padding:0;">
+            <li style="padding:10px; border-bottom:1px solid #eee;">🧪 <strong>Moon Rocks</strong> - 16.5°P OG / 2.4 Vol CO2</li>
+            <li style="padding:10px; border-bottom:1px solid #eee;">🧪 <strong>Lager</strong> - 11.2°P OG / 2.7 Vol CO2</li>
+        </ul>
+    </div>`
+};
+
+// --- LOGIC ---
+function switchTab(tabId, el) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+}
+
+function copyAssetLink(el) {
+    const assetName = el.querySelector('.asset-name').innerText.trim();
+    const content = ASSET_CONTENT[assetName] || `<div style="text-align:center; padding:50px;">Preview not available for ${assetName}</div>`;
+    
+    document.getElementById('modal-title').innerText = assetName;
+    document.getElementById('modal-body').innerHTML = content;
+    document.getElementById('asset-modal').classList.add('active');
+}
+
+function closeModal(e) {
+    if (!e || e.target.classList.contains('modal-overlay') || e.target.classList.contains('close-btn')) {
+        document.getElementById('asset-modal').classList.remove('active');
+    }
+}
+
+function updateBanner() {
+    document.getElementById('bannerPreviewText').innerText = document.getElementById('bannerMsg').value;
+    alert("Banner updated!");
+}
+
+// --- INIT MOCK DATA ---
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
+    
+    // Fill Fresh Sheet
+    const mockInv = [{n:"Suburban IPA",f:"1/2 BBL",p:"$185"}, {n:"Winter Stout",f:"1/6 BBL",p:"$95"}];
+    document.getElementById('freshSheetBody').innerHTML = mockInv.map(i => `<tr><td>${i.n}</td><td>${i.f}</td><td>${i.p}</td><td style="color:green;font-weight:bold;">In Stock</td></tr>`).join('');
+
+    // Fill Churn
+    const mockChurn = [{n:"The Draft House",l:"45 Days ago",i:"Suburban IPA"}, {n:"City Stadium Bar",l:"62 Days ago",i:"Lager Kegs"}];
+    document.getElementById('churnBody').innerHTML = mockChurn.map(c => `<tr><td><strong>${c.n}</strong></td><td>${c.l}</td><td><span class="badge badge-red">${c.l.split(' ')[0]} Days</span></td><td>${c.i}</td><td><button class="secondary" style="padding:4px 10px; font-size:12px;">Email</button></td></tr>`).join('');
+    
+    updateBanner();
+});
+</script>
+
+</body>
+</html>
