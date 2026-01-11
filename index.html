@@ -65,55 +65,83 @@
       width: 260px; background: var(--sidebar); color: #fff; 
       padding: 24px 0; flex-shrink: 0; position: fixed; 
       height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: all 0.3s ease;
+      /* Hide scrollbar for cleaner look */
+      scrollbar-width: none; 
+      -ms-overflow-style: none;
     }
+    .sidebar::-webkit-scrollbar { display: none; }
+
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-    /* COLLAPSIBLE HEADERS */
-    .nav-section-header, .section-heading, .subsection-heading { 
+    /* HEADERS (The Fixed Links) */
+    .nav-section-header { 
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      user-select: none;
-    }
-
-    .nav-section-header {
       font-size: 11px; text-transform: uppercase; color: #94a3b8; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+      margin: 5px 0; padding: 15px 24px; /* Bigger click area */
+      font-weight: 700; letter-spacing: 1px; 
+      transition: all 0.2s;
+      position: relative; /* Needed for active styling */
     }
-    .nav-section-header:hover { color: #fff; }
-
-    .section-heading { 
-      font-size: 16px; font-weight: 800; margin: 30px 0 15px; 
-      color: var(--text-main); text-transform: uppercase;
-      padding-bottom: 8px; border-bottom: 2px solid #e2e8f0;
+    
+    .nav-section-header:hover { color: #fff; background-color: rgba(255,255,255,0.05); }
+    
+    /* Active State (Highlighted Header) */
+    .nav-section-header.active { 
+        color: #fff; 
+        background-color: #1e293b; 
+        border-right: 3px solid var(--accent);
     }
-    .section-heading:hover { color: var(--accent); border-bottom-color: var(--accent); }
-
-    .subsection-heading {
-      font-size: 13px; font-weight: 700; margin: 20px 0 10px 10px;
-      color: var(--text-muted); text-transform: uppercase;
-      padding-bottom: 5px; border-bottom: 1px dashed #cbd5e1;
-    }
-    .subsection-heading:hover { color: var(--accent); }
-
+    .nav-section-header.active .chevron { transform: rotate(-90deg); } /* Point to the right */
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
-    .collapsed .chevron { transform: rotate(-90deg); }
 
+    /* --- FLYOUT MENUS (The "Appear to the right" part) --- */
     .collapsible-content {
-      max-height: 2500px; overflow: hidden;
-      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
-      opacity: 1;
+      display: none; 
+      position: fixed; /* Escapes the sidebar */
+      left: 260px;     /* Starts exactly where sidebar ends */
+      width: 220px;
+      background-color: #1e293b; /* Matches dark sidebar theme */
+      border: 1px solid #334155;
+      border-left: none; /* Connects visually to sidebar */
+      box-shadow: 10px 0 20px rgba(0,0,0,0.2);
+      border-radius: 0 8px 8px 0;
+      z-index: 1100;
+      padding: 10px 0;
     }
-    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+    
+    .collapsible-content.open {
+        display: block;
+        animation: fadeInRight 0.2s ease-out;
+    }
 
-    /* LINKS */
+    @keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* LINKS INSIDE FLYOUT */
     .nav-link { 
-      display: flex; align-items: center; padding: 10px 24px; 
-      color: #64748b; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent;
+      display: flex; align-items: center; padding: 12px 20px; 
+      color: #94a3b8; text-decoration: none; font-size: 14px; 
+      transition: 0.2s; 
     }
-    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
-    .nav-link.active { border-left-color: var(--accent); color: #fff; }
-
+    .nav-link:hover, .nav-link.active { color: #fff; background: rgba(255,255,255,0.05); }
+    
+    /* SYSTEM GROUP (Always visible inline) */
+    .system-group { display: block; padding-bottom: 20px; margin-bottom: 10px; border-bottom: 1px solid #334155; }
+    
+    /* --- MOBILE OVERRIDE (Revert to Vertical Stack on Phones) --- */
+    @media (max-width: 1024px) {
+        .collapsible-content {
+            position: static; /* Back to normal flow */
+            width: 100%;
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            padding-left: 10px;
+        }
+        .nav-section-header.active .chevron { transform: rotate(180deg); }
+    }
     /* --- MAIN AREA (UPDATED) --- */
     .main { 
         flex: 1; 
@@ -383,8 +411,10 @@
 
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header"><span>System</span></div>
-    <div class="collapsible-content">
+
+    <div class="nav-section-header" style="cursor: default; color: var(--accent);"><span>System</span></div>
+    <div class="system-group">
+      <a href="index.html" class="nav-link active"><span>Command Center</span></a>
       <a href="#" class="nav-link logout-link" onclick="handleLogout()">
         <span class="icon">🚪</span> <span>Logout of Portal</span>
       </a>
@@ -398,19 +428,18 @@
       }
     </script>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span><span class="chevron">▼</span></div>
-    <div id="grp-main" class="collapsible-content">
-      <a href="index.html" class="nav-link active"><span>Command Center</span></a>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
     </div>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)"><span>Samplings</span><span class="chevron">▼</span></div>
     <div id="grp-sample" class="collapsible-content">
       <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
       <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)"><span>Sales</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-sales" class="collapsible-content">
       <a href="sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
       <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
@@ -419,7 +448,9 @@
       <a href="sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
     </div>
 
-    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)"><span>Inventory</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-inv" class="collapsible-content">
       <a href="inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
       <a href="inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
@@ -427,7 +458,9 @@
       <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)"><span>Brewing</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-brew" class="collapsible-content">
       <a href="Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
       <a href="Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
@@ -437,7 +470,9 @@
       <a href="Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)"><span>Reporting & Analytics</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
     <div id="grp-rep" class="collapsible-content">
       <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
       <a href="Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
