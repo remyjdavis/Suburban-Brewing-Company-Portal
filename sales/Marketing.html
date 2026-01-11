@@ -5,17 +5,16 @@
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
-
         if (auth !== "true" && !isLoginPage) {
-            // This finds the root of your GitHub repo automatically
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
     })();
   </script>
+ 
   <meta charset="UTF-8" />
   <title>Marketing Hub | Suburban Brewing</title>
- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,8 +23,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0f172a">
   
-   <link rel="icon" type="image/png" href="../logo.png">
-<link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" type="image/png" href="../logo.png">
+  <link rel="apple-touch-icon" href="../logo.png">
   <link rel="manifest" href="../manifest.json">
   
   <style>
@@ -37,16 +36,19 @@
     body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
     
     /* SIDEBAR */
-    .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; }
+    .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; transition: all 0.3s ease; }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
-    .nav-section-header { margin: 18px 24px 8px; font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 700; cursor: pointer; }
+    .nav-section-header { margin: 18px 24px 8px; font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; }
     .nav-link { display: block; padding: 10px 24px; color: #d1d5db; text-decoration: none; font-size: 14px; border-left: 4px solid transparent; transition: 0.2s; }
     .nav-link:hover, .nav-link.active { background: #374151; color: #fff; border-left-color: var(--accent); }
     .collapsible-content { overflow: hidden; max-height: 2000px; transition: max-height 0.4s; }
+    .collapsible-content.collapsed { max-height: 0; }
+    .chevron { transition: transform 0.3s; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
 
     /* MAIN CONTENT */
-    .main { flex: 1; margin-left: 260px; width: 100%; }
-    .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .main { flex: 1; margin-left: 260px; width: 100%; display: flex; flex-direction: column; }
+    .content { padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
     .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
     
     /* TABS SYSTEM */
@@ -68,6 +70,7 @@
     button.secondary { background: #e5e7eb; color: #374151; }
     button.secondary:hover { background: #d1d5db; }
     input, textarea, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
+    .helper-text { font-size: 11px; color: #64748b; margin-top: -10px; margin-bottom: 15px; }
     
     /* TABLES */
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -85,69 +88,36 @@
     .asset-name { font-weight: 600; font-size: 14px; color: #1f2937; }
 
     /* MODAL STYLES */
-    .modal-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(15, 23, 42, 0.8); z-index: 2000; backdrop-filter: blur(4px);
-      justify-content: center; align-items: center;
-    }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 2000; backdrop-filter: blur(4px); justify-content: center; align-items: center; }
     .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease-out; }
-
-    .modal-window {
-      background: white; width: 90%; max-width: 900px; height: 85vh;
-      border-radius: 12px; display: flex; flex-direction: column; overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    }
-
-    .modal-header {
-      padding: 20px 30px; border-bottom: 1px solid #e2e8f0;
-      display: flex; justify-content: space-between; align-items: center;
-      background: #f8fafc;
-    }
+    .modal-window { background: white; width: 90%; max-width: 900px; height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+    .modal-header { padding: 20px 30px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
     .modal-header h2 { margin: 0; font-size: 18px; color: #0f172a; }
     .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; }
-
     .modal-body { flex: 1; overflow-y: auto; padding: 40px; background: #f1f5f9; }
-
-    .modal-footer {
-      padding: 20px 30px; border-top: 1px solid #e2e8f0; background: white;
-      display: flex; justify-content: flex-end; gap: 15px;
-    }
-    .download-btn {
-      padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none;
-    }
+    .modal-footer { padding: 20px 30px; border-top: 1px solid #e2e8f0; background: white; display: flex; justify-content: flex-end; gap: 15px; }
+    .download-btn { padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; }
     .download-btn.secondary { background: #f1f5f9; color: #475569; }
     .download-btn.primary { background: #2563eb; color: white; }
 
-    /* --- ASSET PREVIEW STYLES --- */
-    /* LOGOS */
-    .logo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; }
-    .logo-box { background: white; border: 1px solid #e2e8f0; padding: 40px 20px; text-align: center; border-radius: 8px; }
-    .logo-box.dark { background: #0f172a; border-color: #0f172a; }
-    .logo-label { display: block; font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-top: 10px;}
+    /* --- MOBILE & PREVIEW --- */
+    #menu-toggle { display: none; }
+    .menu-overlay-mobile { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
-    /* SELL SHEET */
-    .sell-sheet-preview { background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 40px; max-width: 700px; margin: 0 auto; display: flex; gap: 30px; }
-    .bottle-mockup { width: 120px; height: 300px; background: #e2e8f0; border-radius: 4px; position: relative; }
-    .bottle-mockup::after { content: '🍺'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; }
-    .sheet-content h1 { margin: 0 0 10px 0; color: #0f172a; }
-    .sheet-tags { display: flex; gap: 10px; margin-bottom: 20px; }
-    .sheet-tag { background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; }
-    .sheet-specs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 30px; border-top: 2px solid #f1f5f9; padding-top: 20px; }
-
-    /* PRICE LIST */
-    .price-table { width: 100%; border-collapse: collapse; background: white; }
-    .price-table th { background: #f8fafc; text-transform: uppercase; font-size: 12px; }
-    .price-table td { border-bottom: 1px solid #f1f5f9; }
-
-    /* SHELF TALKER */
-    .shelf-talker-container { display: flex; justify-content: center; align-items: center; height: 100%; }
-    .shelf-talker { width: 300px; height: 150px; background: #2563eb; color: white; border-radius: 8px; padding: 20px; position: relative; box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4); transform: rotate(-2deg); }
-    .talker-fold { position: absolute; top: -30px; left: 0; width: 100%; height: 30px; background: #1e40af; border-radius: 8px 8px 0 0; opacity: 0.5; }
+    @media (max-width: 1024px) {
+      .sidebar { left: -260px; z-index: 2000; }
+      .sidebar.open { left: 0; }
+      .main { margin-left: 0 !important; }
+      .content { padding: 15px; }
+      
+      #menu-toggle { display: flex; position: fixed; bottom: 25px; right: 25px; width: 65px; height: 65px; background: var(--accent); color: white; border-radius: 50%; justify-content: center; align-items: center; font-size: 28px; z-index: 2100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none; }
+      .menu-overlay-mobile.active { display: block; }
+    }
   </style>
 </head>
 <body>
   <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
-  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  <div id="menu-overlay" class="menu-overlay-mobile" onclick="toggleMobileMenu()"></div>
 
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
@@ -159,11 +129,11 @@
     </div>
 
     <script>
-     function handleLogout() {
-       sessionStorage.removeItem("sbc_auth");
-       const repoPath = "/Suburban-Brewing-Company-Portal/";
-       window.location.replace(repoPath + "login.html");
-    }
+      function handleLogout() {
+        sessionStorage.removeItem("sbc_auth");
+        const repoPath = "/Suburban-Brewing-Company-Portal/";
+        window.location.replace(repoPath + "login.html");
+      }
     </script>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span><span class="chevron">▼</span></div>
@@ -231,59 +201,9 @@
         <div class="tab" onclick="switchTab('tab-banner', this)">📢 Portal Banner</div>
         <div class="tab" onclick="switchTab('tab-events', this)">📅 Events</div>
         <div class="tab" onclick="switchTab('tab-assets', this)">📂 Assets</div>
-      <div class="tab" onclick="switchTab('tab-facebook', this)">📘 Facebook</div>
-    </div>
-<div id="tab-facebook" class="card">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h3>Social Media Manager</h3>
-    <button class="secondary" onclick="alert('Connected to Suburban Brewing FB Page')">✅ Page Connected</button>
-  </div>
-
-  <div style="display: flex; gap: 40px; flex-wrap: wrap;">
-    
-   <div style="flex: 1; min-width: 300px;">
-      <label>Post Caption</label>
-      <textarea id="fbCaption" rows="6" placeholder="What's brewing today?" oninput="updateFbPreview()" style="resize: vertical;">Fresh pour of Moon Rocks NEIPA! 🍺🚀 Come grab a 4-pack before they're gone.</textarea>
-      
-      <label style="margin-top:20px;">Upload Image</label>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <input type="file" id="fbUpload" accept="image/*" onchange="handleImageUpload(this)" style="background:white; padding:8px;">
-        <button class="secondary" onclick="clearImage()" style="width:auto; padding:8px 12px; margin:0;">❌</button>
-      </div>
-      <div class="helper-text">Supports JPG, PNG, WEBP. Max 5MB.</div>
-      
-      <div style="margin-top:20px; display:flex; gap:10px;">
-        <button onclick="alert('Post published to Facebook!')">🚀 Post Now</button>
-        <button class="secondary">📅 Schedule</button>
-      </div>
-    </div>
-    
-    <div style="flex: 1; min-width: 300px; display:flex; justify-content:center;">
-      <div style="background: #fff; border: 1px solid #ddd; border-radius: 8px; width: 100%; max-width: 400px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        <div style="padding: 12px; display:flex; align-items:center; gap:10px;">
-          <img src="../logo.png" style="width:40px; height:40px; border-radius:50%; background:#0f172a; padding:2px;" onerror="this.src='https://via.placeholder.com/40'">
-          <div>
-            <div style="font-weight:700; font-size:14px; color:#1c1e21;">Suburban Brewing Co.</div>
-            <div style="font-size:12px; color:#65676b;">Just now · 🌎</div>
-          </div>
-        </div>
-        
-        <div id="previewText" style="padding: 0 12px 12px; font-size:14px; color:#1c1e21; white-space: pre-wrap;">Fresh pour of Moon Rocks NEIPA! 🍺🚀 Come grab a 4-pack before they're gone.</div>
-        
-        <div id="previewImgContainer" style="background:#f0f2f5; min-height:200px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-          <img id="previewImg" src="https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?auto=format&fit=crop&w=700&q=80" style="width:100%; height:auto; display:block;">
-        </div>
-        
-        <div style="padding: 10px; border-top:1px solid #ddd; display:flex; justify-content:space-around; color:#65676b; font-weight:600; font-size:13px;">
-          <span>👍 Like</span>
-          <span>💬 Comment</span>
-          <span>↗️ Share</span>
-        </div>
-      </div>
+        <div class="tab" onclick="switchTab('tab-social', this)">📢 Social Manager</div>
     </div>
 
-  </div>
-</div>
     <div id="tab-email" class="card active">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3>Weekly Fresh Sheet Blast</h3>
@@ -365,10 +285,69 @@
         </div>
     </div>
 
-  </div>
-</div>
+    <div id="tab-social" class="card" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h3>Social Media Manager</h3>
+        <div style="display:flex; gap:10px;">
+            <span style="font-size:12px; background:#e0f2fe; color:#0284c7; padding:4px 8px; border-radius:4px;">🔵 FB Connected</span>
+            <span style="font-size:12px; background:#fce7f3; color:#db2777; padding:4px 8px; border-radius:4px;">🟣 IG Connected</span>
+        </div>
+      </div>
 
-<div id="asset-modal" class="modal-overlay" onclick="closeModal(event)">
+      <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+        
+        <div style="flex: 1; min-width: 300px;">
+          <label>Post To:</label>
+          <div style="display:flex; gap:20px; margin-bottom:20px;">
+              <label style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer;">
+                  <input type="checkbox" id="checkFB" checked onchange="updateSocialPreview()"> Facebook
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer;">
+                  <input type="checkbox" id="checkIG" checked onchange="updateSocialPreview()"> Instagram
+              </label>
+          </div>
+
+          <label>Caption</label>
+          <textarea id="socialCaption" rows="6" placeholder="Write your caption..." oninput="updateSocialPreview()" style="resize: vertical;">Fresh pour of Moon Rocks NEIPA! 🍺🚀 Come grab a 4-pack before they're gone. #craftbeer #suburbanbrewing</textarea>
+          
+          <label style="margin-top:20px;">Media</label>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <input type="file" id="socialUpload" accept="image/*" onchange="handleSocialUpload(this)" style="background:white; padding:8px;">
+            <button class="secondary" onclick="clearSocialImage()" style="width:auto; padding:8px 12px; margin:0;">❌</button>
+          </div>
+          <div class="helper-text">Required for Instagram. Max 5MB.</div>
+          
+          <div style="margin-top:30px; display:flex; gap:10px;">
+            <button onclick="handleSocialPost()" style="background: linear-gradient(45deg, #2563eb, #db2777); border:none;">🚀 Post Everywhere</button>
+            <button class="secondary">📅 Schedule</button>
+          </div>
+        </div>
+
+        <div style="flex: 1; min-width: 300px; display:flex; flex-direction:column; align-items:center;">
+          
+          <div style="display:flex; gap:10px; margin-bottom:15px; background:#f1f5f9; padding:4px; border-radius:8px;">
+              <button class="preview-btn active" id="btnPreviewFB" onclick="setPreviewMode('fb')" style="padding:6px 12px; font-size:12px; width:auto; margin:0; background:white; color:black; border:none; cursor:pointer; border-radius:6px;">Facebook View</button>
+              <button class="preview-btn" id="btnPreviewIG" onclick="setPreviewMode('ig')" style="padding:6px 12px; font-size:12px; width:auto; margin:0; background:transparent; color:#64748b; border:none; cursor:pointer; border-radius:6px;">Instagram View</button>
+          </div>
+
+          <div id="previewContainer" style="background: #fff; border: 1px solid #ddd; border-radius: 8px; width: 100%; max-width: 380px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+            
+            <div id="previewHeader" style="padding: 12px; display:flex; align-items:center; gap:10px;"></div>
+            
+            <div id="socialPreviewImgContainer" style="background:#f0f2f5; min-height:300px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+               <span style="color:#94a3b8; font-size:12px;">No Image Selected</span>
+               <img id="socialPreviewImg" src="" style="width:100%; height:auto; display:none; object-fit:cover;">
+            </div>
+            
+            <div id="previewBody" style="padding: 12px;"></div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div> </div> <div id="asset-modal" class="modal-overlay" onclick="closeModal(event)">
   <div class="modal-window">
     <div class="modal-header">
       <h2 id="modal-title">Asset Name</h2>
@@ -383,6 +362,40 @@
 </div>
 
 <script>
+// --- NAVIGATION & MOBILE ---
+function toggleGroup(contentId, headerEl) {
+    const content = document.getElementById(contentId);
+    content.classList.toggle('collapsed');
+    headerEl.classList.toggle('collapsed');
+}
+
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.menu-overlay-mobile');
+    const btn = document.getElementById('menu-toggle');
+    const isOpen = sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+    btn.innerText = isOpen ? '✕' : '☰';
+}
+
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 1024) {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar.classList.contains('open')) toggleMobileMenu();
+        }
+    });
+});
+
+// --- TABS LOGIC ---
+function switchTab(tabId, el) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+}
+
 // --- DATA DICTIONARY ---
 const ASSET_CONTENT = {
   'Vector Logos': `
@@ -440,14 +453,6 @@ const ASSET_CONTENT = {
     </div>`
 };
 
-// --- LOGIC ---
-function switchTab(tabId, el) {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-}
-
 function copyAssetLink(el) {
     const assetName = el.querySelector('.asset-name').innerText.trim();
     const content = ASSET_CONTENT[assetName] || `<div style="text-align:center; padding:50px;">Preview not available for ${assetName}</div>`;
@@ -468,7 +473,100 @@ function updateBanner() {
     alert("Banner updated!");
 }
 
-// --- INIT MOCK DATA ---
+// --- SOCIAL MANAGER LOGIC ---
+let currentPreviewMode = 'fb'; 
+
+function setPreviewMode(mode) {
+    currentPreviewMode = mode;
+    
+    // Update Button Styles
+    document.getElementById('btnPreviewFB').style.background = mode === 'fb' ? 'white' : 'transparent';
+    document.getElementById('btnPreviewFB').style.color = mode === 'fb' ? 'black' : '#64748b';
+    document.getElementById('btnPreviewFB').style.boxShadow = mode === 'fb' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none';
+    
+    document.getElementById('btnPreviewIG').style.background = mode === 'ig' ? 'white' : 'transparent';
+    document.getElementById('btnPreviewIG').style.color = mode === 'ig' ? 'black' : '#64748b';
+    document.getElementById('btnPreviewIG').style.boxShadow = mode === 'ig' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none';
+
+    updateSocialPreview();
+}
+
+function updateSocialPreview() {
+    const text = document.getElementById('socialCaption').value;
+    const headerEl = document.getElementById('previewHeader');
+    const bodyEl = document.getElementById('previewBody');
+    const imgContainer = document.getElementById('socialPreviewImgContainer');
+
+    if (currentPreviewMode === 'fb') {
+        // --- FACEBOOK VIEW ---
+        headerEl.innerHTML = `
+            <img src="../logo.png" style="width:40px; height:40px; border-radius:50%; background:#0f172a; padding:2px;" onerror="this.src='https://via.placeholder.com/40'">
+            <div>
+                <div style="font-weight:700; font-size:14px; color:#1c1e21;">Suburban Brewing Co.</div>
+                <div style="font-size:12px; color:#65676b;">Just now · 🌎</div>
+            </div>
+        `;
+        
+        bodyEl.innerHTML = `
+            <div style="font-size:14px; color:#1c1e21; white-space: pre-wrap; margin-bottom:10px;">${text}</div>
+            <div style="padding-top: 10px; border-top:1px solid #ddd; display:flex; justify-content:space-around; color:#65676b; font-weight:600; font-size:13px;">
+              <span>👍 Like</span><span>💬 Comment</span><span>↗️ Share</span>
+            </div>
+        `;
+    } else {
+        // --- INSTAGRAM VIEW ---
+        headerEl.innerHTML = `
+            <img src="../logo.png" style="width:32px; height:32px; border-radius:50%; background:#0f172a; padding:1px;" onerror="this.src='https://via.placeholder.com/32'">
+            <div style="font-weight:600; font-size:14px; color:#262626;">suburbanbrewing</div>
+            <div style="margin-left:auto; font-weight:bold;">...</div>
+        `;
+        
+        bodyEl.innerHTML = `
+            <div style="display:flex; gap:15px; margin-bottom:10px;">
+                <span style="font-size:22px;">♡</span>
+                <span style="font-size:22px;">💬</span>
+                <span style="font-size:22px;">🚀</span>
+                <span style="margin-left:auto; font-size:22px;">🔖</span>
+            </div>
+            <div style="font-size:14px; color:#262626; line-height:1.4;">
+                <span style="font-weight:600;">suburbanbrewing</span> ${text}
+            </div>
+        `;
+    }
+}
+
+function handleSocialUpload(input) {
+    const imgEl = document.getElementById('socialPreviewImg');
+    const container = document.getElementById('socialPreviewImgContainer');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imgEl.src = e.target.result;
+            imgEl.style.display = 'block';
+            container.querySelector('span').style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function clearSocialImage() {
+    document.getElementById('socialUpload').value = "";
+    document.getElementById('socialPreviewImg').src = "";
+    document.getElementById('socialPreviewImg').style.display = 'none';
+    document.getElementById('socialPreviewImgContainer').querySelector('span').style.display = 'block';
+}
+
+function handleSocialPost() {
+    const postToFB = document.getElementById('checkFB').checked;
+    const postToIG = document.getElementById('checkIG').checked;
+    
+    if(!postToFB && !postToIG) return alert("Please select at least one platform.");
+    
+    alert(`Preparing to post to: ${postToFB ? 'Facebook ' : ''}${postToIG ? 'Instagram' : ''}`);
+}
+
+// --- INIT ---
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
     
@@ -481,39 +579,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('churnBody').innerHTML = mockChurn.map(c => `<tr><td><strong>${c.n}</strong></td><td>${c.l}</td><td><span class="badge badge-red">${c.l.split(' ')[0]} Days</span></td><td>${c.i}</td><td><button class="secondary" style="padding:4px 10px; font-size:12px;">Email</button></td></tr>`).join('');
     
     updateBanner();
+    updateSocialPreview(); // Init social preview
 });
- // --- FACEBOOK POST LOGIC ---
-
-  // 1. Handle Text Updates
-  function updateFbPreview() {
-    const text = document.getElementById('fbCaption').value;
-    document.getElementById('previewText').innerText = text;
-  }
-
-  // 2. Handle Image Uploads (The Magic Part)
-  function handleImageUpload(input) {
-    const container = document.getElementById('previewImgContainer');
-    const imgEl = document.getElementById('previewImg');
-
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      
-      // When the file is read, set it as the image source
-      reader.onload = function(e) {
-        imgEl.src = e.target.result;
-        container.style.display = "flex";
-      };
-      
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
-
-  // 3. Clear Image Button
-  function clearImage() {
-    document.getElementById('fbUpload').value = ""; // Reset input
-    document.getElementById('previewImgContainer').style.display = "none";
-    document.getElementById('previewImg').src = "";
-  }
 </script>
 
 </body>
