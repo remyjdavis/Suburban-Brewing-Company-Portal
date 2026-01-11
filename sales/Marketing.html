@@ -231,8 +231,55 @@
         <div class="tab" onclick="switchTab('tab-banner', this)">📢 Portal Banner</div>
         <div class="tab" onclick="switchTab('tab-events', this)">📅 Events</div>
         <div class="tab" onclick="switchTab('tab-assets', this)">📂 Assets</div>
+      <div class="tab" onclick="switchTab('tab-facebook', this)">📘 Facebook</div>
+    </div>
+<div id="tab-facebook" class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h3>Social Media Manager</h3>
+    <button class="secondary" onclick="alert('Connected to Suburban Brewing FB Page')">✅ Page Connected</button>
+  </div>
+
+  <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+    
+    <div style="flex: 1; min-width: 300px;">
+      <label>Post Caption</label>
+      <textarea id="fbCaption" rows="6" placeholder="What's brewing today?" oninput="updateFbPreview()" style="resize: vertical;">Fresh pour of Moon Rocks NEIPA! 🍺🚀 Come grab a 4-pack before they're gone.</textarea>
+      
+      <label style="margin-top:20px;">Image URL (Optional)</label>
+      <input id="fbImage" type="text" placeholder="https://..." oninput="updateFbPreview()" value="https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?auto=format&fit=crop&w=700&q=80">
+      
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <button onclick="alert('Post published to Facebook!')">🚀 Post Now</button>
+        <button class="secondary">📅 Schedule</button>
+      </div>
     </div>
 
+    <div style="flex: 1; min-width: 300px; display:flex; justify-content:center;">
+      <div style="background: #fff; border: 1px solid #ddd; border-radius: 8px; width: 100%; max-width: 400px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="padding: 12px; display:flex; align-items:center; gap:10px;">
+          <img src="../logo.png" style="width:40px; height:40px; border-radius:50%; background:#0f172a; padding:2px;" onerror="this.src='https://via.placeholder.com/40'">
+          <div>
+            <div style="font-weight:700; font-size:14px; color:#1c1e21;">Suburban Brewing Co.</div>
+            <div style="font-size:12px; color:#65676b;">Just now · 🌎</div>
+          </div>
+        </div>
+        
+        <div id="previewText" style="padding: 0 12px 12px; font-size:14px; color:#1c1e21; white-space: pre-wrap;">Fresh pour of Moon Rocks NEIPA! 🍺🚀 Come grab a 4-pack before they're gone.</div>
+        
+        <div id="previewImgContainer" style="background:#f0f2f5; min-height:200px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+          <img id="previewImg" src="https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?auto=format&fit=crop&w=700&q=80" style="width:100%; height:auto; display:block;">
+        </div>
+        
+        <div style="padding: 10px; border-top:1px solid #ddd; display:flex; justify-content:space-around; color:#65676b; font-weight:600; font-size:13px;">
+          <span>👍 Like</span>
+          <span>💬 Comment</span>
+          <span>↗️ Share</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
     <div id="tab-email" class="card active">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3>Weekly Fresh Sheet Blast</h3>
@@ -431,6 +478,25 @@ document.addEventListener("DOMContentLoaded", () => {
     
     updateBanner();
 });
+  // --- FACEBOOK PREVIEW LOGIC ---
+  function updateFbPreview() {
+    const text = document.getElementById('fbCaption').value;
+    const imgUrl = document.getElementById('fbImage').value;
+    
+    // Update Text
+    document.getElementById('previewText').innerText = text;
+    
+    // Update Image
+    const imgEl = document.getElementById('previewImg');
+    const container = document.getElementById('previewImgContainer');
+    
+    if (imgUrl.trim() !== "") {
+      imgEl.src = imgUrl;
+      container.style.display = "flex";
+    } else {
+      container.style.display = "none";
+    }
+  }
 </script>
 
 </body>
