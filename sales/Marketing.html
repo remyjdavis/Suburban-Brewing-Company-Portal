@@ -48,7 +48,6 @@
 
     /* MAIN CONTENT */
     .main { flex: 1; margin-left: 260px; width: 100%; display: flex; flex-direction: column; }
-    /* ⚠️ Updated Padding to 40px */
     .content { padding: 40px 40px 0 40px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
     .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
     
@@ -70,7 +69,13 @@
     button:hover { background: #1d4ed8; }
     button.secondary { background: #e5e7eb; color: #374151; }
     button.secondary:hover { background: #d1d5db; }
+    
+    /* Inputs */
     input, textarea, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
+    
+    /* ⚠️ CHECKBOX FIX: Prevent them from stretching to 100% width */
+    input[type="checkbox"] { width: auto; margin-bottom: 0; cursor: pointer; }
+    
     .helper-text { font-size: 11px; color: #64748b; margin-top: -10px; margin-bottom: 15px; }
     
     /* TABLES */
@@ -189,7 +194,7 @@
     
     <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)"><span>Brewing</span><span class="chevron">▼</span></div>
     <div id="grp-brew" class="collapsible-content">
-      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
+      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
       <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
       <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
       <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
@@ -490,9 +495,10 @@ function closeModal(e) {
     }
 }
 
+// --- FIXED: Remove ALERT ---
 function updateBanner() {
     document.getElementById('bannerPreviewText').innerText = document.getElementById('bannerMsg').value;
-    alert("Banner updated!");
+    // alert("Banner updated!"); // REMOVED
 }
 
 // --- SOCIAL MANAGER LOGIC ---
