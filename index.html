@@ -69,45 +69,41 @@
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
-    /* HEADERS */
-    .nav-section-header { 
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-header, .section-heading, .subsection-heading { 
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
+    }
+
+    .nav-section-header {
       font-size: 11px; text-transform: uppercase; color: #94a3b8; 
       margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
-      transition: color 0.2s;
     }
     .nav-section-header:hover { color: #fff; }
-    
-    /* Active State (Rotates Arrow) */
-    .nav-section-header.active { color: #fff; }
-    .nav-section-header.active .chevron { transform: rotate(180deg); }
+
+    .section-heading { 
+      font-size: 16px; font-weight: 800; margin: 30px 0 15px; 
+      color: var(--text-main); text-transform: uppercase;
+      padding-bottom: 8px; border-bottom: 2px solid #e2e8f0;
+    }
+    .section-heading:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .subsection-heading {
+      font-size: 13px; font-weight: 700; margin: 20px 0 10px 10px;
+      color: var(--text-muted); text-transform: uppercase;
+      padding-bottom: 5px; border-bottom: 1px dashed #cbd5e1;
+    }
+    .subsection-heading:hover { color: var(--accent); }
+
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
 
-    /* SYSTEM GROUP (Always Visible) */
-    .system-group {
-        display: block;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #1e293b; 
-    }
-
-    /* ACCORDION CONTENT (Hidden by default) */
     .collapsible-content {
-      display: none; 
-      overflow: hidden;
-      padding-bottom: 10px;
+      max-height: 2500px; overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+      opacity: 1;
     }
-    
-    /* Open State */
-    .collapsible-content.open {
-        display: block;
-        animation: slideDown 0.3s ease-out;
-    }
-
-    @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
 
     /* LINKS */
     .nav-link { 
@@ -378,41 +374,6 @@
     .footer-links a { margin: 0 10px; }
     .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
 }
-    /* Style the buttons that are used to open and close the accordion panel */
-.accordion {
-  background-color: #eee;
-  color: #444;
-  cursor: pointer;
-  padding: 18px;
-  width: 100%;
-  text-align: left;
-  border: none;
-  outline: none;
-  transition: 0.4s;
-  font-size: 18px; /* Adjust as needed */
-  font-weight: bold;
-}
-
-/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
-.active, .accordion:hover {
-  background-color: #ccc;
-}
-
-/* Style the accordion panel. Note: hidden by default */
-.panel {
-  padding: 0 18px;
-  background-color: white;
-  display: none; /* KEY: This makes it hidden initially */
-  overflow: hidden;
-}
-
-/* Optional: Add a spacing between links inside the panel */
-.panel a {
-  display: block;
-  padding: 10px 0;
-  text-decoration: none;
-  color: #000;
-}
   </style>
 </head>
 
@@ -422,10 +383,8 @@
 
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-
-    <div class="nav-section-header" style="cursor: default;"><span>System</span></div>
-    <div class="system-group">
-      <a href="index.html" class="nav-link active"><span>Command Center</span></a>
+    <div class="nav-section-header"><span>System</span></div>
+    <div class="collapsible-content">
       <a href="#" class="nav-link logout-link" onclick="handleLogout()">
         <span class="icon">🚪</span> <span>Logout of Portal</span>
       </a>
@@ -439,18 +398,19 @@
       }
     </script>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
-      <span>Samplings</span><span class="chevron">▼</span>
+    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span><span class="chevron">▼</span></div>
+    <div id="grp-main" class="collapsible-content">
+      <a href="index.html" class="nav-link active"><span>Command Center</span></a>
     </div>
+    
+    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)"><span>Samplings</span><span class="chevron">▼</span></div>
     <div id="grp-sample" class="collapsible-content">
       <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
       <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)">
-      <span>Sales</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)"><span>Sales</span><span class="chevron">▼</span></div>
     <div id="grp-sales" class="collapsible-content">
       <a href="sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
       <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
@@ -459,9 +419,7 @@
       <a href="sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
     </div>
 
-    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)">
-      <span>Inventory</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)"><span>Inventory</span><span class="chevron">▼</span></div>
     <div id="grp-inv" class="collapsible-content">
       <a href="inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
       <a href="inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
@@ -469,9 +427,7 @@
       <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)">
-      <span>Brewing</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)"><span>Brewing</span><span class="chevron">▼</span></div>
     <div id="grp-brew" class="collapsible-content">
       <a href="Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
       <a href="Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
@@ -481,9 +437,7 @@
       <a href="Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
-      <span>Reporting & Analytics</span><span class="chevron">▼</span>
-    </div>
+    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)"><span>Reporting & Analytics</span><span class="chevron">▼</span></div>
     <div id="grp-rep" class="collapsible-content">
       <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
       <a href="Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
@@ -674,24 +628,9 @@
         btn.innerText = isOpen ? '✕' : '☰';
     }
 
-    function toggleGroup(id, headerEl) {
-        // 1. Close all other open menus first
-        const allContent = document.querySelectorAll('.collapsible-content');
-        const allHeaders = document.querySelectorAll('.nav-section-header');
-        
-        allContent.forEach(div => {
-            if(div.id !== id) div.classList.remove('open');
-        });
-        allHeaders.forEach(h => {
-            if(h !== headerEl) h.classList.remove('active');
-        });
-
-        // 2. Toggle the selected menu
-        const content = document.getElementById(id);
-        if (content) {
-            content.classList.toggle("open");
-            headerEl.classList.toggle("active");
-        }
+    function toggleGroup(id, el) {
+        document.getElementById(id).classList.toggle('collapsed');
+        el.classList.toggle('collapsed');
     }
 
     // 1. OPEN Logic (Clicking the Card)
