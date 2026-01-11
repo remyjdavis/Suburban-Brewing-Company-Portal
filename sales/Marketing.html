@@ -88,7 +88,7 @@
     .asset-icon { font-size: 32px; margin-bottom: 10px; }
     .asset-name { font-weight: 600; font-size: 14px; color: #1f2937; }
 
-    /* INBOX STYLES (NEW) */
+    /* INBOX STYLES */
     .comment-item { padding: 15px; border-bottom: 1px solid #e5e7eb; display: flex; gap: 15px; }
     .comment-item:last-child { border-bottom: none; }
     .comment-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; font-size: 20px; display: flex; align-items: center; justify-content: center; }
@@ -96,7 +96,10 @@
     .comment-meta { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 4px; }
     .platform-icon { font-size: 14px; margin-right: 5px; }
     .reply-box { margin-top: 10px; display: none; }
-    .reply-box.active { display: flex; gap: 10px; }
+    .reply-box.active { display: flex; gap: 10px; align-items: center; }
+    /* AI Button Style */
+    .ai-btn { background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; font-size: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .ai-btn:hover { filter: brightness(1.1); }
 
     /* MODAL STYLES */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 2000; backdrop-filter: blur(4px); justify-content: center; align-items: center; }
@@ -392,10 +395,11 @@
                       <span><span class="platform-icon">🔵</span> <strong>Mike Smith</strong> on Facebook</span>
                       <span>2m ago</span>
                   </div>
-                  <div style="font-size:14px; margin-bottom:8px;">Do you guys have the stout on tap yet?</div>
+                  <div id="comment-text-1" style="font-size:14px; margin-bottom:8px;">Do you guys have the stout on tap yet?</div>
                   <button class="secondary" onclick="toggleReply(this)" style="padding:4px 10px; font-size:11px; height:auto;">Reply</button>
                   <div class="reply-box">
                       <input type="text" placeholder="Write a reply..." style="margin:0;">
+                      <button class="ai-btn" onclick="generateAIReply(this, 'Do you guys have the stout on tap yet?')">✨ AI Reply</button>
                       <button onclick="sendReply(this)" style="margin:0; padding:8px 15px; font-size:12px;">Send</button>
                   </div>
               </div>
@@ -412,6 +416,7 @@
                   <button class="secondary" onclick="toggleReply(this)" style="padding:4px 10px; font-size:11px; height:auto;">Reply</button>
                   <div class="reply-box">
                       <input type="text" placeholder="Write a reply..." style="margin:0;">
+                      <button class="ai-btn" onclick="generateAIReply(this, 'This looks amazing! 🔥 Can t wait to visit this weekend.')">✨ AI Reply</button>
                       <button onclick="sendReply(this)" style="margin:0; padding:8px 15px; font-size:12px;">Send</button>
                   </div>
               </div>
@@ -580,7 +585,6 @@ function toggleSocialView(view) {
     }
 }
 
-// INBOX REPLY LOGIC
 function toggleReply(btn) {
     const replyBox = btn.nextElementSibling;
     if (replyBox.classList.contains('active')) {
@@ -592,15 +596,40 @@ function toggleReply(btn) {
     }
 }
 
+// --- AI GENERATOR ---
+function generateAIReply(btn, userComment) {
+    const inputField = btn.previousElementSibling;
+    const originalText = btn.innerText;
+    
+    btn.innerText = "🤖 Thinking...";
+    btn.disabled = true;
+
+    // Simulate AI Delay (1s)
+    setTimeout(() => {
+        let aiResponse = "";
+        
+        // Simple heuristic for demo purposes
+        if (userComment.toLowerCase().includes("stout")) {
+            aiResponse = "Hey Mike! Yes, the Winter Stout just went on tap yesterday. Come by for a pint! 🍺";
+        } else if (userComment.toLowerCase().includes("visit")) {
+            aiResponse = "We'd love to see you! We're open till 10pm all weekend. Cheers! 🍻";
+        } else {
+            aiResponse = "Thanks for the love! Hope to see you in the taproom soon.";
+        }
+
+        inputField.value = aiResponse;
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }, 800);
+}
+
 function sendReply(btn) {
-    const input = btn.previousElementSibling;
+    const input = btn.previousElementSibling.previousElementSibling; // Skip over AI button
     if(input.value.trim() === "") return;
     
-    // Simulate sending
     alert(`Reply sent: "${input.value}"`);
     input.value = "";
     
-    // Close box
     const replyBox = btn.parentElement;
     const toggleBtn = replyBox.previousElementSibling;
     replyBox.classList.remove('active');
