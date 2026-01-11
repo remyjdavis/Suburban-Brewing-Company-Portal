@@ -69,13 +69,8 @@
     button:hover { background: #1d4ed8; }
     button.secondary { background: #e5e7eb; color: #374151; }
     button.secondary:hover { background: #d1d5db; }
-    
-    /* Inputs */
     input, textarea, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
-    
-    /* ⚠️ CHECKBOX FIX: Prevent them from stretching to 100% width */
     input[type="checkbox"] { width: auto; margin-bottom: 0; cursor: pointer; }
-    
     .helper-text { font-size: 11px; color: #64748b; margin-top: -10px; margin-bottom: 15px; }
     
     /* TABLES */
@@ -92,6 +87,16 @@
     .asset-item:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
     .asset-icon { font-size: 32px; margin-bottom: 10px; }
     .asset-name { font-weight: 600; font-size: 14px; color: #1f2937; }
+
+    /* INBOX STYLES (NEW) */
+    .comment-item { padding: 15px; border-bottom: 1px solid #e5e7eb; display: flex; gap: 15px; }
+    .comment-item:last-child { border-bottom: none; }
+    .comment-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+    .comment-content { flex: 1; }
+    .comment-meta { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 4px; }
+    .platform-icon { font-size: 14px; margin-right: 5px; }
+    .reply-box { margin-top: 10px; display: none; }
+    .reply-box.active { display: flex; gap: 10px; }
 
     /* MODAL STYLES */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 2000; backdrop-filter: blur(4px); justify-content: center; align-items: center; }
@@ -312,15 +317,21 @@
     </div>
 
     <div id="tab-social" class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h3>Social Media Manager</h3>
-        <div style="display:flex; gap:10px;">
-            <span style="font-size:12px; background:#e0f2fe; color:#0284c7; padding:4px 8px; border-radius:4px;">🔵 FB Connected</span>
-            <span style="font-size:12px; background:#fce7f3; color:#db2777; padding:4px 8px; border-radius:4px;">🟣 IG Connected</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #f1f5f9; padding-bottom:15px;">
+        <div>
+            <h3 style="margin:0; border:none; padding:0;">Social Media Manager</h3>
+            <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                <span style="color:#0284c7;">● FB Connected</span> &nbsp;|&nbsp; <span style="color:#db2777;">● IG Connected</span>
+            </div>
+        </div>
+        
+        <div style="display:flex; gap:5px; background:#f1f5f9; padding:4px; border-radius:8px;">
+            <button class="secondary" id="btnShowCompose" onclick="toggleSocialView('compose')" style="margin:0; background:white; box-shadow:0 1px 2px rgba(0,0,0,0.1); border:1px solid #e2e8f0; font-size:12px;">✏️ Compose</button>
+            <button class="secondary" id="btnShowInbox" onclick="toggleSocialView('inbox')" style="margin:0; background:transparent; font-size:12px; color:#64748b;">💬 Inbox</button>
         </div>
       </div>
 
-      <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+      <div id="social-compose-view" style="display: flex; gap: 40px; flex-wrap: wrap;">
         
         <div style="flex: 1; min-width: 300px;">
           <label>Post To:</label>
@@ -369,8 +380,45 @@
 
           </div>
         </div>
+      </div>
+
+      <div id="social-inbox-view" style="display:none; max-width:800px; margin:0 auto;">
+          <div style="margin-bottom:20px; color:#64748b; font-size:13px;">Recent comments from your connected pages.</div>
+          
+          <div class="comment-item">
+              <div class="comment-avatar">👤</div>
+              <div class="comment-content">
+                  <div class="comment-meta">
+                      <span><span class="platform-icon">🔵</span> <strong>Mike Smith</strong> on Facebook</span>
+                      <span>2m ago</span>
+                  </div>
+                  <div style="font-size:14px; margin-bottom:8px;">Do you guys have the stout on tap yet?</div>
+                  <button class="secondary" onclick="toggleReply(this)" style="padding:4px 10px; font-size:11px; height:auto;">Reply</button>
+                  <div class="reply-box">
+                      <input type="text" placeholder="Write a reply..." style="margin:0;">
+                      <button onclick="sendReply(this)" style="margin:0; padding:8px 15px; font-size:12px;">Send</button>
+                  </div>
+              </div>
+          </div>
+
+          <div class="comment-item">
+              <div class="comment-avatar">📸</div>
+              <div class="comment-content">
+                  <div class="comment-meta">
+                      <span><span class="platform-icon">🟣</span> <strong>craft_lover_99</strong> on Instagram</span>
+                      <span>1h ago</span>
+                  </div>
+                  <div style="font-size:14px; margin-bottom:8px;">This looks amazing! 🔥 Can't wait to visit this weekend.</div>
+                  <button class="secondary" onclick="toggleReply(this)" style="padding:4px 10px; font-size:11px; height:auto;">Reply</button>
+                  <div class="reply-box">
+                      <input type="text" placeholder="Write a reply..." style="margin:0;">
+                      <button onclick="sendReply(this)" style="margin:0; padding:8px 15px; font-size:12px;">Send</button>
+                  </div>
+              </div>
+          </div>
 
       </div>
+
     </div>
 
   </div> </div> <div id="asset-modal" class="modal-overlay" onclick="closeModal(event)">
@@ -388,7 +436,13 @@
 </div>
 
 <script>
-// --- SIDEBAR LOGIC ---
+// --- NAVIGATION & MOBILE ---
+function toggleGroup(contentId, headerEl) {
+    const content = document.getElementById(contentId);
+    content.classList.toggle('collapsed');
+    headerEl.classList.toggle('collapsed');
+}
+
 function toggleMobileMenu() {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.querySelector('.menu-overlay-mobile');
@@ -399,20 +453,21 @@ function toggleMobileMenu() {
     btn.innerText = isOpen ? '✕' : '☰';
 }
 
-function toggleGroup(groupId, header) {
-    const content = document.getElementById(groupId);
-    const chevron = header.querySelector('.chevron');
-    
-    // Toggle Max Height
-    if (content.style.maxHeight) {
-        content.style.maxHeight = null;
-        content.classList.add('collapsed');
-        if(chevron) chevron.style.transform = 'rotate(0deg)';
-    } else {
-        content.style.maxHeight = content.scrollHeight + "px";
-        content.classList.remove('collapsed');
-        if(chevron) chevron.style.transform = 'rotate(180deg)';
-    }
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 1024) {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar.classList.contains('open')) toggleMobileMenu();
+        }
+    });
+});
+
+// --- TABS LOGIC ---
+function switchTab(tabId, el) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
 }
 
 // --- DATA DICTIONARY ---
@@ -472,14 +527,6 @@ const ASSET_CONTENT = {
     </div>`
 };
 
-// --- TAB & MODAL LOGIC ---
-function switchTab(tabId, el) {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-}
-
 function copyAssetLink(el) {
     const assetName = el.querySelector('.asset-name').innerText.trim();
     const content = ASSET_CONTENT[assetName] || `<div style="text-align:center; padding:50px;">Preview not available for ${assetName}</div>`;
@@ -495,14 +542,70 @@ function closeModal(e) {
     }
 }
 
-// --- FIXED: Remove ALERT ---
 function updateBanner() {
     document.getElementById('bannerPreviewText').innerText = document.getElementById('bannerMsg').value;
-    // alert("Banner updated!"); // REMOVED
 }
 
 // --- SOCIAL MANAGER LOGIC ---
 let currentPreviewMode = 'fb'; 
+
+function toggleSocialView(view) {
+    const composeEl = document.getElementById('social-compose-view');
+    const inboxEl = document.getElementById('social-inbox-view');
+    const btnCompose = document.getElementById('btnShowCompose');
+    const btnInbox = document.getElementById('btnShowInbox');
+
+    if (view === 'compose') {
+        composeEl.style.display = 'flex';
+        inboxEl.style.display = 'none';
+        
+        btnCompose.style.background = 'white';
+        btnCompose.style.color = 'black';
+        btnCompose.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+        
+        btnInbox.style.background = 'transparent';
+        btnInbox.style.color = '#64748b';
+        btnInbox.style.boxShadow = 'none';
+    } else {
+        composeEl.style.display = 'none';
+        inboxEl.style.display = 'block';
+        
+        btnInbox.style.background = 'white';
+        btnInbox.style.color = 'black';
+        btnInbox.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+        
+        btnCompose.style.background = 'transparent';
+        btnCompose.style.color = '#64748b';
+        btnCompose.style.boxShadow = 'none';
+    }
+}
+
+// INBOX REPLY LOGIC
+function toggleReply(btn) {
+    const replyBox = btn.nextElementSibling;
+    if (replyBox.classList.contains('active')) {
+        replyBox.classList.remove('active');
+        btn.innerText = 'Reply';
+    } else {
+        replyBox.classList.add('active');
+        btn.innerText = 'Cancel';
+    }
+}
+
+function sendReply(btn) {
+    const input = btn.previousElementSibling;
+    if(input.value.trim() === "") return;
+    
+    // Simulate sending
+    alert(`Reply sent: "${input.value}"`);
+    input.value = "";
+    
+    // Close box
+    const replyBox = btn.parentElement;
+    const toggleBtn = replyBox.previousElementSibling;
+    replyBox.classList.remove('active');
+    toggleBtn.innerText = 'Reply';
+}
 
 function setPreviewMode(mode) {
     currentPreviewMode = mode;
