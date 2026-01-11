@@ -25,8 +25,8 @@
   <meta name="theme-color" content="#0f172a">
   
   <link rel="icon" type="image/png" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
-<link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="manifest" href="manifest.json">
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -64,9 +64,14 @@
     .sidebar { 
       width: 260px; background: var(--sidebar); color: #fff; 
       padding: 24px 0; flex-shrink: 0; position: fixed; 
-      height: 100vh; overflow-y: auto; z-index: 1000;
+      height: 100vh; 
+      /* Changed to visible so flyout menus can be seen outside the box */
+      overflow-y: visible; 
+      z-index: 1000;
       transition: all 0.3s ease;
+      scrollbar-width: none; 
     }
+    .sidebar::-webkit-scrollbar { display: none; }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
     /* COLLAPSIBLE HEADERS */
@@ -77,9 +82,62 @@
 
     .nav-section-header {
       font-size: 11px; text-transform: uppercase; color: #94a3b8; 
-      margin: 18px 24px 8px; font-weight: 700; letter-spacing: 1px; 
+      margin: 5px 0; padding: 12px 24px; /* Adjusted padding for better click target */
+      font-weight: 700; letter-spacing: 1px; 
+      position: relative; /* For active styling */
+      transition: all 0.2s;
     }
-    .nav-section-header:hover { color: #fff; }
+    .nav-section-header:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    
+    /* Active Sidebar Header State */
+    .nav-section-header.active { 
+        color: #fff; 
+        background-color: #1e293b;
+        border-right: 4px solid var(--accent);
+    }
+    .nav-section-header.active .chevron { transform: rotate(-90deg); } /* Point right */
+
+    /* --- SIDEBAR FLYOUT SUB-MENUS --- */
+    /* This targets only the collapsible content inside the sidebar */
+    .sidebar .collapsible-content {
+        display: none;
+        position: fixed; /* Breaks it out of the sidebar flow */
+        left: 260px;     /* Starts exactly at the edge of the sidebar */
+        width: 220px;    /* Width of the flyout */
+        background-color: #1e293b; /* Match sidebar dark blue */
+        border: 1px solid #334155;
+        border-left: none;
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+        border-radius: 0 8px 8px 0;
+        z-index: 1100;
+        padding: 10px 0;
+    }
+
+    .sidebar .collapsible-content.open {
+        display: block;
+        animation: flyIn 0.2s ease-out;
+    }
+
+    @keyframes flyIn {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* MAIN CONTENT COLLAPSIBLES (Standard Accordion) */
+    .main .collapsible-content {
+      max-height: 5000px; overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+      opacity: 1;
+    }
+    .main .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+
+    /* SYSTEM GROUP (Always Visible) */
+    .system-group {
+        display: block;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #334155;
+    }
 
     .section-heading { 
       font-size: 16px; font-weight: 800; margin: 30px 0 15px; 
@@ -98,21 +156,14 @@
     .chevron { transition: transform 0.3s ease; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
 
-    .collapsible-content {
-      max-height: 2500px; overflow: hidden;
-      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
-      opacity: 1;
-    }
-    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
-
     /* LINKS */
     .nav-link { 
-      display: flex; align-items: center; padding: 10px 24px; 
-      color: #64748b; text-decoration: none; font-size: 14px; 
-      transition: 0.2s; border-left: 4px solid transparent;
+      display: flex; align-items: center; padding: 12px 24px; 
+      color: #94a3b8; text-decoration: none; font-size: 14px; 
+      transition: 0.2s; 
     }
-    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
-    .nav-link.active { border-left-color: var(--accent); color: #fff; }
+    .nav-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; background: rgba(255,255,255,0.05); }
 
     /* --- MAIN AREA (UPDATED) --- */
     .main { 
@@ -255,6 +306,7 @@
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 10000;
         box-shadow: 10px 0 20px rgba(0,0,0,0.3);
+        overflow-y: auto; /* Return to normal scroll on mobile */
       }
       
       .sidebar.open {
@@ -296,6 +348,17 @@
         backdrop-filter: blur(2px);
       }
       .menu-overlay.active { display: block; }
+
+      /* ON MOBILE: Revert flyout logic to standard accordion logic */
+      .sidebar .collapsible-content {
+          position: static;
+          width: 100%;
+          background: transparent;
+          border: none;
+          box-shadow: none;
+          padding-left: 10px;
+      }
+      .nav-section-header.active .chevron { transform: rotate(180deg); }
     }
 
     /* --- MOBILE DATA GRID TWEAKS --- */
@@ -383,8 +446,10 @@
 
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header"><span>System</span></div>
-    <div class="collapsible-content">
+    
+    <div class="nav-section-header" style="cursor: default; color: var(--accent);"><span>System</span></div>
+    <div class="system-group">
+      <a href="index.html" class="nav-link active"><span>Command Center</span></a>
       <a href="#" class="nav-link logout-link" onclick="handleLogout()">
         <span class="icon">🚪</span> <span>Logout of Portal</span>
       </a>
@@ -398,19 +463,14 @@
       }
     </script>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span><span class="chevron">▼</span></div>
-    <div id="grp-main" class="collapsible-content">
-      <a href="index.html" class="nav-link active"><span>Command Center</span></a>
-    </div>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)"><span>Samplings</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleSidebarGroup('grp-sample', this)"><span>Samplings</span><span class="chevron">▼</span></div>
     <div id="grp-sample" class="collapsible-content">
       <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
       <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
       <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)"><span>Sales</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleSidebarGroup('grp-sales', this)"><span>Sales</span><span class="chevron">▼</span></div>
     <div id="grp-sales" class="collapsible-content">
       <a href="sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
       <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
@@ -419,7 +479,7 @@
       <a href="sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
     </div>
 
-    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)"><span>Inventory</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleSidebarGroup('grp-inv', this)"><span>Inventory</span><span class="chevron">▼</span></div>
     <div id="grp-inv" class="collapsible-content">
       <a href="inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
       <a href="inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
@@ -427,7 +487,7 @@
       <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)"><span>Brewing</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleSidebarGroup('grp-brew', this)"><span>Brewing</span><span class="chevron">▼</span></div>
     <div id="grp-brew" class="collapsible-content">
       <a href="Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
       <a href="Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
@@ -437,7 +497,7 @@
       <a href="Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
     </div>
     
-    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)"><span>Reporting & Analytics</span><span class="chevron">▼</span></div>
+    <div class="nav-section-header" onclick="toggleSidebarGroup('grp-rep', this)"><span>Reporting & Analytics</span><span class="chevron">▼</span></div>
     <div id="grp-rep" class="collapsible-content">
       <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
       <a href="Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
@@ -456,7 +516,7 @@
       </div>
     </header>
 
-     <div class="section-heading" onclick="toggleGroup('sect-sales', this)">
+     <div class="section-heading" onclick="toggleMainGroup('sect-sales', this)">
       <span>Zone 1: Sales Intelligence</span><span class="chevron">▼</span>
     </div>
     <div id="sect-sales" class="collapsible-content">
@@ -489,7 +549,7 @@
       </div>
     </div>
     
-<div class="section-heading" onclick="toggleGroup('sect-ops', this)">
+<div class="section-heading" onclick="toggleMainGroup('sect-ops', this)">
     <span>Zone 2: Daily Operations</span><span class="chevron">▼</span>
 </div>
 <div id="sect-ops" class="collapsible-content">
@@ -558,17 +618,17 @@
         </div>
     </div>
 </div>
-   <div class="section-heading" onclick="toggleGroup('grp-all-tanks', this)">
+   <div class="section-heading" onclick="toggleMainGroup('grp-all-tanks', this)">
     <span>Zone 3: Active Cellar Overview</span> <span class="chevron">▼</span>
 </div>
 <div id="grp-all-tanks" class="collapsible-content">
-    <div class="subsection-heading" onclick="toggleGroup('sect-prod', this)"><span>Production FVs (10 BBL)</span><span class="chevron">▼</span></div>
+    <div class="subsection-heading" onclick="toggleMainGroup('sect-prod', this)"><span>Production FVs (10 BBL)</span><span class="chevron">▼</span></div>
     <div id="sect-prod" class="collapsible-content"><div class="tier-2" id="grid-production"></div></div>
 
-    <div class="subsection-heading" onclick="toggleGroup('sect-pilot', this)"><span>Pilot System FVs (1 BBL)</span><span class="chevron">▼</span></div>
+    <div class="subsection-heading" onclick="toggleMainGroup('sect-pilot', this)"><span>Pilot System FVs (1 BBL)</span><span class="chevron">▼</span></div>
     <div id="sect-pilot" class="collapsible-content"><div class="tier-2" id="grid-pilot"></div></div>
 
-    <div class="subsection-heading" onclick="toggleGroup('sect-brite', this)"><span>Brite Tanks (10 BBL)</span><span class="chevron">▼</span></div>
+    <div class="subsection-heading" onclick="toggleMainGroup('sect-brite', this)"><span>Brite Tanks (10 BBL)</span><span class="chevron">▼</span></div>
     <div id="sect-brite" class="collapsible-content"><div class="tier-2" id="grid-brite"></div></div>
 </div>
     <footer class="app-footer">
@@ -611,11 +671,11 @@
 
     function runAllSyncs() {
         syncOutreachAndInventory(); // Zone 1 General
-        syncSamplingCard();         // Zone 1 Sampling
-        syncDeliveryCard();         // Zone 1 Delivery
-        syncLeadConversion();       // Zone 1 Leads
-        refreshCellarTanks();       // Zone 3 Tanks
-        refreshMLEngine();          // Zone 2 ML/Stats
+        syncSamplingCard();         // Zone 1 Sampling
+        syncDeliveryCard();         // Zone 1 Delivery
+        syncLeadConversion();       // Zone 1 Leads
+        refreshCellarTanks();       // Zone 3 Tanks
+        refreshMLEngine();          // Zone 2 ML/Stats
     }
 
     // --- DRAWER & UI TOGGLES ---
@@ -628,9 +688,56 @@
         btn.innerText = isOpen ? '✕' : '☰';
     }
 
-    function toggleGroup(id, el) {
-        document.getElementById(id).classList.toggle('collapsed');
-        el.classList.toggle('collapsed');
+    /* --- NEW SIDEBAR FLYOUT LOGIC (Moves Right) --- */
+    function toggleSidebarGroup(id, headerEl) {
+        // 1. Close all other sidebar menus first
+        const allContent = document.querySelectorAll('.sidebar .collapsible-content');
+        const allHeaders = document.querySelectorAll('.sidebar .nav-section-header');
+        
+        // Determine if we are closing the one we just clicked
+        const content = document.getElementById(id);
+        const isAlreadyOpen = content.classList.contains('open');
+
+        // Reset sidebar items
+        allContent.forEach(div => div.classList.remove('open'));
+        allHeaders.forEach(h => h.classList.remove('active'));
+
+        // 2. If it wasn't already open, open it now
+        if (!isAlreadyOpen) {
+            content.classList.add("open");
+            headerEl.classList.add("active");
+
+            // 3. Position Calculation (Only on Desktop)
+            // This grabs the button's location and sets the menu to match vertically
+            if (window.innerWidth > 1024) {
+                const rect = headerEl.getBoundingClientRect();
+                content.style.top = rect.top + "px";
+            } else {
+                content.style.top = "auto"; // Default for mobile
+            }
+        }
+    }
+
+    /* --- MAIN DASHBOARD ACCORDION LOGIC (Expands Down) --- */
+    function toggleMainGroup(id, el) {
+        const content = document.getElementById(id);
+        // Toggle the collapsed class logic you previously had
+        // But simpler: just toggle "open" or check styling
+        
+        // If using your original class logic:
+        // We need to check if we are mixing methods. 
+        // Let's stick to the styling you used for main: "collapsible-content"
+        // But main doesn't use the flyout CSS because it's not inside .sidebar
+        
+        if (content.style.maxHeight && content.style.maxHeight !== "0px") {
+             content.classList.add('collapsed');
+             content.style.maxHeight = null;
+             el.classList.add('collapsed');
+        } else {
+             content.classList.remove('collapsed');
+             content.style.maxHeight = content.scrollHeight + "px";
+             el.classList.remove('collapsed');
+        }
     }
 
     // 1. OPEN Logic (Clicking the Card)
