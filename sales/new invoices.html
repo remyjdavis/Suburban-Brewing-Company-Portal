@@ -447,9 +447,20 @@
       .invoice-footer { margin-top: auto; }
     }
     
-    /* ===== BARCODE COLUMN HARD CONSTRAINT ===== */
-    .invoice-table td:nth-child(5), .invoice-table th:nth-child(5) { width: 26%; max-width: 26%; overflow: hidden; text-align: center; }
-    .invoice-table td:nth-child(5) svg { max-width: 100%; height: 38px; display: block; margin: 0 auto; }
+    /* ===== BARCODE COLUMN UPDATED ===== */
+.invoice-table td:nth-child(5), .invoice-table th:nth-child(5) { 
+    width: 30%; /* Gave it a bit more room */
+    text-align: center; 
+    vertical-align: middle;
+}
+
+.invoice-table td:nth-child(5) svg { 
+    max-width: 100%; 
+    /* removed fixed height so it can grow */
+    height: auto; 
+    display: block; 
+    margin: 0 auto; 
+}
 
     /* --- MOBILE & TABLET DRAWER LOGIC --- */
     #menu-toggle { display: none; }
@@ -1294,7 +1305,15 @@
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                 svg.classList.add("line-barcode");
                 barcodeCell.appendChild(svg);
-                JsBarcode(svg, sku, { format: "CODE128", width: 1.2, height: 36, margin: 0, displayValue: false });
+               // Increased width to 2.0 (standard for retail) and height to 45
+JsBarcode(svg, sku, { 
+    format: "CODE128", 
+    width: 2.0, 
+    height: 45, 
+    margin: 5, // added margin to prevent cutting off edges
+    displayValue: true, // Optional: Shows the number below bars for manual entry if scan fails
+    fontSize: 12
+});
             }
           }
         }
