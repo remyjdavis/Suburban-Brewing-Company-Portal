@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Suburban Brewing | Mobile Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f172a">
+  
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      margin: 0;
+      background: #0f172a; /* Dark Navy Background */
+      color: white;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      margin-top: 10px;
+    }
+
+    h1 {
+      margin: 10px 0 5px;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 15px;
+      max-width: 400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 25px;
+      text-decoration: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      transition: transform 0.2s, background 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .card:active {
+      transform: scale(0.98);
+      background: #334155;
+    }
+
+    .icon-box {
+      width: 50px;
+      height: 50px;
+      background: rgba(37, 99, 235, 0.2); /* Transparent Blue */
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-right: 20px;
+      color: #60a5fa; /* Light Blue Icon */
+    }
+
+    .card-content {
+      flex: 1;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      display: block;
+    }
+
+    /* Specific Colors for Icons */
+    .delivery-icon { background: rgba(16, 185, 129, 0.2); color: #34d399; } /* Green */
+    .invoice-icon { background: rgba(245, 158, 11, 0.2); color: #fbbf24; } /* Orange */
+    .leads-icon { background: rgba(37, 99, 235, 0.2); color: #60a5fa; }   /* Blue */
+    .logout-btn {
+      margin-top: auto;
+      text-align: center;
+      padding: 20px;
+      color: #f87171;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+
+  <script>
+    // Simple Auth Check
+    (function() {
+        const auth = sessionStorage.getItem("sbc_auth");
+        if (auth !== "true") {
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            // Redirect to login, but tell login to come back here afterwards
+            window.location.replace(repoPath + "login.html?redirect=hub.html");
+        }
+    })();
+  </script>
+</head>
+<body>
+
+  <header>
+    <img src="logo.png" style="height: 60px; margin-bottom: 10px;">
+    <h1>Suburban Brewing</h1>
+    <p>Mobile Command Center</p>
+  </header>
+
+  <div class="grid">
+    
+    <a href="sales/deliveries.html" class="card">
+      <div class="icon-box delivery-icon">🚚</div>
+      <div class="card-content">
+        <span class="card-title">Do Deliveries</span>
+        <span class="card-desc">Scan barcodes & drop off orders</span>
+      </div>
+      <span style="font-size: 20px; color: #475569;">›</span>
+    </a>
+
+    <a href="sales/new invoices.html" class="card">
+      <div class="icon-box invoice-icon">📄</div>
+      <div class="card-content">
+        <span class="card-title">Create Invoice</span>
+        <span class="card-desc">Write an order for a customer</span>
+      </div>
+      <span style="font-size: 20px; color: #475569;">›</span>
+    </a>
+
+    <a href="sales/leads.html" class="card">
+      <div class="icon-box leads-icon">🎯</div>
+      <div class="card-content">
+        <span class="card-title">Sales Leads</span>
+        <span class="card-desc">View AI recommended stops</span>
+      </div>
+      <span style="font-size: 20px; color: #475569;">›</span>
+    </a>
+
+    <a href="index.html" class="card" style="background: transparent; border: 1px dashed #334155;">
+      <div class="icon-box" style="background: #334155; color: #94a3b8;">💻</div>
+      <div class="card-content">
+        <span class="card-title" style="color: #94a3b8;">Full Desktop Site</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="logout-btn" onclick="logout()">
+    Log Out
+  </div>
+
+  <script>
+    function logout() {
+      sessionStorage.removeItem("sbc_auth");
+      window.location.replace("login.html");
+    }
+  </script>
+
+</body>
+</html>
