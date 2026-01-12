@@ -441,313 +441,172 @@
 </div>
 
 <script>
-// ===== CONFIGURATION =====
-const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
-
-// ===== INIT =====
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
+    const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
     
-    // 1. Load Real Data
-    loadFreshSheet();
-    loadChurnMonitor();
-    
-    // 2. Initialize UI Defaults
-    updateBanner();
-    updateSocialPreview(); 
+    // Global Data Stores
+    let inventoryData = {};
+    let marketingData = {};
 
-    // 3. Mobile Menu Logic
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            if (window.innerWidth <= 1024) {
-                const sidebar = document.querySelector('.sidebar');
-                if (sidebar.classList.contains('open')) toggleMobileMenu();
-            }
-        });
-    });
-});
-
-// ===== 1. FRESH SHEET LOGIC (REAL INVENTORY) =====
-async function loadFreshSheet() {
-    const tbody = document.getElementById('freshSheetBody');
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading live inventory...</td></tr>';
-
-    try {
-        // Fetch from your backend "getBreweryInventory"
-        const response = await fetch(`${API_URL}?action=getBreweryInventory`);
-        const data = await response.json();
-
-        tbody.innerHTML = ""; // Clear loader
-
-        // Flatten the data (The API returns grouped products)
-        // We only want items with QTY > 0
-        let availableItems = [];
+    // --- INIT ---
+    document.addEventListener("DOMContentLoaded", () => {
+        // Init QR
+        new QRCode(document.getElementById("qr-target"), { text: "https://suburbanbrewingco.com", width: 64, height: 64 });
         
-        data.forEach(prod => {
-            prod.packages.forEach(pkg => {
-                if (pkg.qty > 0) {
-                    availableItems.push({
-                        name: prod.product,
-                        format: pkg.type,
-                        qty: pkg.qty
-                        // Note: Price isn't in inventory endpoint, usually we fetch Products for that
-                        // For now we will show "In Stock" or calculate based on known defaults
-                    });
+        // Load All Data
+        loadFreshSheet();
+        loadProducts();
+        loadMarketingData(); // <--- NEW: Fetch descriptions from Sheet
+    });
+
+    // --- TABS & NAVIGATION ---
+    function switchTab(tabId, el) {
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function openBuilder() {
+        document.getElementById('asset-grid-view').style.display = 'none';
+        document.getElementById('builder-view').style.display = 'block';
+    }
+
+    function closeBuilder() {
+        document.getElementById('builder-view').style.display = 'none';
+        document.getElementById('asset-grid-view').style.display = 'block';
+    }
+
+    // --- DATA LOADING ---
+    function loadMarketingData() {
+        fetch(`${API_URL}?action=getMarketingData`)
+            .then(r => r.json())
+            .then(data => {
+                marketingData = data;
+                console.log("Marketing Data Loaded:", marketingData);
+            });
+    }
+
+    function loadProducts() {
+        fetch(`${API_URL}?action=getProducts`)
+            .then(r => r.json())
+            .then(data => {
+                const select = document.getElementById("product-select");
+                select.innerHTML = '<option value="">-- Select Beer --</option>';
+                
+                inventoryData = {};
+                data.forEach(p => {
+                    if (!inventoryData[p.name]) inventoryData[p.name] = [];
+                    inventoryData[p.name].push(p);
+                });
+
+                Object.keys(inventoryData).sort().forEach(name => {
+                    const opt = document.createElement("option");
+                    opt.value = name;
+                    opt.textContent = name;
+                    select.appendChild(opt);
+                });
+            });
+    }
+
+    async function loadFreshSheet() {
+        const tbody = document.getElementById('freshSheetBody');
+        tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+        
+        try {
+            const res = await fetch(`${API_URL}?action=getBreweryInventory`);
+            const data = await res.json();
+            tbody.innerHTML = "";
+            
+            data.forEach(prod => {
+                prod.packages.forEach(pkg => {
+                    if(pkg.qty > 0) {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><strong>${prod.product}</strong></td>
+                                <td>${pkg.type}</td>
+                                <td><span class="badge badge-green">${pkg.qty} In Stock</span></td>
+                            </tr>
+                        `;
+                    }
+                });
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    // --- BUILDER LOGIC ---
+    function loadProductData() {
+        const name = document.getElementById("product-select").value;
+        if (!name) return;
+
+        // 1. Set Name
+        document.getElementById("in-name").value = name;
+
+        // 2. CHECK THE GOOGLE SHEET DATA 🧠
+        // We trim whitespace just in case the sheet has trailing spaces
+        const info = marketingData[name.trim()];
+        
+        if (info) {
+            document.getElementById("in-style").value = info.style || "Craft Beer";
+            document.getElementById("in-abv").value = info.abv || "";
+            document.getElementById("in-ibu").value = info.ibu || "";
+            document.getElementById("in-desc").value = info.desc || "";
+        } else {
+            // Clear fields if not found in sheet
+            document.getElementById("in-style").value = "Craft Beer"; 
+            document.getElementById("in-abv").value = "";
+            document.getElementById("in-ibu").value = "";
+            document.getElementById("in-desc").value = "";
+        }
+        
+        updateSheet();
+    }
+
+    function updateSheet() {
+        setText("out-name", document.getElementById("in-name").value || "BEER NAME");
+        setText("out-style", document.getElementById("in-style").value || "STYLE");
+        setText("out-abv", document.getElementById("in-abv").value || "--%");
+        setText("out-ibu", document.getElementById("in-ibu").value || "--");
+        setText("out-desc", document.getElementById("in-desc").value || "Description...");
+
+        // Update Price List (This still comes LIVE from Inventory Sheet)
+        const name = document.getElementById("product-select").value;
+        const list = document.getElementById("price-list");
+        list.innerHTML = "";
+
+        if (name && inventoryData[name]) {
+            inventoryData[name].forEach(pkg => {
+                if (pkg.price > 0) {
+                    list.innerHTML += `
+                        <div class="price-item">
+                            <span>${pkg.package}</span>
+                            <span style="color:var(--accent);">$${pkg.price.toFixed(2)}</span>
+                        </div>
+                    `;
                 }
             });
-        });
-
-        if (availableItems.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No inventory in stock.</td></tr>';
-            return;
         }
-
-        // Render Rows
-        tbody.innerHTML = availableItems.map(item => `
-            <tr>
-                <td style="font-weight:600; color:#111827;">${item.name}</td>
-                <td>${item.format}</td>
-                <td style="color:#6b7280;">See Price List</td> 
-                <td><span class="badge badge-green">${item.qty} In Stock</span></td>
-            </tr>
-        `).join('');
-
-    } catch (error) {
-        console.error(error);
-        tbody.innerHTML = '<tr><td colspan="4" style="color:red; text-align:center;">Error loading inventory.</td></tr>';
     }
-}
 
-// ===== 2. CHURN MONITOR LOGIC (REAL SALES ANALYSIS) =====
-async function loadChurnMonitor() {
-    const tbody = document.getElementById('churnBody');
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Analyzing sales history...</td></tr>';
+    function setText(id, val) { document.getElementById(id).textContent = val; }
 
-    try {
-        // Fetch ALL invoices to calculate last order dates
-        const response = await fetch(`${API_URL}?action=getFullAuditData`);
-        const invoices = await response.json();
-
-        // 1. Group by Customer to find last order date
-        const customerLastOrder = {};
-        
-        invoices.forEach(inv => {
-            const date = new Date(inv.date);
-            const name = inv.customer;
-            
-            // If we haven't seen this customer, or this invoice is newer than what we have
-            if (!customerLastOrder[name] || date > customerLastOrder[name].date) {
-                customerLastOrder[name] = {
-                    date: date,
-                    lastProduct: "Invoice #" + inv.number // We assume last product from invoice ID for overview
-                };
-            }
-        });
-
-        // 2. Calculate "Days Since Last Order"
-        const today = new Date();
-        const atRiskList = [];
-
-        Object.keys(customerLastOrder).forEach(custName => {
-            const lastDate = customerLastOrder[custName].date;
-            const diffTime = Math.abs(today - lastDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            // CRITERIA: If inactive for more than 45 days, they are "At Risk"
-            if (diffDays > 45) {
-                atRiskList.push({
-                    name: custName,
-                    lastDate: lastDate.toLocaleDateString(),
-                    daysAgo: diffDays,
-                    product: customerLastOrder[custName].lastProduct
-                });
-            }
-        });
-
-        // 3. Sort by longest time inactive
-        atRiskList.sort((a, b) => b.daysAgo - a.daysAgo);
-
-        tbody.innerHTML = "";
-        
-        if(atRiskList.length === 0) {
-             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No accounts at risk! 🎉</td></tr>';
-             return;
+    function handleImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById("hero-img");
+                img.src = e.target.result;
+                img.style.display = "block";
+                document.getElementById("hero-placeholder").style.display = "none";
+            };
+            reader.readAsDataURL(input.files[0]);
         }
-
-        // 4. Render top 10 at-risk
-        tbody.innerHTML = atRiskList.slice(0, 10).map(c => `
-            <tr>
-                <td><strong>${c.name}</strong></td>
-                <td>${c.lastDate}</td>
-                <td><span class="badge badge-red">${c.daysAgo} Days</span></td>
-                <td style="font-size:12px; color:#6b7280;">${c.product}</td>
-                <td>
-                    <a href="mailto:?subject=Checking In - Suburban Brewing&body=Hi ${c.name.split(' ')[0]},%0D%0A%0D%0AIt's been a while! We have some fresh kegs available..." 
-                       class="secondary" 
-                       style="padding:6px 12px; font-size:12px; text-decoration:none; background:#e5e7eb; color:#374151; border-radius:4px; display:inline-block;">
-                       Email
-                    </a>
-                </td>
-            </tr>
-        `).join('');
-
-    } catch (error) {
-        console.error(error);
-        tbody.innerHTML = '<tr><td colspan="5" style="color:red; text-align:center;">Error analyzing churn.</td></tr>';
     }
-}
 
-// ===== UI & TABS =====
-function toggleGroup(contentId, headerEl) {
-    const content = document.getElementById(contentId);
-    content.classList.toggle('collapsed');
-    headerEl.classList.toggle('collapsed');
-}
-
-function toggleMobileMenu() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.menu-overlay-mobile');
-    const btn = document.getElementById('menu-toggle');
-    const isOpen = sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
-    document.body.style.overflow = isOpen ? 'hidden' : '';
-    btn.innerText = isOpen ? '✕' : '☰';
-}
-
-function switchTab(tabId, el) {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-}
-
-// ===== ASSETS & MODALS =====
-const ASSET_CONTENT = {
-  'Vector Logos': `<div class="logo-grid"><div class="logo-box"><div style="font-size:40px;">🍻</div><span class="logo-label">Primary</span></div><div class="logo-box dark"><div style="font-size:40px; filter:invert(1);">🍻</div><span class="logo-label">White</span></div></div>`,
-  'Core Range Sell Sheet': `<div class="sell-sheet-preview"><div class="bottle-mockup"></div><div class="sheet-content"><h1>Moon Rocks NEIPA</h1><p>Juicy, Hazy, and out of this world.</p></div></div>`,
-  '2026 Price List': `<table class="price-table"><thead><tr><th>SKU</th><th>Product</th><th>Price</th></tr></thead><tbody><tr><td>SBC-001</td><td>Moon Rocks 1/2</td><td>$210.00</td></tr></tbody></table>`
-};
-
-function copyAssetLink(el) {
-    const assetName = el.querySelector('.asset-name').innerText.trim();
-    const content = ASSET_CONTENT[assetName] || `<div style="text-align:center; padding:50px;">Preview not available.</div>`;
-    document.getElementById('modal-title').innerText = assetName;
-    document.getElementById('modal-body').innerHTML = content;
-    document.getElementById('asset-modal').classList.add('active');
-}
-
-function closeModal(e) {
-    if (!e || e.target.classList.contains('modal-overlay') || e.target.classList.contains('close-btn')) {
-        document.getElementById('asset-modal').classList.remove('active');
+    function clearImage() {
+        document.getElementById("img-upload").value = "";
+        document.getElementById("hero-img").style.display = "none";
+        document.getElementById("hero-placeholder").style.display = "block";
     }
-}
-
-// ===== SOCIAL MEDIA TOOLS =====
-function updateBanner() {
-    document.getElementById('bannerPreviewText').innerText = document.getElementById('bannerMsg').value;
-}
-
-let currentPreviewMode = 'fb'; 
-function toggleSocialView(view) {
-    const composeEl = document.getElementById('social-compose-view');
-    const inboxEl = document.getElementById('social-inbox-view');
-    const btnCompose = document.getElementById('btnShowCompose');
-    const btnInbox = document.getElementById('btnShowInbox');
-
-    if (view === 'compose') {
-        composeEl.style.display = 'flex';
-        inboxEl.style.display = 'none';
-        btnCompose.style.background = 'white';
-        btnCompose.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        btnInbox.style.background = 'transparent';
-        btnInbox.style.boxShadow = 'none';
-    } else {
-        composeEl.style.display = 'none';
-        inboxEl.style.display = 'block';
-        btnInbox.style.background = 'white';
-        btnInbox.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        btnCompose.style.background = 'transparent';
-        btnCompose.style.boxShadow = 'none';
-    }
-}
-
-function toggleReply(btn) {
-    const replyBox = btn.nextElementSibling;
-    if (replyBox.classList.contains('active')) {
-        replyBox.classList.remove('active');
-        btn.innerText = 'Reply';
-    } else {
-        replyBox.classList.add('active');
-        btn.innerText = 'Cancel';
-    }
-}
-
-function generateAIReply(btn, userComment) {
-    const inputField = btn.previousElementSibling;
-    const originalText = btn.innerText;
-    btn.innerText = "Thinking...";
-    btn.disabled = true;
-    setTimeout(() => {
-        let aiResponse = "Thanks for the support! 🍻";
-        if (userComment.toLowerCase().includes("stout")) aiResponse = "The stout is on tap now! Come grab a pint.";
-        inputField.value = aiResponse;
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }, 800);
-}
-
-function sendReply(btn) {
-    alert("Reply posted!");
-    btn.parentElement.classList.remove('active');
-}
-
-function setPreviewMode(mode) {
-    currentPreviewMode = mode;
-    document.getElementById('btnPreviewFB').className = mode === 'fb' ? 'preview-btn active' : 'preview-btn';
-    document.getElementById('btnPreviewIG').className = mode === 'ig' ? 'preview-btn active' : 'preview-btn';
-    // Style adjustments would go here, stripped for brevity
-    updateSocialPreview();
-}
-
-function updateSocialPreview() {
-    const text = document.getElementById('socialCaption').value;
-    const headerEl = document.getElementById('previewHeader');
-    const bodyEl = document.getElementById('previewBody');
-    
-    if (currentPreviewMode === 'fb') {
-        headerEl.innerHTML = `<strong>Suburban Brewing Co.</strong><div style="font-size:11px;color:#666;">Just now</div>`;
-        bodyEl.innerHTML = text;
-    } else {
-        headerEl.innerHTML = `<strong>suburbanbrewing</strong>`;
-        bodyEl.innerHTML = `<strong>suburbanbrewing</strong> ${text}`;
-    }
-}
-
-function handleSocialUpload(input) {
-    const imgEl = document.getElementById('socialPreviewImg');
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imgEl.src = e.target.result;
-            imgEl.style.display = 'block';
-            document.getElementById('socialPreviewImgContainer').querySelector('span').style.display = 'none';
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-function clearSocialImage() {
-    document.getElementById('socialUpload').value = "";
-    document.getElementById('socialPreviewImg').style.display = 'none';
-    document.getElementById('socialPreviewImgContainer').querySelector('span').style.display = 'block';
-}
-
-function handleSocialPost() {
-    const fb = document.getElementById('checkFB').checked;
-    const ig = document.getElementById('checkIG').checked;
-    if(!fb && !ig) return alert("Select a platform");
-    alert(`Posting to: ${fb ? 'Facebook ' : ''}${ig ? 'Instagram' : ''}`);
-}
 </script>
 </body>
 </html>
