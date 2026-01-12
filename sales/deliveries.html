@@ -195,10 +195,15 @@
 
     #scanner { max-width: 100%; width: 420px; margin: 15px auto; border-radius: 12px; overflow: hidden; border: 1px solid #ddd; background: #000; }
 
-   /* --- FOOTER STYLES (UPDATED TO MATCH SALES ACTIVITY PAGE) --- */
+   /* --- FOOTER STYLES (LOCKED SIZE) --- */
     .app-footer {
         margin-top: auto;
-        padding: 10px 0; 
+        /* Enforce fixed height to prevent jumping */
+        height: 40px !important; 
+        max-height: 40px !important;
+        overflow: hidden; /* Cuts off anything that tries to make it huge */
+        
+        padding: 0 30px !important; 
         border-top: 1px solid #e2e8f0;
         display: flex;
         justify-content: space-between;
@@ -207,46 +212,45 @@
         font-size: 11px;
         font-weight: 500;
         width: 100%;
-        margin-bottom: 10px;
-        /* background removed to blend with delivery page background */
-        padding-left: 30px; 
-        padding-right: 30px;
+        margin-bottom: 0;
+        background-color: var(--bg); /* Prevents transparent background flash */
     }
 
-    .footer-links a {
-        color: #94a3b8;
-        text-decoration: none;
-        margin-left: 20px;
-        transition: color 0.2s ease;
+    .footer-links a { 
+        color: #94a3b8; 
+        text-decoration: none; 
+        margin-left: 20px; 
+        transition: color 0.2s ease; 
+        line-height: 40px; /* Vertically centers text */
+    }
+    .footer-links a:hover { 
+        color: var(--accent); 
+        text-decoration: underline; 
     }
 
-    .footer-links a:hover {
-        color: var(--accent);
-        text-decoration: underline;
+    .system-status { 
+        display: inline-flex; 
+        align-items: center; 
+        gap: 6px; 
+        margin-left: 15px; 
+        padding-left: 15px; 
+        border-left: 1px solid #cbd5e1; 
+        height: 100%;
     }
 
-    .system-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-left: 15px;
-        padding-left: 15px;
-        border-left: 1px solid #cbd5e1;
+    .status-dot { 
+        width: 8px; 
+        height: 8px; 
+        background-color: var(--ready); 
+        border-radius: 50%; 
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); 
+        animation: pulse 2s infinite; 
     }
 
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        background-color: var(--ready); /* Green */
-        border-radius: 50%;
-        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    @keyframes pulse { 
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 
+        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); } 
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } 
     }
 
     /* ============================================================
@@ -284,9 +288,16 @@
       }
       
      /* Footer Stack for mobile */
-      .app-footer { flex-direction: column; gap: 15px; text-align: center; }
-      .footer-links a { margin: 0 10px; }
-      .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
+      .app-footer { 
+            height: auto !important; /* Allow mobile to expand */
+            max-height: none !important;
+            flex-direction: column; 
+            gap: 10px; 
+            text-align: center; 
+            padding: 10px 15px !important; 
+        }
+        .footer-links a { margin: 0 10px; line-height: normal; }
+        .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
   </style>
 </head>
