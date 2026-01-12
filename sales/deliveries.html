@@ -141,10 +141,16 @@
 
     /* --- MAIN CONTENT & HEADER --- */
     .main { 
-      flex: 1; margin-left: 260px; display: flex; flex-direction: column; 
-      transition: all 0.3s ease; width: 100%; min-height: 100vh; 
+      flex: 1; 
+      margin-left: 260px; 
+      display: flex; 
+      flex-direction: column; 
+      transition: all 0.3s ease; 
+      width: 100%; 
+      min-height: 100vh; 
+      /* FIXED: Removed padding here so Footer spans full width */
+      padding: 0; 
     }
-
     /* ⚠️ MASTER HEADER TEMPLATE STYLE ⚠️ */
     .topbar { 
       background: #fff; 
@@ -195,26 +201,31 @@
 
     #scanner { max-width: 100%; width: 420px; margin: 15px auto; border-radius: 12px; overflow: hidden; border: 1px solid #ddd; background: #000; }
 
-   /* --- FOOTER STYLES (LOCKED SIZE) --- */
+   /* --- FOOTER STYLES (LOCKED & FIXED) --- */
     .app-footer {
         margin-top: auto;
-        /* Enforce fixed height to prevent jumping */
-        height: 40px !important; 
-        max-height: 40px !important;
-        overflow: hidden; /* No expansion allowed */
-        white-space: nowrap; /* Forces content to one line */
         
-        padding: 0 30px !important; 
+        /* 1. FORCE HEIGHT */
+        height: 40px !important;
+        min-height: 40px !important;
+        max-height: 40px !important;
+        
+        /* 2. PREVENT WRAPPING/JUMPING */
+        overflow: hidden;
+        white-space: nowrap;
+        
+        /* 3. LAYOUT */
+        padding: 0 30px !important;
         border-top: 1px solid #e2e8f0;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        color: #94a3b8; 
+        
+        color: #94a3b8;
         font-size: 11px;
         font-weight: 500;
         width: 100%;
-        margin-bottom: 0;
-        background-color: var(--bg); /* Prevents transparent background flash */
+        margin-bottom: 0 !important;
     }
 
     .footer-links a { 
@@ -222,7 +233,7 @@
         text-decoration: none; 
         margin-left: 20px; 
         transition: color 0.2s ease; 
-        line-height: 40px; /* Vertically centers text */
+        line-height: 40px; /* Center text vertically */
     }
     .footer-links a:hover { 
         color: var(--accent); 
@@ -290,15 +301,14 @@
       
      /* Footer Stack for mobile */
       .app-footer { 
-            height: auto !important; /* Allow mobile to expand */
-            max-height: none !important;
-            flex-direction: column; 
-            gap: 10px; 
-            text-align: center; 
-            padding: 10px 15px !important; 
-        }
-        .footer-links a { margin: 0 10px; line-height: normal; }
-        .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
+          height: auto !important; 
+          max-height: none !important;
+          white-space: normal;
+          flex-direction: column; gap: 15px; text-align: center; 
+          padding: 15px !important;
+      }
+      .footer-links a { margin: 0 10px; line-height: normal; }
+      .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
   </style>
 </head>
