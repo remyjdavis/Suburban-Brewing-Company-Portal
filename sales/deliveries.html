@@ -465,6 +465,7 @@
 <script>
 /* ===== CONFIG ===== */
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+const DRIVER_STORAGE_KEY = "sbc_driver_name"; // Key to remember the driver
 
 let deliveries = [];
 let selectedInvoice = null;
@@ -482,12 +483,10 @@ function toggleMobileMenu() {
     const btn = document.getElementById('menu-toggle');
     const isOpen = sidebar.classList.toggle('open');
     overlay.classList.toggle('active');
-    
-    // Prevent background scroll
     document.body.style.overflow = isOpen ? 'hidden' : '';
-    
     btn.innerText = isOpen ? '✕' : '☰';
 }
+
 /* ===== INITIALIZE ===== */
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById('copyright-year').innerText = new Date().getFullYear();
@@ -503,7 +502,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 2. Load Deliveries
+  // 2. AUTO-POPULATE DRIVER NAME
+  // Check if phone remembers the driver
+  const savedDriver = localStorage.getItem(DRIVER_STORAGE_KEY);
+  if (savedDriver) {
+      document.getElementById("driverName").value = savedDriver;
+  }
+
+  // 3. LISTEN FOR NAME CHANGES
+  // If they change the name, remember the new one
+  document.getElementById("driverName").addEventListener("input", (e) => {
+      localStorage.setItem(DRIVER_STORAGE_KEY, e.target.value.trim());
+  });
+
+  // 4. Load Deliveries
   loadOpenDeliveries();
 });
 
@@ -511,10 +523,11 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadOpenDeliveries() {
   try {
     const res = await fetch(`${API_URL}?action=getOpenDeliveries`);
-    const deliveries = await res.json();
+    const data = await res.json();
+    deliveries = data; // Store globally for lookups
     document.getElementById("loading").style.display = "none";
 
-    if (!deliveries.length) {
+    if (!data.length) {
       document.getElementById("empty").style.display = "block";
       return;
     }
@@ -522,17 +535,17 @@ async function loadOpenDeliveries() {
     const tbody = document.getElementById("deliveryBody");
     document.getElementById("deliveryTable").style.display = "table";
     
-    // Updated with data-label for mobile card stacking
-    tbody.innerHTML = deliveries.map(inv => `
+    tbody.innerHTML = data.map(inv => `
       <tr data-invoice="${inv.invoiceNumber}" onclick="selectRow(this, '${inv.invoiceNumber}')">
         <td data-label="Invoice #">${inv.invoiceNumber}</td>
-        <td data-label="Date">${inv.date}</td>
+        <td data-label="Date">${new Date(inv.date).toLocaleDateString()}</td>
         <td data-label="Customer">${inv.customer}</td>
         <td data-label="Total">$${Number(inv.total).toFixed(2)}</td>
         <td data-label="Status" class="status">${inv.status}</td>
       </tr>
     `).join('');
   } catch (err) {
+    console.error(err);
     document.getElementById("loading").textContent = "Error loading data.";
   }
 }
@@ -544,65 +557,120 @@ function selectRow(row, invoiceNumber) {
   selectedInvoice = invoiceNumber;
 }
 
-/* ===== UPDATE ACTION ===== */
+/* ===== MANUAL UPDATE ACTION ===== */
 async function markSelectedDelivered() {
   const driver = document.getElementById("driverName").value.trim();
-  if (!driver) return alert("Driver name required");
-  if (!selectedInvoice) return alert("Select or scan an invoice first");
+  if (!driver) return Swal.fire("Missing Info", "Please enter Driver Name first", "warning");
+  if (!selectedInvoice) return Swal.fire("Missing Info", "Select an invoice to deliver", "warning");
 
-  const deliveredAt = new Date().toISOString();
-
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "markDelivered",
-        invoiceNumber: selectedInvoice,
-        driver,
-        deliveredAt
-      })
-    });
-
-    alert(`Invoice ${selectedInvoice} marked as delivered`);
-    location.reload();
-  } catch (err) {
-    alert("Error updating status. Please try again.");
-    console.error(err);
-  }
+  processDelivery(selectedInvoice, driver);
 }
 
-/* ===== QUAGGA BARCODE SCANNER ===== */
+/* ===== CORE DELIVERY PROCESSOR ===== */
+async function processDelivery(invoiceNum, driverName) {
+    // Visual Feedback
+    Swal.fire({
+       title: 'Processing...',
+       text: `Marking Invoice ${invoiceNum} as Delivered...`,
+       allowOutsideClick: false,
+       didOpen: () => Swal.showLoading()
+    });
+
+    try {
+       const deliveredAt = new Date().toISOString();
+       
+       const response = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "markDelivered",
+            invoiceNumber: invoiceNum,
+            driver: driverName,
+            deliveredAt: deliveredAt
+          })
+       });
+
+       const result = await response.json();
+
+       if(result.success) {
+          Swal.fire({
+             title: "Delivered!",
+             text: `Invoice ${invoiceNum} updated successfully.`,
+             icon: "success",
+             timer: 1500,
+             showConfirmButton: false
+          }).then(() => {
+             location.reload(); 
+          });
+       } else {
+          throw new Error(result.error || "Unknown error");
+       }
+    } catch(err) {
+       Swal.fire("Error", "Could not update invoice: " + err.message, "error");
+    }
+}
+
+/* ===== QUAGGA BARCODE SCANNER (AUTO-FIRE) ===== */
 function startScanner() {
+  // 1. Check Driver Name BEFORE opening camera
+  const driver = document.getElementById("driverName").value.trim();
+  if (!driver) {
+     Swal.fire("Driver Name Required", "Please enter your name before scanning.", "warning");
+     // Highlight the input box
+     document.getElementById("driverName").focus();
+     document.getElementById("driverName").style.borderColor = "red";
+     return;
+  }
+  document.getElementById("driverName").style.borderColor = "#d1d5db"; // Reset border
+
   const target = document.getElementById("scanner");
-  target.innerHTML = "";
+  target.innerHTML = ""; 
 
   Quagga.init({
     inputStream: {
+      name: "Live",
       type: "LiveStream",
-      target,
-      constraints: { facingMode: "environment" }
+      target: target,
+      constraints: {
+        facingMode: "environment",
+        width: 640,
+        height: 480,
+        aspectRatio: { min: 1, max: 2 }
+      }
     },
-    decoder: { readers: ["code_128_reader"] }
-  }, err => {
+    decoder: { readers: ["code_128_reader"] },
+    locate: true
+  }, function(err) {
     if (err) {
       console.error(err);
-      return alert("Camera error: Ensure you are on HTTPS and have given permission.");
+      return Swal.fire("Camera Error", "Could not access camera. Ensure you are on HTTPS.", "error");
     }
     Quagga.start();
+    target.style.border = "3px solid #10b981"; // Green border = Active
   });
 
-  Quagga.onDetected(data => {
+  Quagga.onDetected(async (data) => {
     Quagga.stop();
-    const code = data.codeResult.code;
-    selectedInvoice = code;
+    target.innerHTML = ""; // Clear video
+    target.style.border = "1px solid #ddd";
 
-    // Highlight row in table if it exists
-    const row = document.querySelector(`tr[data-invoice="${code}"]`);
-    if (row) {
-      selectRow(row, code);
-      alert(`Invoice ${code} scanned and selected!`);
+    const code = data.codeResult.code;
+    
+    // Check if this invoice is actually in our list
+    const exists = deliveries.find(d => d.invoiceNumber === code);
+    
+    if (exists) {
+        // Highlight Row
+        const row = document.querySelector(`tr[data-invoice="${code}"]`);
+        if(row) selectRow(row, code);
+        
+        // AUTO-DELIVER
+        processDelivery(code, driver);
     } else {
-      alert(`Scanned invoice ${code}, but it's not in the 'Open' list.`);
+        Swal.fire({
+            title: "Unknown Invoice",
+            text: `Scanned ${code}, but it is not in the Open Deliveries list.`,
+            icon: "warning"
+        });
     }
   });
 }
