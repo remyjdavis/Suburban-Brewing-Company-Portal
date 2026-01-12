@@ -13,6 +13,36 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   
+  <script>
+    /* =========================================
+       MAGIC LOGIN LOGIC (BOSS MODE)
+       ========================================= */
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        
+        // 1. Check for the Magic Key in the URL
+        // You will send him the link: hub.html?key=boss
+        if (params.get("key") === "boss") {
+            
+            // A. Auto-Login him
+            sessionStorage.setItem("sbc_auth", "true");
+            
+            // B. Auto-Set his Driver Name (Customize "Corey" to his actual name)
+            // This ensures the "Deliveries" page doesn't ask him who he is.
+            if (!localStorage.getItem("sbc_driver_name")) {
+                localStorage.setItem("sbc_driver_name", "Corey"); 
+            }
+        }
+
+        // 2. Standard Security Check
+        const auth = sessionStorage.getItem("sbc_auth");
+        if (auth !== "true") {
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            window.location.replace(repoPath + "login.html?redirect=hub.html");
+        }
+    })();
+  </script>
+
   <style>
     body {
       margin: 0;
@@ -74,19 +104,17 @@
     .icon-box {
       width: 50px;
       height: 50px;
-      background: rgba(37, 99, 235, 0.2); /* Transparent Blue */
+      background: rgba(37, 99, 235, 0.2);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 24px;
       margin-right: 20px;
-      color: #60a5fa; /* Light Blue Icon */
+      color: #60a5fa;
     }
 
-    .card-content {
-      flex: 1;
-    }
+    .card-content { flex: 1; }
 
     .card-title {
       font-size: 18px;
@@ -101,10 +129,11 @@
       display: block;
     }
 
-    /* Specific Colors for Icons */
-    .delivery-icon { background: rgba(16, 185, 129, 0.2); color: #34d399; } /* Green */
-    .invoice-icon { background: rgba(245, 158, 11, 0.2); color: #fbbf24; } /* Orange */
-    .leads-icon { background: rgba(37, 99, 235, 0.2); color: #60a5fa; }   /* Blue */
+    /* Colors */
+    .delivery-icon { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .invoice-icon { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .leads-icon { background: rgba(37, 99, 235, 0.2); color: #60a5fa; }
+    
     .logout-btn {
       margin-top: auto;
       text-align: center;
@@ -113,20 +142,9 @@
       font-weight: 600;
       cursor: pointer;
       font-size: 14px;
+      opacity: 0.5;
     }
   </style>
-
-  <script>
-    // Simple Auth Check
-    (function() {
-        const auth = sessionStorage.getItem("sbc_auth");
-        if (auth !== "true") {
-            const repoPath = "/Suburban-Brewing-Company-Portal/";
-            // Redirect to login, but tell login to come back here afterwards
-            window.location.replace(repoPath + "login.html?redirect=hub.html");
-        }
-    })();
-  </script>
 </head>
 <body>
 
@@ -174,9 +192,7 @@
 
   </div>
 
-  <div class="logout-btn" onclick="logout()">
-    Log Out
-  </div>
+  <div class="logout-btn" onclick="logout()">Log Out</div>
 
   <script>
     function logout() {
