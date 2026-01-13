@@ -610,6 +610,8 @@
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+
+// Global Data Stores
 let inventoryData = {};
 let marketingData = {};
 
@@ -651,7 +653,7 @@ function switchTab(tabId, el) {
 function openGenerator() {
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('generator-view').style.display = 'block';
-    renderCatalog(); // <--- This runs the loop you already have at the bottom of your script
+    renderCatalog(); 
 }
 
 function closeGenerator() {
@@ -680,10 +682,6 @@ function closeModal(e) {
     if (!e || e.target.classList.contains('modal-overlay') || e.target.classList.contains('close-btn')) {
         document.getElementById('asset-modal').classList.remove('active');
     }
-}
-
-function updateBanner() {
-    document.getElementById('bannerPreviewText').innerText = document.getElementById('bannerMsg').value;
 }
 
 // --- SOCIAL MANAGER LOGIC ---
@@ -786,38 +784,68 @@ function handleSocialPost() {
     alert("Posted!");
 }
 
+function updateBanner() {
+    document.getElementById('bannerPreviewText').innerText = document.getElementById('bannerMsg').value;
+}
+
 // --- BACKEND DATA INTEGRATION ---
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
+    // 1. Set Date
+    if(document.getElementById('currentDate')) {
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
+    }
     
-    // Check QR Lib
+    // 2. Check QR Lib
     if(document.getElementById("qr-target")) {
-        try { new QRCode(document.getElementById("qr-target"), { text: "https://suburbanbrewingco.com", width: 64, height: 64 }); } 
-        catch(e) { console.log("QR Lib loading..."); }
+        try { 
+            new QRCode(document.getElementById("qr-target"), { text: "https://suburbanbrewingco.com", width: 50, height: 50 }); 
+        } catch(e) { console.log("QR Lib loading..."); }
     }
 
+    // 3. Load Data
     loadFreshSheet();
     loadChurnMonitor();
     
-    // FETCH BOTH DATASETS FOR THE GENERATOR
+    // 4. Load Data for Generator (Fixing the data source here)
+    document.getElementById('loading-status').innerText = "Fetching Data...";
+    
     Promise.all([
-        fetch(`${API_URL}?action=getProducts`).then(r=>r.json()),
-        fetch(`${API_URL}?action=getMarketingData`).then(r=>r.json())
-    ]).then(([products, market]) => {
+        fetch(`${API_URL}?action=getBreweryInventory`).then(r => r.json()), // Changed to getBreweryInventory for correct stock data
+        fetch(`${API_URL}?action=getMarketingData`).then(r => r.json())
+    ]).then(([inventory, market]) => {
         
-        // 1. Process Inventory
+        // Process Inventory (Group by Product Name)
         inventoryData = {};
-        products.forEach(p => {
-            const n = p.name.trim();
+        
+        inventory.forEach(p => {
+            // FIX: Ensure we check both 'product' and 'name' properties
+            const n = (p.product || p.name || "Unknown").trim();
+            
             if(!inventoryData[n]) inventoryData[n] = [];
-            inventoryData[n].push(p);
+            
+            // Handle nested packages if they exist, or flat structure
+            if (p.packages && Array.isArray(p.packages)) {
+                p.packages.forEach(pkg => {
+                    inventoryData[n].push(pkg);
+                });
+            } else {
+                inventoryData[n].push(p);
+            }
         });
 
-        // 2. Process Marketing
+        // Process Marketing
         marketingData = market;
+        
+        document.getElementById('loading-status').innerText = "Synced & Ready";
+        document.getElementById('loading-status').style.color = "green";
 
-    }).catch(e => console.error("Error loading generator data", e));
+    }).catch(e => {
+        console.error("Error loading generator data", e);
+        document.getElementById('loading-status').innerText = "Error Loading";
+        document.getElementById('loading-status').style.color = "red";
+    });
     
+    // 5. Init UI
     updateBanner();
     updateSocialPreview();
 });
@@ -829,14 +857,25 @@ async function loadFreshSheet() {
         const res = await fetch(`${API_URL}?action=getBreweryInventory`);
         const data = await res.json();
         tbody.innerHTML = "";
+        
+        if(!data || data.length === 0) {
+             tbody.innerHTML = '<tr><td colspan="3">No stock available.</td></tr>';
+             return;
+        }
+
         data.forEach(prod => {
-            prod.packages.forEach(pkg => {
-                if(pkg.qty > 0) {
-                    tbody.innerHTML += `<tr><td><strong>${prod.product}</strong></td><td>${pkg.type}</td><td><span class="badge badge-green">${pkg.qty} In Stock</span></td></tr>`;
-                }
-            });
+            if(prod.packages) {
+                prod.packages.forEach(pkg => {
+                    if(pkg.qty > 0) {
+                        tbody.innerHTML += `<tr><td><strong>${prod.product}</strong></td><td>${pkg.type}</td><td><span class="badge badge-green">${pkg.qty} In Stock</span></td></tr>`;
+                    }
+                });
+            }
         });
-    } catch(e) { tbody.innerHTML = '<tr><td colspan="3">Error loading data.</td></tr>'; }
+    } catch(e) { 
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="3" style="color:red;">Error loading data.</td></tr>'; 
+    }
 }
 
 async function loadChurnMonitor() {
@@ -867,7 +906,7 @@ async function loadChurnMonitor() {
     } catch(e) { tbody.innerHTML = '<tr><td colspan="4">Error loading churn.</td></tr>'; }
 }
 
-// --- CATALOG GENERATOR LOGIC (The New Stuff) ---
+// --- CATALOG GENERATOR LOGIC ---
 function renderCatalog() {
     const container = document.getElementById('catalog-container');
     const showPrice = document.getElementById('toggle-price').checked;
@@ -876,103 +915,60 @@ function renderCatalog() {
     const beers = Object.keys(inventoryData).sort();
     
     if(beers.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:30px; color:#999;">No inventory loaded yet. Wait a second...</div>`;
+        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">No inventory loaded yet. (Check Status)</div>`;
         return;
     }
 
     beers.forEach(name => {
-        // Merge Data
+        // 1. Get Marketing Data
         const mkt = marketingData[name] || {};
+        
+        // 2. Get Inventory Items
         const invItems = inventoryData[name];
         
-        // Skip if no marketing data AND no price (optional logic, but keeps it clean)
-        
-        // Build Price HTML
+        // 3. Build Price HTML
         let priceHtml = "";
-        if(showPrice) {
-            invItems.forEach(pkg => {
-                if(pkg.price > 0) {
-                    priceHtml += `<div class="price-row">${pkg.package}<span class="price-val">$${pkg.price.toFixed(2)}</span></div>`;
+        let hasStock = false;
+
+        invItems.forEach(pkg => {
+            // Check for stock (Quantity > 0)
+            if(pkg.qty > 0) {
+                hasStock = true;
+                if(showPrice) {
+                    const price = pkg.price ? parseFloat(pkg.price).toFixed(2) : "--";
+                    // pkg.type is usually the size (1/2 BBL, Case, etc)
+                    const pkgName = pkg.type || pkg.package || "Unit";
+                    priceHtml += `<div class="price-row"><span>${pkgName}</span><span class="price-val">$${price}</span></div>`;
                 }
-            });
-        }
+            }
+        });
 
-        // Build Card HTML
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'catalog-item';
-        itemDiv.innerHTML = `
-            <div class="cat-info">
-                <h3 class="cat-name">${name}</h3>
-                <span class="cat-meta">${mkt.style || 'Craft Beer'} • ${mkt.abv ? mkt.abv : ''} ${mkt.ibu ? `• ${mkt.ibu} IBU` : ''}</span>
-                <p class="cat-desc">${mkt.desc || 'Contact rep for details.'}</p>
-            </div>
-            <div class="cat-pricing">
-                ${priceHtml}
-            </div>
-        `;
-        container.appendChild(itemDiv);
-    });
-}
-
-function updateSheetTitle() {
-    document.getElementById('sheet-title-display').innerText = document.getElementById('sheet-title-input').value;
-}
-  // 1. UPDATE THIS FUNCTION (To trigger the full render)
-function openGenerator() {
-    document.getElementById('dashboard-view').style.display = 'none';
-    document.getElementById('generator-view').style.display = 'block';
-    renderCatalog(); // <--- This triggers the loop
-}
-
-// 2. ADD THIS NEW FUNCTION (The Looping Logic)
-function renderCatalog() {
-    const container = document.getElementById('catalog-container');
-    const showPrice = document.getElementById('toggle-price').checked;
-    container.innerHTML = ""; // Clear current list
-
-    const beers = Object.keys(inventoryData).sort();
-    
-    if(beers.length === 0) {
-        container.innerHTML = `<div style="grid-column: span 2; text-align:center;">No inventory loaded.</div>`;
-        return;
-    }
-
-    beers.forEach(name => {
-        // Get Data
-        const mkt = marketingData[name] || {};
-        const invItems = inventoryData[name];
-        
-        // Build Price HTML
-        let priceHtml = "";
-        if(showPrice) {
-            invItems.forEach(pkg => {
-                if(pkg.price > 0) {
-                    priceHtml += `<div class="price-row"><span>${pkg.package}</span><span>$${pkg.price.toFixed(2)}</span></div>`;
-                }
-            });
-        }
-
-        // Build the Card HTML
-        const card = document.createElement('div');
-        card.className = 'beer-card';
-        card.innerHTML = `
-            <div class="beer-header">
-                <h3 class="beer-name">${name}</h3>
-                <div class="beer-meta">
-                    <span style="color:#d4a017;">${mkt.style || 'Craft Beer'}</span>
-                    <span>${mkt.abv ? `ABV: ${mkt.abv}` : ''} ${mkt.ibu ? `| IBU: ${mkt.ibu}` : ''}</span>
+        // 4. Render Card ONLY if there is stock
+        if (hasStock) {
+            const card = document.createElement('div');
+            card.className = 'beer-card';
+            card.innerHTML = `
+                <div class="beer-header">
+                    <h3 class="beer-name">${name}</h3>
+                    <div class="beer-meta">
+                        <span style="color:var(--gold);">${mkt.style || 'Craft Beer'}</span>
+                        <span>${mkt.abv ? `ABV: ${mkt.abv}` : ''} ${mkt.ibu ? `| IBU: ${mkt.ibu}` : ''}</span>
+                    </div>
                 </div>
-            </div>
-            <p class="beer-desc">${mkt.desc || 'Contact representative for details.'}</p>
-            <div class="price-box">
-                ${priceHtml || '<em>Market Price</em>'}
-            </div>
-        `;
-        container.appendChild(card);
+                <p class="beer-desc">${mkt.desc || 'Contact representative for details.'}</p>
+                <div class="price-box">
+                    ${priceHtml || '<em style="color:#666; font-size:11px;">Please ask for pricing</em>'}
+                </div>
+            `;
+            container.appendChild(card);
+        }
     });
+
+    if(container.innerHTML === "") {
+        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">Items found, but all Quantities are 0.</div>`;
+    }
 }
 
-// 3. ADD THIS HELPER
 function updateSheetTitle() {
     document.getElementById('sheet-title-display').innerText = document.getElementById('sheet-title-input').value;
 }
