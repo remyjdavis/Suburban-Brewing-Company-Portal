@@ -24,12 +24,34 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
-    :root { 
-      --bg: #f4f6f8; --sidebar: #0f172a; --accent: #2563eb; 
-      --text: #1f2937; --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+    /* --- GENERATOR THEME VARIABLES (SYSTEM AWARE) --- */
+    :root {
+        /* DEFAULT (LIGHT MODE) */
+        --deck-bg: #f1f5f9;
+        --deck-text-head: #0f172a;
+        --deck-text-body: #475569;
+        --deck-card-bg: #ffffff;
+        --deck-card-border: #e2e8f0;
+        --deck-price-bg: #f8fafc;
+        --deck-accent: #2563eb;
+        --deck-logo-filter: none;
     }
     * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
     body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+    
+    /* AUTOMATIC DARK MODE (Based on Device Settings) */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --deck-bg: #0f172a;
+            --deck-text-head: #ffffff;
+            --deck-text-body: #94a3b8;
+            --deck-card-bg: #1e293b;
+            --deck-card-border: #334155;
+            --deck-price-bg: #0f172a;
+            --deck-accent: #38bdf8;
+            --deck-logo-filter: brightness(0) invert(1);
+        }
+    }
     
     /* SIDEBAR */
     .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; transition: all 0.3s ease; }
@@ -122,41 +144,54 @@
     .shelf-talker { width: 300px; height: 150px; background: #2563eb; color: white; border-radius: 8px; padding: 20px; position: relative; box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4); transform: rotate(-2deg); }
     .talker-fold { position: absolute; top: -30px; left: 0; width: 100%; height: 30px; background: #1e40af; border-radius: 8px 8px 0 0; opacity: 0.5; }
 
-    /* --- GENERATOR STYLES (UPDATED) --- */
+    /* --- APPLY VARIABLES TO GENERATOR UI --- */
     #generator-view { display: none; }
     .gen-layout { display: flex; gap: 30px; height: calc(100vh - 100px); }
     .gen-controls { width: 350px; flex-shrink: 0; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; overflow-y: auto; }
-    
-    /* FIX: Use block display and relative positioning for proper scrolling */
+
     .gen-preview { 
         flex: 1; 
-        background: #0f172a; 
+        background: var(--deck-bg); 
         border-radius: 12px; 
         display: block; 
         overflow-y: auto; 
         padding: 40px; 
         position: relative;
-    }
-    
-    /* FIX: Ensure paper has room to breathe */
-    #sell-sheet-paper { 
-        width: 100%; 
-        min-height: 100%; 
-        background: transparent; 
-        box-shadow: none; 
-        display: flex; 
-        flex-direction: column; 
-        padding-bottom: 50px; 
+        transition: background 0.3s ease, color 0.3s ease;
     }
 
-    /* FIX: Add top margin to grid so it doesn't hit the header */
-    .deck-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 25px;
-        margin-top: 30px; 
-        align-content: start;
+    #sell-sheet-paper { width: 100%; min-height: 100%; display: flex; flex-direction: column; padding-bottom: 50px; }
+    
+    .deck-header { border-bottom: 2px solid var(--deck-accent); padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:end; }
+    .deck-header h1 { color: var(--deck-text-head); font-family:'Oswald'; font-size:48px; margin:0; letter-spacing:1px; }
+    .deck-header p { color: var(--deck-text-body); margin:5px 0 0; letter-spacing: 2px; font-size:14px; }
+    .header-logo { height: 80px; filter: var(--deck-logo-filter); transition: filter 0.3s ease; }
+
+    .deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; align-content: start; }
+
+    .deck-grid .beer-card { 
+        background: var(--deck-card-bg); 
+        border: 1px solid var(--deck-card-border);
+        border-radius: 12px;
+        padding: 20px;
+        color: var(--deck-text-head);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        display: flex; flex-direction: column;
     }
+
+    .deck-grid .beer-name { color: var(--deck-text-head); font-size: 20px; margin-bottom: 5px; }
+    .deck-grid .beer-meta { color: var(--deck-accent); font-size: 11px; letter-spacing: 1px; margin-bottom: 10px; }
+    .deck-grid .beer-desc { color: var(--deck-text-body); font-size: 13px; line-height: 1.5; margin-bottom: 15px; flex-grow: 1; }
+    
+    .deck-grid .price-box { 
+        background: var(--deck-price-bg); 
+        border: 1px solid var(--deck-card-border); 
+        border-radius: 6px; 
+        padding: 10px; 
+        color: var(--deck-text-head);
+    }
+
+    .deck-footer { margin-top: 50px; border-top: 1px solid var(--deck-card-border); padding-top: 20px; color: var(--deck-text-body); font-size: 12px; display:flex; justify-content:space-between; }
     /* SHEET DESIGN */
     .sheet-header { height: 140px; background: #0f172a; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: relative; }
     .sheet-header::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: var(--accent); }
@@ -200,123 +235,38 @@
       .menu-overlay-mobile.active { display: block; }
     }
 
-    /* PRINT MODE */
+    /* --- PDF / PRINT MODE (ALWAYS FORCE LIGHT THEME) --- */
     @media print {
-        @page { size: portrait; margin: 0; }
-        body { background: white; height: auto; overflow: visible; }
-        /* Hide EVERYTHING except Generator */
+        :root {
+            /* Force White Paper Look */
+            --deck-bg: white !important;
+            --deck-text-head: black !important;
+            --deck-text-body: #333 !important;
+            --deck-card-bg: white !important;
+            --deck-card-border: #ccc !important;
+            --deck-price-bg: #f9fafb !important;
+            --deck-accent: #2563eb !important;
+            --deck-logo-filter: none !important;
+        }
+
+        @page { size: portrait; margin: 0.5in; }
+        body { background: white !important; -webkit-print-color-adjust: exact; }
+        
+        /* Hide UI */
         .sidebar, #dashboard-view, .header, .tabs, #menu-toggle, .gen-controls { display: none !important; }
-        /* Show the Sell Sheet */
-        .main { margin: 0; padding: 0; }
+        
+        /* Layout Fixes - Forces the Generator to Fill the PDF */
+        .main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+        .content { padding: 0 !important; max-width: none !important; }
         #generator-view { display: block !important; }
-        .gen-preview { background: white; padding: 0; display: block; }
-        #sell-sheet-paper { box-shadow: none; width: 100vw; height: 100vh; position: relative; top: 0; left: 0; margin: 0; }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .gen-layout { height: auto !important; display: block !important; }
+        .gen-preview { background: white !important; padding: 0 !important; overflow: visible !important; border: none !important; }
+        
+        /* Stack cards vertically for PDF */
+        .deck-grid { display: block !important; } 
+        .deck-grid .beer-card { margin-bottom: 20px; width: 100%; break-inside: avoid; border: 1px solid #ccc !important; }
     }
-    /* --- PORTFOLIO MENU STYLES --- */
-.catalog-grid { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; /* 2 Columns */
-    gap: 30px; 
-    align-content: start;
-}
-
-.beer-card {
-    border: 2px solid #1a1a1a;
-    padding: 15px;
-    background: #fff;
-    break-inside: avoid; /* Prevents cutting in half when printing */
-    display: flex;
-    flex-direction: column;
-}
-
-.beer-header {
-    border-bottom: 2px solid #e5e5e5;
-    padding-bottom: 8px;
-    margin-bottom: 10px;
-}
-
-.beer-name {
-    font-family: 'Oswald', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin: 0;
-    line-height: 1;
-    text-transform: uppercase;
-}
-
-.beer-meta {
-    display: flex; 
-    justify-content: space-between; 
-    margin-top: 5px; 
-    font-size: 11px; 
-    font-weight: 700; 
-    text-transform: uppercase; 
-    color: #666;
-}
-
-.beer-desc {
-    font-size: 13px;
-    color: #333;
-    line-height: 1.4;
-    margin-bottom: 10px;
-    flex-grow: 1;
-}
-
-.price-box {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 8px;
-    font-size: 12px;
-}
-
-.price-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 3px;
-    font-weight: 600;
-}
-    /* Digital Deck Card Styles */
-.deck-grid .beer-card {
-    background: #1e293b; /* Dark Blue/Grey */
-    border: 1px solid #334155;
-    border-radius: 12px;
-    padding: 20px;
-    color: white;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    display: flex;
-    flex-direction: column;
-}
-
-.deck-grid .beer-name {
-    color: white;
-    font-size: 20px;
-    margin-bottom: 5px;
-}
-
-.deck-grid .beer-meta {
-    color: var(--accent); /* Blue accent */
-    font-size: 11px;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-}
-
-.deck-grid .beer-desc {
-    color: #94a3b8; /* Muted text */
-    font-size: 13px;
-    line-height: 1.5;
-    margin-bottom: 15px;
-    flex-grow: 1;
-}
-
-.deck-grid .price-box {
-    background: #0f172a; /* Darker background for price */
-    border: 1px solid #334155;
-    border-radius: 6px;
-    color: white;
-}
-  </style>
+</style>
 </head>
 <body>
   <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
@@ -490,7 +440,7 @@
             <div class="gen-controls" style="background: #1e293b; color: white; border:none;">
                 <h3 style="margin-top:0; color:white;">Digital Menu</h3>
                 <p style="font-size:12px; color:#94a3b8; margin-bottom:20px;">
-                    Select options below to format your live inventory for clients.
+                    This view adapts to your device (Light/Dark).<br>PDFs will always save in clean Light Mode.
                 </p>
                 
                 <div style="background:#0f172a; padding:15px; border-radius:8px; border:1px solid #334155; margin-bottom:20px;">
@@ -515,22 +465,24 @@
                 </div>
             </div>
 
-            <div class="gen-preview" style="background:#0f172a; padding: 40px; overflow-y:auto;">
-                <div id="sell-sheet-paper" style="background: transparent; box-shadow: none; width: 100%; min-height: auto;">
+            <div class="gen-preview">
+                <div id="sell-sheet-paper">
                     
-                    <div class="deck-header" style="border-bottom: 2px solid var(--accent); padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:end;">
+                    <div class="deck-header">
                         <div>
-                            <h1 id="sheet-title-display" style="color:white; font-family:'Oswald'; font-size:48px; margin:0; letter-spacing:1px;">CURRENT OFFERINGS</h1>
-                            <p style="color:#94a3b8; margin:5px 0 0; letter-spacing: 2px; font-size:14px;">SUBURBAN BREWING CO. | LIVE INVENTORY</p>
+                            <h1 id="sheet-title-display">CURRENT OFFERINGS</h1>
+                            <p>SUBURBAN BREWING CO. | LIVE INVENTORY</p>
                         </div>
-                        <img src="../logo.png" style="height:80px; filter: brightness(0) invert(1);">
+                        <img src="https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/logo.png" 
+                             class="header-logo"
+                             onerror="this.style.display='none'">
                     </div>
 
-                    <div id="catalog-container" class="deck-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
+                    <div id="catalog-container" class="deck-grid">
                         <div style="color:#64748b; text-align:center; grid-column:1/-1;">Loading your beers...</div>
                     </div>
 
-                    <div class="deck-footer" style="margin-top: 50px; border-top: 1px solid #334155; padding-top: 20px; color: #64748b; font-size: 12px; display:flex; justify-content:space-between;">
+                    <div class="deck-footer">
                         <div>Valid as of <span id="deck-date"></span></div>
                         <div>suburbanbrewingco.com</div>
                     </div>
