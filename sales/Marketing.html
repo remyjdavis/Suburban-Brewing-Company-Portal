@@ -203,6 +203,48 @@
         
         .deck-footer { border-color: #eee !important; color: #666 !important; }
     }
+    /* --- SOCIAL MEDIA MANAGER STYLES --- */
+    .social-dashboard { display: flex; gap: 30px; height: 600px; }
+    .social-compose { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+    .social-preview-pane { flex: 1; background: #f0f2f5; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; border: 1px solid #ddd; }
+    
+    /* Platform Toggles */
+    .platform-tabs { display: flex; gap: 10px; margin-bottom: 15px; width: 100%; justify-content: center; }
+    .p-tab { padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 13px; border: 1px solid transparent; opacity: 0.7; transition: 0.2s; }
+    .p-tab.active { opacity: 1; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .p-tab.fb.active { color: #1877F2; border-color: #1877F2; }
+    .p-tab.ig.active { color: #E1306C; border-color: #E1306C; }
+
+    /* The Mock Phone Preview */
+    .mock-post { background: white; width: 100%; max-width: 380px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    
+    /* FB Style */
+    .mock-post.fb .post-header { padding: 12px; display: flex; align-items: center; gap: 10px; }
+    .mock-post.fb .avatar { width: 40px; height: 40px; border-radius: 50%; background: #ddd; }
+    .mock-post.fb .user-info { font-size: 14px; font-weight: 600; color: #050505; }
+    .mock-post.fb .timestamp { font-size: 12px; color: #65676B; font-weight: 400; }
+    .mock-post.fb .post-caption { padding: 0 12px 12px; font-size: 15px; color: #050505; white-space: pre-wrap; }
+    
+    /* IG Style */
+    .mock-post.ig .post-header { padding: 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #efefef; }
+    .mock-post.ig .avatar { width: 32px; height: 32px; border-radius: 50%; background: #ddd; }
+    .mock-post.ig .user-info { font-size: 14px; font-weight: 600; color: #262626; }
+    .mock-post.ig .post-image { width: 100%; height: auto; display: block; }
+    .mock-post.ig .post-footer { padding: 10px; }
+    .mock-post.ig .post-caption { font-size: 14px; color: #262626; line-height: 1.4; }
+    .mock-post.ig .post-caption strong { margin-right: 5px; }
+
+    /* Image Container */
+    .preview-image-container { width: 100%; background: #f0f2f5; min-height: 200px; display: flex; align-items: center; justify-content: center; color: #ccc; overflow: hidden; }
+    .preview-image-container img { width: 100%; height: auto; object-fit: cover; display: none; }
+
+    /* --- INBOX / COMMENTS STYLES --- */
+    .inbox-container { margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 20px; }
+    .comment-thread { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+    .comment-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: #64748b; }
+    .comment-body { font-size: 14px; margin-bottom: 10px; color: #1e293b; }
+    .reply-area { display: flex; gap: 10px; }
+    .reply-area input { margin-bottom: 0; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -356,14 +398,96 @@
           </div>
 
           <div id="tab-social" class="card">
-            <h3>Social Media Manager</h3>
-            <textarea id="socialCaption" rows="4" placeholder="Write caption..." oninput="updateSocialPreview()"></textarea>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button onclick="handleSocialPost()">🚀 Post to FB/IG</button>
-                <button class="secondary" onclick="clearSocialImage()">Clear Image</button>
+            <div class="header-bar" style="border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:20px;">
+                <h3 style="margin:0;">Social Media Manager</h3>
+            </div>
+
+            <div class="social-dashboard">
+                <div class="social-compose">
+                    <label style="font-weight:600; font-size:14px;">Create New Post</label>
+                    <textarea id="socialCaption" rows="4" placeholder="Write your caption here..." oninput="updateSocialPreview()"></textarea>
+                    
+                    <div style="background:#f8fafc; padding:15px; border:1px dashed #cbd5e1; border-radius:8px; text-align:center;">
+                        <input type="file" id="socialImageInput" accept="image/*" onchange="handleSocialImage(this)" style="display:none;">
+                        <button class="secondary" onclick="document.getElementById('socialImageInput').click()">📸 Upload Photo</button>
+                        <div id="fileNameDisplay" style="font-size:12px; color:#64748b; margin-top:5px;"></div>
+                    </div>
+
+                    <div style="margin-top:10px;">
+                        <label style="font-weight:600; font-size:13px; display:block; margin-bottom:8px;">Post To:</label>
+                        <div style="display:flex; gap:15px;">
+                            <label><input type="checkbox" checked> Facebook Page</label>
+                            <label><input type="checkbox" checked> Instagram Feed</label>
+                        </div>
+                    </div>
+
+                    <button class="primary" style="margin-top:auto;" onclick="alert('Post scheduled!')">🚀 Schedule Post</button>
+                </div>
+
+                <div class="social-preview-pane">
+                    <div class="platform-tabs">
+                        <div class="p-tab fb active" onclick="setPreviewMode('fb')">Facebook</div>
+                        <div class="p-tab ig" onclick="setPreviewMode('ig')">Instagram</div>
+                    </div>
+
+                    <div id="mockPost" class="mock-post fb">
+                        <div class="post-header">
+                            <img src="https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/logo.png" class="avatar">
+                            <div>
+                                <div class="user-info">Suburban Brewing Co.</div>
+                                <div class="timestamp" id="fbTimestamp">Just now · 🌎</div>
+                            </div>
+                        </div>
+
+                        <div class="post-caption fb-caption" id="previewCaptionFB"></div>
+
+                        <div class="preview-image-container">
+                            <span id="imgPlaceholder">No Image Selected</span>
+                            <img id="previewImgTag" src="">
+                        </div>
+
+                        <div class="post-footer ig-footer" style="display:none;">
+                            <div class="post-caption">
+                                <strong>suburbanbrewing</strong> <span id="previewCaptionIG"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="inbox-container">
+                <h3 style="margin-top:0;">Unified Inbox (Comments)</h3>
+                
+                <div class="comment-thread">
+                    <div class="comment-header">
+                        <span><span style="color:#1877F2;">f</span> <strong>Facebook</strong> · John Doe</span>
+                        <span>2 hours ago</span>
+                    </div>
+                    <div class="comment-body">
+                        Are you guys releasing the new stout this weekend?
+                    </div>
+                    <div class="reply-area">
+                        <input type="text" placeholder="Write a reply...">
+                        <button class="secondary" style="width:auto;" onclick="alert('Reply sent!')">Reply</button>
+                    </div>
+                </div>
+
+                <div class="comment-thread">
+                    <div class="comment-header">
+                        <span><span style="color:#E1306C;">📷</span> <strong>Instagram</strong> · @beer_lover_99</span>
+                        <span>45 mins ago</span>
+                    </div>
+                    <div class="comment-body">
+                        🔥🔥🔥 looks amazing!
+                    </div>
+                    <div class="reply-area">
+                        <input type="text" placeholder="Write a reply...">
+                        <button class="secondary" style="width:auto;" onclick="alert('Reply sent!')">Reply</button>
+                    </div>
+                </div>
+
             </div>
           </div>
-      </div>
 
       <div id="generator-view" style="display:none;">
         <div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
@@ -826,121 +950,103 @@ function closeModal(e) {
     }
 }
 
-// --- SOCIAL MEDIA ---
-let currentPreviewMode = 'fb'; 
+// --- SOCIAL MEDIA MANAGER LOGIC ---
+let currentPreviewMode = 'fb';
 
-function toggleSocialView(view) {
-    const composeEl = document.getElementById('social-compose-view');
-    const inboxEl = document.getElementById('social-inbox-view');
-    const btnCompose = document.getElementById('btnShowCompose');
-    const btnInbox = document.getElementById('btnShowInbox');
+function setPreviewMode(mode) {
+    currentPreviewMode = mode;
+    const mock = document.getElementById('mockPost');
+    const tabs = document.querySelectorAll('.p-tab');
+    
+    // 1. Highlight the correct tab button
+    tabs.forEach(t => t.classList.remove('active'));
+    document.querySelector(`.p-tab.${mode}`).classList.add('active');
 
-    if (view === 'compose') {
-        composeEl.style.display = 'flex';
-        if(inboxEl) inboxEl.style.display = 'none';
-        btnCompose.style.background = 'white';
-        btnCompose.style.color = 'black';
-        btnCompose.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        
-        btnInbox.style.background = 'transparent';
-        btnInbox.style.color = '#64748b';
-        btnInbox.style.boxShadow = 'none';
+    // 2. Toggle the Visual Preview Styles (FB vs IG)
+    if (mode === 'fb') {
+        mock.classList.remove('ig');
+        mock.classList.add('fb');
+        // Show FB Header Timestamp & Caption at Top
+        if(document.getElementById('fbTimestamp')) document.getElementById('fbTimestamp').style.display = 'block';
+        if(document.querySelector('.fb-caption')) document.querySelector('.fb-caption').style.display = 'block';
+        // Hide IG Footer
+        if(document.querySelector('.ig-footer')) document.querySelector('.ig-footer').style.display = 'none';
     } else {
-        composeEl.style.display = 'none';
-        if(inboxEl) inboxEl.style.display = 'block';
-        btnInbox.style.background = 'white';
-        btnInbox.style.color = 'black';
-        btnInbox.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        
-        btnCompose.style.background = 'transparent';
-        btnCompose.style.color = '#64748b';
-        btnCompose.style.boxShadow = 'none';
+        mock.classList.remove('fb');
+        mock.classList.add('ig');
+        // Hide FB Header Timestamp & Caption at Top
+        if(document.getElementById('fbTimestamp')) document.getElementById('fbTimestamp').style.display = 'none';
+        if(document.querySelector('.fb-caption')) document.querySelector('.fb-caption').style.display = 'none';
+        // Show IG Footer
+        if(document.querySelector('.ig-footer')) document.querySelector('.ig-footer').style.display = 'block';
     }
-}
-
-function handleSocialUpload(input) {
-    const imgEl = document.getElementById('socialPreviewImg');
-    const container = document.getElementById('socialPreviewImgContainer');
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imgEl.src = e.target.result;
-            imgEl.style.display = 'block';
-            if(container.querySelector('span')) container.querySelector('span').style.display = 'none';
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-function clearSocialImage() {
-    document.getElementById('socialUpload').value = "";
-    document.getElementById('socialPreviewImg').src = "";
-    document.getElementById('socialPreviewImg').style.display = 'none';
-    const span = document.getElementById('socialPreviewImgContainer').querySelector('span');
-    if(span) span.style.display = 'block';
-}
-
-function handleSocialPost() {
-    const postToFB = document.getElementById('checkFB').checked;
-    const postToIG = document.getElementById('checkIG').checked;
-    if(!postToFB && !postToIG) return alert("Please select at least one platform.");
-    alert(`Preparing to post to: ${postToFB ? 'Facebook ' : ''}${postToIG ? 'Instagram' : ''}`);
 }
 
 function updateSocialPreview() {
     const text = document.getElementById('socialCaption').value;
-    const headerEl = document.getElementById('previewHeader');
-    const bodyEl = document.getElementById('previewBody');
-    const logoUrl = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/logo.png";
-  
-    if (currentPreviewMode === 'fb') {
-        headerEl.innerHTML = `
-            <img src="../logo.png" style="width:40px; height:40px; border-radius:50%; background:#0f172a; padding:2px;" onerror="this.src='https://via.placeholder.com/40'">
-            <div><div style="font-weight:700; font-size:14px; color:#1c1e21;">Suburban Brewing Co.</div><div style="font-size:12px; color:#65676b;">Just now · 🌎</div></div>`;
-        bodyEl.innerHTML = `<div style="font-size:14px; color:#1c1e21; white-space: pre-wrap; margin-bottom:10px;">${text}</div>`;
+    // Update the text in both the FB slot (top) and IG slot (bottom)
+    if(document.getElementById('previewCaptionFB')) document.getElementById('previewCaptionFB').innerText = text;
+    if(document.getElementById('previewCaptionIG')) document.getElementById('previewCaptionIG').innerText = text;
+}
+
+function handleSocialImage(input) {
+    const imgTag = document.getElementById('previewImgTag');
+    const placeholder = document.getElementById('imgPlaceholder');
+    const nameDisplay = document.getElementById('fileNameDisplay');
+
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if(nameDisplay) nameDisplay.innerText = "Selected: " + file.name;
+        
+        // Read the image file and display it in the mock phone
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imgTag.src = e.target.result;
+            imgTag.style.display = 'block';
+            if(placeholder) placeholder.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
     } else {
-        headerEl.innerHTML = `
-            <img src="../logo.png" style="width:32px; height:32px; border-radius:50%; background:#0f172a; padding:1px;" onerror="this.src='https://via.placeholder.com/32'">
-            <div style="font-weight:600; font-size:14px; color:#262626;">suburbanbrewing</div>`;
-        bodyEl.innerHTML = `<div style="font-size:14px; color:#262626; line-height:1.4;"><span style="font-weight:600;">suburbanbrewing</span> ${text}</div>`;
+        // Reset if canceled
+        imgTag.style.display = 'none';
+        imgTag.src = "";
+        if(placeholder) placeholder.style.display = 'block';
+        if(nameDisplay) nameDisplay.innerText = "";
     }
 }
 
-function setPreviewMode(mode) {
-    currentPreviewMode = mode;
-    document.getElementById('btnPreviewFB').style.background = mode === 'fb' ? 'white' : 'transparent';
-    document.getElementById('btnPreviewIG').style.background = mode === 'ig' ? 'white' : 'transparent';
-    updateSocialPreview();
-}
-
+// --- INBOX FUNCTIONS ---
 function toggleReply(btn) {
     const replyBox = btn.nextElementSibling;
-    if (replyBox.classList.contains('active')) {
+    if (replyBox && replyBox.classList.contains('active')) {
         replyBox.classList.remove('active');
         btn.innerText = 'Reply';
-    } else {
+    } else if (replyBox) {
         replyBox.classList.add('active');
         btn.innerText = 'Cancel';
     }
 }
 
-function generateAIReply(btn, userComment) {
-    const inputField = btn.previousElementSibling;
-    const originalText = btn.innerText;
-    btn.innerText = "Thinking...";
-    btn.disabled = true;
-    setTimeout(() => {
-        let aiResponse = "Thanks for the love! 🍻";
-        if (userComment.toLowerCase().includes("stout")) aiResponse = "Yes! The stout is tapping this Friday.";
-        inputField.value = aiResponse;
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }, 800);
-}
-
 function sendReply(btn) {
-    alert("Reply posted!");
-    btn.parentElement.classList.remove('active');
+    // Simulate sending a reply
+    const input = btn.previousElementSibling;
+    if(input.value.trim() === "") return alert("Please type a reply.");
+    
+    Swal.fire({
+        title: 'Reply Sent!',
+        text: 'Your response has been posted.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+    });
+    
+    input.value = ""; // Clear input
+    // Hide the box
+    const replyBox = btn.parentElement;
+    replyBox.classList.remove('active');
+    // Reset toggle button text
+    const toggleBtn = replyBox.previousElementSibling;
+    if(toggleBtn) toggleBtn.innerText = "Reply";
 }
   function copyInventoryText() {
     let text = "🍺 *Suburban Brewing - Current Inventory* 🍺\n\n";
