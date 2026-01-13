@@ -783,7 +783,7 @@ async function initGeneratorData() {
         marketingData = {};
         if (Array.isArray(market)) {
             market.forEach(row => {
-                // Normalize marketing keys too
+                // Normalize keys to lowercase so "Lifecycle" becomes "lifecycle"
                 const keys = Object.keys(row).reduce((acc, k) => {
                     acc[k.toLowerCase()] = row[k];
                     return acc;
@@ -795,7 +795,10 @@ async function initGeneratorData() {
                         style: keys['style'] || "",
                         abv: keys['abv'] || "",
                         ibu: keys['ibu'] || "",
-                        desc: keys['description'] || keys['desc'] || ""
+                        desc: keys['description'] || keys['desc'] || "",
+                        
+                        // NEW: Look specifically for the "Lifecycle" column
+                        category: keys['lifecycle'] || keys['category'] || "Other" 
                     };
                 }
             });
@@ -879,52 +882,114 @@ function renderCatalog() {
         return;
     }
 
+    // 1. Define Your Groups
+    const groups = {
+        "Core Range": [],
+        "Seasonal": [],
+        "Rotating / Small Batch": [],
+        "Other": []
+    };
+
     let itemsRendered = 0;
 
+    // 2. Sort Beers into Groups based on "Lifecycle"
     beers.forEach(name => {
-        // 1. Get Marketing Data
         let mkt = marketingData[name];
+        
+        // Fallback if data is missing
         if (!mkt) {
+            // Try to find case-insensitive match
             const key = Object.keys(marketingData).find(k => k.toLowerCase() === name.toLowerCase());
-            mkt = key ? marketingData[key] : {};
+            mkt = key ? marketingData[key] : { style: '', category: 'Other' };
         }
 
-        const invItems = inventoryData[name];
-        let priceHtml = "";
-        let hasStock = false;
+        // Get the Lifecycle value
+        let lifecycle = mkt.category || "Other"; 
+        
+        // Match Lifecycle to Display Groups
+        // (This allows "Core" or "Core Beer" to both land in "Core Range")
+        if (lifecycle.match(/core/i)) lifecycle = "Core Range";
+        else if (lifecycle.match(/season/i)) lifecycle = "Seasonal";
+        else if (lifecycle.match(/rotat/i) || lifecycle.match(/batch/i) || lifecycle.match(/limit/i)) lifecycle = "Rotating / Small Batch";
+        else lifecycle = "Other";
 
-        // 2. Build Price Rows
-        invItems.forEach(pkg => {
-            let qty = parseFloat(pkg.qty);
+        // Add to the group
+        if(groups[lifecycle]) {
+            groups[lifecycle].push({ name, mkt });
+        } else {
+            groups["Other"].push({ name, mkt });
+        }
+    });
+
+    // 3. Render the Groups in Order
+    const groupOrder = ["Core Range", "Seasonal", "Rotating / Small Batch", "Other"];
+
+    groupOrder.forEach(groupName => {
+        const groupItems = groups[groupName];
+        
+        // Only display the header if there are beers in this group
+        if (groupItems.length > 0) {
             
-            if (!isNaN(qty) && qty > 0) {
-                hasStock = true;
-                if(showPrice) {
-                    const price = pkg.price ? parseFloat(pkg.price).toFixed(2) : "--";
-                    priceHtml += `<div class="price-row"><span>${pkg.type}</span><span class="price-val">$${price}</span></div>`;
-                }
-            }
-        });
+            // Create Section Header
+            const header = document.createElement('div');
+            header.style.gridColumn = "1 / -1"; // Span full width
+            header.style.marginTop = "30px";
+            header.style.marginBottom = "15px";
+            header.style.borderBottom = "2px solid #334155";
+            header.style.paddingBottom = "5px";
+            
+            // Using Oswald font for the header
+            header.innerHTML = `<h2 style="color:#38bdf8; font-family:'Oswald'; text-transform:uppercase; margin:0; font-size: 28px;">${groupName}</h2>`;
+            container.appendChild(header);
 
-        // 3. Render Card
-        if (hasStock) {
-            itemsRendered++;
-            const card = document.createElement('div');
-            card.className = 'beer-card';
-            card.innerHTML = `
-                <div class="beer-header">
-                    <h3 class="beer-name">${name}</h3>
-                    <div class="beer-meta">
-                        <span style="color:var(--gold);">${mkt.style || 'Craft Beer'}</span>
-                        <span>${mkt.abv ? `ABV: ${mkt.abv}` : ''} ${mkt.ibu ? `| IBU: ${mkt.ibu}` : ''}</span>
-                    </div>
-                </div>
-                <p class="beer-desc">${mkt.desc || 'Contact representative for details.'}</p>
-                <div class="price-box">
-                    ${priceHtml || '<em style="color:#666; font-size:11px;">Ask for pricing</em>'}
-                </div>
-            `;
-            container.appendChild(card);
+            // Create Cards for this Group
+            groupItems.forEach(item => {
+                const name = item.name;
+                const mkt = item.mkt;
+                const invItems = inventoryData[name];
+                
+                let priceHtml = "";
+                let hasStock = false;
+
+                // Build Price List
+                invItems.forEach(pkg => {
+                    let qty = parseFloat(pkg.qty);
+                    if (!isNaN(qty) && qty > 0) {
+                        hasStock = true;
+                        if(showPrice) {
+                            const price = pkg.price ? parseFloat(pkg.price).toFixed(2) : "--";
+                            priceHtml += `<div class="price-row" style="display:flex; justify-content:space-between; border-bottom:1px solid #334155; padding:4px 0;">
+                                <span>${pkg.type}</span>
+                                <span style="font-weight:700;">$${price}</span>
+                            </div>`;
+                        }
+                    }
+                });
+
+                // Only render if in stock
+                if (hasStock) {
+                    itemsRendered++;
+                    const card = document.createElement('div');
+                    card.className = 'beer-card';
+                    // Ensure card styling is consistent
+                    card.innerHTML = `
+                        <div class="beer-header" style="margin-bottom:10px;">
+                            <h3 class="beer-name" style="margin:0; font-size:20px; color:white;">${name}</h3>
+                            <div class="beer-meta" style="color:#38bdf8; font-size:12px; font-weight:700; margin-top:4px;">
+                                <span>${mkt.style || ''}</span>
+                                <span style="float:right;">${mkt.abv ? `ABV: ${mkt.abv}` : ''}</span>
+                            </div>
+                        </div>
+                        <p class="beer-desc" style="color:#94a3b8; font-size:13px; line-height:1.4; margin-bottom:15px; flex-grow:1;">
+                            ${mkt.desc || 'Contact representative for details.'}
+                        </p>
+                        <div class="price-box" style="background:#0f172a; padding:10px; border-radius:6px; margin-top:auto;">
+                            ${priceHtml || '<em style="color:#666; font-size:11px;">Ask for pricing</em>'}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+            });
         }
     });
 
@@ -932,7 +997,6 @@ function renderCatalog() {
         container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">Items found, but currently Out of Stock.</div>`;
     }
 
-    // --- FIX: This block is now correctly INSIDE the function ---
     if(document.getElementById('item-count-badge')) {
         document.getElementById('item-count-badge').innerText = itemsRendered;
     }
