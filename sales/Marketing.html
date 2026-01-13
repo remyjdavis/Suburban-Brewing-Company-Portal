@@ -329,7 +329,7 @@
           <div class="header">
             <div>
                 <h1 style="margin:0; font-size: 24px;">Marketing & Outreach</h1>
-                <div style="font-size:13px; color:#6b7280;">Manage Campaigns, Assets, and Client Communication</div>
+                <div style="font-size:13px; color:#6b7280;">Manage Campaigns & Assets</div>
             </div>
             <button class="secondary" onclick="location.reload()">🔄 Refresh Data</button>
           </div>
@@ -340,13 +340,11 @@
             <div class="tab" onclick="switchTab('tab-churn', this)">🚨 Churn Monitor</div>
             <div class="tab" onclick="switchTab('tab-banner', this)">📢 Portal Banner</div>
             <div class="tab" onclick="switchTab('tab-events', this)">📅 Events</div>
-            <div class="tab" onclick="switchTab('tab-social', this)">📢 Social Manager</div>
+            <div class="tab" onclick="switchTab('tab-social', this)">📢 Social</div>
           </div>
 
           <div id="tab-assets" class="card active">
             <h3>Sales Asset Library</h3>
-            <p style="font-size:13px; color:#6b7280; margin-bottom:20px;">Click any card to preview assets.</p>
-            
             <div class="asset-grid">
                 <div class="asset-item" onclick="openGenerator()">
                     <div class="tool-tag">GENERATOR</div>
@@ -354,64 +352,42 @@
                     <div class="asset-name">Core Range Sell Sheet</div>
                     <div style="font-size:11px; color:#64748b; margin-top:5px;">Open Builder ↗</div>
                 </div>
-
-                <div class="asset-item" onclick="copyAssetLink(this)">
-                    <div class="asset-icon">🎨</div>
-                    <div class="asset-name">Vector Logos</div>
+                <div class="asset-item" onclick="showAsset('Vector Logos')">
+                    <div class="asset-icon">🎨</div><div class="asset-name">Vector Logos</div>
                 </div>
-                <div class="asset-item" onclick="copyAssetLink(this)">
-                    <div class="asset-icon">💲</div>
-                    <div class="asset-name">2026 Price List</div>
+                <div class="asset-item" onclick="showAsset('2026 Price List')">
+                    <div class="asset-icon">💲</div><div class="asset-name">2026 Price List</div>
                 </div>
-                <div class="asset-item" onclick="copyAssetLink(this)">
-                    <div class="asset-icon">🏷️</div>
-                    <div class="asset-name">Shelf Talkers</div>
+                <div class="asset-item" onclick="showAsset('Shelf Talkers')">
+                    <div class="asset-icon">🏷️</div><div class="asset-name">Shelf Talkers</div>
                 </div>
-                <div class="asset-item" onclick="copyAssetLink(this)">
-                    <div class="asset-icon">🍺</div>
-                    <div class="asset-name">Tap Handle Request</div>
+                <div class="asset-item" onclick="showAsset('Tap Handle Request')">
+                    <div class="asset-icon">🍺</div><div class="asset-name">Tap Handle Request</div>
                 </div>
-                <div class="asset-item" onclick="copyAssetLink(this)">
-                    <div class="asset-icon">🧪</div>
-                    <div class="asset-name">Tech Sheets (All)</div>
+                <div class="asset-item" onclick="showAsset('Tech Sheets (All)')">
+                    <div class="asset-icon">🧪</div><div class="asset-name">Tech Sheets (All)</div>
                 </div>
             </div>
           </div>
 
           <div id="tab-email" class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3>Weekly Fresh Sheet Blast</h3>
-                <span class="badge badge-green">Live Inventory</span>
-            </div>
-            <div style="border:1px solid #d1d5db; border-radius:8px; overflow:hidden; margin-bottom:20px;">
-                <div style="background:#f3f4f6; padding:10px; border-bottom:1px solid #d1d5db; font-size:12px; font-weight:700; color:#6b7280;">EMAIL PREVIEW</div>
-                <div style="padding:20px; background:#fff;">
-                    <p><strong>Subject:</strong> 🍺 Fresh Drops - Week of <span id="currentDate"></span></p>
-                    <table style="width:100%; border:1px solid #eee; margin:15px 0;">
-                        <thead style="background:#f9fafb;"><tr><th>Product</th><th>Format</th><th>Status</th></tr></thead>
-                        <tbody id="freshSheetBody"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div style="display:flex; gap:10px; justify-content:flex-end;">
-                <button class="secondary">Send Test</button>
-                <button>🚀 Send Blast</button>
-            </div>
+            <h3>Weekly Fresh Sheet</h3>
+            <table style="width:100%; border:1px solid #eee; margin-top:15px;">
+                <thead style="background:#f9fafb;"><tr><th>Product</th><th>Format</th><th>Status</th></tr></thead>
+                <tbody id="freshSheetBody"></tbody>
+            </table>
           </div>
 
           <div id="tab-churn" class="card">
-            <h3>🚨 At-Risk Accounts (Churn Monitor)</h3>
-            <table>
-                <thead><tr><th>Customer Name</th><th>Last Order</th><th>Days Inactive</th><th>Action</th></tr></thead>
+            <h3>🚨 At-Risk Accounts</h3>
+            <table style="width:100%; margin-top:15px;">
+                <thead><tr><th>Customer</th><th>Last Order</th><th>Inactive</th><th>Action</th></tr></thead>
                 <tbody id="churnBody"></tbody>
             </table>
           </div>
 
           <div id="tab-banner" class="card">
             <h3>Client Portal Banner</h3>
-            <div style="background:#eff6ff; padding:15px; border-radius:6px; margin-bottom:20px; border:1px solid #bfdbfe; color:#1e40af; text-align:center;">
-                <strong>Live Preview:</strong> <span id="bannerPreviewText">Loading...</span>
-            </div>
             <textarea id="bannerMsg" rows="2">🍺 Valentine's Special: Get 10% off Chocolate Stout kegs this week only!</textarea>
             <button onclick="updateBanner()">Update Banner</button>
           </div>
@@ -419,119 +395,24 @@
           <div id="tab-events" class="card">
             <div style="display:flex; justify-content:space-between;"><h3>Manage Events</h3><button class="secondary">+ Add New</button></div>
             <table>
-                <thead><tr><th>Date</th><th>Event</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Date</th><th>Event</th><th>Status</th></tr></thead>
                 <tbody>
-                    <tr><td>Feb 14</td><td><strong>Valentine's Vinyl Night</strong></td><td><span class="badge badge-green">Published</span></td><td><button class="secondary">Edit</button></td></tr>
-                    <tr><td>Feb 20</td><td><strong>Food Truck: Tacos El Gringo</strong></td><td><span class="badge badge-red">Draft</span></td><td><button>Publish</button></td></tr>
+                    <tr><td>Feb 14</td><td>Valentine's Vinyl Night</td><td><span class="badge badge-green">Published</span></td></tr>
+                    <tr><td>Feb 20</td><td>Food Truck: Tacos El Gringo</td><td><span class="badge badge-red">Draft</span></td></tr>
                 </tbody>
             </table>
           </div>
 
           <div id="tab-social" class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #f1f5f9; padding-bottom:15px;">
-                <div>
-                    <h3 style="margin:0; border:none; padding:0;">Social Media Manager</h3>
-                    <div style="font-size:12px; color:#64748b; margin-top:4px;">
-                        <span style="color:#0284c7;">● FB Connected</span> &nbsp;|&nbsp; <span style="color:#db2777;">● IG Connected</span>
-                    </div>
-                </div>
-                
-                <div style="display:flex; gap:5px; background:#f1f5f9; padding:4px; border-radius:8px;">
-                    <button class="secondary" id="btnShowCompose" onclick="toggleSocialView('compose')" style="margin:0; background:white; box-shadow:0 1px 2px rgba(0,0,0,0.1); border:1px solid #e2e8f0; font-size:12px;">✏️ Compose</button>
-                    <button class="secondary" id="btnShowInbox" onclick="toggleSocialView('inbox')" style="margin:0; background:transparent; font-size:12px; color:#64748b;">💬 Inbox</button>
-                </div>
-            </div>
-
-            <div id="social-compose-view" style="display: flex; gap: 40px; flex-wrap: wrap;">
-                
-                <div style="flex: 1; min-width: 300px;">
-                    <label>Post To:</label>
-                    <div style="display:flex; gap:20px; margin-bottom:20px;">
-                        <label style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer;">
-                            <input type="checkbox" id="checkFB" checked onchange="updateSocialPreview()"> Facebook
-                        </label>
-                        <label style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer;">
-                            <input type="checkbox" id="checkIG" checked onchange="updateSocialPreview()"> Instagram
-                        </label>
-                    </div>
-
-                    <label>Caption</label>
-                    <textarea id="socialCaption" rows="6" placeholder="Write your caption..." oninput="updateSocialPreview()" style="resize: vertical;">Fresh pour of Moon Rocks NEIPA! 🍺🚀 Come grab a 4-pack before they're gone. #craftbeer #suburbanbrewing</textarea>
-                    
-                    <label style="margin-top:20px;">Media</label>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <input type="file" id="socialUpload" accept="image/*" onchange="handleSocialUpload(this)" style="background:white; padding:8px;">
-                        <button class="secondary" onclick="clearSocialImage()" style="width:auto; padding:8px 12px; margin:0;">❌</button>
-                    </div>
-                    <div class="helper-text">Required for Instagram. Max 5MB.</div>
-                    
-                    <div style="margin-top:30px; display:flex; gap:10px;">
-                        <button onclick="handleSocialPost()" style="background: linear-gradient(45deg, #2563eb, #db2777); border:none;">🚀 Post Everywhere</button>
-                        <button class="secondary">📅 Schedule</button>
-                    </div>
-                </div>
-
-                <div style="flex: 1; min-width: 300px; display:flex; flex-direction:column; align-items:center;">
-                    
-                    <div style="display:flex; gap:10px; margin-bottom:15px; background:#f1f5f9; padding:4px; border-radius:8px;">
-                        <button class="preview-btn active" id="btnPreviewFB" onclick="setPreviewMode('fb')" style="padding:6px 12px; font-size:12px; width:auto; margin:0; background:white; color:black; border:none; cursor:pointer; border-radius:6px;">Facebook View</button>
-                        <button class="preview-btn" id="btnPreviewIG" onclick="setPreviewMode('ig')" style="padding:6px 12px; font-size:12px; width:auto; margin:0; background:transparent; color:#64748b; border:none; cursor:pointer; border-radius:6px;">Instagram View</button>
-                    </div>
-
-                    <div id="previewContainer" style="background: #fff; border: 1px solid #ddd; border-radius: 8px; width: 100%; max-width: 380px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.3s ease;">
-                        
-                        <div id="previewHeader" style="padding: 12px; display:flex; align-items:center; gap:10px;"></div>
-                        
-                        <div id="socialPreviewImgContainer" style="background:#f0f2f5; min-height:300px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                            <span style="color:#94a3b8; font-size:12px;">No Image Selected</span>
-                            <img id="socialPreviewImg" src="" style="width:100%; height:auto; display:none; object-fit:cover;">
-                        </div>
-                        
-                        <div id="previewBody" style="padding: 12px;"></div>
-
-                    </div>
-                </div>
-            </div>
-
-            <div id="social-inbox-view" style="display:none; max-width:800px; margin:0 auto;">
-                <div style="margin-bottom:20px; color:#64748b; font-size:13px;">Recent comments from your connected pages.</div>
-                
-                <div class="comment-item">
-                    <div class="comment-avatar">👤</div>
-                    <div class="comment-content">
-                        <div class="comment-meta">
-                            <span><span class="platform-icon">🔵</span> <strong>Mike Smith</strong> on Facebook</span>
-                            <span>2m ago</span>
-                        </div>
-                        <div id="comment-text-1" style="font-size:14px; margin-bottom:8px;">Do you guys have the stout on tap yet?</div>
-                        <button class="secondary" onclick="toggleReply(this)" style="padding:4px 10px; font-size:11px; height:auto;">Reply</button>
-                        <div class="reply-box">
-                            <input type="text" placeholder="Write a reply..." style="margin:0;">
-                            <button class="ai-btn" onclick="generateAIReply(this, 'Do you guys have the stout on tap yet?')">✨ AI Reply</button>
-                            <button onclick="sendReply(this)" style="margin:0; padding:8px 15px; font-size:12px;">Send</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="comment-item">
-                    <div class="comment-avatar">📸</div>
-                    <div class="comment-content">
-                        <div class="comment-meta">
-                            <span><span class="platform-icon">🟣</span> <strong>craft_lover_99</strong> on Instagram</span>
-                            <span>1h ago</span>
-                        </div>
-                        <div style="font-size:14px; margin-bottom:8px;">This looks amazing! 🔥 Can't wait to visit this weekend.</div>
-                        <button class="secondary" onclick="toggleReply(this)" style="padding:4px 10px; font-size:11px; height:auto;">Reply</button>
-                        <div class="reply-box">
-                            <input type="text" placeholder="Write a reply..." style="margin:0;">
-                            <button class="ai-btn" onclick="generateAIReply(this, 'This looks amazing! 🔥 Can t wait to visit this weekend.')">✨ AI Reply</button>
-                            <button onclick="sendReply(this)" style="margin:0; padding:8px 15px; font-size:12px;">Send</button>
-                        </div>
-                    </div>
-                </div>
-
+            <h3>Social Media Manager</h3>
+            <textarea id="socialCaption" rows="4" placeholder="Write caption..." oninput="updateSocialPreview()"></textarea>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button onclick="handleSocialPost()">🚀 Post to FB/IG</button>
+                <button class="secondary" onclick="clearSocialImage()">Clear Image</button>
             </div>
           </div>
+      </div>
+
       <div id="generator-view" style="display:none;">
         <div style="margin-bottom:15px;">
             <button class="secondary" onclick="closeGenerator()">← Back to Dashboard</button>
@@ -541,7 +422,7 @@
             <div class="gen-controls">
                 <h3 style="margin-top:0;">Portfolio Builder</h3>
                 <p style="font-size:12px; color:#666; margin-bottom:20px;">
-                    This tool loops through your live inventory to create a wholesale menu.
+                    Automatically compiles all active inventory items into a professional catalog.
                 </p>
                 
                 <div style="background:#f0f9ff; padding:15px; border-radius:8px; border:1px solid #bae6fd; margin-bottom:20px;">
@@ -550,18 +431,17 @@
 
                 <div style="margin-bottom:20px;">
                     <label>Sheet Title</label>
-                    <input id="sheet-title-input" value="FRESH INVENTORY & CORE RANGE" oninput="updateSheetTitle()">
+                    <input id="sheet-title-input" value="FRESH INVENTORY" oninput="updateSheetTitle()">
                 </div>
 
                 <div style="margin-bottom:20px;">
                     <label>Options</label>
-                    <div style="font-size:13px;">
-                        <input type="checkbox" id="toggle-price" checked onchange="renderCatalog()"> Include Wholesale Pricing
+                    <div style="font-size:13px; margin-bottom:5px;">
+                        <input type="checkbox" id="toggle-price" checked onchange="renderCatalog()"> Show Pricing
                     </div>
                 </div>
 
                 <button class="download-btn primary" style="width:100%;" onclick="window.print()">🖨️ Print / Save PDF</button>
-                <div style="margin-top:10px; font-size:11px; color:#999; text-align:center;">Tip: Use Landscape mode for 2-column layout.</div>
             </div>
 
             <div class="gen-preview">
@@ -569,24 +449,25 @@
                     
                     <div class="sheet-header">
                         <img src="../logo.png" class="header-logo">
-                        <div class="header-text" style="text-align: right;">
-                            <h1 id="sheet-title-display" style="margin:0; font-family:'Oswald'; font-size:36px; line-height:1;">FRESH INVENTORY</h1>
-                            <p style="margin:5px 0 0; font-size:12px; letter-spacing:2px;">SUBURBAN BREWING CO.</p>
+                        <div class="header-text">
+                            <h1 id="sheet-title-display">FRESH INVENTORY</h1>
+                            <p>SUBURBAN BREWING CO. | HONEY BROOK, PA</p>
                         </div>
                     </div>
 
                     <div class="sheet-body">
                         <div id="catalog-container" class="catalog-grid">
-                            <div style="grid-column: span 2; text-align:center; padding:50px; color:#999;">Loading Inventory...</div>
+                            <div style="grid-column: span 2; text-align:center; padding:50px; color:#999;">Loading Data...</div>
                         </div>
                     </div>
 
                     <div class="sheet-footer">
-                        <div class="footer-contact">
-                            <strong>Contact Sales</strong><br>
-                            sales@suburbanbrewingco.com
+                        <div class="footer-left">
+                            <strong>SUBURBAN BREWING COMPANY</strong><br>
+                            3041 Horseshoe Pike, Honey Brook, PA 19344<br>
+                            Sales: 908-642-1019 | sales@suburbanbrewingco.com
                         </div>
-                        <div class="qr-area">
+                        <div class="qr-box">
                             <div id="qr-target"></div>
                         </div>
                     </div>
@@ -595,6 +476,8 @@
             </div>
         </div>
       </div>
+
+    </div>
 
   <div id="asset-modal" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-window">
