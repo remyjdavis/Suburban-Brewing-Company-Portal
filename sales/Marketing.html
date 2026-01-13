@@ -532,64 +532,65 @@
 
             </div>
           </div>
-      </div> <div id="generator-view">
+      <div id="generator-view">
         <div style="margin-bottom:15px;">
             <button class="secondary" onclick="closeGenerator()">← Back to Dashboard</button>
         </div>
         
         <div class="gen-layout">
-    <div class="gen-controls">
-        <h3 style="margin-top:0;">Portfolio Builder</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:20px;">
-            This tool loops through your entire inventory to create a wholesale catalog.
-        </p>
-        
-        <div style="margin-bottom:20px;">
-            <label>Sheet Title</label>
-            <input id="sheet-title-input" value="FRESH INVENTORY & CORE RANGE" oninput="updateSheetTitle()">
-        </div>
+            <div class="gen-controls">
+                <h3 style="margin-top:0;">Portfolio Builder</h3>
+                <p style="font-size:12px; color:#666; margin-bottom:20px;">
+                    This tool automatically loops through your inventory to create a professional wholesale menu.
+                </p>
+                
+                <div style="margin-bottom:20px;">
+                    <label>Sheet Title</label>
+                    <input id="sheet-title-input" value="FRESH INVENTORY & CORE RANGE" oninput="updateSheetTitle()">
+                </div>
 
-        <div style="margin-bottom:20px;">
-            <label>Options</label>
-            <div style="font-size:13px;">
-                <input type="checkbox" id="toggle-price" checked onchange="renderCatalog()"> Include Wholesale Pricing
+                <div style="margin-bottom:20px;">
+                    <label>Options</label>
+                    <div style="font-size:13px;">
+                        <input type="checkbox" id="toggle-price" checked onchange="renderCatalog()"> Include Wholesale Pricing
+                    </div>
+                </div>
+
+                <button class="download-btn primary" style="width:100%;" onclick="window.print()">🖨️ Print / Save PDF</button>
+                <div style="margin-top:10px; font-size:11px; color:#999; text-align:center;">Tip: Use Landscape mode for 2-column layout.</div>
+            </div>
+
+            <div class="gen-preview">
+                <div id="sell-sheet-paper">
+                    
+                    <div class="sheet-header">
+                        <img src="../logo.png" class="header-logo">
+                        <div class="header-text" style="text-align: right;">
+                            <h1 id="sheet-title-display" style="margin:0; font-family:'Oswald'; font-size:36px; line-height:1;">FRESH INVENTORY</h1>
+                            <p style="margin:5px 0 0; font-size:12px; letter-spacing:2px;">SUBURBAN BREWING CO.</p>
+                        </div>
+                    </div>
+
+                    <div class="sheet-body">
+                        <div id="catalog-container" class="catalog-grid">
+                            <div style="grid-column: span 2; text-align:center; padding:50px; color:#999;">Loading Inventory...</div>
+                        </div>
+                    </div>
+
+                    <div class="sheet-footer">
+                        <div class="footer-contact">
+                            <strong>Contact Sales</strong><br>
+                            sales@suburbanbrewingco.com
+                        </div>
+                        <div class="qr-area">
+                            <div id="qr-target"></div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
-
-        <button class="download-btn primary" style="width:100%;" onclick="window.print()">🖨️ Print / Save PDF</button>
     </div>
-
-    <div class="gen-preview">
-        <div id="sell-sheet-paper">
-            
-            <div class="sheet-header">
-                <img src="../logo.png" class="header-logo">
-                <div class="header-text" style="text-align: right;">
-                    <h1 id="sheet-title-display" style="margin:0; font-family:'Oswald'; font-size:36px; line-height:1;">FRESH INVENTORY</h1>
-                    <p style="margin:5px 0 0; font-size:12px; letter-spacing:2px;">SUBURBAN BREWING CO.</p>
-                </div>
-            </div>
-
-            <div class="sheet-body">
-                <div id="catalog-container" class="catalog-grid">
-                    <div style="grid-column: span 2; text-align:center; padding:50px; color:#999;">Loading Inventory...</div>
-                </div>
-            </div>
-
-            <div class="sheet-footer">
-                <div class="footer-contact">
-                    <strong>Contact Sales</strong><br>
-                    sales@suburbanbrewingco.com
-                </div>
-                <div class="qr-area">
-                    <div id="qr-target"></div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-      </div>
 
     </div>
   </div> 
@@ -647,11 +648,11 @@ function switchTab(tabId, el) {
     el.classList.add('active');
 }
 
-// --- GENERATOR LOGIC (Hidden/Shown) ---
+// --- GENERATOR LOGIC ---
 function openGenerator() {
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('generator-view').style.display = 'block';
-    renderCatalog(); // Renders the full list
+    renderCatalog(); // <--- This runs the loop you already have at the bottom of your script
 }
 
 function closeGenerator() {
