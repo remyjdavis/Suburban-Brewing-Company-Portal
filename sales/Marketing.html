@@ -738,22 +738,19 @@ function renderCatalog() {
     let itemsRendered = 0;
 
     beers.forEach(name => {
-        // 1. Get Marketing Data (Flexible Matching)
+        // 1. Get Marketing Data
         let mkt = marketingData[name];
         if (!mkt) {
-            // Try partial match if exact match fails
             const key = Object.keys(marketingData).find(k => k.toLowerCase() === name.toLowerCase());
             mkt = key ? marketingData[key] : {};
         }
 
         const invItems = inventoryData[name];
-        
         let priceHtml = "";
         let hasStock = false;
 
         // 2. Build Price Rows
         invItems.forEach(pkg => {
-            // Check for stock (Handle string or number)
             let qty = parseFloat(pkg.qty);
             
             if (!isNaN(qty) && qty > 0) {
@@ -765,7 +762,7 @@ function renderCatalog() {
             }
         });
 
-        // 3. Render Card ONLY if there is stock
+        // 3. Render Card
         if (hasStock) {
             itemsRendered++;
             const card = document.createElement('div');
@@ -790,11 +787,13 @@ function renderCatalog() {
     if(itemsRendered === 0) {
         container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">Items found, but currently Out of Stock.</div>`;
     }
-}
-if(document.getElementById('item-count-badge')) {
+
+    // --- FIX: This block is now correctly INSIDE the function ---
+    if(document.getElementById('item-count-badge')) {
         document.getElementById('item-count-badge').innerText = itemsRendered;
     }
 }
+  
 function updateSheetTitle() {
     document.getElementById('sheet-title-display').innerText = document.getElementById('sheet-title-input').value;
 }
