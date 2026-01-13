@@ -1034,7 +1034,7 @@ async function loadFreshSheet() {
             packages.forEach(pkg => {
                 // FIXED: Checking both naming possibilities for safety
                 // Your backend maps the 'On Hand' value to pkg.qty
-                const stock = parseFloat(pkg['On Hand'] || pkg.qty || 0);
+                onst stock = parseFloat(pkg['On Hand'] || pkg.onHand || pkg.qty || Object.values(pkg)[2] || 0);
                 
                 if (stock > 0) {
                     const statusColor = stock <= 5 ? '#f59e0b' : '#10b981';
