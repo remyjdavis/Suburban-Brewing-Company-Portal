@@ -1010,33 +1010,122 @@ function updateSheetTitle() {
     document.getElementById('sheet-title-display').innerText = document.getElementById('sheet-title-input').value;
 }
 
-// --- DASHBOARD DATA LOADING ---
+// --- LOAD FRESH SHEET (HIDE OOS ITEMS) ---
 async function loadFreshSheet() {
-    const tbody = document.getElementById('freshSheetBody');
-    if(!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+    const container = document.getElementById('fresh-sheet-list');
+    if(!container) return;
+
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">Loading Fresh Sheet...</div>';
+
     try {
         const res = await fetch(`${API_URL}?action=getBreweryInventory`);
         const data = await res.json();
-        tbody.innerHTML = "";
-        
-        if(!data || data.length === 0) {
-             tbody.innerHTML = '<tr><td colspan="3">No stock available.</td></tr>';
-             return;
+
+        container.innerHTML = ""; 
+
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px;">No inventory found.</div>';
+            return;
         }
 
-        data.forEach(prod => {
-            if(prod.packages) {
-                prod.packages.forEach(pkg => {
-                    if(pkg.qty > 0) {
-                        tbody.innerHTML += `<tr><td><strong>${prod.product}</strong></td><td>${pkg.type}</td><td><span class="badge badge-green">${pkg.qty} In Stock</span></td></tr>`;
-                    }
+        // 1. Sort Beers: Core Range first, then A-Z
+        data.sort((a, b) => {
+            const isCoreA = (a.lifecycle || "").match(/core/i);
+            const isCoreB = (b.lifecycle || "").match(/core/i);
+            if (isCoreA && !isCoreB) return -1;
+            if (!isCoreA && isCoreB) return 1;
+            return a.product.localeCompare(b.product);
+        });
+
+        // 2. Render One Card Per Beer
+        data.forEach(beer => {
+            // FILTER: Only keep formats that have stock > 0
+            let validPackages = beer.packages.filter(p => parseFloat(p.qty) > 0);
+
+            // SKIP: If no formats are in stock, don't show the beer at all
+            if (validPackages.length > 0) {
+                
+                // SORT: Order by Case -> 1/2 -> 1/6
+                validPackages.sort((a, b) => {
+                    const typeA = a.type.toLowerCase();
+                    const typeB = b.type.toLowerCase();
+                    const getWeight = (t) => {
+                        if (t.includes('case')) return 1;
+                        if (t.includes('1/2')) return 2;
+                        if (t.includes('1/6')) return 3;
+                        return 4; 
+                    };
+                    return getWeight(typeA) - getWeight(typeB);
                 });
+
+                // Build the List of Formats (Right Side)
+                let formatsHtml = '<div style="display:flex; flex-direction:column; gap:4px;">';
+                
+                validPackages.forEach(pkg => {
+                    const qty = parseFloat(pkg.qty);
+                    
+                    // Logic for "Low" vs "Good" status (OOS is already filtered out)
+                    let statusColor = '#10b981'; // Green (Good)
+                    let statusText = 'Good'; 
+                    
+                    if (qty <= 10) { 
+                        statusColor = '#f59e0b'; // Orange (Low)
+                        statusText = 'Low'; 
+                    }
+
+                    formatsHtml += `
+                        <div style="
+                            display:flex; 
+                            justify-content:space-between; 
+                            align-items:center; 
+                            padding: 6px 0; 
+                            border-bottom: 1px solid #334155;">
+                            
+                            <span style="color:#cbd5e1; font-size:14px; flex-grow:1; padding-left:15px;">
+                                ${pkg.type}
+                            </span>
+                            
+                            <span style="color:${statusColor}; font-weight:bold; font-size:13px; min-width:60px; text-align:right;">
+                                ${qty} <span style="font-size:10px; opacity:0.8;">${statusText}</span>
+                            </span>
+                        </div>
+                    `;
+                });
+                formatsHtml += '</div>';
+
+                // Build the Card
+                const card = document.createElement('div');
+                card.className = 'fresh-card';
+                card.style.cssText = `
+                    background: #0f172a; 
+                    border: 1px solid #334155; 
+                    border-radius: 8px; 
+                    padding: 15px; 
+                    margin-bottom: 15px;
+                    display: flex;
+                    align-items: center;
+                `;
+
+                card.innerHTML = `
+                    <div style="width: 35%; border-right: 1px solid #334155; padding-right: 15px; margin-right: 15px;">
+                         <h3 style="margin:0; font-size:18px; color:#38bdf8; font-family:'Oswald'; line-height:1.2;">
+                            ${beer.product}
+                         </h3>
+                         <div style="font-size:11px; color:#64748b; margin-top:4px;">${beer.lifecycle || ''}</div>
+                    </div>
+
+                    <div style="flex-grow: 1;">
+                        ${formatsHtml}
+                    </div>
+                `;
+
+                container.appendChild(card);
             }
         });
-    } catch(e) { 
+
+    } catch (e) {
         console.error(e);
-        tbody.innerHTML = '<tr><td colspan="3" style="color:red;">Error loading data.</td></tr>'; 
+        container.innerHTML = '<div style="color:red; text-align:center;">Error loading sheet.</div>';
     }
 }
 
