@@ -111,10 +111,12 @@
     .deck-header h1 { color: white; font-family:'Oswald'; font-size:48px; margin:0; letter-spacing:1px; }
     .deck-header p { color: #94a3b8; margin:5px 0 0; letter-spacing: 2px; font-size:14px; }
     
-/* Screen Logo: rounded corners to hide white box */
+/* Screen Logo: Circle crop with a "masking" border */
 .header-logo { 
     height: 80px; 
-    border-radius: 50%; /* <--- This turns the square into a circle */
+    border-radius: 50%; 
+    border: 4px solid #0f172a; /* This thick border covers the white edges */
+    box-sizing: border-box;
 }
     
     .deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; align-content: start; }
@@ -179,8 +181,12 @@
         .deck-header h1 { color: #0f172a !important; }
         .deck-header p { color: #64748b !important; }
         
-        /* Reset Logo Filter for White Paper */
-        .header-logo { filter: none !important; } 
+        /* Inside @media print */
+.header-logo { 
+    filter: none !important; 
+    border: none !important; /* Removes the dark ring on the white PDF */
+    border-radius: 0 !important; /* Optional: Resets to square if you prefer */
+}
         
         .deck-grid { display: block !important; } 
         
