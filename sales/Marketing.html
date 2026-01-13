@@ -111,14 +111,17 @@
     .deck-header h1 { color: white; font-family:'Oswald'; font-size:48px; margin:0; letter-spacing:1px; }
     .deck-header p { color: #94a3b8; margin:5px 0 0; letter-spacing: 2px; font-size:14px; }
     
-/* Screen Logo: Thick border acting as a crop tool */
+/* Screen Logo: "Cookie Cutter" crop */
 .header-logo { 
     height: 80px; 
-    width: 80px;         /* Force it to be a square/circle shape */
-    border-radius: 50%; 
-    border: 12px solid #0f172a; /* Thicker border covers more white edge */
-    box-sizing: border-box;    /* IMPORTANT: Makes border go INWARD */
-    object-fit: cover;         /* Ensures image fills the circle */
+    width: 80px; 
+    object-fit: cover;
+    
+    /* This draws a circle 36px radius from the center.
+       Since the image is 40px radius (80px wide), 
+       this cuts off the outer 4px of white space entirely.
+    */
+    clip-path: circle(36px at center); 
 }
     
     .deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; align-content: start; }
