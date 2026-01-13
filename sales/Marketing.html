@@ -541,7 +541,7 @@ async function initGeneratorData() {
         const inventory = await invRes.json();
         const market = await mktRes.json();
 
-        console.log("Raw Inventory:", inventory); // Debugging: See what the API actually sends
+        console.log("Raw Inventory:", inventory); // Debugging
 
         // Process Inventory
         inventoryData = {};
@@ -555,7 +555,6 @@ async function initGeneratorData() {
                 // Handle nested packages if they exist
                 if (p.packages && Array.isArray(p.packages)) {
                     p.packages.forEach(pkg => {
-                        // Ensure we have a valid object
                         inventoryData[n].push({
                             type: pkg.type || pkg.package || "Unit",
                             qty: pkg.qty || 0,
@@ -573,11 +572,10 @@ async function initGeneratorData() {
             });
         }
 
-        // Process Marketing
+        // Process Marketing (Flexible Match)
         marketingData = {};
         if (Array.isArray(market)) {
             market.forEach(row => {
-                // Flexible header matching based on your screenshot
                 const name = (row['Product Name'] || row['product name'] || row['Product'] || row['name'] || "").trim();
                 if(name) {
                     marketingData[name] = {
