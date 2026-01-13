@@ -617,6 +617,75 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXl
 let inventoryData = {};
 let marketingData = {};
 
+// --- INITIALIZATION ---
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Set Date
+    if(document.getElementById('currentDate')) {
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
+    }
+    
+    // 2. Init QR Code (Safe Check)
+    if(document.getElementById("qr-target")) {
+        try { 
+            new QRCode(document.getElementById("qr-target"), { text: "https://suburbanbrewingco.com", width: 50, height: 50 }); 
+        } catch(e) { console.log("QR Lib loading..."); }
+    }
+
+    // 3. Load Dashboard Data
+    loadFreshSheet();
+    loadChurnMonitor();
+    
+    // 4. Load Data for Generator (THE FIX)
+    // We use getBreweryInventory to ensure we get the same data as the fresh sheet
+    if(document.getElementById('loading-status')) {
+        document.getElementById('loading-status').innerText = "Fetching Data...";
+    }
+    
+    Promise.all([
+        fetch(`${API_URL}?action=getBreweryInventory`).then(r => r.json()), 
+        fetch(`${API_URL}?action=getMarketingData`).then(r => r.json())
+    ]).then(([inventory, market]) => {
+        
+        // Process Inventory (Group by Product Name)
+        inventoryData = {};
+        
+        inventory.forEach(p => {
+            // FIX: Normalize the name so we catch 'product' or 'name' properties
+            const n = (p.product || p.name || "Unknown").trim();
+            
+            if(!inventoryData[n]) inventoryData[n] = [];
+            
+            // Handle nested packages if they exist (standard structure), or flat structure
+            if (p.packages && Array.isArray(p.packages)) {
+                p.packages.forEach(pkg => {
+                    inventoryData[n].push(pkg);
+                });
+            } else {
+                inventoryData[n].push(p);
+            }
+        });
+
+        // Process Marketing
+        marketingData = market;
+        
+        if(document.getElementById('loading-status')) {
+            document.getElementById('loading-status').innerText = "Synced & Ready";
+            document.getElementById('loading-status').style.color = "green";
+        }
+
+    }).catch(e => {
+        console.error("Error loading generator data", e);
+        if(document.getElementById('loading-status')) {
+            document.getElementById('loading-status').innerText = "Error Loading";
+            document.getElementById('loading-status').style.color = "red";
+        }
+    });
+    
+    // 5. Init UI Helpers
+    updateBanner();
+    updateSocialPreview();
+});
+
 // --- NAVIGATION & MOBILE ---
 function toggleGroup(contentId, headerEl) {
     const content = document.getElementById(contentId);
@@ -651,11 +720,11 @@ function switchTab(tabId, el) {
     el.classList.add('active');
 }
 
-// --- GENERATOR LOGIC ---
+// --- PORTFOLIO GENERATOR LOGIC ---
 function openGenerator() {
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('generator-view').style.display = 'block';
-    renderCatalog(); 
+    renderCatalog(); // Triggers the loop to build the menu
 }
 
 function closeGenerator() {
@@ -663,7 +732,75 @@ function closeGenerator() {
     document.getElementById('dashboard-view').style.display = 'block';
 }
 
-// --- DATA DICTIONARY ---
+function renderCatalog() {
+    const container = document.getElementById('catalog-container');
+    if (!container) return; // Guard clause if HTML is missing
+    
+    const showPrice = document.getElementById('toggle-price').checked;
+    container.innerHTML = ""; // Clear existing
+
+    const beers = Object.keys(inventoryData).sort();
+    
+    if(beers.length === 0) {
+        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">No inventory loaded yet. (Check Status)</div>`;
+        return;
+    }
+
+    beers.forEach(name => {
+        // 1. Get Data
+        const mkt = marketingData[name] || {};
+        const invItems = inventoryData[name];
+        
+        // 2. Build Price HTML (Loop through packages)
+        let priceHtml = "";
+        let hasStock = false;
+
+        invItems.forEach(pkg => {
+            // Check for stock (Quantity > 0)
+            // Some APIs return strings for numbers, so we parse
+            if(pkg.qty && parseFloat(pkg.qty) > 0) {
+                hasStock = true;
+                if(showPrice) {
+                    const price = pkg.price ? parseFloat(pkg.price).toFixed(2) : "--";
+                    // pkg.type is usually the size (1/2 BBL, Case, etc)
+                    const pkgName = pkg.type || pkg.package || "Unit";
+                    priceHtml += `<div class="price-row"><span>${pkgName}</span><span class="price-val">$${price}</span></div>`;
+                }
+            }
+        });
+
+        // 3. Render Card ONLY if there is stock
+        // If you want to show out-of-stock items, remove the 'if (hasStock)' check
+        if (hasStock) {
+            const card = document.createElement('div');
+            card.className = 'beer-card';
+            card.innerHTML = `
+                <div class="beer-header">
+                    <h3 class="beer-name">${name}</h3>
+                    <div class="beer-meta">
+                        <span style="color:var(--gold);">${mkt.style || 'Craft Beer'}</span>
+                        <span>${mkt.abv ? `ABV: ${mkt.abv}` : ''} ${mkt.ibu ? `| IBU: ${mkt.ibu}` : ''}</span>
+                    </div>
+                </div>
+                <p class="beer-desc">${mkt.desc || 'Contact representative for tasting notes and availability details.'}</p>
+                <div class="price-box">
+                    ${priceHtml || '<em style="color:#666; font-size:11px;">Please ask for pricing</em>'}
+                </div>
+            `;
+            container.appendChild(card);
+        }
+    });
+
+    if(container.innerHTML === "") {
+        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">Items found, but all Quantities are 0.</div>`;
+    }
+}
+
+function updateSheetTitle() {
+    document.getElementById('sheet-title-display').innerText = document.getElementById('sheet-title-input').value;
+}
+
+// --- DATA DICTIONARY (ASSETS) ---
 const ASSET_CONTENT = {
   'Vector Logos': `<div class="logo-grid"><div class="logo-box"><div style="font-size:40px;">🍻</div><span class="logo-label">Primary</span></div></div>`,
   '2026 Price List': `<table class="price-table"><thead><tr><th>SKU</th><th>Product</th><th>Price</th></tr></thead><tbody><tr><td>SBC-001</td><td>Moon Rocks</td><td>$210.00</td></tr></tbody></table>`,
@@ -686,180 +823,10 @@ function closeModal(e) {
     }
 }
 
-// --- SOCIAL MANAGER LOGIC ---
-let currentPreviewMode = 'fb'; 
-
-function toggleSocialView(view) {
-    const composeEl = document.getElementById('social-compose-view');
-    const inboxEl = document.getElementById('social-inbox-view');
-    const btnCompose = document.getElementById('btnShowCompose');
-    const btnInbox = document.getElementById('btnShowInbox');
-
-    if (view === 'compose') {
-        composeEl.style.display = 'flex';
-        inboxEl.style.display = 'none';
-        btnCompose.style.background = 'white';
-        btnCompose.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        btnInbox.style.background = 'transparent';
-        btnInbox.style.boxShadow = 'none';
-    } else {
-        composeEl.style.display = 'none';
-        inboxEl.style.display = 'block';
-        btnInbox.style.background = 'white';
-        btnInbox.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        btnCompose.style.background = 'transparent';
-        btnCompose.style.boxShadow = 'none';
-    }
-}
-
-function toggleReply(btn) {
-    const replyBox = btn.nextElementSibling;
-    if (replyBox.classList.contains('active')) {
-        replyBox.classList.remove('active');
-        btn.innerText = 'Reply';
-    } else {
-        replyBox.classList.add('active');
-        btn.innerText = 'Cancel';
-    }
-}
-
-function generateAIReply(btn, userComment) {
-    const inputField = btn.previousElementSibling;
-    const originalText = btn.innerText;
-    btn.innerText = "Thinking...";
-    btn.disabled = true;
-    setTimeout(() => {
-        let aiResponse = "Thanks for the love! 🍻";
-        if (userComment.toLowerCase().includes("stout")) aiResponse = "Yes! The stout is tapping this Friday.";
-        inputField.value = aiResponse;
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }, 800);
-}
-
-function sendReply(btn) {
-    alert("Reply posted!");
-    btn.parentElement.classList.remove('active');
-}
-
-function setPreviewMode(mode) {
-    currentPreviewMode = mode;
-    document.getElementById('btnPreviewFB').style.background = mode === 'fb' ? 'white' : 'transparent';
-    document.getElementById('btnPreviewIG').style.background = mode === 'ig' ? 'white' : 'transparent';
-    updateSocialPreview();
-}
-
-function updateSocialPreview() {
-    const text = document.getElementById('socialCaption').value;
-    const headerEl = document.getElementById('previewHeader');
-    const bodyEl = document.getElementById('previewBody');
-    if (currentPreviewMode === 'fb') {
-        headerEl.innerHTML = `<strong>Suburban Brewing Co.</strong><div style="font-size:11px;color:#666;">Just now</div>`;
-        bodyEl.innerHTML = text;
-    } else {
-        headerEl.innerHTML = `<strong>suburbanbrewing</strong>`;
-        bodyEl.innerHTML = `<strong>suburbanbrewing</strong> ${text}`;
-    }
-}
-
-function handleSocialUpload(input) {
-    const imgEl = document.getElementById('socialPreviewImg');
-    const container = document.getElementById('socialPreviewImgContainer');
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imgEl.src = e.target.result;
-            imgEl.style.display = 'block';
-            container.querySelector('span').style.display = 'none';
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-function clearSocialImage() {
-    document.getElementById('socialUpload').value = "";
-    document.getElementById('socialPreviewImg').style.display = 'none';
-    document.getElementById('socialPreviewImgContainer').querySelector('span').style.display = 'block';
-}
-
-function handleSocialPost() {
-    alert("Posted!");
-}
-
-function updateBanner() {
-    document.getElementById('bannerPreviewText').innerText = document.getElementById('bannerMsg').value;
-}
-
-// --- BACKEND DATA INTEGRATION ---
-document.addEventListener("DOMContentLoaded", () => {
-    // 1. Set Date
-    if(document.getElementById('currentDate')) {
-        document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
-    }
-    
-    // 2. Check QR Lib
-    if(document.getElementById("qr-target")) {
-        try { 
-            new QRCode(document.getElementById("qr-target"), { text: "https://suburbanbrewingco.com", width: 50, height: 50 }); 
-        } catch(e) { console.log("QR Lib loading..."); }
-    }
-
-    // 3. Load Data
-    loadFreshSheet();
-    loadChurnMonitor();
-    
-    // 4. Load Data for Generator
-    if(document.getElementById('loading-status')) {
-        document.getElementById('loading-status').innerText = "Fetching Data...";
-    }
-    
-    Promise.all([
-        fetch(`${API_URL}?action=getBreweryInventory`).then(r => r.json()), // UPDATED: Matches Fresh Sheet source
-        fetch(`${API_URL}?action=getMarketingData`).then(r => r.json())
-    ]).then(([inventory, market]) => {
-        
-        // Process Inventory (Group by Product Name)
-        inventoryData = {};
-        
-        inventory.forEach(p => {
-            // FIX: Use 'product' property (standard for getBreweryInventory)
-            const n = (p.product || p.name || "Unknown").trim();
-            
-            if(!inventoryData[n]) inventoryData[n] = [];
-            
-            // Handle nested packages structure
-            if (p.packages && Array.isArray(p.packages)) {
-                p.packages.forEach(pkg => {
-                    inventoryData[n].push(pkg);
-                });
-            } else {
-                inventoryData[n].push(p);
-            }
-        });
-
-        // Process Marketing
-        marketingData = market;
-        
-        if(document.getElementById('loading-status')) {
-            document.getElementById('loading-status').innerText = "Synced & Ready";
-            document.getElementById('loading-status').style.color = "green";
-        }
-
-    }).catch(e => {
-        console.error("Error loading generator data", e);
-        if(document.getElementById('loading-status')) {
-            document.getElementById('loading-status').innerText = "Error Loading";
-            document.getElementById('loading-status').style.color = "red";
-        }
-    });
-    
-    // 5. Init UI
-    updateBanner();
-    updateSocialPreview();
-});
-
+// --- DASHBOARD DATA LOADING ---
 async function loadFreshSheet() {
     const tbody = document.getElementById('freshSheetBody');
+    if(!tbody) return;
     tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
     try {
         const res = await fetch(`${API_URL}?action=getBreweryInventory`);
@@ -888,6 +855,8 @@ async function loadFreshSheet() {
 
 async function loadChurnMonitor() {
     const tbody = document.getElementById('churnBody');
+    if(!tbody) return; 
+    
     tbody.innerHTML = '<tr><td colspan="4">Analyzing sales...</td></tr>';
     try {
         const res = await fetch(`${API_URL}?action=getFullAuditData`);
@@ -914,71 +883,181 @@ async function loadChurnMonitor() {
     } catch(e) { tbody.innerHTML = '<tr><td colspan="4">Error loading churn.</td></tr>'; }
 }
 
-// --- CATALOG GENERATOR LOGIC ---
-function renderCatalog() {
-    const container = document.getElementById('catalog-container');
-    const showPrice = document.getElementById('toggle-price').checked;
-    container.innerHTML = ""; // Clear existing
-
-    const beers = Object.keys(inventoryData).sort();
-    
-    if(beers.length === 0) {
-        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">No inventory loaded yet. (Check Status)</div>`;
-        return;
-    }
-
-    beers.forEach(name => {
-        // 1. Get Marketing Data
-        const mkt = marketingData[name] || {};
-        
-        // 2. Get Inventory Items
-        const invItems = inventoryData[name];
-        
-        // 3. Build Price HTML
-        let priceHtml = "";
-        let hasStock = false;
-
-        invItems.forEach(pkg => {
-            // Check for stock (Quantity > 0)
-            if(pkg.qty > 0) {
-                hasStock = true;
-                if(showPrice) {
-                    const price = pkg.price ? parseFloat(pkg.price).toFixed(2) : "--";
-                    // pkg.type is usually the size (1/2 BBL, Case, etc)
-                    const pkgName = pkg.type || pkg.package || "Unit";
-                    priceHtml += `<div class="price-row"><span>${pkgName}</span><span class="price-val">$${price}</span></div>`;
-                }
-            }
-        });
-
-        // 4. Render Card ONLY if there is stock
-        if (hasStock) {
-            const card = document.createElement('div');
-            card.className = 'beer-card';
-            card.innerHTML = `
-                <div class="beer-header">
-                    <h3 class="beer-name">${name}</h3>
-                    <div class="beer-meta">
-                        <span style="color:var(--gold);">${mkt.style || 'Craft Beer'}</span>
-                        <span>${mkt.abv ? `ABV: ${mkt.abv}` : ''} ${mkt.ibu ? `| IBU: ${mkt.ibu}` : ''}</span>
-                    </div>
-                </div>
-                <p class="beer-desc">${mkt.desc || 'Contact representative for details.'}</p>
-                <div class="price-box">
-                    ${priceHtml || '<em style="color:#666; font-size:11px;">Please ask for pricing</em>'}
-                </div>
-            `;
-            container.appendChild(card);
-        }
-    });
-
-    if(container.innerHTML === "") {
-        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">Items found, but all Quantities are 0.</div>`;
+function updateBanner() {
+    if(document.getElementById('bannerMsg')) {
+        document.getElementById('bannerPreviewText').innerText = document.getElementById('bannerMsg').value;
     }
 }
 
-function updateSheetTitle() {
-    document.getElementById('sheet-title-display').innerText = document.getElementById('sheet-title-input').value;
+// --- SOCIAL MANAGER LOGIC ---
+let currentPreviewMode = 'fb'; 
+
+function toggleSocialView(view) {
+    const composeEl = document.getElementById('social-compose-view');
+    const inboxEl = document.getElementById('social-inbox-view');
+    const btnCompose = document.getElementById('btnShowCompose');
+    const btnInbox = document.getElementById('btnShowInbox');
+
+    if (view === 'compose') {
+        composeEl.style.display = 'flex';
+        inboxEl.style.display = 'none';
+        btnCompose.style.background = 'white';
+        btnCompose.style.color = 'black';
+        btnCompose.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+        
+        btnInbox.style.background = 'transparent';
+        btnInbox.style.color = '#64748b';
+        btnInbox.style.boxShadow = 'none';
+    } else {
+        composeEl.style.display = 'none';
+        inboxEl.style.display = 'block';
+        btnInbox.style.background = 'white';
+        btnInbox.style.color = 'black';
+        btnInbox.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+        
+        btnCompose.style.background = 'transparent';
+        btnCompose.style.color = '#64748b';
+        btnCompose.style.boxShadow = 'none';
+    }
+}
+
+function toggleReply(btn) {
+    const replyBox = btn.nextElementSibling;
+    if (replyBox.classList.contains('active')) {
+        replyBox.classList.remove('active');
+        btn.innerText = 'Reply';
+    } else {
+        replyBox.classList.add('active');
+        btn.innerText = 'Cancel';
+    }
+}
+
+function generateAIReply(btn, userComment) {
+    const inputField = btn.previousElementSibling;
+    const originalText = btn.innerText;
+    btn.innerText = "🤖 Thinking...";
+    btn.disabled = true;
+
+    // Simulate AI Delay (1s)
+    setTimeout(() => {
+        let aiResponse = "";
+        
+        // Simple heuristic for demo purposes
+        if (userComment.toLowerCase().includes("stout")) {
+            aiResponse = "Hey! Yes, the Winter Stout just went on tap yesterday. Come by for a pint! 🍺";
+        } else if (userComment.toLowerCase().includes("visit")) {
+            aiResponse = "We'd love to see you! We're open till 10pm all weekend. Cheers! 🍻";
+        } else {
+            aiResponse = "Thanks for the love! Hope to see you in the taproom soon.";
+        }
+
+        inputField.value = aiResponse;
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }, 800);
+}
+
+function sendReply(btn) {
+    const input = btn.previousElementSibling.previousElementSibling; // Skip over AI button
+    if(input.value.trim() === "") return;
+    
+    alert(`Reply sent: "${input.value}"`);
+    input.value = "";
+    
+    const replyBox = btn.parentElement;
+    const toggleBtn = replyBox.previousElementSibling;
+    replyBox.classList.remove('active');
+    toggleBtn.innerText = 'Reply';
+}
+
+function setPreviewMode(mode) {
+    currentPreviewMode = mode;
+    
+    // Update Button Styles
+    document.getElementById('btnPreviewFB').style.background = mode === 'fb' ? 'white' : 'transparent';
+    document.getElementById('btnPreviewFB').style.color = mode === 'fb' ? 'black' : '#64748b';
+    document.getElementById('btnPreviewFB').style.boxShadow = mode === 'fb' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none';
+    
+    document.getElementById('btnPreviewIG').style.background = mode === 'ig' ? 'white' : 'transparent';
+    document.getElementById('btnPreviewIG').style.color = mode === 'ig' ? 'black' : '#64748b';
+    document.getElementById('btnPreviewIG').style.boxShadow = mode === 'ig' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none';
+
+    updateSocialPreview();
+}
+
+function updateSocialPreview() {
+    const text = document.getElementById('socialCaption').value;
+    const headerEl = document.getElementById('previewHeader');
+    const bodyEl = document.getElementById('previewBody');
+    const imgContainer = document.getElementById('socialPreviewImgContainer');
+
+    if (currentPreviewMode === 'fb') {
+        // --- FACEBOOK VIEW ---
+        headerEl.innerHTML = `
+            <img src="../logo.png" style="width:40px; height:40px; border-radius:50%; background:#0f172a; padding:2px;" onerror="this.src='https://via.placeholder.com/40'">
+            <div>
+                <div style="font-weight:700; font-size:14px; color:#1c1e21;">Suburban Brewing Co.</div>
+                <div style="font-size:12px; color:#65676b;">Just now · 🌎</div>
+            </div>
+        `;
+        
+        bodyEl.innerHTML = `
+            <div style="font-size:14px; color:#1c1e21; white-space: pre-wrap; margin-bottom:10px;">${text}</div>
+            <div style="padding-top: 10px; border-top:1px solid #ddd; display:flex; justify-content:space-around; color:#65676b; font-weight:600; font-size:13px;">
+                <span>👍 Like</span><span>💬 Comment</span><span>↗️ Share</span>
+            </div>
+        `;
+    } else {
+        // --- INSTAGRAM VIEW ---
+        headerEl.innerHTML = `
+            <img src="../logo.png" style="width:32px; height:32px; border-radius:50%; background:#0f172a; padding:1px;" onerror="this.src='https://via.placeholder.com/32'">
+            <div style="font-weight:600; font-size:14px; color:#262626;">suburbanbrewing</div>
+            <div style="margin-left:auto; font-weight:bold;">...</div>
+        `;
+        
+        bodyEl.innerHTML = `
+            <div style="display:flex; gap:15px; margin-bottom:10px;">
+                <span style="font-size:22px;">♡</span>
+                <span style="font-size:22px;">💬</span>
+                <span style="font-size:22px;">🚀</span>
+                <span style="margin-left:auto; font-size:22px;">🔖</span>
+            </div>
+            <div style="font-size:14px; color:#262626; line-height:1.4;">
+                <span style="font-weight:600;">suburbanbrewing</span> ${text}
+            </div>
+        `;
+    }
+}
+
+function handleSocialUpload(input) {
+    const imgEl = document.getElementById('socialPreviewImg');
+    const container = document.getElementById('socialPreviewImgContainer');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imgEl.src = e.target.result;
+            imgEl.style.display = 'block';
+            container.querySelector('span').style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function clearSocialImage() {
+    document.getElementById('socialUpload').value = "";
+    document.getElementById('socialPreviewImg').src = "";
+    document.getElementById('socialPreviewImg').style.display = 'none';
+    document.getElementById('socialPreviewImgContainer').querySelector('span').style.display = 'block';
+}
+
+function handleSocialPost() {
+    const postToFB = document.getElementById('checkFB').checked;
+    const postToIG = document.getElementById('checkIG').checked;
+    
+    if(!postToFB && !postToIG) return alert("Please select at least one platform.");
+    
+    alert(`Preparing to post to: ${postToFB ? 'Facebook ' : ''}${postToIG ? 'Instagram' : ''}`);
 }
 </script>
 
