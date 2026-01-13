@@ -505,7 +505,7 @@
                         </div>
                     </div>
 
-                    <button class="primary" style="margin-top:auto;" onclick="alert('Post scheduled!')">🚀 Schedule Post</button>
+                    <button class="primary" style="margin-top:auto;" onclick="publishToFacebook()">🚀 Publish to Facebook</button>
                 </div>
 
                 <div class="social-preview-pane">
@@ -1240,7 +1240,78 @@ function sendReply(btn) {
         });
     });
 }
+async function publishToFacebook() {
+    const btn = document.querySelector('.social-compose button.primary');
+    const caption = document.getElementById('socialCaption').value;
+    const fileInput = document.getElementById('socialImageInput');
+    
+    // Get Checkbox Values
+    // Note: We look for the inputs inside the .social-compose container
+    const checkboxes = document.querySelectorAll('.social-compose input[type="checkbox"]');
+    const postToFB = checkboxes[0].checked; // First box is FB
+    const postToIG = checkboxes[1].checked; // Second box is IG
 
+    if(!postToFB && !postToIG) {
+        return Swal.fire('No Platform Selected', 'Please select Facebook, Instagram, or both.', 'warning');
+    }
+    
+    if(!caption && fileInput.files.length === 0) {
+        return Swal.fire('Empty Post', 'Please write a caption or select an image.', 'warning');
+    }
+
+    // UI Loading State
+    const originalText = btn.innerText;
+    btn.innerText = "🚀 Publishing...";
+    btn.disabled = true;
+
+    try {
+        let payload = {
+            action: "postToSocials", // Renamed action
+            message: caption,
+            image: "",
+            postToFB: postToFB,
+            postToIG: postToIG
+        };
+
+        // Process Image
+        if (fileInput.files.length > 0) {
+            payload.image = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result.split(',')[1]); 
+                reader.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.status === "success") {
+            let msg = 'Posted successfully!';
+            if(result.fb_id) msg += ' (FB)';
+            if(result.ig_id) msg += ' (IG)';
+            
+            Swal.fire('Success!', msg, 'success');
+            
+            // Clear form
+            document.getElementById('socialCaption').value = "";
+            document.getElementById('socialImageInput').value = "";
+            handleSocialImage({files:[]}); // Reset preview
+        } else {
+            throw new Error(result.message || "Unknown error from server");
+        }
+
+    } catch (e) {
+        console.error(e);
+        Swal.fire('Error', 'Failed to publish: ' + e.message, 'error');
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
 </script>
 
 </body>
