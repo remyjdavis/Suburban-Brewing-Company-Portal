@@ -810,11 +810,13 @@ document.addEventListener("DOMContentLoaded", () => {
     loadFreshSheet();
     loadChurnMonitor();
     
-    // 4. Load Data for Generator (Fixing the data source here)
-    document.getElementById('loading-status').innerText = "Fetching Data...";
+    // 4. Load Data for Generator
+    if(document.getElementById('loading-status')) {
+        document.getElementById('loading-status').innerText = "Fetching Data...";
+    }
     
     Promise.all([
-        fetch(`${API_URL}?action=getBreweryInventory`).then(r => r.json()), // Changed to getBreweryInventory for correct stock data
+        fetch(`${API_URL}?action=getBreweryInventory`).then(r => r.json()), // UPDATED: Matches Fresh Sheet source
         fetch(`${API_URL}?action=getMarketingData`).then(r => r.json())
     ]).then(([inventory, market]) => {
         
@@ -822,12 +824,12 @@ document.addEventListener("DOMContentLoaded", () => {
         inventoryData = {};
         
         inventory.forEach(p => {
-            // FIX: Ensure we check both 'product' and 'name' properties
+            // FIX: Use 'product' property (standard for getBreweryInventory)
             const n = (p.product || p.name || "Unknown").trim();
             
             if(!inventoryData[n]) inventoryData[n] = [];
             
-            // Handle nested packages if they exist, or flat structure
+            // Handle nested packages structure
             if (p.packages && Array.isArray(p.packages)) {
                 p.packages.forEach(pkg => {
                     inventoryData[n].push(pkg);
@@ -840,13 +842,17 @@ document.addEventListener("DOMContentLoaded", () => {
         // Process Marketing
         marketingData = market;
         
-        document.getElementById('loading-status').innerText = "Synced & Ready";
-        document.getElementById('loading-status').style.color = "green";
+        if(document.getElementById('loading-status')) {
+            document.getElementById('loading-status').innerText = "Synced & Ready";
+            document.getElementById('loading-status').style.color = "green";
+        }
 
     }).catch(e => {
         console.error("Error loading generator data", e);
-        document.getElementById('loading-status').innerText = "Error Loading";
-        document.getElementById('loading-status').style.color = "red";
+        if(document.getElementById('loading-status')) {
+            document.getElementById('loading-status').innerText = "Error Loading";
+            document.getElementById('loading-status').style.color = "red";
+        }
     });
     
     // 5. Init UI
