@@ -540,9 +540,14 @@ let marketingData = {};
 
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Set Date
+    // 1. Set Date (Dashboard)
     if(document.getElementById('currentDate')) {
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
+    }
+    
+    // NEW: Set Date (Digital Deck)
+    if(document.getElementById('deck-date')) {
+       document.getElementById('deck-date').innerText = new Date().toLocaleDateString();
     }
     
     // 2. Init QR Code (Safe Check)
@@ -786,7 +791,10 @@ function renderCatalog() {
         container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">Items found, but currently Out of Stock.</div>`;
     }
 }
-
+if(document.getElementById('item-count-badge')) {
+        document.getElementById('item-count-badge').innerText = itemsRendered;
+    }
+}
 function updateSheetTitle() {
     document.getElementById('sheet-title-display').innerText = document.getElementById('sheet-title-input').value;
 }
@@ -1040,12 +1048,6 @@ function sendReply(btn) {
     });
 }
 
-// Update the date on load
-document.addEventListener("DOMContentLoaded", () => {
-   if(document.getElementById('deck-date')) {
-       document.getElementById('deck-date').innerText = new Date().toLocaleDateString();
-   }
-});
 </script>
 
 </body>
