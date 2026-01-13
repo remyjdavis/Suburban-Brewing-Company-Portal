@@ -519,7 +519,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadChurnMonitor();
     
     // 4. Load Data for Generator (THE FIX)
-    // We use getBreweryInventory to ensure we get the same data as the fresh sheet
     if(document.getElementById('loading-status')) {
         document.getElementById('loading-status').innerText = "Fetching Data...";
     }
@@ -740,24 +739,21 @@ async function loadChurnMonitor() {
     const tbody = document.getElementById('churnBody');
     if(!tbody) return; 
     
-    tbody.innerHTML = '<tr><td colspan="4">Analyzing sales...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4">Analyzing...</td></tr>';
     try {
         const res = await fetch(`${API_URL}?action=getFullAuditData`);
         const invoices = await res.json();
-        
         const lastOrder = {};
         invoices.forEach(inv => {
             const d = new Date(inv.date);
             if(!lastOrder[inv.customer] || d > lastOrder[inv.customer]) lastOrder[inv.customer] = d;
         });
-
         const today = new Date();
         const atRisk = [];
         Object.keys(lastOrder).forEach(cust => {
             const diff = Math.ceil(Math.abs(today - lastOrder[cust]) / (1000 * 60 * 60 * 24));
             if(diff > 45) atRisk.push({name: cust, days: diff, date: lastOrder[cust].toLocaleDateString()});
         });
-        
         tbody.innerHTML = "";
         if(atRisk.length === 0) tbody.innerHTML = '<tr><td colspan="4">No at-risk accounts!</td></tr>';
         else atRisk.slice(0,10).forEach(c => {
@@ -783,7 +779,7 @@ function toggleSocialView(view) {
 
     if (view === 'compose') {
         composeEl.style.display = 'flex';
-        inboxEl.style.display = 'none';
+        if(inboxEl) inboxEl.style.display = 'none';
         btnCompose.style.background = 'white';
         btnCompose.style.color = 'black';
         btnCompose.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
@@ -793,7 +789,7 @@ function toggleSocialView(view) {
         btnInbox.style.boxShadow = 'none';
     } else {
         composeEl.style.display = 'none';
-        inboxEl.style.display = 'block';
+        if(inboxEl) inboxEl.style.display = 'block';
         btnInbox.style.background = 'white';
         btnInbox.style.color = 'black';
         btnInbox.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
