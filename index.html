@@ -60,12 +60,27 @@
       display: flex; min-height: 100vh;
     }
 
-    /* --- SIDEBAR STYLES --- */
+    /* --- AUTO-HIDING SIDEBAR --- */
     .sidebar { 
-      width: 260px; background: var(--sidebar); color: #fff; 
-      padding: 24px 0; flex-shrink: 0; position: fixed; 
-      height: 100vh; overflow-y: auto; z-index: 1000;
-      transition: all 0.3s ease;
+        width: 260px; 
+        background: var(--sidebar); 
+        color: #fff; 
+        padding: 24px 0; 
+        flex-shrink: 0; 
+        position: fixed; 
+        height: 100vh; 
+        overflow-y: auto; 
+        z-index: 1000; 
+        
+        /* THE MAGIC: Push it off-screen, leaving a 10px "Hit Zone" */
+        left: 0;
+        transform: translateX(-250px); 
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    /* When mouse hits the 10px strip (or the menu itself), slide it out */
+    .sidebar:hover {
+        transform: translateX(0);
+        box-shadow: 10px 0 25px rgba(0,0,0,0.5); /* Adds a shadow so it pops over content */
     }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
 
@@ -114,16 +129,24 @@
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-    /* --- MAIN AREA (UPDATED) --- */
+   /* --- FULL WIDTH MAIN CONTENT --- */
     .main { 
         flex: 1; 
-        margin-left: 260px; 
-        /* Change padding to 0 on bottom so it doesn't push the footer up */
-        padding: 40px 40px 0 40px; 
-        transition: all 0.3s ease;
+        margin-left: 0 !important; /* Content now fills the whole screen */
+        width: 100%; 
         display: flex; 
         flex-direction: column; 
-        min-height: 100vh; 
+    }
+
+    /* Mobile Handling: Disable the hover effect on phones (Stick to the button) */
+    @media (max-width: 1024px) {
+        .sidebar { 
+            transform: none !important; /* Reset the slide logic */
+            left: -260px; /* Completely hide it */
+        }
+        .sidebar.open { 
+            left: 0; /* Button click brings it back */
+        }
     }
     .header-bar { margin-bottom: 32px; }
     .header-bar h1 { font-size: 28px; font-weight: 800; margin: 0; }
