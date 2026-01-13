@@ -1015,45 +1015,34 @@ async function loadFreshSheet() {
     const container = document.getElementById('fresh-sheet-list'); 
     if(!container) return;
 
-    container.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">SYNCING ON HAND INVENTORY...</div>';
+    container.innerHTML = '<div style="text-align:center; padding:20px;">FORCING DATA RELOAD...</div>';
 
     try {
         const res = await fetch(`${API_URL}?action=getBreweryInventory`);
         const data = await res.json();
-        
         container.innerHTML = ""; 
 
         if (!data || !Array.isArray(data)) {
-            container.innerHTML = `<div style="padding:20px; color:red;">Data Error: ${JSON.stringify(data)}</div>`;
+            container.innerHTML = `<div style="padding:20px; color:red;">Connection Error.</div>`;
             return;
         }
 
         data.forEach(beer => {
+            // Use the raw package array from your backend
             const packages = beer.packages || [];
             
-            // --- UPDATED FILTER: Check "On Hand" instead of "qty" ---
-            const inStock = packages.filter(p => {
-                const count = Number(p['On Hand'] || p.qty || 0); 
-                return count > 0;
+            // Nuclear check: Only show beer if it has at least one package with stock
+            // We check position [2] because you said it's the 3rd column
+            const hasStock = packages.some(p => {
+                const val = parseFloat(p.qty || p['On Hand'] || Object.values(p)[2] || 0);
+                return val > 0;
             });
 
-            if (inStock.length > 0) {
-                // Sort packages: Case -> 1/2 -> 1/6
-                inStock.sort((a, b) => {
-                    const weight = (t) => {
-                        t = (t || "").toLowerCase();
-                        if (t.includes('case')) return 1;
-                        if (t.includes('1/2')) return 2;
-                        if (t.includes('1/6')) return 3;
-                        return 4;
-                    };
-                    return weight(a.type) - weight(b.type);
-                });
-
+            if (hasStock) {
                 const beerRow = document.createElement('div');
                 beerRow.style.cssText = "display: flex; border-bottom: 1px solid #e2e8f0; background: white; align-items: stretch; margin-bottom: 2px;";
 
-                // COLUMN 1: Beer Name (Left 30%)
+                // LEFT 30%: Beer Name
                 let beerInfo = `
                     <div style="width: 30%; padding: 15px; border-right: 1px solid #f1f5f9; display: flex; flex-direction: column; justify-content: center; background: #fafafa;">
                         <strong style="color: #1e293b; font-size: 14px; text-transform: uppercase;">${beer.product}</strong>
@@ -1061,17 +1050,23 @@ async function loadFreshSheet() {
                     </div>
                 `;
 
-                // COLUMN 2 & 3: Formats and Statuses (Right 70%)
+                // RIGHT 70%: Formats and "On Hand" Status
                 let formatsContainer = '<div style="width: 70%; display: flex; flex-direction: column;">';
-                inStock.forEach((pkg, index) => {
-                    // --- MAPPING "On Hand" DATA ---
-                    const stockCount = Number(pkg['On Hand'] || pkg.qty || 0);
+                
+                packages.forEach((pkg, index) => {
+                    // NUCLEAR: Grabs the 3rd value in the object regardless of what it's named
+                    const values = Object.values(pkg);
+                    const stockCount = parseFloat(values[2] || 0); 
+                    
+                    // Skip if this specific format is 0
+                    if (stockCount <= 0) return;
+
                     const statusColor = stockCount <= 5 ? '#f59e0b' : '#10b981';
-                    const border = index < inStock.length - 1 ? 'border-bottom: 1px solid #f1f5f9;' : '';
+                    const border = index < packages.length - 1 ? 'border-bottom: 1px solid #f1f5f9;' : '';
 
                     formatsContainer += `
                         <div style="display: flex; align-items: center; padding: 10px; ${border}">
-                            <div style="flex: 1; text-align: center; color: #475569; font-size: 13px;">${pkg.type}</div>
+                            <div style="flex: 1; text-align: center; color: #475569; font-size: 13px;">${pkg.type || values[0]}</div>
                             <div style="width: 120px; text-align: right; color: ${statusColor}; font-weight: bold; font-size: 13px; padding-right: 10px;">
                                 ${stockCount} <span style="font-size: 10px; opacity: 0.7;">${stockCount <= 5 ? 'LOW' : 'GOOD'}</span>
                             </div>
@@ -1085,12 +1080,8 @@ async function loadFreshSheet() {
             }
         });
 
-        if (container.innerHTML === "") {
-            container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">No items with "On Hand" stock found.</div>';
-        }
-
     } catch (e) {
-        container.innerHTML = `<div style="color:red; text-align:center; padding:20px;">CRITICAL ERROR: ${e.message}</div>`;
+        container.innerHTML = `<div style="color:red; text-align:center; padding:20px;">System Error: Check Console</div>`;
     }
 }
 async function loadChurnMonitor() {
