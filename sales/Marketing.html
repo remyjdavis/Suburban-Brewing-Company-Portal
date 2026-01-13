@@ -187,6 +187,70 @@
         #sell-sheet-paper { box-shadow: none; width: 100vw; height: 100vh; position: relative; top: 0; left: 0; margin: 0; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
+    /* --- PORTFOLIO MENU STYLES --- */
+.catalog-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; /* 2 Columns */
+    gap: 30px; 
+    align-content: start;
+}
+
+.beer-card {
+    border: 2px solid #1a1a1a;
+    padding: 15px;
+    background: #fff;
+    break-inside: avoid; /* Prevents cutting in half when printing */
+    display: flex;
+    flex-direction: column;
+}
+
+.beer-header {
+    border-bottom: 2px solid #e5e5e5;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+.beer-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.beer-meta {
+    display: flex; 
+    justify-content: space-between; 
+    margin-top: 5px; 
+    font-size: 11px; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    color: #666;
+}
+
+.beer-desc {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.4;
+    margin-bottom: 10px;
+    flex-grow: 1;
+}
+
+.price-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 8px;
+    font-size: 12px;
+}
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3px;
+    font-weight: 600;
+}
   </style>
 </head>
 <body>
@@ -474,60 +538,57 @@
         </div>
         
         <div class="gen-layout">
-            <div class="gen-controls">
-                <h3 style="margin-top:0;">Portfolio Builder</h3>
-                <p style="font-size:12px; color:#666; margin-bottom:20px;">
-                    This tool automatically combines your inventory quantity with marketing descriptions to create a full portfolio sheet.
-                </p>
-                
-                <div style="margin-bottom:20px;">
-                    <label>Sheet Title</label>
-                    <input id="sheet-title-input" value="FRESH INVENTORY & CORE RANGE" oninput="updateSheetTitle()">
-                </div>
+    <div class="gen-controls">
+        <h3 style="margin-top:0;">Portfolio Builder</h3>
+        <p style="font-size:12px; color:#666; margin-bottom:20px;">
+            This tool loops through your entire inventory to create a wholesale catalog.
+        </p>
+        
+        <div style="margin-bottom:20px;">
+            <label>Sheet Title</label>
+            <input id="sheet-title-input" value="FRESH INVENTORY & CORE RANGE" oninput="updateSheetTitle()">
+        </div>
 
-                <div style="margin-bottom:20px;">
-                    <label>Show Prices?</label>
-                    <div style="font-size:13px;">
-                        <input type="checkbox" id="toggle-price" checked onchange="renderCatalog()"> Include Wholesale Pricing
-                    </div>
-                </div>
-
-                <button class="download-btn primary" style="width:100%;" onclick="window.print()">🖨️ Download Portfolio PDF</button>
-                <div style="margin-top:10px; font-size:11px; color:#999; text-align:center;">Tip: Use Landscape mode if lists are long.</div>
-            </div>
-
-            <div class="gen-preview">
-                <div id="sell-sheet-paper">
-                    
-                    <div class="sheet-header">
-                        <img src="../logo.png" class="header-logo">
-                        <div class="header-title">
-                            <h1 id="sheet-title-display">FRESH INVENTORY</h1>
-                            <p>SUBURBAN BREWING CO. | HONEY BROOK, PA</p>
-                        </div>
-                    </div>
-
-                    <div class="sheet-body">
-                        <div id="catalog-container" class="catalog-list">
-                            <div style="text-align:center; padding:50px; color:#999;">Loading Inventory...</div>
-                        </div>
-                    </div>
-
-                    <div class="sheet-footer">
-                        <div class="footer-contact">
-                            <strong>Contact Sales</strong><br>
-                            Remy Davis · 908-642-1019<br>
-                            sales@suburbanbrewingco.com
-                        </div>
-                        <div class="qr-area">
-                            <span class="qr-text">Scan for<br>Digital Menu</span>
-                            <div id="qr-target"></div>
-                        </div>
-                    </div>
-
-                </div>
+        <div style="margin-bottom:20px;">
+            <label>Options</label>
+            <div style="font-size:13px;">
+                <input type="checkbox" id="toggle-price" checked onchange="renderCatalog()"> Include Wholesale Pricing
             </div>
         </div>
+
+        <button class="download-btn primary" style="width:100%;" onclick="window.print()">🖨️ Print / Save PDF</button>
+    </div>
+
+    <div class="gen-preview">
+        <div id="sell-sheet-paper">
+            
+            <div class="sheet-header">
+                <img src="../logo.png" class="header-logo">
+                <div class="header-text" style="text-align: right;">
+                    <h1 id="sheet-title-display" style="margin:0; font-family:'Oswald'; font-size:36px; line-height:1;">FRESH INVENTORY</h1>
+                    <p style="margin:5px 0 0; font-size:12px; letter-spacing:2px;">SUBURBAN BREWING CO.</p>
+                </div>
+            </div>
+
+            <div class="sheet-body">
+                <div id="catalog-container" class="catalog-grid">
+                    <div style="grid-column: span 2; text-align:center; padding:50px; color:#999;">Loading Inventory...</div>
+                </div>
+            </div>
+
+            <div class="sheet-footer">
+                <div class="footer-contact">
+                    <strong>Contact Sales</strong><br>
+                    sales@suburbanbrewingco.com
+                </div>
+                <div class="qr-area">
+                    <div id="qr-target"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
       </div>
 
     </div>
@@ -853,6 +914,65 @@ function renderCatalog() {
     });
 }
 
+function updateSheetTitle() {
+    document.getElementById('sheet-title-display').innerText = document.getElementById('sheet-title-input').value;
+}
+  // 1. UPDATE THIS FUNCTION (To trigger the full render)
+function openGenerator() {
+    document.getElementById('dashboard-view').style.display = 'none';
+    document.getElementById('generator-view').style.display = 'block';
+    renderCatalog(); // <--- This triggers the loop
+}
+
+// 2. ADD THIS NEW FUNCTION (The Looping Logic)
+function renderCatalog() {
+    const container = document.getElementById('catalog-container');
+    const showPrice = document.getElementById('toggle-price').checked;
+    container.innerHTML = ""; // Clear current list
+
+    const beers = Object.keys(inventoryData).sort();
+    
+    if(beers.length === 0) {
+        container.innerHTML = `<div style="grid-column: span 2; text-align:center;">No inventory loaded.</div>`;
+        return;
+    }
+
+    beers.forEach(name => {
+        // Get Data
+        const mkt = marketingData[name] || {};
+        const invItems = inventoryData[name];
+        
+        // Build Price HTML
+        let priceHtml = "";
+        if(showPrice) {
+            invItems.forEach(pkg => {
+                if(pkg.price > 0) {
+                    priceHtml += `<div class="price-row"><span>${pkg.package}</span><span>$${pkg.price.toFixed(2)}</span></div>`;
+                }
+            });
+        }
+
+        // Build the Card HTML
+        const card = document.createElement('div');
+        card.className = 'beer-card';
+        card.innerHTML = `
+            <div class="beer-header">
+                <h3 class="beer-name">${name}</h3>
+                <div class="beer-meta">
+                    <span style="color:#d4a017;">${mkt.style || 'Craft Beer'}</span>
+                    <span>${mkt.abv ? `ABV: ${mkt.abv}` : ''} ${mkt.ibu ? `| IBU: ${mkt.ibu}` : ''}</span>
+                </div>
+            </div>
+            <p class="beer-desc">${mkt.desc || 'Contact representative for details.'}</p>
+            <div class="price-box">
+                ${priceHtml || '<em>Market Price</em>'}
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// 3. ADD THIS HELPER
 function updateSheetTitle() {
     document.getElementById('sheet-title-display').innerText = document.getElementById('sheet-title-input').value;
 }
