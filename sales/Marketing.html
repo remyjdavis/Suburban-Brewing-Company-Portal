@@ -122,15 +122,41 @@
     .shelf-talker { width: 300px; height: 150px; background: #2563eb; color: white; border-radius: 8px; padding: 20px; position: relative; box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4); transform: rotate(-2deg); }
     .talker-fold { position: absolute; top: -30px; left: 0; width: 100%; height: 30px; background: #1e40af; border-radius: 8px 8px 0 0; opacity: 0.5; }
 
-    /* --- GENERATOR STYLES (NEW) --- */
+    /* --- GENERATOR STYLES (UPDATED) --- */
     #generator-view { display: none; }
     .gen-layout { display: flex; gap: 30px; height: calc(100vh - 100px); }
     .gen-controls { width: 350px; flex-shrink: 0; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; overflow-y: auto; }
-    .gen-preview { flex: 1; background: #94a3b8; border-radius: 12px; display: flex; justify-content: center; align-items: center; overflow: auto; padding: 40px; }
     
-    /* THE PAPER */
-    #sell-sheet-paper { width: 8.5in; height: 11in; background: white; box-shadow: 0 20px 50px rgba(0,0,0,0.3); flex-shrink: 0; display: flex; flex-direction: column; position: relative; }
+    /* FIX: Use block display and relative positioning for proper scrolling */
+    .gen-preview { 
+        flex: 1; 
+        background: #0f172a; 
+        border-radius: 12px; 
+        display: block; 
+        overflow-y: auto; 
+        padding: 40px; 
+        position: relative;
+    }
     
+    /* FIX: Ensure paper has room to breathe */
+    #sell-sheet-paper { 
+        width: 100%; 
+        min-height: 100%; 
+        background: transparent; 
+        box-shadow: none; 
+        display: flex; 
+        flex-direction: column; 
+        padding-bottom: 50px; 
+    }
+
+    /* FIX: Add top margin to grid so it doesn't hit the header */
+    .deck-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+        margin-top: 30px; 
+        align-content: start;
+    }
     /* SHEET DESIGN */
     .sheet-header { height: 140px; background: #0f172a; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: relative; }
     .sheet-header::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: var(--accent); }
@@ -576,7 +602,6 @@ async function initGeneratorData() {
     }
     
     try {
-        // 1. Fetch Inventory, Marketing, AND Prices
         const [invRes, mktRes, priceRes] = await Promise.all([
             fetch(`${API_URL}?action=getBreweryInventory`), 
             fetch(`${API_URL}?action=getMarketingData`),
@@ -587,75 +612,96 @@ async function initGeneratorData() {
         const market = await mktRes.json();
         const prices = await priceRes.json();
 
-        console.log("Prices Loaded:", prices); // Debugging
+        console.log("Debug Prices:", prices); // Check console (F12) to see if data arrives
 
-        // 2. Create Price Lookup Map
-        // Key: "ProductName_Format" -> Value: Price
+        // --- 1. BUILD SMART PRICE MAP ---
         const priceMap = {};
         if (Array.isArray(prices)) {
             prices.forEach(p => {
-                // Try to find Name and Format columns flexibly
-                const pName = (p['Product Name'] || p['Name'] || p['Product'] || "").trim();
-                const pFormat = (p['Format'] || p['Type'] || p['Package'] || "").trim();
-                const pPrice = p['Wholesale Price'] || p['Price'] || p['Wholesale'] || 0;
+                // Normalize keys to lowercase to find columns easily
+                const keys = Object.keys(p).reduce((acc, k) => {
+                    acc[k.toLowerCase()] = p[k];
+                    return acc;
+                }, {});
+
+                // Find Name (look for 'product', 'name', 'product name')
+                const pName = (keys['product name'] || keys['product'] || keys['name'] || "").trim().toLowerCase();
                 
+                // Find Format (look for 'type', 'format', 'package')
+                const pFormat = (keys['type'] || keys['format'] || keys['package'] || "").trim().toLowerCase();
+                
+                // Find Price (look for 'default price', 'wholesale price', 'price')
+                const pPrice = parseFloat(keys['default price'] || keys['wholesale price'] || keys['price'] || keys['wholesale'] || 0);
+
                 if (pName) {
-                    // Store strict match
+                    // Save specific price (e.g. "moon rocks_1/2 keg")
                     priceMap[`${pName}_${pFormat}`] = pPrice;
-                    // Store loose match (Name only) as fallback
+                    // Save base price fallback (e.g. "moon rocks")
                     if (!priceMap[pName]) priceMap[pName] = pPrice;
                 }
             });
         }
 
-        // 3. Process Inventory & Merge Prices
+        // --- 2. MERGE INVENTORY WITH PRICES ---
         inventoryData = {};
         if (Array.isArray(inventory)) {
             inventory.forEach(p => {
-                const n = (p.product || p.name || "Unknown").trim();
+                const rawName = (p.product || p.name || "Unknown").trim();
+                const lookupName = rawName.toLowerCase();
                 
-                if(!inventoryData[n]) inventoryData[n] = [];
+                if(!inventoryData[rawName]) inventoryData[rawName] = [];
                 
-                // Handle packages
+                // Helper to process a single package
+                const addPackage = (type, qty, existingPrice) => {
+                    const lookupType = type.toLowerCase();
+                    
+                    // ORDER OF OPERATIONS FOR PRICE:
+                    // 1. Exact match in Price List (Name + Size)
+                    // 2. Base match in Price List (Name only)
+                    // 3. Existing price from Inventory
+                    let finalPrice = priceMap[`${lookupName}_${lookupType}`] 
+                                  || priceMap[lookupName] 
+                                  || existingPrice 
+                                  || 0;
+
+                    inventoryData[rawName].push({
+                        type: type,
+                        qty: qty || 0,
+                        price: finalPrice
+                    });
+                };
+
+                // Handle nested packages
                 if (p.packages && Array.isArray(p.packages)) {
                     p.packages.forEach(pkg => {
-                        const pkgType = (pkg.type || pkg.package || "").trim();
-                        
-                        // FIND PRICE: Try exact match (Name + Type), then Name fallback, then existing pkg price
-                        let finalPrice = priceMap[`${n}_${pkgType}`] 
-                                      || priceMap[n] 
-                                      || pkg.price 
-                                      || 0;
-
-                        inventoryData[n].push({
-                            type: pkgType,
-                            qty: pkg.qty || 0,
-                            price: finalPrice
-                        });
+                        const type = (pkg.type || pkg.package || "").trim();
+                        addPackage(type, pkg.qty, pkg.price);
                     });
                 } else {
                     // Flat structure
-                    inventoryData[n].push({
-                        type: p.type || "Unit",
-                        qty: p.qty || 0,
-                        price: priceMap[n] || p.price || 0
-                    });
+                    const type = (p.type || "Unit").trim();
+                    addPackage(type, p.qty, p.price);
                 }
             });
         }
 
-        // 4. Process Marketing Data
+        // --- 3. PROCESS MARKETING ---
         marketingData = {};
         if (Array.isArray(market)) {
             market.forEach(row => {
-                // Flexible header matching based on your sheet
-                const name = (row['Product Name'] || row['product name'] || row['Product'] || "").trim();
+                // Normalize marketing keys too
+                const keys = Object.keys(row).reduce((acc, k) => {
+                    acc[k.toLowerCase()] = row[k];
+                    return acc;
+                }, {});
+
+                const name = (keys['product name'] || keys['product'] || keys['name'] || "").trim();
                 if(name) {
                     marketingData[name] = {
-                        style: row['Style'] || row['style'] || "",
-                        abv: row['ABV'] || row['abv'] || "",
-                        ibu: row['IBU'] || row['ibu'] || "",
-                        desc: row['Description'] || row['description'] || ""
+                        style: keys['style'] || "",
+                        abv: keys['abv'] || "",
+                        ibu: keys['ibu'] || "",
+                        desc: keys['description'] || keys['desc'] || ""
                     };
                 }
             });
@@ -664,6 +710,11 @@ async function initGeneratorData() {
         if(document.getElementById('loading-status')) {
             document.getElementById('loading-status').innerText = "Synced & Ready";
             document.getElementById('loading-status').style.color = "green";
+        }
+        
+        // Refresh the catalog immediately if the view is open
+        if(document.getElementById('generator-view').style.display === 'block') {
+            renderCatalog();
         }
 
     } catch (e) {
@@ -674,7 +725,6 @@ async function initGeneratorData() {
         }
     }
 }
-
 // --- NAVIGATION & MOBILE ---
 function toggleGroup(contentId, headerEl) {
     const content = document.getElementById(contentId);
