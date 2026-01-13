@@ -706,32 +706,42 @@ async function initGeneratorData() {
         const market = await mktRes.json();
         const prices = await priceRes.json();
 
-        console.log("Debug Prices:", prices); // Check console (F12) to see if data arrives
+        console.log("Debug Prices:", prices); 
 
-        // --- 1. BUILD SMART PRICE MAP ---
+        // --- 1. BUILD SMART PRICE & LIFECYCLE MAP ---
         const priceMap = {};
+        const lifecycleMap = {}; // <--- New: Stores Core/Seasonal/etc. from Product Tab
+
         if (Array.isArray(prices)) {
             prices.forEach(p => {
-                // Normalize keys to lowercase to find columns easily
+                // Normalize keys
                 const keys = Object.keys(p).reduce((acc, k) => {
                     acc[k.toLowerCase()] = p[k];
                     return acc;
                 }, {});
 
-                // Find Name (look for 'product', 'name', 'product name')
+                // Find Name
                 const pName = (keys['product name'] || keys['product'] || keys['name'] || "").trim().toLowerCase();
                 
-                // Find Format (look for 'type', 'format', 'package')
+                // Find Format
                 const pFormat = (keys['type'] || keys['format'] || keys['package'] || "").trim().toLowerCase();
                 
-                // Find Price (look for 'default price', 'wholesale price', 'price')
+                // Find Price
                 const pPrice = parseFloat(keys['default price'] || keys['wholesale price'] || keys['price'] || keys['wholesale'] || 0);
 
+                // --- NEW: Find Lifecycle in Product Tab ---
+                // Looks for "Lifecycle", "Category", or "Status"
+                const pLifecycle = (keys['lifecycle'] || keys['category'] || keys['status'] || "").trim();
+
                 if (pName) {
-                    // Save specific price (e.g. "moon rocks_1/2 keg")
+                    // Save Price
                     priceMap[`${pName}_${pFormat}`] = pPrice;
-                    // Save base price fallback (e.g. "moon rocks")
                     if (!priceMap[pName]) priceMap[pName] = pPrice;
+
+                    // Save Lifecycle (if found)
+                    if (pLifecycle && !lifecycleMap[pName]) {
+                        lifecycleMap[pName] = pLifecycle;
+                    }
                 }
             });
         }
@@ -745,14 +755,8 @@ async function initGeneratorData() {
                 
                 if(!inventoryData[rawName]) inventoryData[rawName] = [];
                 
-                // Helper to process a single package
                 const addPackage = (type, qty, existingPrice) => {
                     const lookupType = type.toLowerCase();
-                    
-                    // ORDER OF OPERATIONS FOR PRICE:
-                    // 1. Exact match in Price List (Name + Size)
-                    // 2. Base match in Price List (Name only)
-                    // 3. Existing price from Inventory
                     let finalPrice = priceMap[`${lookupName}_${lookupType}`] 
                                   || priceMap[lookupName] 
                                   || existingPrice 
@@ -765,14 +769,12 @@ async function initGeneratorData() {
                     });
                 };
 
-                // Handle nested packages
                 if (p.packages && Array.isArray(p.packages)) {
                     p.packages.forEach(pkg => {
                         const type = (pkg.type || pkg.package || "").trim();
                         addPackage(type, pkg.qty, pkg.price);
                     });
                 } else {
-                    // Flat structure
                     const type = (p.type || "Unit").trim();
                     addPackage(type, p.qty, p.price);
                 }
@@ -783,22 +785,23 @@ async function initGeneratorData() {
         marketingData = {};
         if (Array.isArray(market)) {
             market.forEach(row => {
-                // Normalize keys to lowercase so "Lifecycle" becomes "lifecycle"
                 const keys = Object.keys(row).reduce((acc, k) => {
                     acc[k.toLowerCase()] = row[k];
                     return acc;
                 }, {});
 
                 const name = (keys['product name'] || keys['product'] || keys['name'] || "").trim();
+                const lookupName = name.toLowerCase();
+
                 if(name) {
                     marketingData[name] = {
                         style: keys['style'] || "",
                         abv: keys['abv'] || "",
                         ibu: keys['ibu'] || "",
                         desc: keys['description'] || keys['desc'] || "",
-                        
-                        // NEW: Look specifically for the "Lifecycle" column
-                        category: keys['lifecycle'] || keys['category'] || "Other" 
+                        // MERGE: Use Lifecycle from Product Tab (lifecycleMap) 
+                        // If not there, check Marketing tab, else default to "Other"
+                        category: lifecycleMap[lookupName] || keys['lifecycle'] || keys['category'] || "Other"
                     };
                 }
             });
@@ -809,7 +812,6 @@ async function initGeneratorData() {
             document.getElementById('loading-status').style.color = "green";
         }
         
-        // Refresh the catalog immediately if the view is open
         if(document.getElementById('generator-view').style.display === 'block') {
             renderCatalog();
         }
