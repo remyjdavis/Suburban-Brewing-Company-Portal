@@ -251,6 +251,45 @@
     margin-bottom: 3px;
     font-weight: 600;
 }
+    /* Digital Deck Card Styles */
+.deck-grid .beer-card {
+    background: #1e293b; /* Dark Blue/Grey */
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 20px;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.deck-grid .beer-name {
+    color: white;
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.deck-grid .beer-meta {
+    color: var(--accent); /* Blue accent */
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.deck-grid .beer-desc {
+    color: #94a3b8; /* Muted text */
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    flex-grow: 1;
+}
+
+.deck-grid .price-box {
+    background: #0f172a; /* Darker background for price */
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: white;
+}
   </style>
 </head>
 <body>
@@ -414,67 +453,66 @@
       </div>
 
       <div id="generator-view" style="display:none;">
-        <div style="margin-bottom:15px;">
+        <div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
             <button class="secondary" onclick="closeGenerator()">← Back to Dashboard</button>
+            <div style="font-size:12px; color:#64748b;">
+                <span id="item-count-badge">0</span> Active Brews
+            </div>
         </div>
         
-        <div class="gen-layout">
-            <div class="gen-controls">
-                <h3 style="margin-top:0;">Portfolio Builder</h3>
-                <p style="font-size:12px; color:#666; margin-bottom:20px;">
-                    Automatically compiles all active inventory items into a professional catalog.
+        <div class="gen-layout" style="gap: 20px;">
+            <div class="gen-controls" style="background: #1e293b; color: white; border:none;">
+                <h3 style="margin-top:0; color:white;">Digital Menu</h3>
+                <p style="font-size:12px; color:#94a3b8; margin-bottom:20px;">
+                    Select options below to format your live inventory for clients.
                 </p>
                 
-                <div style="background:#f0f9ff; padding:15px; border-radius:8px; border:1px solid #bae6fd; margin-bottom:20px;">
-                    <div id="loading-status" style="font-size:13px; font-weight:600; color:#0369a1;">Syncing Inventory...</div>
+                <div style="background:#0f172a; padding:15px; border-radius:8px; border:1px solid #334155; margin-bottom:20px;">
+                    <div id="loading-status" style="font-size:13px; font-weight:600; color:#38bdf8;">Checking Live Stock...</div>
                 </div>
 
                 <div style="margin-bottom:20px;">
-                    <label>Sheet Title</label>
-                    <input id="sheet-title-input" value="FRESH INVENTORY" oninput="updateSheetTitle()">
+                    <label style="color:#cbd5e1;">Menu Title</label>
+                    <input id="sheet-title-input" value="CURRENT OFFERINGS" oninput="updateSheetTitle()" style="background:#334155; color:white; border-color:#475569;">
                 </div>
 
                 <div style="margin-bottom:20px;">
-                    <label>Options</label>
-                    <div style="font-size:13px; margin-bottom:5px;">
-                        <input type="checkbox" id="toggle-price" checked onchange="renderCatalog()"> Show Pricing
+                    <label style="color:#cbd5e1;">Display Options</label>
+                    <div style="font-size:13px; margin-bottom:8px;">
+                        <input type="checkbox" id="toggle-price" checked onchange="renderCatalog()"> Show Wholesale Pricing
                     </div>
                 </div>
 
-                <button class="download-btn primary" style="width:100%;" onclick="window.print()">🖨️ Print / Save PDF</button>
+                <div style="display:flex; flex-direction:column; gap:10px; margin-top:auto;">
+                    <button class="primary" style="background:var(--accent); width:100%;" onclick="copyInventoryText()">📋 Copy List for Email/Text</button>
+                    <button class="secondary" style="background:#334155; color:white; border:none; width:100%;" onclick="window.print()">💾 Save as PDF</button>
+                </div>
             </div>
 
-            <div class="gen-preview">
-                <div id="sell-sheet-paper">
+            <div class="gen-preview" style="background:#0f172a; padding: 40px; overflow-y:auto;">
+                <div id="sell-sheet-paper" style="background: transparent; box-shadow: none; width: 100%; min-height: auto;">
                     
-                    <div class="sheet-header">
-                        <img src="../logo.png" class="header-logo">
-                        <div class="header-text">
-                            <h1 id="sheet-title-display">FRESH INVENTORY</h1>
-                            <p>SUBURBAN BREWING CO. | HONEY BROOK, PA</p>
+                    <div class="deck-header" style="border-bottom: 2px solid var(--accent); padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:end;">
+                        <div>
+                            <h1 id="sheet-title-display" style="color:white; font-family:'Oswald'; font-size:48px; margin:0; letter-spacing:1px;">CURRENT OFFERINGS</h1>
+                            <p style="color:#94a3b8; margin:5px 0 0; letter-spacing: 2px; font-size:14px;">SUBURBAN BREWING CO. | LIVE INVENTORY</p>
                         </div>
+                        <img src="../logo.png" style="height:80px; filter: brightness(0) invert(1);">
                     </div>
 
-                    <div class="sheet-body">
-                        <div id="catalog-container" class="catalog-grid">
-                            <div style="grid-column: span 2; text-align:center; padding:50px; color:#999;">Loading Data...</div>
-                        </div>
+                    <div id="catalog-container" class="deck-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
+                        <div style="color:#64748b; text-align:center; grid-column:1/-1;">Loading your beers...</div>
                     </div>
 
-                    <div class="sheet-footer">
-                        <div class="footer-left">
-                            <strong>SUBURBAN BREWING COMPANY</strong><br>
-                            3041 Horseshoe Pike, Honey Brook, PA 19344<br>
-                            Sales: 908-642-1019 | sales@suburbanbrewingco.com
-                        </div>
-                        <div class="qr-box">
-                            <div id="qr-target"></div>
-                        </div>
+                    <div class="deck-footer" style="margin-top: 50px; border-top: 1px solid #334155; padding-top: 20px; color: #64748b; font-size: 12px; display:flex; justify-content:space-between;">
+                        <div>Valid as of <span id="deck-date"></span></div>
+                        <div>suburbanbrewingco.com</div>
                     </div>
 
                 </div>
             </div>
         </div>
+      </div>
       </div>
 
     </div>
@@ -956,6 +994,58 @@ function sendReply(btn) {
     alert("Reply posted!");
     btn.parentElement.classList.remove('active');
 }
+  function copyInventoryText() {
+    let text = "🍺 *Suburban Brewing - Current Inventory* 🍺\n\n";
+    const beers = Object.keys(inventoryData).sort();
+    
+    if(beers.length === 0) return alert("No inventory to copy!");
+
+    beers.forEach(name => {
+        const invItems = inventoryData[name];
+        let hasStock = false;
+        let packages = [];
+
+        invItems.forEach(pkg => {
+            let qty = parseFloat(pkg.qty);
+            if (!isNaN(qty) && qty > 0) {
+                hasStock = true;
+                // Format: "1/2 BBL ($180)" or just "1/2 BBL"
+                const priceStr = document.getElementById('toggle-price').checked && pkg.price 
+                    ? ` ($${pkg.price})` 
+                    : "";
+                packages.push(`${pkg.type}${priceStr}`);
+            }
+        });
+
+        if (hasStock) {
+            text += `🔹 *${name}*\n`;
+            // Add style/ABV if available
+            const mkt = marketingData[name];
+            if(mkt) text += `   ${mkt.style} | ${mkt.abv}\n`;
+            text += `   Available: ${packages.join(", ")}\n\n`;
+        }
+    });
+
+    text += "Let me know what you'd like to reserve! 🍻";
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(text).then(() => {
+        Swal.fire({
+            title: 'Copied!',
+            text: 'Inventory list copied to clipboard. Ready to paste into Email or Text.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    });
+}
+
+// Update the date on load
+document.addEventListener("DOMContentLoaded", () => {
+   if(document.getElementById('deck-date')) {
+       document.getElementById('deck-date').innerText = new Date().toLocaleDateString();
+   }
+});
 </script>
 
 </body>
