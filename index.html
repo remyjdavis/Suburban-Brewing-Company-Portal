@@ -133,15 +133,18 @@
     .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
     .nav-link.active { border-left-color: var(--accent); color: #fff; }
 
-   /* --- FULL WIDTH MAIN CONTENT (Adjusted for Auto-Hide) --- */
+   /* --- FULL WIDTH MAIN CONTENT --- */
     .main { 
         flex: 1; 
-        margin-left: 0 !important; /* Content fills the whole screen */
+        margin-left: 0 !important; 
         width: 100%; 
         display: flex; 
-        flex-direction: column; 
+        flex-direction: column;
+        
+        /* FIX: Add safety padding so text isn't cut off by the screen edge */
+        padding-left: 50px; 
+        padding-right: 40px;
     }
-
     /* Mobile Handling: Disable the hover effect on phones */
     @media (max-width: 1024px) {
         .sidebar { 
@@ -384,10 +387,10 @@
         100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
 
-    @media (max-width: 768px) {
-        .app-footer { flex-direction: column; gap: 15px; text-align: center; }
-        .footer-links a { margin: 0 10px; }
-        .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
+    /* Mobile Adjustment: Reduce padding on small screens */
+    @media (max-width: 1024px) {
+        .main { padding: 20px 15px; } /* Smaller padding for phones */
+        .content { padding-top: 20px; }
     }
 </style>
 </head>
