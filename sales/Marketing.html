@@ -541,7 +541,7 @@
             <div class="gen-controls">
                 <h3 style="margin-top:0;">Portfolio Builder</h3>
                 <p style="font-size:12px; color:#666; margin-bottom:20px;">
-                    Automatically compiles all active inventory items into a professional catalog.
+                    This tool loops through your live inventory to create a wholesale menu.
                 </p>
                 
                 <div style="background:#f0f9ff; padding:15px; border-radius:8px; border:1px solid #bae6fd; margin-bottom:20px;">
@@ -550,17 +550,18 @@
 
                 <div style="margin-bottom:20px;">
                     <label>Sheet Title</label>
-                    <input id="sheet-title-input" value="FRESH INVENTORY" oninput="updateSheetTitle()">
+                    <input id="sheet-title-input" value="FRESH INVENTORY & CORE RANGE" oninput="updateSheetTitle()">
                 </div>
 
                 <div style="margin-bottom:20px;">
                     <label>Options</label>
-                    <div style="font-size:13px; margin-bottom:5px;">
-                        <input type="checkbox" id="toggle-price" checked onchange="renderCatalog()"> Show Pricing
+                    <div style="font-size:13px;">
+                        <input type="checkbox" id="toggle-price" checked onchange="renderCatalog()"> Include Wholesale Pricing
                     </div>
                 </div>
 
                 <button class="download-btn primary" style="width:100%;" onclick="window.print()">🖨️ Print / Save PDF</button>
+                <div style="margin-top:10px; font-size:11px; color:#999; text-align:center;">Tip: Use Landscape mode for 2-column layout.</div>
             </div>
 
             <div class="gen-preview">
@@ -568,25 +569,24 @@
                     
                     <div class="sheet-header">
                         <img src="../logo.png" class="header-logo">
-                        <div class="header-text">
-                            <h1 id="sheet-title-display">FRESH INVENTORY</h1>
-                            <p>SUBURBAN BREWING CO. | HONEY BROOK, PA</p>
+                        <div class="header-text" style="text-align: right;">
+                            <h1 id="sheet-title-display" style="margin:0; font-family:'Oswald'; font-size:36px; line-height:1;">FRESH INVENTORY</h1>
+                            <p style="margin:5px 0 0; font-size:12px; letter-spacing:2px;">SUBURBAN BREWING CO.</p>
                         </div>
                     </div>
 
                     <div class="sheet-body">
                         <div id="catalog-container" class="catalog-grid">
-                            <div style="grid-column: span 2; text-align:center; padding:50px; color:#999;">Loading Data...</div>
+                            <div style="grid-column: span 2; text-align:center; padding:50px; color:#999;">Loading Inventory...</div>
                         </div>
                     </div>
 
                     <div class="sheet-footer">
-                        <div class="footer-left">
-                            <strong>SUBURBAN BREWING COMPANY</strong><br>
-                            3041 Horseshoe Pike, Honey Brook, PA 19344<br>
-                            Sales: 908-642-1019 | sales@suburbanbrewingco.com
+                        <div class="footer-contact">
+                            <strong>Contact Sales</strong><br>
+                            sales@suburbanbrewingco.com
                         </div>
-                        <div class="qr-box">
+                        <div class="qr-area">
                             <div id="qr-target"></div>
                         </div>
                     </div>
@@ -595,8 +595,6 @@
             </div>
         </div>
       </div>
-    </div>
-  </div> 
 
   <div id="asset-modal" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-window">
