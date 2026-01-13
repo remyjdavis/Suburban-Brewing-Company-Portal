@@ -519,54 +519,90 @@ document.addEventListener("DOMContentLoaded", () => {
     loadChurnMonitor();
     
     // 4. Load Data for Generator (THE FIX)
+    initGeneratorData();
+    
+    // 5. Init UI Helpers
+    updateBanner();
+    updateSocialPreview();
+});
+
+// --- DATA LOADING ---
+async function initGeneratorData() {
     if(document.getElementById('loading-status')) {
         document.getElementById('loading-status').innerText = "Fetching Data...";
     }
     
-    Promise.all([
-        fetch(`${API_URL}?action=getBreweryInventory`).then(r => r.json()), 
-        fetch(`${API_URL}?action=getMarketingData`).then(r => r.json())
-    ]).then(([inventory, market]) => {
-        
-        // Process Inventory (Group by Product Name)
+    try {
+        const [invRes, mktRes] = await Promise.all([
+            fetch(`${API_URL}?action=getBreweryInventory`), 
+            fetch(`${API_URL}?action=getMarketingData`)
+        ]);
+
+        const inventory = await invRes.json();
+        const market = await mktRes.json();
+
+        console.log("Raw Inventory:", inventory); // Debugging: See what the API actually sends
+
+        // Process Inventory
         inventoryData = {};
         
-        inventory.forEach(p => {
-            // FIX: Normalize the name so we catch 'product' or 'name' properties
-            const n = (p.product || p.name || "Unknown").trim();
-            
-            if(!inventoryData[n]) inventoryData[n] = [];
-            
-            // Handle nested packages if they exist (standard structure), or flat structure
-            if (p.packages && Array.isArray(p.packages)) {
-                p.packages.forEach(pkg => {
-                    inventoryData[n].push(pkg);
-                });
-            } else {
-                inventoryData[n].push(p);
-            }
-        });
+        if (Array.isArray(inventory)) {
+            inventory.forEach(p => {
+                const n = (p.product || p.name || "Unknown").trim();
+                
+                if(!inventoryData[n]) inventoryData[n] = [];
+                
+                // Handle nested packages if they exist
+                if (p.packages && Array.isArray(p.packages)) {
+                    p.packages.forEach(pkg => {
+                        // Ensure we have a valid object
+                        inventoryData[n].push({
+                            type: pkg.type || pkg.package || "Unit",
+                            qty: pkg.qty || 0,
+                            price: pkg.price || 0
+                        });
+                    });
+                } else {
+                    // Fallback for flat structure
+                    inventoryData[n].push({
+                        type: p.type || p.package || "Unit",
+                        qty: p.qty || 0,
+                        price: p.price || 0
+                    });
+                }
+            });
+        }
 
         // Process Marketing
-        marketingData = market;
+        marketingData = {};
+        if (Array.isArray(market)) {
+            market.forEach(row => {
+                // Flexible header matching based on your screenshot
+                const name = (row['Product Name'] || row['product name'] || row['Product'] || row['name'] || "").trim();
+                if(name) {
+                    marketingData[name] = {
+                        style: row['Style'] || row['style'] || "",
+                        abv: row['ABV'] || row['abv'] || "",
+                        ibu: row['IBU'] || row['ibu'] || "",
+                        desc: row['Description'] || row['description'] || ""
+                    };
+                }
+            });
+        }
         
         if(document.getElementById('loading-status')) {
             document.getElementById('loading-status').innerText = "Synced & Ready";
             document.getElementById('loading-status').style.color = "green";
         }
 
-    }).catch(e => {
-        console.error("Error loading generator data", e);
+    } catch (e) {
+        console.error("Generator Data Error:", e);
         if(document.getElementById('loading-status')) {
-            document.getElementById('loading-status').innerText = "Error Loading";
+            document.getElementById('loading-status').innerText = "Error Loading Data";
             document.getElementById('loading-status').style.color = "red";
         }
-    });
-    
-    // 5. Init UI Helpers
-    updateBanner();
-    updateSocialPreview();
-});
+    }
+}
 
 // --- NAVIGATION & MOBILE ---
 function toggleGroup(contentId, headerEl) {
@@ -606,7 +642,7 @@ function switchTab(tabId, el) {
 function openGenerator() {
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('generator-view').style.display = 'block';
-    renderCatalog(); // Triggers the loop to build the menu
+    renderCatalog(); 
 }
 
 function closeGenerator() {
@@ -616,44 +652,51 @@ function closeGenerator() {
 
 function renderCatalog() {
     const container = document.getElementById('catalog-container');
-    if (!container) return; // Guard clause if HTML is missing
+    if (!container) return;
     
     const showPrice = document.getElementById('toggle-price').checked;
-    container.innerHTML = ""; // Clear existing
+    container.innerHTML = ""; 
 
     const beers = Object.keys(inventoryData).sort();
     
     if(beers.length === 0) {
-        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">No inventory loaded yet. (Check Status)</div>`;
+        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">No inventory loaded yet. Please wait for Sync...</div>`;
         return;
     }
 
+    let itemsRendered = 0;
+
     beers.forEach(name => {
-        // 1. Get Data
-        const mkt = marketingData[name] || {};
+        // 1. Get Data (Flexible Matching)
+        let mkt = marketingData[name];
+        if (!mkt) {
+            // Try partial match if exact match fails
+            const key = Object.keys(marketingData).find(k => k.toLowerCase() === name.toLowerCase());
+            mkt = key ? marketingData[key] : {};
+        }
+
         const invItems = inventoryData[name];
         
-        // 2. Build Price HTML (Loop through packages)
         let priceHtml = "";
         let hasStock = false;
 
+        // 2. Build Price Rows
         invItems.forEach(pkg => {
             // Check for stock (Quantity > 0)
-            // Some APIs return strings for numbers, so we parse
-            if(pkg.qty && parseFloat(pkg.qty) > 0) {
+            // Handle both number types and string types "10.0"
+            let qty = parseFloat(pkg.qty);
+            if (!isNaN(qty) && qty > 0) {
                 hasStock = true;
                 if(showPrice) {
                     const price = pkg.price ? parseFloat(pkg.price).toFixed(2) : "--";
-                    // pkg.type is usually the size (1/2 BBL, Case, etc)
-                    const pkgName = pkg.type || pkg.package || "Unit";
-                    priceHtml += `<div class="price-row"><span>${pkgName}</span><span class="price-val">$${price}</span></div>`;
+                    priceHtml += `<div class="price-row"><span>${pkg.type}</span><span class="price-val">$${price}</span></div>`;
                 }
             }
         });
 
         // 3. Render Card ONLY if there is stock
-        // If you want to show out-of-stock items, remove the 'if (hasStock)' check
         if (hasStock) {
+            itemsRendered++;
             const card = document.createElement('div');
             card.className = 'beer-card';
             card.innerHTML = `
@@ -664,45 +707,22 @@ function renderCatalog() {
                         <span>${mkt.abv ? `ABV: ${mkt.abv}` : ''} ${mkt.ibu ? `| IBU: ${mkt.ibu}` : ''}</span>
                     </div>
                 </div>
-                <p class="beer-desc">${mkt.desc || 'Contact representative for tasting notes and availability details.'}</p>
+                <p class="beer-desc">${mkt.desc || 'Contact representative for details.'}</p>
                 <div class="price-box">
-                    ${priceHtml || '<em style="color:#666; font-size:11px;">Please ask for pricing</em>'}
+                    ${priceHtml || '<em style="color:#666; font-size:11px;">Ask for pricing</em>'}
                 </div>
             `;
             container.appendChild(card);
         }
     });
 
-    if(container.innerHTML === "") {
-        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">Items found, but all Quantities are 0.</div>`;
+    if(itemsRendered === 0) {
+        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:30px; color:#999;">Items found, but currently Out of Stock.</div>`;
     }
 }
 
 function updateSheetTitle() {
     document.getElementById('sheet-title-display').innerText = document.getElementById('sheet-title-input').value;
-}
-
-// --- DATA DICTIONARY (ASSETS) ---
-const ASSET_CONTENT = {
-  'Vector Logos': `<div class="logo-grid"><div class="logo-box"><div style="font-size:40px;">🍻</div><span class="logo-label">Primary</span></div></div>`,
-  '2026 Price List': `<table class="price-table"><thead><tr><th>SKU</th><th>Product</th><th>Price</th></tr></thead><tbody><tr><td>SBC-001</td><td>Moon Rocks</td><td>$210.00</td></tr></tbody></table>`,
-  'Shelf Talkers': `<div class="shelf-talker-container"><div class="shelf-talker"><h2 style="margin:0;">STAFF PICK!</h2></div></div>`,
-  'Tap Handle Request': `<div style="text-align:center;">Request Form Mockup</div>`,
-  'Tech Sheets (All)': `<ul><li>Moon Rocks Tech Sheet</li></ul>`
-};
-
-function copyAssetLink(el) {
-    const assetName = el.querySelector('.asset-name').innerText.trim();
-    const content = ASSET_CONTENT[assetName] || `<div style="text-align:center; padding:50px;">Preview not available for ${assetName}</div>`;
-    document.getElementById('modal-title').innerText = assetName;
-    document.getElementById('modal-body').innerHTML = content;
-    document.getElementById('asset-modal').classList.add('active');
-}
-
-function closeModal(e) {
-    if (!e || e.target.classList.contains('modal-overlay') || e.target.classList.contains('close-btn')) {
-        document.getElementById('asset-modal').classList.remove('active');
-    }
 }
 
 // --- DASHBOARD DATA LOADING ---
@@ -739,21 +759,24 @@ async function loadChurnMonitor() {
     const tbody = document.getElementById('churnBody');
     if(!tbody) return; 
     
-    tbody.innerHTML = '<tr><td colspan="4">Analyzing...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4">Analyzing sales...</td></tr>';
     try {
         const res = await fetch(`${API_URL}?action=getFullAuditData`);
         const invoices = await res.json();
+        
         const lastOrder = {};
         invoices.forEach(inv => {
             const d = new Date(inv.date);
             if(!lastOrder[inv.customer] || d > lastOrder[inv.customer]) lastOrder[inv.customer] = d;
         });
+
         const today = new Date();
         const atRisk = [];
         Object.keys(lastOrder).forEach(cust => {
             const diff = Math.ceil(Math.abs(today - lastOrder[cust]) / (1000 * 60 * 60 * 24));
             if(diff > 45) atRisk.push({name: cust, days: diff, date: lastOrder[cust].toLocaleDateString()});
         });
+        
         tbody.innerHTML = "";
         if(atRisk.length === 0) tbody.innerHTML = '<tr><td colspan="4">No at-risk accounts!</td></tr>';
         else atRisk.slice(0,10).forEach(c => {
@@ -768,7 +791,30 @@ function updateBanner() {
     }
 }
 
-// --- SOCIAL MANAGER LOGIC ---
+// --- ASSETS ---
+const ASSET_CONTENT = {
+  'Vector Logos': `<div class="logo-grid"><div class="logo-box"><div style="font-size:40px;">🍻</div><span class="logo-label">Primary</span></div></div>`,
+  '2026 Price List': `<div style="text-align:center; padding:20px;">Price List PDF Preview</div>`,
+  'Shelf Talkers': `<div class="shelf-talker-container"><div class="shelf-talker"><h2 style="margin:0;">STAFF PICK!</h2></div></div>`,
+  'Tap Handle Request': `<div style="text-align:center;">Request Form Mockup</div>`,
+  'Tech Sheets (All)': `<ul><li>Moon Rocks Tech Sheet</li></ul>`
+};
+
+function copyAssetLink(el) {
+    const assetName = el.querySelector('.asset-name').innerText.trim();
+    const content = ASSET_CONTENT[assetName] || `<div style="text-align:center; padding:50px;">Preview not available for ${assetName}</div>`;
+    document.getElementById('modal-title').innerText = assetName;
+    document.getElementById('modal-body').innerHTML = content;
+    document.getElementById('asset-modal').classList.add('active');
+}
+
+function closeModal(e) {
+    if (!e || e.target.classList.contains('modal-overlay') || e.target.classList.contains('close-btn')) {
+        document.getElementById('asset-modal').classList.remove('active');
+    }
+}
+
+// --- SOCIAL MEDIA ---
 let currentPreviewMode = 'fb'; 
 
 function toggleSocialView(view) {
@@ -800,6 +846,59 @@ function toggleSocialView(view) {
     }
 }
 
+function handleSocialUpload(input) {
+    const imgEl = document.getElementById('socialPreviewImg');
+    const container = document.getElementById('socialPreviewImgContainer');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imgEl.src = e.target.result;
+            imgEl.style.display = 'block';
+            if(container.querySelector('span')) container.querySelector('span').style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function clearSocialImage() {
+    document.getElementById('socialUpload').value = "";
+    document.getElementById('socialPreviewImg').src = "";
+    document.getElementById('socialPreviewImg').style.display = 'none';
+    const span = document.getElementById('socialPreviewImgContainer').querySelector('span');
+    if(span) span.style.display = 'block';
+}
+
+function handleSocialPost() {
+    const postToFB = document.getElementById('checkFB').checked;
+    const postToIG = document.getElementById('checkIG').checked;
+    if(!postToFB && !postToIG) return alert("Please select at least one platform.");
+    alert(`Preparing to post to: ${postToFB ? 'Facebook ' : ''}${postToIG ? 'Instagram' : ''}`);
+}
+
+function updateSocialPreview() {
+    const text = document.getElementById('socialCaption').value;
+    const headerEl = document.getElementById('previewHeader');
+    const bodyEl = document.getElementById('previewBody');
+    if (currentPreviewMode === 'fb') {
+        headerEl.innerHTML = `
+            <img src="../logo.png" style="width:40px; height:40px; border-radius:50%; background:#0f172a; padding:2px;" onerror="this.src='https://via.placeholder.com/40'">
+            <div><div style="font-weight:700; font-size:14px; color:#1c1e21;">Suburban Brewing Co.</div><div style="font-size:12px; color:#65676b;">Just now · 🌎</div></div>`;
+        bodyEl.innerHTML = `<div style="font-size:14px; color:#1c1e21; white-space: pre-wrap; margin-bottom:10px;">${text}</div>`;
+    } else {
+        headerEl.innerHTML = `
+            <img src="../logo.png" style="width:32px; height:32px; border-radius:50%; background:#0f172a; padding:1px;" onerror="this.src='https://via.placeholder.com/32'">
+            <div style="font-weight:600; font-size:14px; color:#262626;">suburbanbrewing</div>`;
+        bodyEl.innerHTML = `<div style="font-size:14px; color:#262626; line-height:1.4;"><span style="font-weight:600;">suburbanbrewing</span> ${text}</div>`;
+    }
+}
+
+function setPreviewMode(mode) {
+    currentPreviewMode = mode;
+    document.getElementById('btnPreviewFB').style.background = mode === 'fb' ? 'white' : 'transparent';
+    document.getElementById('btnPreviewIG').style.background = mode === 'ig' ? 'white' : 'transparent';
+    updateSocialPreview();
+}
+
 function toggleReply(btn) {
     const replyBox = btn.nextElementSibling;
     if (replyBox.classList.contains('active')) {
@@ -814,22 +913,11 @@ function toggleReply(btn) {
 function generateAIReply(btn, userComment) {
     const inputField = btn.previousElementSibling;
     const originalText = btn.innerText;
-    btn.innerText = "🤖 Thinking...";
+    btn.innerText = "Thinking...";
     btn.disabled = true;
-
-    // Simulate AI Delay (1s)
     setTimeout(() => {
-        let aiResponse = "";
-        
-        // Simple heuristic for demo purposes
-        if (userComment.toLowerCase().includes("stout")) {
-            aiResponse = "Hey! Yes, the Winter Stout just went on tap yesterday. Come by for a pint! 🍺";
-        } else if (userComment.toLowerCase().includes("visit")) {
-            aiResponse = "We'd love to see you! We're open till 10pm all weekend. Cheers! 🍻";
-        } else {
-            aiResponse = "Thanks for the love! Hope to see you in the taproom soon.";
-        }
-
+        let aiResponse = "Thanks for the love! 🍻";
+        if (userComment.toLowerCase().includes("stout")) aiResponse = "Yes! The stout is tapping this Friday.";
         inputField.value = aiResponse;
         btn.innerText = originalText;
         btn.disabled = false;
@@ -837,106 +925,8 @@ function generateAIReply(btn, userComment) {
 }
 
 function sendReply(btn) {
-    const input = btn.previousElementSibling.previousElementSibling; // Skip over AI button
-    if(input.value.trim() === "") return;
-    
-    alert(`Reply sent: "${input.value}"`);
-    input.value = "";
-    
-    const replyBox = btn.parentElement;
-    const toggleBtn = replyBox.previousElementSibling;
-    replyBox.classList.remove('active');
-    toggleBtn.innerText = 'Reply';
-}
-
-function setPreviewMode(mode) {
-    currentPreviewMode = mode;
-    
-    // Update Button Styles
-    document.getElementById('btnPreviewFB').style.background = mode === 'fb' ? 'white' : 'transparent';
-    document.getElementById('btnPreviewFB').style.color = mode === 'fb' ? 'black' : '#64748b';
-    document.getElementById('btnPreviewFB').style.boxShadow = mode === 'fb' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none';
-    
-    document.getElementById('btnPreviewIG').style.background = mode === 'ig' ? 'white' : 'transparent';
-    document.getElementById('btnPreviewIG').style.color = mode === 'ig' ? 'black' : '#64748b';
-    document.getElementById('btnPreviewIG').style.boxShadow = mode === 'ig' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none';
-
-    updateSocialPreview();
-}
-
-function updateSocialPreview() {
-    const text = document.getElementById('socialCaption').value;
-    const headerEl = document.getElementById('previewHeader');
-    const bodyEl = document.getElementById('previewBody');
-    const imgContainer = document.getElementById('socialPreviewImgContainer');
-
-    if (currentPreviewMode === 'fb') {
-        // --- FACEBOOK VIEW ---
-        headerEl.innerHTML = `
-            <img src="../logo.png" style="width:40px; height:40px; border-radius:50%; background:#0f172a; padding:2px;" onerror="this.src='https://via.placeholder.com/40'">
-            <div>
-                <div style="font-weight:700; font-size:14px; color:#1c1e21;">Suburban Brewing Co.</div>
-                <div style="font-size:12px; color:#65676b;">Just now · 🌎</div>
-            </div>
-        `;
-        
-        bodyEl.innerHTML = `
-            <div style="font-size:14px; color:#1c1e21; white-space: pre-wrap; margin-bottom:10px;">${text}</div>
-            <div style="padding-top: 10px; border-top:1px solid #ddd; display:flex; justify-content:space-around; color:#65676b; font-weight:600; font-size:13px;">
-                <span>👍 Like</span><span>💬 Comment</span><span>↗️ Share</span>
-            </div>
-        `;
-    } else {
-        // --- INSTAGRAM VIEW ---
-        headerEl.innerHTML = `
-            <img src="../logo.png" style="width:32px; height:32px; border-radius:50%; background:#0f172a; padding:1px;" onerror="this.src='https://via.placeholder.com/32'">
-            <div style="font-weight:600; font-size:14px; color:#262626;">suburbanbrewing</div>
-            <div style="margin-left:auto; font-weight:bold;">...</div>
-        `;
-        
-        bodyEl.innerHTML = `
-            <div style="display:flex; gap:15px; margin-bottom:10px;">
-                <span style="font-size:22px;">♡</span>
-                <span style="font-size:22px;">💬</span>
-                <span style="font-size:22px;">🚀</span>
-                <span style="margin-left:auto; font-size:22px;">🔖</span>
-            </div>
-            <div style="font-size:14px; color:#262626; line-height:1.4;">
-                <span style="font-weight:600;">suburbanbrewing</span> ${text}
-            </div>
-        `;
-    }
-}
-
-function handleSocialUpload(input) {
-    const imgEl = document.getElementById('socialPreviewImg');
-    const container = document.getElementById('socialPreviewImgContainer');
-    
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imgEl.src = e.target.result;
-            imgEl.style.display = 'block';
-            container.querySelector('span').style.display = 'none';
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-function clearSocialImage() {
-    document.getElementById('socialUpload').value = "";
-    document.getElementById('socialPreviewImg').src = "";
-    document.getElementById('socialPreviewImg').style.display = 'none';
-    document.getElementById('socialPreviewImgContainer').querySelector('span').style.display = 'block';
-}
-
-function handleSocialPost() {
-    const postToFB = document.getElementById('checkFB').checked;
-    const postToIG = document.getElementById('checkIG').checked;
-    
-    if(!postToFB && !postToIG) return alert("Please select at least one platform.");
-    
-    alert(`Preparing to post to: ${postToFB ? 'Facebook ' : ''}${postToIG ? 'Instagram' : ''}`);
+    alert("Reply posted!");
+    btn.parentElement.classList.remove('active');
 }
 </script>
 
