@@ -449,12 +449,9 @@
     </div>
 </div>
           <div id="tab-email" class="card">
-            <h3>Weekly Fresh Sheet</h3>
-            <table style="width:100%; border:1px solid #eee; margin-top:15px;">
-                <thead style="background:#f9fafb;"><tr><th>Product</th><th>Format</th><th>Status</th></tr></thead>
-                <tbody id="freshSheetBody"></tbody>
-            </table>
-          </div>
+  <h3>Weekly Fresh Sheet</h3>
+  <div id="fresh-sheet-list" style="margin-top: 15px;"></div>
+</div>
 
           <div id="tab-churn" class="card">
             <h3>🚨 At-Risk Accounts</h3>
@@ -1015,50 +1012,68 @@ async function loadFreshSheet() {
     const container = document.getElementById('fresh-sheet-list'); 
     if(!container) return;
 
-    container.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">Loading Live Inventory...</div>';
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">Syncing Inventory...</div>';
 
     try {
         const res = await fetch(`${API_URL}?action=getBreweryInventory`);
         const data = await res.json();
-        
         container.innerHTML = ""; 
 
         if (!data || !Array.isArray(data)) {
-            container.innerHTML = '<div style="padding:20px; color:red;">Error: No data returned from Brewery Inventory.</div>';
+            container.innerHTML = '<div style="padding:20px; color:red;">No inventory data found.</div>';
             return;
         }
 
         data.forEach(beer => {
-            const packages = beer.packages || [];
+            // Filter: Only show formats where "On Hand" (index 2) is > 0
+            const inStock = (beer.packages || []).filter(p => {
+                const val = parseFloat(p['On Hand'] || p.qty || Object.values(p)[2] || 0);
+                return val > 0;
+            });
 
-            packages.forEach(pkg => {
-                // FIXED: Checking both naming possibilities for safety
-                // Your backend maps the 'On Hand' value to pkg.qty
-                onst stock = parseFloat(pkg['On Hand'] || pkg.onHand || pkg.qty || Object.values(pkg)[2] || 0);
-                
-                if (stock > 0) {
-                    const statusColor = stock <= 5 ? '#f59e0b' : '#10b981';
-                    const statusText = stock <= 5 ? 'LOW' : 'GOOD';
+            if (inStock.length > 0) {
+                // Sort Formats: Case -> 1/2 -> 1/6
+                inStock.sort((a, b) => {
+                    const weight = (t) => {
+                        t = (t || "").toLowerCase();
+                        if (t.includes('case')) return 1;
+                        if (t.includes('1/2')) return 2;
+                        if (t.includes('1/6')) return 3;
+                        return 4;
+                    };
+                    return weight(a.type) - weight(b.type);
+                });
 
-                    const row = document.createElement('div');
-                    row.style.cssText = "display: flex; border-bottom: 1px solid #e2e8f0; padding: 12px 10px; align-items: center; background: white;";
+                const beerRow = document.createElement('div');
+                beerRow.style.cssText = "display: flex; border-bottom: 1px solid #e2e8f0; background: white; align-items: stretch; margin-bottom: 2px;";
 
-                    row.innerHTML = `
-                        <div style="width: 30%; color: #1e293b; font-weight: 600; font-size: 13px;">
-                            ${beer.product}
-                        </div>
-                        
-                        <div style="width: 40%; text-align: center; color: #475569; font-size: 13px;">
-                            ${pkg.type || 'Standard'}
-                        </div>
-                        
-                        <div style="width: 30%; text-align: right; color: ${statusColor}; font-weight: bold; font-size: 13px;">
-                            ${stock} <span style="font-size: 10px; opacity: 0.7; margin-left: 4px;">${statusText}</span>
+                let beerInfo = `
+                    <div style="width: 30%; padding: 15px; border-right: 1px solid #f1f5f9; display: flex; flex-direction: column; justify-content: center;">
+                        <strong style="color: #1e293b; font-size: 14px;">${beer.product}</strong>
+                        <span style="font-size: 10px; color: #94a3b8; text-transform: uppercase;">${beer.lifecycle || 'Inventory'}</span>
+                    </div>
+                `;
+
+                let formatsContainer = '<div style="width: 70%; display: flex; flex-direction: column;">';
+                inStock.forEach((pkg, index) => {
+                    const stock = parseFloat(pkg['On Hand'] || pkg.qty || Object.values(pkg)[2] || 0);
+                    const border = index < inStock.length - 1 ? 'border-bottom: 1px solid #f1f5f9;' : '';
+                    const color = stock <= 5 ? '#f59e0b' : '#10b981';
+
+                    formatsContainer += `
+                        <div style="display: flex; align-items: center; padding: 10px; ${border}">
+                            <div style="flex: 1; text-align: center; color: #475569; font-size: 13px;">${pkg.type}</div>
+                            <div style="width: 100px; text-align: right; color: ${color}; font-weight: bold; font-size: 13px; padding-right: 10px;">
+                                ${stock} <span style="font-size: 10px; opacity: 0.7;">${stock <= 5 ? 'LOW' : 'GOOD'}</span>
+                            </div>
                         </div>
                     `;
-                    container.appendChild(row);
-                }
-            });
+                });
+                formatsContainer += '</div>';
+
+                beerRow.innerHTML = beerInfo + formatsContainer;
+                container.appendChild(beerRow);
+            }
         });
 
         if (container.innerHTML === "") {
@@ -1066,7 +1081,7 @@ async function loadFreshSheet() {
         }
 
     } catch (e) {
-        console.error("Fresh Sheet Flat Render Error:", e);
+        console.error("Fresh Sheet Render Error:", e);
         container.innerHTML = '<div style="color:red; text-align:center; padding:20px;">Connection Error.</div>';
     }
 }
