@@ -1314,7 +1314,7 @@ async function publishToFacebook() {
         btn.disabled = false;
     }
 }
-  // --- 2. LOAD INBOX (COMMENTS) ---
+ // --- 2. LOAD INBOX (COMMENTS) ---
 async function loadInbox() {
     const container = document.querySelector('.inbox-container');
     // Keep header, show loading
@@ -1327,7 +1327,18 @@ async function loadInbox() {
         const loadingEl = document.getElementById('inbox-loading');
         if(loadingEl) loadingEl.remove();
         
-        if (!comments || comments.length === 0) {
+        // --- SAFETY CHECK (The Fix) ---
+        // If the server sent an error object instead of a list, show the error
+        if (!Array.isArray(comments)) {
+            console.error("Inbox Data Error:", comments);
+            container.innerHTML += `<div style="color:red; padding:20px;">
+                <strong>System Message:</strong> ${comments.error || comments.message || "Unknown error loading inbox."}
+            </div>`;
+            return;
+        }
+        // ------------------------------
+
+        if (comments.length === 0) {
             container.innerHTML += '<div style="color:#666; padding:20px;">No recent comments found.</div>';
             return;
         }
