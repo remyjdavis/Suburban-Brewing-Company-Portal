@@ -533,50 +533,80 @@ async function initGeneratorData() {
     }
     
     try {
-        const [invRes, mktRes] = await Promise.all([
+        // 1. Fetch Inventory, Marketing, AND Prices
+        const [invRes, mktRes, priceRes] = await Promise.all([
             fetch(`${API_URL}?action=getBreweryInventory`), 
-            fetch(`${API_URL}?action=getMarketingData`)
+            fetch(`${API_URL}?action=getMarketingData`),
+            fetch(`${API_URL}?action=getProductPrices`)
         ]);
 
         const inventory = await invRes.json();
         const market = await mktRes.json();
+        const prices = await priceRes.json();
 
-        console.log("Raw Inventory:", inventory); // Debugging
+        console.log("Prices Loaded:", prices); // Debugging
 
-        // Process Inventory
+        // 2. Create Price Lookup Map
+        // Key: "ProductName_Format" -> Value: Price
+        const priceMap = {};
+        if (Array.isArray(prices)) {
+            prices.forEach(p => {
+                // Try to find Name and Format columns flexibly
+                const pName = (p['Product Name'] || p['Name'] || p['Product'] || "").trim();
+                const pFormat = (p['Format'] || p['Type'] || p['Package'] || "").trim();
+                const pPrice = p['Wholesale Price'] || p['Price'] || p['Wholesale'] || 0;
+                
+                if (pName) {
+                    // Store strict match
+                    priceMap[`${pName}_${pFormat}`] = pPrice;
+                    // Store loose match (Name only) as fallback
+                    if (!priceMap[pName]) priceMap[pName] = pPrice;
+                }
+            });
+        }
+
+        // 3. Process Inventory & Merge Prices
         inventoryData = {};
-        
         if (Array.isArray(inventory)) {
             inventory.forEach(p => {
                 const n = (p.product || p.name || "Unknown").trim();
                 
                 if(!inventoryData[n]) inventoryData[n] = [];
                 
-                // Handle nested packages if they exist
+                // Handle packages
                 if (p.packages && Array.isArray(p.packages)) {
                     p.packages.forEach(pkg => {
+                        const pkgType = (pkg.type || pkg.package || "").trim();
+                        
+                        // FIND PRICE: Try exact match (Name + Type), then Name fallback, then existing pkg price
+                        let finalPrice = priceMap[`${n}_${pkgType}`] 
+                                      || priceMap[n] 
+                                      || pkg.price 
+                                      || 0;
+
                         inventoryData[n].push({
-                            type: pkg.type || pkg.package || "Unit",
+                            type: pkgType,
                             qty: pkg.qty || 0,
-                            price: pkg.price || 0
+                            price: finalPrice
                         });
                     });
                 } else {
-                    // Fallback for flat structure
+                    // Flat structure
                     inventoryData[n].push({
-                        type: p.type || p.package || "Unit",
+                        type: p.type || "Unit",
                         qty: p.qty || 0,
-                        price: p.price || 0
+                        price: priceMap[n] || p.price || 0
                     });
                 }
             });
         }
 
-        // Process Marketing (Flexible Match)
+        // 4. Process Marketing Data
         marketingData = {};
         if (Array.isArray(market)) {
             market.forEach(row => {
-                const name = (row['Product Name'] || row['product name'] || row['Product'] || row['name'] || "").trim();
+                // Flexible header matching based on your sheet
+                const name = (row['Product Name'] || row['product name'] || row['Product'] || "").trim();
                 if(name) {
                     marketingData[name] = {
                         style: row['Style'] || row['style'] || "",
