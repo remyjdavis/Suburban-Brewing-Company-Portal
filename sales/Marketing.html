@@ -24,36 +24,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
-    /* --- GENERATOR THEME VARIABLES (SYSTEM AWARE) --- */
-    :root {
-        /* DEFAULT (LIGHT MODE) */
-        --deck-bg: #f1f5f9;
-        --deck-text-head: #0f172a;
-        --deck-text-body: #475569;
-        --deck-card-bg: #ffffff;
-        --deck-card-border: #e2e8f0;
-        --deck-price-bg: #f8fafc;
-        --deck-accent: #2563eb;
-        --deck-logo-filter: none;
+    /* --- STANDARD VARIABLES (NO THEMES) --- */
+    :root { 
+      --bg: #f4f6f8; 
+      --sidebar: #0f172a; 
+      --accent: #2563eb; 
+      --text: #1f2937; 
+      --danger: #ef4444; 
+      --success: #10b981; 
+      --warning: #f59e0b;
     }
     * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
     body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
     
-    /* AUTOMATIC DARK MODE (Based on Device Settings) */
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --deck-bg: #0f172a;
-            --deck-text-head: #ffffff;
-            --deck-text-body: #94a3b8;
-            --deck-card-bg: #1e293b;
-            --deck-card-border: #334155;
-            --deck-price-bg: #0f172a;
-            --deck-accent: #38bdf8;
-            --deck-logo-filter: brightness(0) invert(1);
-        }
-    }
-    
-    /* SIDEBAR */
+    /* SIDEBAR (Always Dark Blue) */
     .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; transition: all 0.3s ease; }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
     .nav-section-header { margin: 18px 24px 8px; font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; }
@@ -89,7 +73,6 @@
     button.secondary:hover { background: #d1d5db; }
     input, textarea, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
     input[type="checkbox"] { width: auto; margin-bottom: 0; cursor: pointer; }
-    .helper-text { font-size: 11px; color: #64748b; margin-top: -10px; margin-bottom: 15px; }
     
     /* TABLES */
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -107,122 +90,57 @@
     .asset-name { font-weight: 600; font-size: 14px; color: #1f2937; }
     .tool-tag { font-size: 9px; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; position: absolute; top: 10px; right: 10px; font-weight: 700; }
 
-    /* INBOX STYLES */
-    .comment-item { padding: 15px; border-bottom: 1px solid #e5e7eb; display: flex; gap: 15px; }
-    .comment-item:last-child { border-bottom: none; }
-    .comment-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; font-size: 20px; display: flex; align-items: center; justify-content: center; }
-    .comment-content { flex: 1; }
-    .comment-meta { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 4px; }
-    .platform-icon { font-size: 14px; margin-right: 5px; }
-    .reply-box { margin-top: 10px; display: none; }
-    .reply-box.active { display: flex; gap: 10px; align-items: center; }
-    .ai-btn { background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; font-size: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
-    .ai-btn:hover { filter: brightness(1.1); }
-
-    /* MODAL STYLES */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 2000; backdrop-filter: blur(4px); justify-content: center; align-items: center; }
-    .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease-out; }
-    .modal-window { background: white; width: 90%; max-width: 900px; height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
-    .modal-header { padding: 20px 30px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-    .modal-header h2 { margin: 0; font-size: 18px; color: #0f172a; }
-    .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; }
-    .modal-body { flex: 1; overflow-y: auto; padding: 40px; background: #f1f5f9; }
-    .modal-footer { padding: 20px 30px; border-top: 1px solid #e2e8f0; background: white; display: flex; justify-content: flex-end; gap: 15px; }
-    .download-btn { padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; }
-    .download-btn.secondary { background: #f1f5f9; color: #475569; }
-    .download-btn.primary { background: #2563eb; color: white; }
-
-    /* --- ASSET PREVIEW STYLES --- */
-    .logo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; }
-    .logo-box { background: white; border: 1px solid #e2e8f0; padding: 40px 20px; text-align: center; border-radius: 8px; }
-    .logo-box.dark { background: #0f172a; border-color: #0f172a; }
-    .logo-label { display: block; font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-top: 10px;}
-    .price-table { width: 100%; border-collapse: collapse; background: white; }
-    .price-table th { background: #f8fafc; text-transform: uppercase; font-size: 12px; }
-    .price-table td { border-bottom: 1px solid #f1f5f9; }
-    .shelf-talker-container { display: flex; justify-content: center; align-items: center; height: 100%; min-height: 200px; }
-    .shelf-talker { width: 300px; height: 150px; background: #2563eb; color: white; border-radius: 8px; padding: 20px; position: relative; box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4); transform: rotate(-2deg); }
-    .talker-fold { position: absolute; top: -30px; left: 0; width: 100%; height: 30px; background: #1e40af; border-radius: 8px 8px 0 0; opacity: 0.5; }
-
-    /* --- APPLY VARIABLES TO GENERATOR UI --- */
+    /* GENERATOR UI (ON SCREEN = DARK MODE) */
     #generator-view { display: none; }
     .gen-layout { display: flex; gap: 30px; height: calc(100vh - 100px); }
     .gen-controls { width: 350px; flex-shrink: 0; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; overflow-y: auto; }
-
+    
     .gen-preview { 
         flex: 1; 
-        background: var(--deck-bg); 
+        background: #0f172a; /* Always Dark on Screen */
         border-radius: 12px; 
         display: block; 
         overflow-y: auto; 
         padding: 40px; 
         position: relative;
-        transition: background 0.3s ease, color 0.3s ease;
     }
-
+    
     #sell-sheet-paper { width: 100%; min-height: 100%; display: flex; flex-direction: column; padding-bottom: 50px; }
     
-    .deck-header { border-bottom: 2px solid var(--deck-accent); padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:end; }
-    .deck-header h1 { color: var(--deck-text-head); font-family:'Oswald'; font-size:48px; margin:0; letter-spacing:1px; }
-    .deck-header p { color: var(--deck-text-body); margin:5px 0 0; letter-spacing: 2px; font-size:14px; }
-    .header-logo { height: 80px; filter: var(--deck-logo-filter); transition: filter 0.3s ease; }
+    .deck-header { border-bottom: 2px solid #38bdf8; padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:end; }
+    .deck-header h1 { color: white; font-family:'Oswald'; font-size:48px; margin:0; letter-spacing:1px; }
+    .deck-header p { color: #94a3b8; margin:5px 0 0; letter-spacing: 2px; font-size:14px; }
+    
+    /* Screen Logo: Invert colors to look good on dark background */
+    .header-logo { height: 80px; filter: brightness(0) invert(1); }
 
     .deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; align-content: start; }
 
     .deck-grid .beer-card { 
-        background: var(--deck-card-bg); 
-        border: 1px solid var(--deck-card-border);
+        background: #1e293b; 
+        border: 1px solid #334155;
         border-radius: 12px;
         padding: 20px;
-        color: var(--deck-text-head);
+        color: white;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         display: flex; flex-direction: column;
     }
 
-    .deck-grid .beer-name { color: var(--deck-text-head); font-size: 20px; margin-bottom: 5px; }
-    .deck-grid .beer-meta { color: var(--deck-accent); font-size: 11px; letter-spacing: 1px; margin-bottom: 10px; }
-    .deck-grid .beer-desc { color: var(--deck-text-body); font-size: 13px; line-height: 1.5; margin-bottom: 15px; flex-grow: 1; }
+    .deck-grid .beer-name { color: white; font-size: 20px; margin-bottom: 5px; }
+    .deck-grid .beer-meta { color: #38bdf8; font-size: 11px; letter-spacing: 1px; margin-bottom: 10px; }
+    .deck-grid .beer-desc { color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 15px; flex-grow: 1; }
     
     .deck-grid .price-box { 
-        background: var(--deck-price-bg); 
-        border: 1px solid var(--deck-card-border); 
+        background: #0f172a; 
+        border: 1px solid #334155; 
         border-radius: 6px; 
         padding: 10px; 
-        color: var(--deck-text-head);
+        color: white;
     }
 
-    .deck-footer { margin-top: 50px; border-top: 1px solid var(--deck-card-border); padding-top: 20px; color: var(--deck-text-body); font-size: 12px; display:flex; justify-content:space-between; }
-    /* SHEET DESIGN */
-    .sheet-header { height: 140px; background: #0f172a; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: relative; }
-    .sheet-header::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: var(--accent); }
-    .header-logo { height: 70px; filter: brightness(0) invert(1); }
-    .header-title { text-align: right; color: white; }
-    .header-title h1 { margin: 0; font-family: 'Oswald', sans-serif; font-size: 32px; text-transform: uppercase; letter-spacing: 1px; }
-    .header-title p { margin: 5px 0 0; font-size: 12px; opacity: 0.8; font-family: 'Inter', sans-serif; }
+    .deck-footer { margin-top: 50px; border-top: 1px solid #334155; padding-top: 20px; color: #64748b; font-size: 12px; display:flex; justify-content:space-between; }
 
-    .sheet-body { padding: 30px 40px; flex: 1; display: flex; flex-direction: column; }
-    .catalog-list { display: flex; flex-direction: column; gap: 20px; }
-    
-    .catalog-item { display: flex; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; break-inside: avoid; page-break-inside: avoid; }
-    .catalog-item:last-child { border-bottom: none; }
-
-    .cat-info { flex: 3; }
-    .cat-name { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700; color: #0f172a; text-transform: uppercase; margin: 0 0 5px 0; }
-    .cat-meta { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; display: block; }
-    .cat-desc { font-size: 13px; line-height: 1.5; color: #475569; margin: 0; }
-
-    .cat-pricing { flex: 1; text-align: right; min-width: 120px; display: flex; flex-direction: column; gap: 4px; justify-content: center; }
-    .price-row { font-size: 13px; font-weight: 600; color: #1e293b; }
-    .price-val { color: var(--accent); font-weight: 800; margin-left: 5px; }
-
-    .sheet-footer { background: #f8fafc; padding: 20px 40px; border-top: 2px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-    .footer-contact { font-size: 11px; color: #64748b; line-height: 1.5; }
-    .footer-contact strong { color: #0f172a; text-transform: uppercase; }
-    
-    .qr-area { display: flex; align-items: center; gap: 10px; }
-    .qr-text { font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; text-align: right; }
-
-    /* MOBILE RESPONSIVENESS */
+    /* --- MOBILE RESPONSIVENESS --- */
     #menu-toggle { display: none; }
     .menu-overlay-mobile { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
 
@@ -235,38 +153,57 @@
       .menu-overlay-mobile.active { display: block; }
     }
 
-    /* --- PDF / PRINT MODE (ALWAYS FORCE LIGHT THEME) --- */
+    /* --- PRINT / SAVE AS PDF (ALWAYS WHITE) --- */
     @media print {
-        :root {
-            /* Force White Paper Look */
-            --deck-bg: white !important;
-            --deck-text-head: black !important;
-            --deck-text-body: #333 !important;
-            --deck-card-bg: white !important;
-            --deck-card-border: #ccc !important;
-            --deck-price-bg: #f9fafb !important;
-            --deck-accent: #2563eb !important;
-            --deck-logo-filter: none !important;
-        }
-
         @page { size: portrait; margin: 0.5in; }
+        
         body { background: white !important; -webkit-print-color-adjust: exact; }
         
         /* Hide UI */
         .sidebar, #dashboard-view, .header, .tabs, #menu-toggle, .gen-controls { display: none !important; }
         
-        /* Layout Fixes - Forces the Generator to Fill the PDF */
+        /* Layout Reset */
         .main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
         .content { padding: 0 !important; max-width: none !important; }
         #generator-view { display: block !important; }
         .gen-layout { height: auto !important; display: block !important; }
+        
+        /* Force White Backgrounds */
         .gen-preview { background: white !important; padding: 0 !important; overflow: visible !important; border: none !important; }
         
-        /* Stack cards vertically for PDF */
+        /* Force Black Text & White Cards */
+        .deck-header { border-color: #2563eb !important; }
+        .deck-header h1 { color: #0f172a !important; }
+        .deck-header p { color: #64748b !important; }
+        
+        /* Reset Logo Filter for White Paper */
+        .header-logo { filter: none !important; } 
+        
         .deck-grid { display: block !important; } 
-        .deck-grid .beer-card { margin-bottom: 20px; width: 100%; break-inside: avoid; border: 1px solid #ccc !important; }
+        
+        .deck-grid .beer-card { 
+            background: white !important; 
+            border: 1px solid #ccc !important;
+            color: black !important;
+            break-inside: avoid !important;
+            margin-bottom: 20px; 
+            width: 100%;
+            box-shadow: none !important;
+        }
+        
+        .deck-grid .beer-name { color: black !important; }
+        .deck-grid .beer-meta { color: #2563eb !important; }
+        .deck-grid .beer-desc { color: #333 !important; }
+        
+        .deck-grid .price-box { 
+            background: #f9fafb !important; 
+            border: 1px solid #ddd !important; 
+            color: black !important; 
+        }
+        
+        .deck-footer { border-color: #eee !important; color: #666 !important; }
     }
-</style>
+  </style>
 </head>
 <body>
   <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
