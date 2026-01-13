@@ -505,7 +505,7 @@
                         </div>
                     </div>
 
-                    <button class="primary" style="margin-top:auto;" onclick="publishToFacebook()">🚀 Publish to Facebook</button>
+                    <button class="primary" style="margin-top:auto;" onclick="publishToFacebook()">🚀 Publish to Socials</button>
                 </div>
 
                 <div class="social-preview-pane">
@@ -681,14 +681,16 @@ document.addEventListener("DOMContentLoaded", () => {
     loadFreshSheet();
     loadChurnMonitor();
     
-    // 4. Load Data for Generator (THE FIX)
+    // 4. Load Data for Generator
     initGeneratorData();
     
-    // 5. Init UI Helpers
+    // 5. Load Social Inbox (NEW - Required for Comments)
+    loadInbox();
+    
+    // 6. Init UI Helpers
     updateBanner();
     updateSocialPreview();
 });
-
 // --- DATA LOADING ---
 async function initGeneratorData() {
     if(document.getElementById('loading-status')) {
@@ -1309,6 +1311,101 @@ async function publishToFacebook() {
         Swal.fire('Error', 'Failed to publish: ' + e.message, 'error');
     } finally {
         btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+  // --- 2. LOAD INBOX (COMMENTS) ---
+async function loadInbox() {
+    const container = document.querySelector('.inbox-container');
+    // Keep header, show loading
+    container.innerHTML = '<h3 style="margin-top:0;">Unified Inbox (Comments)</h3><div id="inbox-loading" style="padding:20px; color:#64748b;">Loading comments...</div>';
+    
+    try {
+        const res = await fetch(`${API_URL}?action=getInbox`);
+        const comments = await res.json();
+        
+        const loadingEl = document.getElementById('inbox-loading');
+        if(loadingEl) loadingEl.remove();
+        
+        if (!comments || comments.length === 0) {
+            container.innerHTML += '<div style="color:#666; padding:20px;">No recent comments found.</div>';
+            return;
+        }
+
+        comments.forEach(c => {
+            // Format Date
+            const date = new Date(c.time).toLocaleDateString() + " " + new Date(c.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Set Icon & Color based on platform
+            const isIG = c.platform === 'instagram';
+            const icon = isIG ? '📷' : 'f';
+            const color = isIG ? '#E1306C' : '#1877F2';
+            const platformName = isIG ? 'Instagram' : 'Facebook';
+
+            const html = `
+                <div class="comment-thread" id="thread-${c.id}">
+                    <div class="comment-header">
+                        <span><span style="color:${color}; font-weight:bold; margin-right:5px;">${icon}</span> <strong>${platformName}</strong> · ${c.user}</span>
+                        <span>${date}</span>
+                    </div>
+                    <div class="comment-body" style="font-size:13px; color:#4b5563; margin-bottom:5px;">
+                        <em>On post: "${c.post_title}"</em>
+                    </div>
+                    <div class="comment-body" style="font-size:15px; color:#1f2937;">
+                        ${c.text}
+                    </div>
+                    <div class="reply-area">
+                        <input type="text" id="reply-${c.id}" placeholder="Write a reply...">
+                        <button class="secondary" style="width:auto;" onclick="sendRealReply('${c.id}')">Reply</button>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += html;
+        });
+
+    } catch (e) {
+        console.error(e);
+        container.innerHTML += '<div style="color:red; padding:20px;">Error connecting to Facebook API. Check console.</div>';
+    }
+}
+
+// --- 3. SEND REPLY ---
+async function sendRealReply(commentId) {
+    const input = document.getElementById(`reply-${commentId}`);
+    const text = input.value;
+    const btn = input.nextElementSibling;
+
+    if (!text) return Swal.fire('Error', 'Please write a reply first.', 'warning');
+
+    btn.innerText = "Sending...";
+    btn.disabled = true;
+
+    try {
+        const payload = {
+            action: "replyToComment",
+            commentId: commentId,
+            message: text
+        };
+
+        const res = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await res.json();
+
+        if (result.status === 'success') {
+            Swal.fire('Sent!', 'Reply posted successfully.', 'success');
+            input.value = "";
+            input.placeholder = "Reply sent!";
+        } else {
+            throw new Error(result.message);
+        }
+
+    } catch (e) {
+        Swal.fire('Error', 'Failed to reply: ' + e.message, 'error');
+    } finally {
+        btn.innerText = "Reply";
         btn.disabled = false;
     }
 }
