@@ -667,7 +667,7 @@ function renderCatalog() {
     let itemsRendered = 0;
 
     beers.forEach(name => {
-        // 1. Get Data (Flexible Matching)
+        // 1. Get Marketing Data (Flexible Matching)
         let mkt = marketingData[name];
         if (!mkt) {
             // Try partial match if exact match fails
@@ -682,9 +682,9 @@ function renderCatalog() {
 
         // 2. Build Price Rows
         invItems.forEach(pkg => {
-            // Check for stock (Quantity > 0)
-            // Handle both number types and string types "10.0"
+            // Check for stock (Handle string or number)
             let qty = parseFloat(pkg.qty);
+            
             if (!isNaN(qty) && qty > 0) {
                 hasStock = true;
                 if(showPrice) {
