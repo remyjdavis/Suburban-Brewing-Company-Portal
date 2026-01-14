@@ -233,37 +233,35 @@
 }
 
 /* --- ZERO-CONTRAST IMAGE FIX --- */
+/* --- FINAL ZERO-CONTRAST BLEND --- */
 .product-img-container { 
     width: 100%; 
-    height: 180px; 
-    /* 🔴 Forces container to match card exactly */
+    height: 200px; /* Taller for the 16oz can */
     background-color: #ffffff !important; 
     display: flex; 
     align-items: center; 
     justify-content: center; 
     overflow: hidden;
-    position: relative;
-    border-radius: 12px;
+    /* 🔴 This tells Safari to force-blend the layers */
+    isolation: isolate; 
 }
 
 .product-img {
-    height: 95% !important; 
+    height: 100% !important; 
     width: auto !important;
+    max-height: 180px;
     object-fit: contain; 
     
-    /* 🔴 THE FIX: Blends the image background away */
-    mix-blend-mode: multiply !important;
+    /* 🔴 THE FIX: 'Screen' ignores the grey/darker pixels in the image background */
+    mix-blend-mode: screen !important;
     
-    /* 🔴 THE OVERRIDE: Brightens whites so they hit 100% white */
-    filter: brightness(1.08) contrast(1.05) !important;
+    /* 🔴 THE PUNCH: This washes out the grey background while keeping the label red */
+    filter: contrast(1.1) brightness(1.05) saturate(1.1) !important;
     
-    background-color: transparent !important;
-    -webkit-user-drag: none;
-    
-    /* Forces Safari to ignore image metadata color-space */
-    image-rendering: -webkit-optimize-contrast;
+    /* 🔴 Prevents Safari from adding its own 'depth' filter */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
-
     .cart-badge {
         position: absolute;
         top: 4px;
