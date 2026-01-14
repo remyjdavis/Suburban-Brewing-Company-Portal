@@ -209,9 +209,9 @@
 }
    .product-img-container { 
     width: 100%; 
-    /* 🔴 REMOVED aspect-ratio: 1/1 */
-    height: 160px; /* Forces a consistent height for all cards */
-    background: #ffffff; 
+    height: 160px; 
+    /* 🔴 MUST BE PURE WHITE FOR BLENDING TO WORK */
+    background: #ffffff !important; 
     border-radius: 12px;
     display: flex; 
     align-items: center; 
@@ -229,11 +229,11 @@
     border-radius: 8px;
     margin: 0 auto;
 
-    /* 🔴 THE BLENDING FIX: */
-    mix-blend-mode: multiply; /* Removes the light grey background from the render */
-    filter: contrast(1.05);   /* Optional: keeps the colors popping after blending */
+    /* 🔴 THE TRIPLE-THREAT FIX: */
+    mix-blend-mode: multiply;    /* Blends the grey into the white */
+    filter: brightness(1.05) contrast(1.1); /* Brightens the light greys to pure white */
+    background-color: transparent;
 }
-
 .product-card { 
     background: #fff; 
     border-radius: 16px; 
