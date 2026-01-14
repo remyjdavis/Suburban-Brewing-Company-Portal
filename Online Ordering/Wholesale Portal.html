@@ -24,12 +24,12 @@
     }
 
     body { 
-        margin: 0; 
-        background-color: var(--bg); 
-        color: var(--primary); 
-        padding-bottom: 100px; 
-        overscroll-behavior-y: contain; 
-    }
+    margin: 0; 
+    background-color: #ffffff !important; /* Forces white to allow image blending */
+    color: var(--primary); 
+    padding-bottom: 100px; 
+    overscroll-behavior-y: contain; 
+}
 
     /* --- NATIVE APP HEADER --- */
     .site-header { 
@@ -207,10 +207,21 @@
     flex-grow: 1;            /* Uses all available space in the 90% height box */
     margin: 5px 0;
 }
-   .product-img-container { 
+  .product-card { 
+    background: #ffffff !important; /* Matches body exactly */
+    border-radius: 16px; 
+    padding: 12px;
+    display: flex; 
+    flex-direction: column;
+    height: 100%; 
+    box-shadow: var(--card-shadow);
+    transition: 0.2s;
+    border: 2px solid transparent;
+}
+
+.product-img-container { 
     width: 100%; 
     height: 160px; 
-    /* 🔴 MUST BE PURE WHITE FOR BLENDING TO WORK */
     background: #ffffff !important; 
     border-radius: 12px;
     display: flex; 
@@ -224,27 +235,15 @@
 .product-img {
     height: 100% !important; 
     width: auto !important;
-    max-height: 150px; 
+    max-height: 155px; /* Pushes the can size slightly higher */
     object-fit: contain; 
     border-radius: 8px;
     margin: 0 auto;
 
-    /* 🔴 THE TRIPLE-THREAT FIX: */
-    mix-blend-mode: multiply;    /* Blends the grey into the white */
-    filter: brightness(1.05) contrast(1.1); /* Brightens the light greys to pure white */
-    background-color: transparent;
-}
-.product-card { 
-    background: #fff; 
-    border-radius: 16px; 
-    padding: 12px;
-    display: flex; 
-    flex-direction: column;
-    /* 🔴 HEIGHT: Ensures all cards in the row are the exact same height */
-    height: 100%; 
-    box-shadow: var(--card-shadow);
-    transition: 0.2s;
-    border: 2px solid transparent;
+    /* THE BLENDING SUITE */
+    mix-blend-mode: multiply !important;
+    filter: brightness(1.1) contrast(1.1); /* Erases the grey shadows in the raw image */
+    background-color: transparent !important;
 }
     .cart-badge {
         position: absolute;
