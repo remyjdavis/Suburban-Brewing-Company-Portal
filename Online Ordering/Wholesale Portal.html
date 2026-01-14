@@ -158,7 +158,51 @@
     @media (min-width: 768px) {
         .product-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
     }
+/* --- HOVER INFO OVERLAY --- */
+.product-card {
+    position: relative;
+    overflow: hidden; /* Keeps the overlay inside the card corners */
+}
 
+.hover-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 23, 42, 0.95); /* Dark background like your modal */
+    color: white;
+    padding: 15px;
+    transform: translateY(100%); /* Start hidden below the card */
+    transition: transform 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 5;
+    height: 80%; /* Only covers part of the image so they know what they are looking at */
+    font-size: 0.8rem;
+    pointer-events: none; /* Allows clicks to pass through to the card */
+}
+
+/* Show on hover */
+.product-card:hover .hover-info {
+    transform: translateY(0);
+}
+
+.hover-abv {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.hover-desc {
+    line-height: 1.4;
+    color: #cbd5e1;
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* Limits description to 4 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
     .product-card { 
         background: #fff; 
         border-radius: 16px; 
@@ -387,7 +431,42 @@
     
     .search-wrapper { position: relative; display: flex; gap: 10px; align-items: center; width: 100%; }
     .scan-btn { height: 50px; padding: 0 15px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.2rem; }
-</style>
+/* --- HOVER INFO OVERLAY --- */
+.product-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.hover-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(15, 23, 42, 0.95);
+    color: white;
+    padding: 15px;
+    transform: translateY(101%);
+    transition: transform 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 5;
+    height: 80%;
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+@media (hover: hover) {
+    .product-card:hover .hover-info { transform: translateY(0); }
+}
+
+.hover-abv { color: var(--accent); font-weight: 800; font-size: 0.9rem; text-transform: uppercase; }
+.hover-desc { line-height: 1.4; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* --- QTY STEPPER (WHITE ARROWS) --- */
+.qty-stepper { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.qty-btn { background: none; border: none; color: #ffffff !important; font-size: 1.2rem; cursor: pointer; padding: 0; line-height: 1; user-select: none; }
+.variant-qty { width: 60px; height: 40px; text-align: center; border: 2px solid #334155; border-radius: 6px; font-size: 1.1rem; font-weight: bold; background: #0f172a; color: #ffffff; appearance: textfield; -moz-appearance: textfield; }
+.variant-qty::-webkit-inner-spin-button, .variant-qty::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
 </head>
 <body>
 
@@ -462,8 +541,7 @@
         document.getElementById('scanner-container').style.display = 'none';
     }
 
-    // --- INITIALIZATION ---
-    // --- INITIALIZATION ---
+    // --- INITIALIZATION ---//
     async function init() {
         try {
             // 🔴 FIX: Changed '?' to '&' because API_URL already has a '?'
@@ -488,20 +566,22 @@
         }
     }
     function processProducts(rawList) {
-        groupedProducts = {};
-        rawList.forEach(p => {
-            if (!groupedProducts[p.name]) {
-                groupedProducts[p.name] = { 
-                    name: p.name, 
-                    lifecycle: p.lifecycle || "Rotating",
-                    upc: p.upc,
-                    image: p.image || p.name.split(' ')[0].toLowerCase() + ".jpg", 
-                    variants: [] 
-                };
-            }
-            groupedProducts[p.name].variants.push({ type: p.type, price: p.price, stock: p.stock });
-        });
-    }
+    groupedProducts = {};
+    rawList.forEach(p => {
+        if (!groupedProducts[p.name]) {
+            groupedProducts[p.name] = { 
+                name: p.name, 
+                lifecycle: p.lifecycle || "Rotating", 
+                upc: p.upc,
+                abv: p.abv || "TBD",
+                desc: p.description || p.desc || "No description available.",
+                image: p.image || p.name.split(' ')[0].toLowerCase() + ".jpg", 
+                variants: [] 
+            };
+        }
+        groupedProducts[p.name].variants.push({ type: p.type, price: p.price, stock: p.stock });
+    });
+}
 
     // --- RENDER VIEWS ---
     function render() {
@@ -547,13 +627,14 @@
                     <button class="btn btn-primary" style="width:100%;" onclick="attemptLogin()">Log In</button>
                 </div>`;
         
-        // STEP 2: PRODUCT GRID (COMPACT VIEW)
+        // STEP 2: PRODUCT GRID
         } else if (state.step === 2) {
             liveBar.style.display = "flex";
+            updateLiveTotals();
             let html = `
                 <div class="controls-area">
                     <div class="search-wrapper">
-                        <input type="text" id="searchInput" class="search-input" placeholder="Search or scan UPC..." oninput="filterProducts()">
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search products..." oninput="filterProducts()">
                         <button class="scan-btn" onclick="startScanner()">📷</button>
                     </div>
                     <div class="cat-bar">
@@ -567,25 +648,24 @@
             
             for (const key in groupedProducts) {
                 const p = groupedProducts[key];
-                // Check if any variant is in cart to show badge
-                let countInCart = 0;
-                p.variants.forEach(v => {
-                    if(state.cart[`${p.name}-${v.type}`]) countInCart += 1;
-                });
-
-                const badgeDisplay = countInCart > 0 ? "block" : "none";
-                const borderClass = countInCart > 0 ? "card-selected-border" : "";
-
+                // Define inCart here so the card knows to show the badge
+                const inCart = Object.values(state.cart).some(item => item.beer === p.name);
+                
                 html += `
-                <div class="product-card ${borderClass}" data-name="${p.name}" data-lifecycle="${p.lifecycle}" data-upc="${p.upc}" onclick="openOrderModal('${p.name}')">
-                    <div class="cart-badge" style="display:${badgeDisplay}">IN CART</div>
+                <div class="product-card ${inCart ? 'card-selected-border' : ''}" data-name="${p.name}" data-lifecycle="${p.lifecycle}" data-upc="${p.upc}" onclick="openOrderModal('${p.name}')">
+                    ${inCart ? '<div class="cart-badge">IN CART</div>' : ''}
+                    
+                    <div class="hover-info">
+                        <div class="hover-abv">ABV: ${p.abv}</div>
+                        <div class="hover-desc">${p.desc}</div>
+                        <div style="margin-top:auto; font-size: 0.7rem; opacity: 0.6;">Tap to order...</div>
+                    </div>
+
                     <div class="product-img-container">
                         <span class="lifecycle-badge">${p.lifecycle}</span>
-                        <img src="${BASE_IMG_URL}${p.image}" class="product-img" onerror="this.onerror=null;this.src='${FALLBACK_LOGO}';">
+                        <img src="${BASE_IMG_URL}${p.image}" class="product-img" onerror="this.src='${FALLBACK_LOGO}';">
                     </div>
-                    <div class="product-name-area">
-                        <h4>${p.name}</h4>
-                    </div>
+                    <div class="product-name-area"><h4>${p.name}</h4></div>
                 </div>`;
             }
             app.innerHTML = html + `</div>`;
@@ -623,27 +703,25 @@
     function openOrderModal(productName) {
         currentModalProduct = groupedProducts[productName];
         document.getElementById('modalTitle').innerText = productName;
-        
         const container = document.getElementById('modalVariants');
         container.innerHTML = currentModalProduct.variants.map(v => {
             const cartKey = `${productName}-${v.type}`;
             const val = state.cart[cartKey] ? state.cart[cartKey].qty : 0;
             return `
-<div class="variant-row">
-    <div class="variant-info">
-        <strong>${v.type}</strong><br>$${v.price} 
-        <span style="font-size:0.8rem; color:#94a3b8">(${v.stock} in stock)</span>
-    </div>
-    <div class="qty-stepper">
-        <button class="qty-btn" onclick="this.parentNode.querySelector('input').stepUp()">▲</button>
-        <input type="number" class="variant-qty modal-input" 
-               data-type="${v.type}" data-price="${v.price}" data-stock="${v.stock}"
-               min="0" max="${v.stock}" value="${val}">
-        <button class="qty-btn" onclick="this.parentNode.querySelector('input').stepDown()">▼</button>
-    </div>
-</div>`;
+            <div class="variant-row">
+                <div class="variant-info">
+                    <strong>${v.type}</strong><br>$${v.price} 
+                    <span style="font-size:0.8rem; color:#94a3b8">(${v.stock} in stock)</span>
+                </div>
+                <div class="qty-stepper">
+                    <button class="qty-btn" onclick="let inp=this.parentNode.querySelector('input'); inp.stepUp(); event.stopPropagation();">▲</button>
+                    <input type="number" class="variant-qty modal-input" 
+                           data-type="${v.type}" data-price="${v.price}" data-stock="${v.stock}"
+                           min="0" max="${v.stock}" value="${val}">
+                    <button class="qty-btn" onclick="let inp=this.parentNode.querySelector('input'); inp.stepDown(); event.stopPropagation();">▼</button>
+                </div>
+            </div>`;
         }).join('');
-
         document.getElementById('orderModal').style.display = "flex";
     }
 
