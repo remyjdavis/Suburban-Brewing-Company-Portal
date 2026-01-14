@@ -282,28 +282,49 @@
 
     .variant-info { font-size: 0.9rem; }
     
-    /* --- UPDATED QUANTITY BOX WITH ARROWS --- */
+   /* Container to stack arrows and input */
+.qty-stepper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Custom Arrow Buttons */
+.qty-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    user-select: none;
+}
+
+.qty-btn:active {
+    color: var(--accent);
+}
+
+/* The Qty Box (Arrows hidden) */
 .variant-qty { 
-    width: 90px; /* Increased from 70px to fit arrows */
+    width: 60px; 
     height: 40px; 
     text-align: center; 
     border: 2px solid #334155; 
     border-radius: 6px; 
-    font-size: 1rem; 
+    font-size: 1.1rem; 
     font-weight: bold; 
     background: #0f172a; 
     color: #ffffff;
-    /* Show arrows on Firefox */
-    -moz-appearance: number-input;
+    /* Hide the internal browser arrows */
+    -moz-appearance: textfield;
+    appearance: none;
 }
-
-/* Force up/down arrows to show on Chrome, Safari, and Edge */
 .variant-qty::-webkit-inner-spin-button, 
 .variant-qty::-webkit-outer-spin-button { 
-    opacity: 1 !important;
-    appearance: auto !important;
-    -webkit-appearance: auto !important;
-    margin-left: 5px;
+    -webkit-appearance: none; 
+    margin: 0; 
 }
     .btn-add-order {
         width: 100%;
