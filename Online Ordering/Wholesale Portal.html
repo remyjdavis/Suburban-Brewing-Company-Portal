@@ -9,14 +9,15 @@
     <style>
     /* --- APP-FIRST THEME --- */
     :root {
-    /* 🔴 THE GREY BACKGROUND: Set this to your preferred light grey */
-    --bg: #f3f4f6; 
-    --sidebar: #0f172a;
-    --accent: #2563eb;
-    --primary: #1e293b;
-    --success: #10b981;
-    --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
+        /* 🔴 THE GREY BACKGROUND: Set this to your preferred light grey */
+        --bg: #f3f4f6; 
+        --sidebar: #0f172a;
+        --accent: #2563eb;
+        --primary: #1e293b;
+        --success: #10b981;
+        --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
     * { 
         box-sizing: border-box; 
         font-family: 'Inter', -apple-system, system-ui, sans-serif;
@@ -24,18 +25,19 @@
     }
 
     body { 
-    margin: 0; 
-    /* 🔴 PAGE BACKGROUND: Set to the grey variable */
-    background-color: var(--bg) !important; 
-    color: var(--primary); 
-    padding-bottom: 100px; 
-    overscroll-behavior-y: contain; 
-}
+        margin: 0; 
+        /* 🔴 PAGE BACKGROUND: Set to the grey variable */
+        background-color: var(--bg) !important; 
+        color: var(--primary); 
+        padding-bottom: 100px; 
+        overscroll-behavior-y: contain; 
+    }
 
-/* 🔴 ADD THIS: This kills the grey bar behind your search/filters */
-.controls-area {
-    background-color: #ffffff !important;
-}
+    /* 🔴 ADD THIS: This kills the grey bar behind your search/filters */
+    .controls-area {
+        background-color: #ffffff !important;
+    }
+
     /* --- NATIVE APP HEADER --- */
     .site-header { 
         background: #ffffff; 
@@ -163,94 +165,98 @@
     @media (min-width: 768px) {
         .product-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
     }
-/* --- HOVER INFO OVERLAY --- */
-.product-card {
-    position: relative;
-    overflow: hidden; /* Keeps the overlay inside the card corners */
-}
 
-.hover-info {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(15, 23, 42, 0.95);
-    color: white;
-    padding: 12px; /* Slightly reduced padding to gain vertical space */
-    transform: translateY(100%);
-    transition: transform 0.3s ease-in-out;
-    display: flex;
-    flex-direction: column;
-    /* justify-content: space-between ensures description uses all middle space */
-    justify-content: space-between; 
-    z-index: 5;
-    height: 85%; /* Slightly increased height to 85% for better text fit */
-    pointer-events: none;
-}
-/* Show on hover */
-.product-card:hover .hover-info {
-    transform: translateY(0);
-}
+    /* --- HOVER INFO OVERLAY --- */
+    .product-card {
+        position: relative;
+        overflow: hidden; /* Keeps the overlay inside the card corners */
+    }
 
-.hover-abv {
-    color: var(--accent);
-    font-weight: 800;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-}
+    .hover-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.95);
+        color: white;
+        padding: 12px; 
+        transform: translateY(100%);
+        transition: transform 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; 
+        z-index: 5;
+        height: 85%; 
+        pointer-events: none;
+    }
 
-.hover-desc {
-    font-size: 0.82rem;      /* Keeps text legible */
-    line-height: 1.25;       /* Maintains tight spacing */
-    color: #cbd5e1;
-    
-    /* 🔴 THE FORCE FIX: */
-    display: block !important;          /* Disables the "Line Clamp" engine */
-    -webkit-line-clamp: none !important; /* Removes the line limit entirely */
-    overflow: visible !important;       /* Ensures text isn't hidden if it runs long */
-    
-    flex-grow: 1;            /* Uses all available space in the 90% height box */
-    margin: 5px 0;
-}
-  .product-card { 
-    /* 🔴 THE CARD: Set to pure white so blending works */
-    background: #ffffff !important; 
-    border-radius: 16px; 
-    padding: 12px;
-    display: flex; 
-    flex-direction: column;
-    height: 100%; 
-    box-shadow: var(--card-shadow);
-    transition: 0.2s;
-    border: 1px solid #e5e7eb; /* Adds a clean border to pop off the grey */
-}
+    /* Show on hover */
+    .product-card:hover .hover-info {
+        transform: translateY(0);
+    }
 
-.product-img-container { 
-    width: 100%; 
-    height: 160px; 
-    /* 🔴 IMAGE BOX: Must match the card's white exactly */
-    background: #ffffff !important; 
-    border-radius: 12px;
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    position: relative;
-    margin-bottom: 8px;
-    overflow: hidden;
-}
-.product-img {
-    height: 100% !important; 
-    width: auto !important;
-    max-height: 155px; /* Pushes the can size slightly higher */
-    object-fit: contain; 
-    border-radius: 8px;
-    margin: 0 auto;
+    .hover-abv {
+        color: var(--accent);
+        font-weight: 800;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
 
-    /* THE BLENDING SUITE */
-    mix-blend-mode: multiply !important;
-    filter: brightness(1.1) contrast(1.1); /* Erases the grey shadows in the raw image */
-    background-color: transparent !important;
-}
+    .hover-desc {
+        font-size: 0.82rem;      /* Keeps text legible */
+        line-height: 1.25;        /* Maintains tight spacing */
+        color: #cbd5e1;
+        
+        /* 🔴 THE FORCE FIX: */
+        display: block !important;          /* Disables the "Line Clamp" engine */
+        -webkit-line-clamp: none !important; /* Removes the line limit entirely */
+        overflow: visible !important;       /* Ensures text isn't hidden if it runs long */
+        
+        flex-grow: 1;            /* Uses all available space in the 90% height box */
+        margin: 5px 0;
+    }
+
+    .product-card { 
+        /* 🔴 THE CARD: Set to pure white so blending works */
+        background: #ffffff !important; 
+        border-radius: 16px; 
+        padding: 12px;
+        display: flex; 
+        flex-direction: column;
+        height: 100%; 
+        box-shadow: var(--card-shadow);
+        transition: 0.2s;
+        border: 1px solid #e5e7eb; /* Adds a clean border to pop off the grey */
+    }
+
+    .product-img-container { 
+        width: 100%; 
+        height: 160px; 
+        /* 🔴 IMAGE BOX: Must match the card's white exactly */
+        background: #ffffff !important; 
+        border-radius: 12px;
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        position: relative;
+        margin-bottom: 8px;
+        overflow: hidden;
+    }
+
+    .product-img {
+        height: 100% !important; 
+        width: auto !important;
+        max-height: 155px; /* Pushes the can size slightly higher */
+        object-fit: contain; 
+        border-radius: 8px;
+        margin: 0 auto;
+
+        /* THE BLENDING SUITE */
+        mix-blend-mode: multiply !important;
+        filter: brightness(1.1) contrast(1.1); /* Erases the grey shadows in the raw image */
+        background-color: transparent !important;
+    }
+
     .cart-badge {
         position: absolute;
         top: 4px;
@@ -281,7 +287,6 @@
         font-weight: bold; 
     }
 
-    /* --- ORDER MODAL (POPUP) --- */
     .order-modal {
         display: none;
         position: fixed;
@@ -297,8 +302,8 @@
     }
 
     .order-modal-content {
-        background-color: #1e293b; /* Set to dark blue */
-        color: #ffffff;            /* Set font to white */
+        background-color: #1e293b; 
+        color: #ffffff;            
         width: 90%;
         max-width: 400px;
         border-radius: 16px;
@@ -316,6 +321,7 @@
             bottom: auto;
         }
     }
+
     @keyframes slideUp {
         from { transform: translateY(20px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
@@ -347,50 +353,48 @@
 
     .variant-info { font-size: 0.9rem; }
     
-   /* Container to stack arrows and input */
-.qty-stepper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
+    .qty-stepper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
 
-/* Custom Arrow Buttons */
-.qty-btn {
-    background: none;
-    border: none;
-    color: #ffffff;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    user-select: none;
-}
+    .qty-btn {
+        background: none;
+        border: none;
+        color: #ffffff;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+        user-select: none;
+    }
 
-.qty-btn:active {
-    color: var(--accent);
-}
+    .qty-btn:active {
+        color: var(--accent);
+    }
 
-/* The Qty Box (Arrows hidden) */
-.variant-qty { 
-    width: 60px; 
-    height: 40px; 
-    text-align: center; 
-    border: 2px solid #334155; 
-    border-radius: 6px; 
-    font-size: 1.1rem; 
-    font-weight: bold; 
-    background: #0f172a; 
-    color: #ffffff;
-    /* Hide the internal browser arrows */
-    -moz-appearance: textfield;
-    appearance: none;
-}
-.variant-qty::-webkit-inner-spin-button, 
-.variant-qty::-webkit-outer-spin-button { 
-    -webkit-appearance: none; 
-    margin: 0; 
-}
+    .variant-qty { 
+        width: 60px; 
+        height: 40px; 
+        text-align: center; 
+        border: 2px solid #334155; 
+        border-radius: 6px; 
+        font-size: 1.1rem; 
+        font-weight: bold; 
+        background: #0f172a; 
+        color: #ffffff;
+        -moz-appearance: textfield;
+        appearance: none;
+    }
+
+    .variant-qty::-webkit-inner-spin-button, 
+    .variant-qty::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+
     .btn-add-order {
         width: 100%;
         margin-top: 20px;
@@ -404,7 +408,6 @@
         cursor: pointer;
     }
 
-    /* --- FLOATING BOTTOM BAR --- */
     .live-bar { 
         position: fixed; 
         bottom: 20px; 
@@ -435,93 +438,95 @@
     .btn-outline.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
     .btn-success { background: #27ae60; color: white; width: 100%; }
 
-    /* REVIEW TABLE */
     .review-table { width: 100%; font-size: 0.85rem; margin-top: 10px;}
     .review-table th { text-align: left; padding: 8px; border-bottom: 2px solid #eee; }
     .review-table td { padding: 8px; border-bottom: 1px solid #f9f9f9; }
 
     @media print { .site-header, .live-bar, #menu-toggle { display: none !important; } }
 
-    /* SCANNER OVERLAY */
     #scanner-container {
         display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
         background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column; align-items: center; justify-content: center;
     }
+
     #reader { width: 90%; max-width: 500px; background: #fff; border-radius: 12px; overflow: hidden; }
     .scanner-close { margin-top: 20px; padding: 15px 30px; background: #d63031; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     
     .search-wrapper { position: relative; display: flex; gap: 10px; align-items: center; width: 100%; }
     .scan-btn { height: 50px; padding: 0 15px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.2rem; }
-/* --- HOVER INFO OVERLAY --- */
-.product-card {
-    position: relative;
-    overflow: hidden;
-}
 
-.hover-info {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(15, 23, 42, 0.95);
-    color: white;
-    padding: 12px;
-    transform: translateY(100%);
-    transition: transform 0.3s ease-in-out;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    z-index: 5;
-    /* 🔴 INCREASED HEIGHT TO 90% */
-    height: 90%; 
-    pointer-events: none;
-}
-@media (hover: hover) {
-    .product-card:hover .hover-info { transform: translateY(0); }
-}
+    /* --- HOVER INFO OVERLAY (REPEATED/CLEANED) --- */
+    .product-card {
+        position: relative;
+        overflow: hidden;
+    }
 
-.hover-abv { color: var(--accent); font-weight: 800; font-size: 0.9rem; text-transform: uppercase; }
-.hover-desc { line-height: 1.4; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .hover-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.95);
+        color: white;
+        padding: 12px;
+        transform: translateY(100%);
+        transition: transform 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        z-index: 5;
+        /* 🔴 INCREASED HEIGHT TO 90% */
+        height: 90%; 
+        pointer-events: none;
+    }
 
-/* --- QTY STEPPER (WHITE ARROWS) --- */
-.qty-stepper { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.qty-btn { background: none; border: none; color: #ffffff !important; font-size: 1.2rem; cursor: pointer; padding: 0; line-height: 1; user-select: none; }
-.variant-qty { width: 60px; height: 40px; text-align: center; border: 2px solid #334155; border-radius: 6px; font-size: 1.1rem; font-weight: bold; background: #0f172a; color: #ffffff; appearance: textfield; -moz-appearance: textfield; }
-.variant-qty::-webkit-inner-spin-button, .variant-qty::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-   /* --- MOBILE COLOR SYNC --- */
-/* --- MOBILE CARD COLOR OVERRIDE --- */
-@media (max-width: 768px) {
+    @media (hover: hover) {
+        .product-card:hover .hover-info { transform: translateY(0); }
+    }
+
+    .hover-abv { color: var(--accent); font-weight: 800; font-size: 0.9rem; text-transform: uppercase; }
+    .hover-desc { line-height: 1.4; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* --- QTY STEPPER (WHITE ARROWS) --- */
+    .qty-stepper { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .qty-btn { background: none; border: none; color: #ffffff !important; font-size: 1.2rem; cursor: pointer; padding: 0; line-height: 1; user-select: none; }
+    .variant-qty { width: 60px; height: 40px; text-align: center; border: 2px solid #334155; border-radius: 6px; font-size: 1.1rem; font-weight: bold; background: #0f172a; color: #ffffff; appearance: textfield; -moz-appearance: textfield; }
+    .variant-qty::-webkit-inner-spin-button, .variant-qty::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+    /* --- MOBILE CARD COLOR OVERRIDE --- */
+    @media (max-width: 768px) {
+        .product-card, 
+        .product-img-container {
+            /* 🔴 Forces pure white regardless of mobile system theme */
+            background-color: #ffffff !important; 
+            background: #ffffff !important;
+        }
+    }
+
+    /* --- GLOBAL WHITE-OUT FIX --- */
+    body, 
+    .container, 
+    #app, 
+    .product-grid, 
     .product-card, 
     .product-img-container {
-        /* 🔴 Forces pure white regardless of mobile system theme */
-        background-color: #ffffff !important; 
-        background: #ffffff !important;
+        background-color: #ffffff !important;
     }
-}
-        /* --- GLOBAL WHITE-OUT FIX --- */
-body, 
-.container, 
-#app, 
-.product-grid, 
-.product-card, 
-.product-img-container {
-    background-color: #ffffff !important;
-}
 
-.product-img {
-    height: 100% !important;
-    width: auto !important;
-    max-height: 160px; /* Increased slightly for better mobile presence */
-    object-fit: contain;
-    
-    /* 🔴 THE SECRET SAUCE FOR DIRTY IMAGE BACKGROUNDS */
-    mix-blend-mode: multiply !important;
-    filter: brightness(1.1) contrast(1.1) !important;
-    
-    /* Ensures no hidden background color on the img tag itself */
-    background: transparent !important;
-}
-    </style>
+    .product-img {
+        height: 100% !important;
+        width: auto !important;
+        max-height: 160px; 
+        object-fit: contain;
+        
+        /* 🔴 THE SECRET SAUCE FOR DIRTY IMAGE BACKGROUNDS */
+        mix-blend-mode: multiply !important;
+        filter: brightness(1.1) contrast(1.1) !important;
+        
+        /* Ensures no hidden background color on the img tag itself */
+        background: transparent !important;
+    }
+</style>
 </head>
 <body>
 
