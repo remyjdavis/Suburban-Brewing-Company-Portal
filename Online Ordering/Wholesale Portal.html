@@ -222,13 +222,16 @@
 }
 
 .product-img {
-    /* 🔴 FORCE the image to take up nearly the full 160px height */
     height: 100% !important; 
     width: auto !important;
-    max-height: 150px; /* Slight buffer so it doesn't touch the very edge */
+    max-height: 150px; 
     object-fit: contain; 
     border-radius: 8px;
     margin: 0 auto;
+
+    /* 🔴 THE BLENDING FIX: */
+    mix-blend-mode: multiply; /* Removes the light grey background from the render */
+    filter: contrast(1.05);   /* Optional: keeps the colors popping after blending */
 }
 
 .product-card { 
