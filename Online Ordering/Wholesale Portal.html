@@ -542,29 +542,44 @@
     }
 
     // --- INITIALIZATION ---//
-    async function init() {
-        try {
-            // 🔴 FIX: Changed '?' to '&' because API_URL already has a '?'
-            const response = await fetch(`${API_URL}&action=getStoreData`);
-            
-            const data = await response.json();
-            
-            // Debugging: This will show you exactly what the sheet is returning
-            console.log("API Response:", data); 
-
-            if(data.status === 'success') {
-                processProducts(data.products);
-                customersDB = data.customers;
-                render();
-            } else {
-                console.error("API returned status:", data.status);
-                // Optional: Alert the user if the backend is not ready
-                Swal.fire("Connection Error", "Could not load store data. Check console.", "error");
-            }
-        } catch (error) { 
-            console.error("Fetch Error:", error); 
+async function init() {
+    // 1. Create a unique global callback name to prevent caching or collisions
+    const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+    
+    // 2. Define the global function the Google Script will call
+    window[callbackName] = function(data) {
+        console.log("Data received via JSONP:", data);
+        
+        if(data.status === 'success') {
+            processProducts(data.products);
+            customersDB = data.customers;
+            render();
+        } else {
+            console.error("API returned status:", data.status);
+            Swal.fire("Data Error", "Could not load products. Check console.", "error");
         }
-    }
+        
+        // Cleanup: remove the script tag and the global function after data is received
+        delete window[callbackName];
+        const scriptElement = document.getElementById('jsonp-script');
+        if (scriptElement) scriptElement.remove();
+    };
+
+    // 3. Inject a <script> tag to perform the request
+    const script = document.createElement('script');
+    script.id = 'jsonp-script';
+    
+    // 🔴 IMPORTANT: We add &callback=... to the URL
+    script.src = `${API_URL}&action=getStoreData&callback=${callbackName}`;
+    
+    // Handle script load errors (e.g., script fails to load entirely)
+    script.onerror = function() {
+        console.error("JSONP Script load failed.");
+        Swal.fire("Connection Error", "The backend failed to respond.", "error");
+    };
+
+    document.body.appendChild(script);
+}
     function processProducts(rawList) {
     groupedProducts = {};
     rawList.forEach(p => {
