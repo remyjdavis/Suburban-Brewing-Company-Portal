@@ -629,15 +629,19 @@
             const cartKey = `${productName}-${v.type}`;
             const val = state.cart[cartKey] ? state.cart[cartKey].qty : 0;
             return `
-            <div class="variant-row">
-                <div class="variant-info">
-                    <strong>${v.type}</strong><br>$${v.price} 
-                    <span style="font-size:0.8rem; color:${v.stock < 5 ? 'red':'green'}">(${v.stock} in stock)</span>
-                </div>
-                <input type="number" class="variant-qty modal-input" 
-                       data-type="${v.type}" data-price="${v.price}" data-stock="${v.stock}"
-                       min="0" max="${v.stock}" value="${val}">
-            </div>`;
+<div class="variant-row">
+    <div class="variant-info">
+        <strong>${v.type}</strong><br>$${v.price} 
+        <span style="font-size:0.8rem; color:#94a3b8">(${v.stock} in stock)</span>
+    </div>
+    <div class="qty-stepper">
+        <button class="qty-btn" onclick="this.parentNode.querySelector('input').stepUp()">▲</button>
+        <input type="number" class="variant-qty modal-input" 
+               data-type="${v.type}" data-price="${v.price}" data-stock="${v.stock}"
+               min="0" max="${v.stock}" value="${val}">
+        <button class="qty-btn" onclick="this.parentNode.querySelector('input').stepDown()">▼</button>
+    </div>
+</div>`;
         }).join('');
 
         document.getElementById('orderModal').style.display = "flex";
