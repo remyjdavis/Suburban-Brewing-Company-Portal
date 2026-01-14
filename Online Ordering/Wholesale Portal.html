@@ -195,14 +195,16 @@
 }
 
 .hover-desc {
-    font-size: 0.82rem;
-    line-height: 1.25;
+    font-size: 0.82rem;      /* Keeps text legible */
+    line-height: 1.25;       /* Maintains tight spacing */
     color: #cbd5e1;
-    /* 🔴 CHANGED TO BLOCK TO REMOVE DOTS */
-    display: block; 
-    /* 🔴 SET TO VISIBLE TO PREVENT ELLIPSIS */
-    overflow: visible; 
-    flex-grow: 1;
+    
+    /* 🔴 THE FORCE FIX: */
+    display: block !important;          /* Disables the "Line Clamp" engine */
+    -webkit-line-clamp: none !important; /* Removes the line limit entirely */
+    overflow: visible !important;       /* Ensures text isn't hidden if it runs long */
+    
+    flex-grow: 1;            /* Uses all available space in the 90% height box */
     margin: 5px 0;
 }
     .product-card { 
