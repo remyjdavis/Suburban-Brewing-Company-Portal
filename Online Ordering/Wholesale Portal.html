@@ -503,29 +503,29 @@
         }
     }
 
-    /* --- GLOBAL WHITE-OUT FIX --- */
-    body, 
-    .container, 
-    #app, 
-    .product-grid, 
-    .product-card, 
-    .product-img-container {
-        background-color: #ffffff !important;
-    }
+    /* --- GLOBAL WHITE-OUT FIX (RESTORED CONTRAST) --- */
+.product-card, 
+.product-img-container {
+    /* 🔴 This forces the CARDS to be white */
+    background-color: #ffffff !important;
+}
 
-    .product-img {
-        height: 100% !important;
-        width: auto !important;
-        max-height: 160px; 
-        object-fit: contain;
-        
-        /* 🔴 THE SECRET SAUCE FOR DIRTY IMAGE BACKGROUNDS */
-        mix-blend-mode: multiply !important;
-        filter: brightness(1.1) contrast(1.1) !important;
-        
-        /* Ensures no hidden background color on the img tag itself */
-        background: transparent !important;
-    }
+body, 
+.product-grid {
+    /* 🔴 This forces the PAGE to stay grey */
+    background-color: var(--bg) !important;
+}
+
+.product-img {
+    height: 100% !important;
+    width: auto !important;
+    max-height: 160px; 
+    object-fit: contain;
+    /* 🔴 This erases the grey from the image itself */
+    mix-blend-mode: multiply !important;
+    filter: brightness(1.1) contrast(1.1) !important;
+    background: transparent !important;
+}
 </style>
 </head>
 <body>
