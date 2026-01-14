@@ -232,26 +232,36 @@
     transform: translateZ(0);
 }
 
+/* --- ZERO-CONTRAST IMAGE FIX --- */
 .product-img-container { 
     width: 100%; 
-    height: 180px; /* Increased for the 16oz Tallboy */
-    background: #ffffff !important; 
-    background-color: #ffffff !important;
+    height: 180px; 
+    /* 🔴 Forces container to match card exactly */
+    background-color: #ffffff !important; 
     display: flex; 
     align-items: center; 
     justify-content: center; 
     overflow: hidden;
+    position: relative;
+    border-radius: 12px;
 }
 
 .product-img {
-    height: 100% !important; 
+    height: 95% !important; 
     width: auto !important;
     object-fit: contain; 
-    /* 🔴 THE BLEND TRICK: Makes image white match card white */
+    
+    /* 🔴 THE FIX: Blends the image background away */
     mix-blend-mode: multiply !important;
-    /* Sharpens the labels for mobile */
-    filter: contrast(1.05) brightness(1.02); 
+    
+    /* 🔴 THE OVERRIDE: Brightens whites so they hit 100% white */
+    filter: brightness(1.08) contrast(1.05) !important;
+    
     background-color: transparent !important;
+    -webkit-user-drag: none;
+    
+    /* Forces Safari to ignore image metadata color-space */
+    image-rendering: -webkit-optimize-contrast;
 }
 
     .cart-badge {
