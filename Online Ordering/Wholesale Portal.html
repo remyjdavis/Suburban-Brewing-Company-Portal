@@ -7,38 +7,46 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        /* --- SHARED THEME VARIABLES --- */
-        :root {
-            --bg: #f8f9fa;
-            --sidebar: #0f172a;
-            --accent: #2563eb;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --card-bg: #ffffff;
-            --primary: #1a1a1a;
-        }
+        /* --- APP-FIRST THEME --- */
+:root {
+    --bg: #f3f4f6;
+    --sidebar: #0f172a;
+    --accent: #2563eb;
+    --primary: #1e293b;
+    --success: #10b981;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
 
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        
-        body { 
-            margin: 0; 
-            background-color: var(--bg); 
-            color: #1f2937; 
-            padding-bottom: 140px; /* Space for the live bar */
-            -webkit-tap-highlight-color: transparent;
-        }
+* { 
+    box-sizing: border-box; 
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
 
-        .site-header { 
-            background-color: #ffffff; 
-            padding: 15px 5%; 
-            border-bottom: 2px solid #1a1a1a; 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-        }
+body { 
+    margin: 0; 
+    background-color: var(--bg); 
+    color: var(--primary); 
+    padding-bottom: 100px; /* Space for bottom app bar */
+    overscroll-behavior-y: contain; /* Prevents "pull-to-refresh" bounce */
+}
 
-        .header-info h1 { margin: 0; font-size: 1.1rem; color: #1a1a1a; }
-        .header-info { font-size: 0.75rem; line-height: 1.2; }
+        /* --- NATIVE APP HEADER --- */
+.site-header { 
+    background: #ffffff; 
+    padding: 12px 20px; 
+    display: flex; 
+    align-items: center; 
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.site-header img { height: 40px; border-radius: 8px; }
+.header-info h1 { margin: 0; font-size: 1rem; font-weight: 700; }
+.header-info { font-size: 0.7rem; color: #64748b; }
 
         .container { 
             max-width: 1000px; 
@@ -78,111 +86,123 @@
             font-size: 0.85rem;
         }
 
-        /* SEARCH STICKY BAR */
-        .controls-area { 
-            margin-bottom: 15px; 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
-            background: var(--bg); 
-            padding: 10px 0; 
-        }
+        /* --- COMPACT CATEGORY PILLS --- */
+.controls-area { 
+    background: var(--bg);
+    padding: 12px 16px;
+    position: sticky;
+    top: 64px;
+    z-index: 999;
+}
 
-        .search-input { 
-            width: 100%; 
-            padding: 12px; 
-            border: 2px solid #1a1a1a; 
-            border-radius: 8px; 
-            font-size: 16px; 
-            margin-bottom: 10px; 
-        }
+.search-wrapper {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
 
-        .cat-bar { 
-            display: flex; 
-            gap: 6px; 
-            overflow-x: auto; 
-            padding-bottom: 5px;
-            scrollbar-width: none; 
-        }
-        .cat-bar::-webkit-scrollbar { display: none; }
+.search-input { 
+    flex: 1;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    box-shadow: var(--card-shadow);
+}
 
-        /* PRODUCT GRID (SMALL CARDS) */
-        .product-grid { 
-            display: grid; 
-            /* Smaller minimum width for compact layout */
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
-            gap: 1rem; 
-        }
+.scan-btn {
+    width: 50px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--card-shadow);
+}
 
-        .product-card { 
-            background: #fff; 
-            border: 1px solid #dee2e6; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            display: flex; 
-            flex-direction: column;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-        }
+.cat-bar { 
+    display: flex; 
+    gap: 8px; 
+    overflow-x: auto; 
+    padding: 4px 0;
+    scrollbar-width: none; 
+}
 
-        .product-card:active { transform: scale(0.98); }
+.cat-btn {
+    background: white;
+    border: 1px solid #e5e7eb;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: 0.2s;
+}
 
-        /* Selection Indicator */
-        .card-selected-border {
-            border: 2px solid var(--accent) !important;
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-        }
+.cat-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
 
-        .cart-badge {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: var(--accent);
-            color: white;
-            font-size: 0.7rem;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 4px;
-            z-index: 10;
-            display: none; /* Hidden by default */
-        }
+        /* --- APP-STYLE PRODUCT GRID --- */
+.product-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); /* 2 per row on mobile */
+    gap: 12px; 
+    padding: 0 16px;
+}
 
-        .product-img-container { 
-            width: 100%; 
-            height: 140px; /* Reduced height */
-            background: #fcfcfc; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            position: relative;
-            padding: 10px; 
-        }
+@media (min-width: 768px) {
+    .product-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
 
-        .product-img { 
-            max-width: 100%; 
-            max-height: 100%; 
-            object-fit: contain; 
-            display: block;
-        }
+.product-card { 
+    background: #fff; 
+    border-radius: 16px; 
+    padding: 12px;
+    display: flex; 
+    flex-direction: column;
+    box-shadow: var(--card-shadow);
+    transition: 0.2s;
+    border: 2px solid transparent;
+}
 
-        .product-name-area {
-            padding: 10px;
-            border-top: 1px solid #f1f1f1;
-            background: #fff;
-            text-align: center;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+.product-card.card-selected-border {
+    border-color: var(--accent);
+}
 
-        .product-name-area h4 {
-            margin: 0;
-            font-size: 0.9rem;
-            line-height: 1.2;
-            color: var(--primary);
-        }
+.product-img-container { 
+    width: 100%; 
+    aspect-ratio: 1/1; /* Makes images square */
+    background: #f9fafb; 
+    border-radius: 12px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.cart-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.product-name-area h4 {
+    margin: 4px 0;
+    font-size: 0.9rem;
+    color: #111827;
+}
 
         .lifecycle-badge { 
             position: absolute; 
@@ -212,15 +232,20 @@
         }
 
         .order-modal-content {
-            background-color: #fff;
-            width: 90%;
-            max-width: 400px;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: slideUp 0.3s ease-out;
-        }
-
+    border-radius: 24px 24px 0 0; /* Bottom sheet look on mobile */
+    width: 100%;
+    max-width: 500px;
+    position: fixed;
+    bottom: 0;
+    padding: 24px;
+}
+        @media (min-width: 500px) {
+    .order-modal-content {
+        border-radius: 24px;
+        position: relative;
+        bottom: auto;
+    }
+}
         @keyframes slideUp {
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -267,16 +292,31 @@
             cursor: pointer;
         }
 
-        /* ORDER BAR */
-        .live-bar { 
-            position: fixed; bottom: 0; left: 0; right: 0; 
-            background: #1a1a1a; color: white; padding: 15px 5%; 
-            display: flex; justify-content: space-between; align-items: center; 
-            z-index: 1001; box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
-        }
+        /* --- FLOATING BOTTOM BAR --- */
+.live-bar { 
+    position: fixed; 
+    bottom: 20px; 
+    left: 20px; 
+    right: 20px; 
+    background: #111827; 
+    color: white; 
+    padding: 12px 20px; 
+    border-radius: 20px;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    z-index: 1001; 
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
 
         .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: 800; font-size: 0.9rem; cursor: pointer; }
-        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary { 
+    background: var(--accent); 
+    color: white; 
+    padding: 10px 20px; 
+    border-radius: 12px; 
+    font-weight: 700; 
+}
         .btn-outline { background: white; border: 1px solid #ccc; font-size: 0.8rem;}
         .btn-outline.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
         .btn-success { background: #27ae60; color: white; width: 100%; }
@@ -559,30 +599,33 @@
     }
 
     function saveModalOrder() {
-        const inputs = document.querySelectorAll('.modal-input');
-        inputs.forEach(input => {
-            const type = input.dataset.type;
-            const price = parseFloat(input.dataset.price);
-            const stock = parseInt(input.dataset.stock);
-            const qty = parseInt(input.value) || 0;
-            const key = `${currentModalProduct.name}-${type}`;
+    const inputs = document.querySelectorAll('.modal-input');
+    let hasChanges = false;
 
-            if (qty > stock && stock > 0) {
-                // Simple Alert for overflow, logic prevents save usually
-                input.value = stock; 
-            }
+    inputs.forEach(input => {
+        const type = input.dataset.type;
+        const price = parseFloat(input.dataset.price);
+        const stock = parseInt(input.dataset.stock);
+        const qty = parseInt(input.value) || 0;
+        const key = `${currentModalProduct.name}-${type}`;
 
-            if (qty > 0) {
-                state.cart[key] = { beer: currentModalProduct.name, type, price, qty };
-            } else {
-                delete state.cart[key];
-            }
-        });
-        
-        updateLiveTotals();
-        closeOrderModal();
-        render(); // Re-render grid to update badges
+        if (qty > 0) {
+            state.cart[key] = { beer: currentModalProduct.name, type, price, qty };
+            hasChanges = true;
+        } else {
+            delete state.cart[key];
+        }
+    });
+
+    // Native Mobile vibration feedback
+    if (hasChanges && "vibrate" in navigator) {
+        navigator.vibrate(50); 
     }
+    
+    updateLiveTotals();
+    closeOrderModal();
+    render(); 
+}
 
     // --- CORE LOGIC ---
     async function attemptLogin() {
@@ -604,11 +647,15 @@
     }
 
     function setCategory(cat) {
-        state.category = cat;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    state.category = cat;
+    // Remove active class from all buttons
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    // Add active class to clicked button
+    if (event && event.target) {
         event.target.classList.add('active');
-        filterProducts();
     }
+    filterProducts();
+}
 
     function calculateOrderMath() {
         let sub = 0, kegs = 0, caseTotal = 0, casesCount = 0;
@@ -635,7 +682,16 @@
     function updateLiveTotals() {
         const math = calculateOrderMath();
         const totalEl = document.getElementById("live-total");
+        const bar = document.getElementById("live-bar");
+        
         if (totalEl) totalEl.innerText = "$" + math.grandTotal;
+        
+        // Show bar only if there are items in the cart
+        if (Object.keys(state.cart).length > 0 && state.step === 2) {
+            bar.style.display = "flex";
+        } else {
+            bar.style.display = "none";
+        }
     }
 
     function goToReview() { if(Object.keys(state.cart).length === 0) return; state.step = 3; render(); }
@@ -643,24 +699,42 @@
     async function submitFinalOrder() {
         const btn = document.querySelector('.btn-success');
         const emailInput = document.getElementById("custEmail");
-        if (emailInput && !emailInput.value) return Swal.fire("Email Required", "Please enter an email for your PDF receipt.", "warning");
-        btn.disabled = true; btn.innerText = "PLACING ORDER...";
-        try {
-            await fetch(API_URL, { 
-                method: "POST", 
-                mode: "no-cors", 
-                body: JSON.stringify({ 
-                    action: 'submitOrder', 
-                    customer: state.customer, 
-                    customerEmail: emailInput ? emailInput.value : null,
-                    cart: state.cart, 
-                    summary: calculateOrderMath() 
-                }) 
-            });
-            Swal.fire("Order Placed!", "Your PDF receipt has been emailed.", "success").then(() => location.reload());
-        } catch (e) { Swal.fire("Error", "Failed.", "error"); btn.disabled = false; }
-    }
+        
+        // Validation for new customers or missing emails
+        if (emailInput && !emailInput.value) {
+            return Swal.fire("Email Required", "Enter an email for your receipt.", "warning");
+        }
 
+        btn.disabled = true;
+        btn.innerText = "PLACING ORDER...";
+
+        try {
+            const payload = {
+                action: 'submitOrder',
+                customer: state.customer,
+                customerEmail: emailInput ? emailInput.value : state.customer.email,
+                cart: state.cart,
+                summary: calculateOrderMath()
+            };
+
+            const response = await fetch(API_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify(payload)
+            });
+
+            Swal.fire({
+                title: "Order Placed!",
+                text: "Your confirmation has been sent.",
+                icon: "success"
+            }).then(() => location.reload());
+            
+        } catch (e) {
+            Swal.fire("Error", "Check your connection and try again.", "error");
+            btn.disabled = false;
+            btn.innerText = "Confirm Order";
+        }
+    }
     init();
 </script>
 
