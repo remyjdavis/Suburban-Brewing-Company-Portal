@@ -209,8 +209,9 @@
 }
    .product-img-container { 
     width: 100%; 
-    aspect-ratio: 1/1; 
-    background: #ffffff; /* Matches the card background */
+    /* 🔴 REMOVED aspect-ratio: 1/1 */
+    height: 160px; /* Forces a consistent height for all cards */
+    background: #ffffff; 
     border-radius: 12px;
     display: flex; 
     align-items: center; 
@@ -221,14 +222,13 @@
 }
 
 .product-img {
-    /* 🔴 INCREASED TO 95% to fill the white box better */
-    max-width: 95%;
-    max-height: 95%;
-    width: auto;
-    height: auto;
+    /* 🔴 FORCE the image to take up nearly the full 160px height */
+    height: 100% !important; 
+    width: auto !important;
+    max-height: 150px; /* Slight buffer so it doesn't touch the very edge */
     object-fit: contain; 
     border-radius: 8px;
-    transition: transform 0.3s ease;
+    margin: 0 auto;
 }
 
 .product-card { 
