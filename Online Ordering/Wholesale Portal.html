@@ -503,30 +503,47 @@
         }
     }
 
-    /* --- FINAL CONTRAST FIX --- */
-/* 🔴 This forces the PAGE to be the grey from your variables */
+    /* --- SAFARI HARDWARE OVERRIDE --- */
+:root {
+    /* 🔴 Tells Safari to ignore system dark/light modes */
+    color-scheme: light;
+}
+
 body, 
 .product-grid, 
 .container, 
 #app {
-    background-color: var(--bg) !important;
+    /* 🔴 Forces Page Grey */
+    background-color: #f3f4f6 !important;
+    background: #f3f4f6 !important;
+    -webkit-appearance: none;
 }
 
-/* ⚪ This forces ONLY THE CARDS to be pure white */
 .product-card, 
 .product-img-container {
+    /* 🔴 Forces Card White */
     background-color: #ffffff !important;
+    background: #ffffff !important;
+    
+    /* 🔴 Prevents Safari from adding hardware-level shadows/tints */
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-print-color-adjust: exact !important;
 }
 
-/* 🍺 This cleans up the can image blending */
 .product-img {
     height: 100% !important;
     width: auto !important;
     max-height: 160px; 
     object-fit: contain;
+    
+    /* 🔴 Blending Fix */
     mix-blend-mode: multiply !important;
     filter: brightness(1.1) contrast(1.1) !important;
     background: transparent !important;
+    
+    /* 🔴 Forces Safari to render the blend mode correctly */
+    isolation: isolate;
 }
 </style>
 </head>
