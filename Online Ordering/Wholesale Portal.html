@@ -246,21 +246,21 @@
     isolation: isolate; 
 }
 
-.product-img {
+..product-img {
     height: 100% !important; 
     width: auto !important;
     max-height: 180px;
     object-fit: contain; 
     
-    /* 🔴 THE FIX: 'Screen' ignores the grey/darker pixels in the image background */
-    mix-blend-mode: screen !important;
+    /* 🔴 THE FIX: Multiply makes the image background transparent ONLY if we force it to pure white first */
+    mix-blend-mode: multiply !important;
     
-    /* 🔴 THE PUNCH: This washes out the grey background while keeping the label red */
-    filter: contrast(1.1) brightness(1.05) saturate(1.1) !important;
+    /* 🔴 THE CALIBRATION: This forces the light grey background of the JPG to become pure #ffffff */
+    filter: contrast(1.15) brightness(1.12) saturate(1.1) !important;
     
-    /* 🔴 Prevents Safari from adding its own 'depth' filter */
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
+    /* 🔴 Ensures Safari doesn't "smooth" the grey box back into existence */
+    image-rendering: -webkit-optimize-contrast !important;
+    background-color: transparent !important;
 }
     .cart-badge {
         position: absolute;
