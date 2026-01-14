@@ -503,25 +503,27 @@
         }
     }
 
-    /* --- GLOBAL WHITE-OUT FIX (RESTORED CONTRAST) --- */
-.product-card, 
-.product-img-container {
-    /* 🔴 This forces the CARDS to be white */
-    background-color: #ffffff !important;
-}
-
+    /* --- FINAL CONTRAST FIX --- */
+/* 🔴 This forces the PAGE to be the grey from your variables */
 body, 
-.product-grid {
-    /* 🔴 This forces the PAGE to stay grey */
+.product-grid, 
+.container, 
+#app {
     background-color: var(--bg) !important;
 }
 
+/* ⚪ This forces ONLY THE CARDS to be pure white */
+.product-card, 
+.product-img-container {
+    background-color: #ffffff !important;
+}
+
+/* 🍺 This cleans up the can image blending */
 .product-img {
     height: 100% !important;
     width: auto !important;
     max-height: 160px; 
     object-fit: contain;
-    /* 🔴 This erases the grey from the image itself */
     mix-blend-mode: multiply !important;
     filter: brightness(1.1) contrast(1.1) !important;
     background: transparent !important;
