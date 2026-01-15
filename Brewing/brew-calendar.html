@@ -855,6 +855,33 @@
             Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
         }
     }
+   // Inside your brew-calendar.html <script>
+async function submitManualBrew() {
+    const brand = document.getElementById('manual-brew-name').value;
+    const date = document.getElementById('manual-brew-date').value;
+
+    if (!brand || !date) {
+        Swal.fire('Error', 'Please enter a beer name and date', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'addManualTask',
+                data: { brand: brand, date: date } // Matches backend payload.brand/payload.date
+            })
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+            Swal.fire('Scheduled!', 'Manual entry added.', 'success');
+            location.reload(); 
+        }
+    } catch (e) {
+        Swal.fire('Error', 'Submission failed.', 'error');
+    }
+}
   </script>
 </body>
 </html>
