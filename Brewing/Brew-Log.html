@@ -579,49 +579,180 @@
         .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
     /* ============================================================
-   🖨️ STEP 1: FOUNDATION & CLEANUP
+   🖨️ FINAL PRODUCTION PRINT TEMPLATE
+   Matches "Visual Render" Design using Existing HTML
    ============================================================ */
 @media print {
-    /* 1. Basic Page Setup */
+    /* 1. PAPER SETUP */
     @page { margin: 0.25in; size: portrait; }
-    
+
     html, body {
         background: white !important;
         color: black !important;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+        font-size: 10pt !important;
         width: 100%;
         height: 100%;
         margin: 0;
         padding: 0;
-        zoom: 0.65; /* Sets the scale for the whole page */
+        zoom: 0.60; /* SCALING FACTOR: Adjusts fit */
+        -webkit-print-color-adjust: exact;
     }
 
-    /* 2. Hide ALL UI Elements (Sidebar, Buttons, Colors) */
+    /* 2. HIDE INTERFACE ELEMENTS */
     .sidebar, #menu-toggle, .app-footer, .btn-save-section, 
     .btn-add-deep, .btn-now, .btn-delete, .btn-timer, 
     .timer-box, .toggle-indicator, button, .close-modal,
     #active-stage-display, small, .nav-section-header, 
-    .calc-result, .cost-summary-box, .toggle-indicator { 
-        display: none !important; 
-    }
-
-    /* 3. Hide "Suggested" Columns in Tables (Saves horizontal space) */
+    .calc-result, .cost-summary-box, .toggle-indicator,
+    /* Hide specific columns in tables (Suggested & Actual) to save space */
     td:nth-child(3), th:nth-child(3), 
     td:nth-child(6), th:nth-child(6) { 
         display: none !important; 
     }
 
-    /* 4. Reset Main Container */
+    /* 3. MASTER GRID LAYOUT */
     .main { margin: 0 !important; padding: 0 !important; display: block !important; }
-    
-    /* 5. Define the Master Grid (2 Columns) */
+
     #main-screen {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* Two equal columns */
-        gap: 15px;
+        grid-template-columns: 1fr 1fr; /* 2 Column Grid */
+        /* Define the "Map" of where sections go */
+        grid-template-areas:
+            "setup mash"    /* Row 1: Setup Left, Mash Right */
+            "grain grain"   /* Row 2: Grain Full Width */
+            "lauter boil"   /* Row 3: Lauter Left, Boil Right */
+            "yeast yeast";  /* Row 4: Yeast Full Width */
+        gap: 10px;
         align-items: start;
         width: 100%;
     }
+
+    /* 4. MAP SECTIONS TO GRID AREAS */
+    /* We use nth-of-type because your divs don't have unique IDs on the wrapper */
+    .brew-stage:nth-of-type(1) { grid-area: setup; }
+    .brew-stage:nth-of-type(2) { grid-area: grain; }
+    .brew-stage:nth-of-type(3) { grid-area: mash; }
+    .brew-stage:nth-of-type(4) { grid-area: lauter; }
+    .brew-stage:nth-of-type(5) { grid-area: boil; }
+    .brew-stage:nth-of-type(6) { grid-area: yeast; }
+
+    /* 5. SECTION STYLING (The "Card" Look) */
+    .brew-stage {
+        border: 2px solid #000 !important;
+        border-radius: 4px;
+        margin: 0 !important;
+        break-inside: avoid;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .stage-header {
+        background: #333 !important; /* Dark Header */
+        color: white !important;
+        padding: 4px 8px !important;
+        border-bottom: 1px solid #000;
+        margin: 0 !important;
+    }
+
+    .stage-title { 
+        font-size: 11pt !important; 
+        font-weight: 800; 
+        color: white !important; 
+        margin: 0; 
+        text-transform: uppercase;
+    }
+
+    .stage-content {
+        display: block !important;
+        max-height: none !important;
+        padding: 5px !important;
+    }
+
+    /* 6. HEADER STYLING */
+    .sticky-header {
+        position: relative !important;
+        grid-column: 1 / -1; /* Spans top */
+        border: none !important;
+        margin-bottom: 15px !important;
+        padding-bottom: 5px !important;
+        border-bottom: 3px solid #000 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: flex-end !important;
+    }
+    .batch-summary { font-size: 24pt !important; font-weight: 900; line-height: 1; }
+    #header-beer-name { font-weight: normal; font-size: 14pt; }
+
+    /* 7. INPUTS & LABELS (The "Paper Form" Look) */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px !important;
+    }
+    
+    .input-group { margin-bottom: 2px !important; }
+
+    label {
+        font-size: 8pt !important;
+        font-weight: bold !important;
+        color: #555 !important;
+        text-transform: uppercase;
+        margin-bottom: 0 !important;
+    }
+
+    input, select, .target-display, .actual-input {
+        border: none !important;
+        border-bottom: 1px solid #000 !important; /* Solid Line */
+        background: transparent !important;
+        font-size: 11pt !important;
+        font-weight: 600 !important;
+        color: #000 !important;
+        padding: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        text-align: center;
+    }
+    
+    /* 8. TABLES */
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+    .data-table th { 
+        background: #ddd !important; 
+        font-size: 8pt !important; 
+        border: 1px solid #999; 
+        padding: 2px; 
+        color: #000;
+    }
+    .data-table td { 
+        border: 1px solid #999; 
+        font-size: 9pt !important; 
+        padding: 2px; 
+        text-align: center;
+    }
+    
+    /* 9. SPECIAL: LAUTER INTERNAL GRID */
+    /* This hacks the existing Lauter list into the 2x2 grid from the visual render */
+    #lauter-content {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+    }
+    
+    /* Make the top "Sparge Vol" section span full width */
+    #lauter-content > .form-grid:first-child { grid-column: 1 / -1; margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;}
+
+    /* Style the sub-headers (First Wort, Sparge, etc.) */
+    .lauter-header {
+        font-size: 8pt !important;
+        font-weight: 800 !important;
+        text-decoration: underline;
+        margin-top: 5px !important;
+        margin-bottom: 0 !important;
+        border: none !important;
+    }
+    
+    /* Ensure the form grids inside Lauter fit the small columns */
+    #lauter-content .form-grid { grid-template-columns: 1fr; gap: 2px !important; }
 }
   </style>
 </head>
