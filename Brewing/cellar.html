@@ -812,32 +812,47 @@
         btn.innerText = isOpen ? '✕' : '☰';
     }
 
-    // --- INITIALIZE SIDEBAR & MOBILE AUTO-CLOSE ---
-    window.addEventListener('DOMContentLoaded', () => {
-      // Set Year
-      document.getElementById('copyright-year').innerText = new Date().getFullYear();
+    // --- MASTER INITIALIZATION ENGINE ---
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. SET VISUALS IMMEDIATELY (Fixes "Loading..." issue)
+    setupUserProfile(); 
+    document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
-      // 1. Auto-expand the active section in the sidebar
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
+    // 2. LOAD DATA
+    refreshGrid();
+
+    // 3. AUTO-EXPAND SIDEBAR
+    const activeLink = document.querySelector('.nav-link.active');
+    if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) header.classList.remove('collapsed');
-        }
-      }
+        if (parentGroup) parentGroup.classList.remove('collapsed');
+    }
 
-      // 2. Ensure menu auto-closes when a link is clicked on mobile
-      document.querySelectorAll('.nav-link').forEach(link => {
+    // 4. MOBILE NAVIGATION
+    document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => {
             if (window.innerWidth <= 1024) {
                 const sidebar = document.querySelector('.sidebar');
                 if (sidebar.classList.contains('open')) toggleMobileMenu();
             }
         });
-      });
     });
+
+    // 5. QR CODE CONTEXT HANDLING
+    handleURLParameters();
+});
+
+// Separated function for clarity
+function handleURLParameters() {
+    if (typeof google !== 'undefined' && google.script && google.script.url) {
+        google.script.url.getLocation((loc) => {
+            if (loc.parameter && loc.parameter.vessel) processQRContext(loc.parameter.vessel);
+        });
+    } else {
+        const qrVessel = new URLSearchParams(window.location.search).get('vessel');
+        if (qrVessel) processQRContext(qrVessel);
+    }
+}
 
     // --- CELLAR API CONFIGURATION ---
     // --- API CONFIGURATIONS ---
