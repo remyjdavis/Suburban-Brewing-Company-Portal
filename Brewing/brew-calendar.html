@@ -607,21 +607,21 @@
       calendar.render();
     });
 
-    // --- LOGIC: UPDATE SIDE PANELS (With Duplicate Filtering) ---
+    // --- LOGIC: UPDATE SIDE PANELS (With FULL Deduplication) ---
     function updateSidePanels(tasks) {
       const alertContainer = document.getElementById('alert-list');
       const suggestContainer = document.getElementById('suggestion-list');
       alertContainer.innerHTML = ""; suggestContainer.innerHTML = "";
       
       let alertCount = 0, suggestCount = 0;
-      let seenAlerts = new Set(); // Track unique alerts
+      let seenAlerts = new Set();       // Track unique alerts
+      let seenSuggestions = new Set();  // Track unique brew suggestions
 
       tasks.forEach(t => {
         const dateStr = new Date(t.date).toLocaleDateString();
         
-        // 1. HANDLE SUPPLY CHAIN ALERTS
+        // 1. HANDLE SUPPLY CHAIN ALERTS (Deduplicated)
         if (t.type === 'logistics') {
-            // Deduplication Logic: Create a unique key for the alert
             const alertKey = t.title.toLowerCase().trim();
             
             if (!seenAlerts.has(alertKey)) {
@@ -635,11 +635,24 @@
             }
         }
         
-        // 2. HANDLE BREW SUGGESTIONS
+        // 2. HANDLE BREW SUGGESTIONS (Deduplicated)
         if (t.type === 'production') {
-          suggestCount++;
-          const urgentBadge = t.status === 'urgent' ? '🔥' : '';
-          suggestContainer.innerHTML += `<div class="suggestion-item"><div><b>${urgentBadge} ${t.title.replace('🍺 ', '')}</b><br><small>Target: ${dateStr}</small></div><button class="btn-approve" onclick="approveBrew('${t.title}')">Approve</button></div>`;
+          // Clean the title to ensure "🍺 IPA" and "IPA" count as the same beer
+          const cleanTitle = t.title.replace('🍺 ', '').trim();
+          const suggestKey = cleanTitle.toLowerCase();
+
+          // Only add if we haven't suggested this beer yet
+          if (!seenSuggestions.has(suggestKey)) {
+              seenSuggestions.add(suggestKey); // Mark as seen
+              suggestCount++;
+              
+              const urgentBadge = t.status === 'urgent' ? '🔥' : '';
+              suggestContainer.innerHTML += `
+                <div class="suggestion-item">
+                    <div><b>${urgentBadge} ${cleanTitle}</b><br><small>Target: ${dateStr}</small></div>
+                    <button class="btn-approve" onclick="approveBrew('${t.title}')">Approve</button>
+                </div>`;
+          }
         }
       });
       
