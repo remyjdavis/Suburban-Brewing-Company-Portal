@@ -602,35 +602,35 @@
         navLinks: true,
         editable: false, 
         dayMaxEvents: 4, 
-        events: async function(info, successCallback, failureCallback) {
-          try {
-            // Update Loading Message
-            if(Swal.isVisible()) Swal.update({ title: 'Loading Schedule...' });
-            else Swal.fire({title: 'Loading Schedule...', didOpen: () => Swal.showLoading()});
+       events: async function(info, successCallback, failureCallback) {
+  try {
+    const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`, {
+      method: 'GET',
+      mode: 'cors', // Force CORS mode
+      redirect: 'follow' // Follow Google's 302 redirects
+    });
 
-            const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`);
-            const data = await res.json();
-            
-            const cleanTasks = processEvents(data.tasks); // Filter & Dedupe
+    if (!res.ok) throw new Error("Network response was not ok");
+    
+    const data = await res.json();
+    const cleanTasks = processEvents(data.tasks);
+    updateSidePanels(cleanTasks); 
 
-            updateSidePanels(cleanTasks); 
-
-            const events = cleanTasks.map(task => ({
-              title: task.title,
-              start: task.date,
-              allDay: true,
-              classNames: [`evt-${task.type}`, task.status === 'urgent' ? 'evt-urgent' : ''],
-              extendedProps: { description: task.status, type: task.type }
-            }));
-            
-            Swal.close();
-            successCallback(events);
-          } catch (e) { 
-            console.error(e);
-            Swal.fire('Error', 'Could not load calendar data.', 'error');
-            failureCallback(e); 
-          }
-        },
+    const events = cleanTasks.map(task => ({
+      title: task.title,
+      start: task.date,
+      allDay: true,
+      classNames: [`evt-${task.type}`, task.status === 'urgent' ? 'evt-urgent' : ''],
+      extendedProps: { description: task.status, type: task.type }
+    }));
+    
+    successCallback(events);
+    Swal.close();
+  } catch (e) { 
+    console.error("Fetch Error:", e);
+    failureCallback(e); 
+  }
+}
         eventClick: function(info) {
           const props = info.event.extendedProps;
           let icon = props.type === 'logistics' ? 'warning' : (props.type === 'production' ? 'question' : 'info');
