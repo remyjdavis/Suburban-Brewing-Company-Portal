@@ -579,137 +579,128 @@
         .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
     /* ============================================================
-       🖨️ AGGRESSIVE ONE-PAGE LAYOUT (NEWSPAPER MODE)
+       🖨️ READABLE DASHBOARD PRINT LAYOUT
        ============================================================ */
     @media print {
-        /* 1. MAXIMIZE PAPER SPACE */
-        @page { margin: 0.15in; size: portrait; }
+        @page { margin: 0.2in; size: portrait; }
         
         html, body {
-            margin: 0;
-            padding: 0;
+            background: white !important;
+            color: black !important;
+            font-size: 10pt !important; /* Readable Font Size */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
             width: 100%;
             height: 100%;
-            /* 🔴 ZOOM: 60% usually guarantees 1 page */
-            zoom: 0.60; 
-            -webkit-print-color-adjust: exact;
+            margin: 0;
+            padding: 0;
+            zoom: 0.65; /* The Sweet Spot: Fits 1 page, still readable */
         }
 
-        /* 2. HIDE ALL UI JUNK */
+        /* --- 1. HIDE CLUTTER --- */
         .sidebar, #menu-toggle, .app-footer, .btn-save-section, 
         .btn-add-deep, .btn-now, .btn-delete, .btn-timer, 
         .timer-box, .toggle-indicator, button, .close-modal,
-        #active-stage-display, small, .nav-section-header { 
+        #active-stage-display, small, .nav-section-header, 
+        .calc-result, .toggle-indicator, .cost-summary-box { 
             display: none !important; 
         }
 
-        /* 3. NEWSPAPER LAYOUT (This packs boxes tighter than Grid) */
-        .main {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            display: block !important;
+        /* Hide "Suggested" columns in tables to save space for "Lot #" */
+        td:nth-child(3), th:nth-child(3), 
+        td:nth-child(6), th:nth-child(6) { 
+            display: none !important; 
         }
 
+        /* --- 2. LAYOUT GRID --- */
+        .main { margin: 0 !important; padding: 0 !important; display: block !important; }
+        
         #main-screen {
-            display: block;
-            column-count: 2; /* Creates two newspaper columns */
-            column-gap: 15px;
-            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Split page in half */
+            gap: 10px;
+            align-items: start;
         }
 
-        /* 4. COMPACT CARD STYLING */
+        /* --- 3. SECTION PLACEMENT --- */
+        /* Header spans full width */
+        .sticky-header { grid-column: 1 / -1; margin-bottom: 5px !important; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        .batch-summary { font-size: 16pt !important; font-weight: 900; }
+
+        /* Stage 1 (Setup) & Stage 3 (Mash) share top row for compactness */
+        .brew-stage:nth-of-type(1) { grid-column: 1; } /* Setup Left */
+        .brew-stage:nth-of-type(3) { grid-column: 2; } /* Mash Right */
+
+        /* Stage 2 (Grains) & Stage 5 (Boil) are TALL, so they get their own columns or full width */
+        .brew-stage:nth-of-type(2) { grid-column: 1 / -1; } /* Grain Bill Full Width */
+        .brew-stage:nth-of-type(5) { grid-column: 1 / -1; } /* Boil Full Width */
+        
+        /* Stage 4 (Lauter) & Stage 6 (Yeast) share bottom */
+        .brew-stage:nth-of-type(4) { grid-column: 1; } 
+        .brew-stage:nth-of-type(6) { grid-column: 2; }
+
+        /* --- 4. STYLING RESTORATION --- */
         .brew-stage {
-            break-inside: avoid; /* Prevent cutting box in half */
-            page-break-inside: avoid;
-            -webkit-column-break-inside: avoid;
-            display: inline-block; /* Helps column layout */
-            width: 100%;
-            margin-bottom: 10px !important;
             border: 1px solid #000 !important;
-            border-radius: 4px !important;
+            margin: 0 !important;
+            break-inside: avoid;
             background: transparent !important;
-            box-shadow: none !important;
         }
 
-        /* 5. HEADER SPANS ACROSS TOP */
-        .sticky-header {
-            column-span: all; /* Header stretches across both columns */
-            position: relative !important;
-            top: auto !important;
-            border: none !important;
-            margin-bottom: 10px !important;
-            text-align: center;
-        }
-        
-        .batch-summary {
-            font-size: 16pt !important;
-            border-bottom: 2px solid #000;
-            padding-bottom: 5px;
-            display: block;
-        }
-
-        /* 6. EXPAND CONTENT & SHRINK TEXT */
-        .stage-content {
-            display: block !important;
-            max-height: none !important;
-            padding: 5px !important;
-        }
-        
         .stage-header {
-            background: #e5e5e5 !important;
-            padding: 2px 5px !important;
+            background: #eee !important;
             border-bottom: 1px solid #000;
-            margin-bottom: 5px;
+            padding: 2px 5px !important;
         }
+        .stage-title { font-size: 11pt !important; font-weight: 800; color: #000 !important; margin: 0; }
+        .stage-content { padding: 5px !important; display: block !important; max-height: none !important; }
 
-        .stage-title { font-size: 10pt !important; margin: 0; color: #000 !important; }
-
-        /* 7. MAKE INPUTS TINY */
+        /* --- 5. DATA DENSITY --- */
         .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* 2 cols inside the cards */
-            gap: 2px !important;
-            margin-bottom: 5px !important;
+            grid-template-columns: repeat(2, 1fr); /* Inputs side-by-side */
+            gap: 5px !important;
         }
 
         .input-group { margin-bottom: 2px !important; }
 
         label { 
-            font-size: 7pt !important; 
-            margin: 0 !important; 
-            color: #444 !important;
-            text-transform: none !important; 
+            font-size: 8pt !important; 
+            font-weight: bold !important; 
+            color: #444 !important; 
+            text-transform: uppercase;
+            margin: 0 !important;
         }
 
-        input, select, .target-display {
+        /* Turn inputs into solid text lines */
+        input, select, .target-display, .actual-input {
             border: none !important;
-            border-bottom: 1px dotted #888 !important;
+            border-bottom: 1px solid #000 !important; /* Solid line is easier to see than dots */
             background: transparent !important;
-            padding: 0 !important;
-            font-size: 9pt !important;
-            font-weight: bold;
+            font-size: 10pt !important;
+            font-weight: 700 !important;
             color: #000 !important;
+            padding: 0 !important;
             height: auto !important;
-            min-height: 0 !important;
+            width: 100% !important;
         }
-
-        /* 8. SQUISH TABLES */
-        .data-table { margin-bottom: 5px !important; width: 100%; }
-        .data-table th { font-size: 6pt !important; padding: 1px !important; background: #ddd !important; border: 1px solid #000; }
-        .data-table td { font-size: 7pt !important; padding: 1px !important; border: 1px solid #000; }
-        .data-table input { font-size: 7pt !important; }
-
-        /* 9. TINY COST BOX */
-        .cost-summary-box {
-            margin-top: 5px !important;
-            padding: 5px !important;
-            border: 1px solid #000 !important;
-            border-radius: 4px;
+        
+        /* --- 6. TABLE OPTIMIZATION --- */
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .data-table th { 
+            background: #ddd !important; 
+            font-size: 8pt !important; 
+            border: 1px solid #000; 
+            padding: 2px; 
+            color: #000;
         }
-        .cost-row { display: flex; justify-content: space-between; font-size: 7pt !important; margin: 0 !important; color: #000 !important; }
-        .cost-total { font-size: 8pt !important; font-weight: bold; border-top: 1px solid #000 !important; margin-top: 2px !important; padding-top: 2px !important;}
-        #cost-details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; } /* Horizontal cost details */
+        .data-table td { 
+            border: 1px solid #000; 
+            font-size: 9pt !important; 
+            padding: 2px; 
+        }
+        
+        /* Fix Yeast Section Layout */
+        #ko-yeast-content .form-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
