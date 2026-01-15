@@ -579,180 +579,60 @@
         .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
     /* ============================================================
-   🖨️ FINAL PRODUCTION PRINT TEMPLATE
-   Matches "Visual Render" Design using Existing HTML
+   🖨️ SHADOW PRINT CSS (STYLES THE HIDDEN TEMPLATE)
    ============================================================ */
 @media print {
-    /* 1. PAPER SETUP */
     @page { margin: 0.25in; size: portrait; }
-
+    
+    /* 1. HIDE THE REAL APP */
+    body > *:not(#print-template) { display: none !important; }
+    
+    /* 2. SHOW THE PRINT TEMPLATE */
+    #print-template { display: block !important; }
+    
+    /* 3. RESET PAGE SETTINGS */
     html, body {
-        background: white !important;
-        color: black !important;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-        font-size: 10pt !important;
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        zoom: 0.60; /* SCALING FACTOR: Adjusts fit */
+        background: white !important; margin: 0; padding: 0;
+        zoom: 0.65; /* Adjust this if it bleeds to page 2 */
+        font-family: 'Segoe UI', sans-serif !important;
         -webkit-print-color-adjust: exact;
     }
 
-    /* 2. HIDE INTERFACE ELEMENTS */
-    .sidebar, #menu-toggle, .app-footer, .btn-save-section, 
-    .btn-add-deep, .btn-now, .btn-delete, .btn-timer, 
-    .timer-box, .toggle-indicator, button, .close-modal,
-    #active-stage-display, small, .nav-section-header, 
-    .calc-result, .cost-summary-box, .toggle-indicator,
-    /* Hide specific columns in tables (Suggested & Actual) to save space */
-    td:nth-child(3), th:nth-child(3), 
-    td:nth-child(6), th:nth-child(6) { 
-        display: none !important; 
-    }
-
-    /* 3. MASTER GRID LAYOUT */
-    .main { margin: 0 !important; padding: 0 !important; display: block !important; }
-
-    #main-screen {
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* 2 Column Grid */
-        /* Define the "Map" of where sections go */
-        grid-template-areas:
-            "setup mash"    /* Row 1: Setup Left, Mash Right */
-            "grain grain"   /* Row 2: Grain Full Width */
-            "lauter boil"   /* Row 3: Lauter Left, Boil Right */
-            "yeast yeast";  /* Row 4: Yeast Full Width */
-        gap: 10px;
-        align-items: start;
-        width: 100%;
-    }
-
-    /* 4. MAP SECTIONS TO GRID AREAS */
-    /* We use nth-of-type because your divs don't have unique IDs on the wrapper */
-    .brew-stage:nth-of-type(1) { grid-area: setup; }
-    .brew-stage:nth-of-type(2) { grid-area: grain; }
-    .brew-stage:nth-of-type(3) { grid-area: mash; }
-    .brew-stage:nth-of-type(4) { grid-area: lauter; }
-    .brew-stage:nth-of-type(5) { grid-area: boil; }
-    .brew-stage:nth-of-type(6) { grid-area: yeast; }
-
-    /* 5. SECTION STYLING (The "Card" Look) */
-    .brew-stage {
-        border: 2px solid #000 !important;
-        border-radius: 4px;
-        margin: 0 !important;
-        break-inside: avoid;
-        background: transparent !important;
-        box-shadow: none !important;
-    }
-
-    .stage-header {
-        background: #333 !important; /* Dark Header */
-        color: white !important;
-        padding: 4px 8px !important;
-        border-bottom: 1px solid #000;
-        margin: 0 !important;
-    }
-
-    .stage-title { 
-        font-size: 11pt !important; 
-        font-weight: 800; 
-        color: white !important; 
-        margin: 0; 
-        text-transform: uppercase;
-    }
-
-    .stage-content {
-        display: block !important;
-        max-height: none !important;
-        padding: 5px !important;
-    }
-
-    /* 6. HEADER STYLING */
-    .sticky-header {
-        position: relative !important;
-        grid-column: 1 / -1; /* Spans top */
-        border: none !important;
-        margin-bottom: 15px !important;
-        padding-bottom: 5px !important;
-        border-bottom: 3px solid #000 !important;
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: flex-end !important;
-    }
-    .batch-summary { font-size: 24pt !important; font-weight: 900; line-height: 1; }
-    #header-beer-name { font-weight: normal; font-size: 14pt; }
-
-    /* 7. INPUTS & LABELS (The "Paper Form" Look) */
-    .form-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px !important;
-    }
+    /* 4. TEMPLATE STYLING (The "Screenshot" Look) */
+    .print-page { width: 100%; }
     
-    .input-group { margin-bottom: 2px !important; }
+    .p-header {
+        border-bottom: 3px solid #000; margin-bottom: 10px; padding-bottom: 5px;
+        display: flex; justify-content: space-between; align-items: flex-end;
+    }
+    .p-brand { font-size: 24pt; font-weight: 900; text-transform: uppercase; }
+    .p-meta { text-align: right; }
+    .p-batch-row { font-size: 16pt; font-weight: 800; }
 
-    label {
-        font-size: 8pt !important;
-        font-weight: bold !important;
-        color: #555 !important;
-        text-transform: uppercase;
-        margin-bottom: 0 !important;
-    }
+    .p-grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    
+    .p-section { border: 2px solid #333; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+    .p-sec-head { background: #333; color: white; font-weight: 800; padding: 4px 8px; text-transform: uppercase; font-size: 11pt; }
+    .p-sec-body { padding: 5px; }
 
-    input, select, .target-display, .actual-input {
-        border: none !important;
-        border-bottom: 1px solid #000 !important; /* Solid Line */
-        background: transparent !important;
-        font-size: 11pt !important;
-        font-weight: 600 !important;
-        color: #000 !important;
-        padding: 0 !important;
-        height: auto !important;
-        width: 100% !important;
-        text-align: center;
-    }
+    .p-line { border-bottom: 1px solid #000; margin-bottom: 2px; font-size: 10pt; font-weight: 600; padding-left: 2px; }
+    .p-label { font-size: 8pt; font-weight: bold; color: #555; text-transform: uppercase; margin-right: 5px; }
     
-    /* 8. TABLES */
-    .data-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-    .data-table th { 
-        background: #ddd !important; 
-        font-size: 8pt !important; 
-        border: 1px solid #999; 
-        padding: 2px; 
-        color: #000;
-    }
-    .data-table td { 
-        border: 1px solid #999; 
-        font-size: 9pt !important; 
-        padding: 2px; 
-        text-align: center;
-    }
-    
-    /* 9. SPECIAL: LAUTER INTERNAL GRID */
-    /* This hacks the existing Lauter list into the 2x2 grid from the visual render */
-    #lauter-content {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr;
-        gap: 5px;
-    }
-    
-    /* Make the top "Sparge Vol" section span full width */
-    #lauter-content > .form-grid:first-child { grid-column: 1 / -1; margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;}
+    .p-row-split { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .p-water-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dotted #ccc; padding-bottom: 4px; }
 
-    /* Style the sub-headers (First Wort, Sparge, etc.) */
-    .lauter-header {
-        font-size: 8pt !important;
-        font-weight: 800 !important;
-        text-decoration: underline;
-        margin-top: 5px !important;
-        margin-bottom: 0 !important;
-        border: none !important;
-    }
-    
-    /* Ensure the form grids inside Lauter fit the small columns */
-    #lauter-content .form-grid { grid-template-columns: 1fr; gap: 2px !important; }
+    /* TABLES */
+    .p-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    .p-table th { background: #eee; border: 1px solid #999; padding: 2px; font-size: 8pt; text-align: left; }
+    .p-table td { border: 1px solid #999; padding: 3px; font-weight: 600; }
+
+    /* LAUTER GRID */
+    .p-lauter-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 5px; padding: 5px; }
+    .p-sub-box { border: 1px solid #ccc; padding: 4px; }
+    .p-sub-box strong { display: block; font-size: 9pt; text-decoration: underline; margin-bottom: 2px; }
+
+    /* YEAST GRID */
+    .p-yeast-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 }
   </style>
 </head>
@@ -1982,24 +1862,178 @@ async function handoffToCellar(brewData) {
         });
     }
 }
-  /**
-     * 🖨️ PRINT LOG HANDLER
-     * Expands all sections so data is visible, then triggers browser print.
-     */
-    function printLog() {
-        // 1. Expand all sections
-        document.querySelectorAll('.stage-content').forEach(el => {
-            el.classList.remove('collapsed');
-        });
+  // ===========================================
+// 🖨️ NEW PRINT HANDLER (Syncs Data to Shadow Template)
+// ===========================================
+function printLog() {
+    // 1. SYNC HEADER INFO
+    document.getElementById('p-batch-id').innerText = document.getElementById('batchId').value || "---";
+    document.getElementById('p-batch-id-2').innerText = document.getElementById('batchId').value || "---";
+    document.getElementById('p-date').innerText = document.getElementById('brewDate').value || "--/--/----";
+    document.getElementById('p-recipe').innerText = document.getElementById('header-beer-name').innerText;
+    document.getElementById('p-vol').innerText = document.getElementById('setup-batch-size').value + " BBL";
+    
+    // 2. SYNC MASH
+    document.getElementById('p-mash-temp').innerText = document.getElementById('t-mash-temp').innerText;
+    document.getElementById('p-mash-ph').innerText = document.getElementById('t-ph').innerText;
+    document.getElementById('p-mash-temp-act').innerText = (document.querySelector('#mash-content .actual-input').value || "__") + "°F";
+    
+    // 3. SYNC WATER
+    document.getElementById('p-foundation').innerText = document.getElementById('t-foundation').innerText;
+    document.getElementById('p-mashin').innerText = document.getElementById('t-mash').innerText;
+    document.getElementById('p-sparge').innerText = document.getElementById('t-sparge').innerText;
 
-        // 2. Update all header icons to minus (-)
-        document.querySelectorAll('.toggle-indicator').forEach(el => {
-            el.innerText = "-";
-        });
+    // 4. SYNC GRAINS (Loop through table)
+    const grainHTML = [];
+    document.querySelectorAll('#grain-body tr').forEach(row => {
+        const cols = row.querySelectorAll('td');
+        const name = cols[0].innerText;
+        const target = cols[1].innerText;
+        const actual = row.querySelector('.ing-qty').value || "___";
+        const lot = row.querySelector('.ing-lot').value || "___";
+        grainHTML.push(`<tr><td>${name}</td><td>${target}</td><td>${actual}</td><td>${lot}</td></tr>`);
+    });
+    document.getElementById('p-grain-body').innerHTML = grainHTML.join('');
 
-        // 3. Trigger Print
-        window.print();
-    }
+    // 5. SYNC BOIL (Loop through table)
+    const boilHTML = [];
+    document.getElementById('p-pre-g').innerText = document.getElementById('t-pre-g').innerText;
+    document.getElementById('p-post-g').innerText = document.getElementById('t-post-g').innerText;
+    
+    document.querySelectorAll('#boil-body tr').forEach(row => {
+        const cols = row.querySelectorAll('td');
+        const name = cols[0].innerText;
+        const time = cols[1].innerText;
+        const amt = cols[2].innerText;
+        const actual = row.querySelector('.ing-qty').value || "___";
+        boilHTML.push(`<tr><td>${name}</td><td>${time}</td><td>${amt}</td><td>${actual}</td></tr>`);
+    });
+    document.getElementById('p-boil-body').innerHTML = boilHTML.join('');
+
+    // 6. SYNC LAUTER (Values)
+    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value || "___" : "___";
+    document.getElementById('p-fw-start').innerText = getVal('fw-start');
+    document.getElementById('p-sp1-start').innerText = getVal('sp1-start');
+    document.getElementById('p-sp2-start').innerText = getVal('sp2-start');
+    document.getElementById('p-fr-start').innerText = getVal('fr-start');
+
+    // 7. SYNC YEAST
+    document.getElementById('p-ystrain').innerText = document.getElementById('t-yeast').innerText;
+    document.getElementById('p-ysource').innerText = document.getElementById('yeast-source').value;
+    document.getElementById('p-ypitch').innerText = document.getElementById('ko-actual-pitch').value || "___";
+    document.getElementById('p-yvessel').innerText = document.getElementById('ko-vessel-select').value;
+
+    // 8. TRIGGER PRINT
+    window.print();
+}
 </script>
+  <div id="print-template" style="display: none;">
+    <div class="print-page">
+        <div class="p-header">
+            <div class="p-brand">SUBURBAN BREWING CO.</div>
+            <div class="p-meta">
+                <div class="p-batch-row">BATCH: <span id="p-batch-id">B-XXXX-XXX</span></div>
+                <div class="p-date-row">Date: <span id="p-date">--/--/----</span></div>
+            </div>
+        </div>
+
+        <div class="p-grid-row">
+            <div class="p-section">
+                <div class="p-sec-head">1. BATCH SETUP</div>
+                <div class="p-sec-body">
+                    <div class="p-line"><span class="p-label">RECIPE:</span> <span id="p-recipe">---</span></div>
+                    <div class="p-line"><span class="p-label">BATCH ID:</span> <span id="p-batch-id-2">---</span></div>
+                    <div class="p-line"><span class="p-label">TARGET VOL:</span> <span id="p-vol">---</span></div>
+                    <div class="p-line"><span class="p-label">EXP ABV:</span> <span id="p-abv">---</span></div>
+                </div>
+            </div>
+            <div class="p-section">
+                <div class="p-sec-head">3. MASH SCHEDULE</div>
+                <div class="p-sec-body">
+                    <div class="p-row-split">
+                        <div><span class="p-label">TARGET TEMP:</span> <span id="p-mash-temp">---</span></div>
+                        <div><span class="p-label">ACTUAL:</span> <span id="p-mash-temp-act">___°F</span></div>
+                    </div>
+                    <div class="p-row-split">
+                        <div><span class="p-label">TARGET PH:</span> <span id="p-mash-ph">---</span></div>
+                        <div><span class="p-label">ACTUAL:</span> <span id="p-mash-ph-act">___</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-section">
+            <div class="p-sec-head">2. WATER & GRAIN BILL</div>
+            <div class="p-sec-body">
+                <div class="p-water-row">
+                    <span><span class="p-label">FOUNDATION:</span> <span id="p-foundation">---</span></span>
+                    <span><span class="p-label">MASH IN:</span> <span id="p-mashin">---</span></span>
+                    <span><span class="p-label">SPARGE:</span> <span id="p-sparge">---</span></span>
+                </div>
+                <table class="p-table">
+                    <thead><tr><th>MALT / GRAIN</th><th>TARGET (lbs)</th><th>ACTUAL (lbs)</th><th>LOT #</th></tr></thead>
+                    <tbody id="p-grain-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="p-grid-row">
+            <div class="p-section p-lauter-grid">
+                <div class="p-sec-head" style="grid-column: 1/-1;">4. LAUTER & SPARGE</div>
+                
+                <div class="p-sub-box">
+                    <strong>First Wort</strong>
+                    <div class="p-line"><span class="p-label">Start:</span> <span id="p-fw-start">__:__</span></div>
+                    <div class="p-line"><span class="p-label">Grav:</span> <span id="p-fw-g">1.___</span></div>
+                </div>
+                <div class="p-sub-box">
+                    <strong>First Sparge</strong>
+                    <div class="p-line"><span class="p-label">Start:</span> <span id="p-sp1-start">__:__</span></div>
+                    <div class="p-line"><span class="p-label">End:</span> <span id="p-sp1-end">__:__</span></div>
+                </div>
+                <div class="p-sub-box">
+                    <strong>Second Sparge</strong>
+                    <div class="p-line"><span class="p-label">Start:</span> <span id="p-sp2-start">__:__</span></div>
+                    <div class="p-line"><span class="p-label">End:</span> <span id="p-sp2-end">__:__</span></div>
+                </div>
+                <div class="p-sub-box">
+                    <strong>Final Runnings</strong>
+                    <div class="p-line"><span class="p-label">Start:</span> <span id="p-fr-start">__:__</span></div>
+                    <div class="p-line"><span class="p-label">Grav:</span> <span id="p-fr-g">1.___</span></div>
+                </div>
+            </div>
+
+            <div class="p-section">
+                <div class="p-sec-head">5. BOIL ADDITIONS</div>
+                <div class="p-sec-body">
+                    <div class="p-row-split">
+                        <div><span class="p-label">PRE-BOIL G:</span> <span id="p-pre-g">---</span></div>
+                        <div><span class="p-label">POST G:</span> <span id="p-post-g">---</span></div>
+                    </div>
+                    <table class="p-table" style="margin-top:5px;">
+                        <thead><tr><th>ADDITION</th><th>TIME</th><th>AMT</th><th>ACTUAL</th></tr></thead>
+                        <tbody id="p-boil-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-section">
+            <div class="p-sec-head">6. KNOCKOUT & YEAST PITCH</div>
+            <div class="p-sec-body">
+                <div class="p-yeast-grid">
+                    <div><span class="p-label">STRAIN:</span> <span id="p-ystrain">---</span></div>
+                    <div><span class="p-label">SOURCE:</span> <span id="p-ysource">---</span></div>
+                    <div><span class="p-label">GEN #:</span> <span id="p-ygen">---</span></div>
+                    <div><span class="p-label">PITCH VOL:</span> <span id="p-ypitch">---</span></div>
+                    <div><span class="p-label">KO TEMP:</span> <span id="p-yko">___°F</span></div>
+                    <div><span class="p-label">VESSEL:</span> <span id="p-yvessel">---</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
