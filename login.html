@@ -267,8 +267,8 @@ async function checkLogin() {
         const result = await response.json();
 
         if (result.status === "success") {
+            // 1. CHECK AGREEMENT (If not signed, force them to sign now)
             if (!result.profile.agreementSigned) {
-                // Using SweetAlert dark theme colors to match
                 const { isConfirmed } = await Swal.fire({
                     title: 'User Access Agreement',
                     width: '90%',
@@ -293,17 +293,30 @@ async function checkLogin() {
                 });
 
                 if (isConfirmed) {
+                    // Send signature to backend
                     await fetch(`${MASTER_API_URL}?action=signAgreement&user=${encodeURIComponent(user)}`);
                 }
             }
 
+            // 2. SAVE SESSION DATA (Runs for EVERYONE now)
             sessionStorage.setItem("sbc_auth", "true");
+            
+            // --- The Critical Fixes ---
+            sessionStorage.setItem("user_login_id", user); // This was missing!
+            sessionStorage.setItem("user_email", result.profile.email || "");
+            sessionStorage.setItem("user_phone", result.profile.phone || "");
+            sessionStorage.setItem("user_pic", result.profile.pic || "");
+            // --------------------------
+
             sessionStorage.setItem("user_name", result.profile.name);
             sessionStorage.setItem("user_role", result.profile.role);
             sessionStorage.setItem("user_access", result.profile.access);
+
+            // 3. REDIRECT
             window.location.replace("index.html"); 
 
         } else {
+            // Login Failed
             errorMsg.innerText = result.message || "Invalid Credentials";
             errorMsg.style.display = 'block';
             passInput.value = ""; 
