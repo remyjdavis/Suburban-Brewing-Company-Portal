@@ -578,6 +578,141 @@
         .footer-links a { margin: 0 10px; }
         .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
+    /* ============================================================
+       🖨️ ONE-PAGE PRINT LAYOUT ENGINE
+       ============================================================ */
+    @media print {
+        /* 1. PAGE SETUP & SCALING */
+        @page { margin: 0.25in; size: portrait; }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            /* 🔴 THE MAGIC FIX: Shrink everything to fit */
+            zoom: 0.70; 
+            -webkit-print-color-adjust: exact;
+        }
+
+        /* 2. HIDE UI ELEMENTS */
+        .sidebar, #menu-toggle, .app-footer, .btn-save-section, 
+        .btn-add-deep, .btn-now, .btn-delete, .btn-timer, 
+        .timer-box, .toggle-indicator, button, .close-modal,
+        #active-stage-display { 
+            display: none !important; 
+        }
+
+        /* 3. GRID LAYOUT (Use width to save height) */
+        .main {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            overflow: visible !important;
+        }
+
+        #main-screen {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two Columns */
+            gap: 15px;
+            align-items: start;
+        }
+
+        /* 4. COMPACT SECTIONS */
+        .brew-stage {
+            break-inside: avoid; /* Don't cut a box in half */
+            page-break-inside: avoid;
+            margin-bottom: 10px !important;
+            border: 1px solid #333 !important;
+            border-radius: 4px !important;
+            box-shadow: none !important;
+        }
+
+        .stage-header {
+            background: #eee !important;
+            padding: 4px 8px !important;
+            border-bottom: 1px solid #333;
+            margin-bottom: 5px;
+        }
+        
+        .stage-title {
+            font-size: 11pt !important;
+            margin: 0;
+            color: #000 !important;
+        }
+
+        .stage-content {
+            display: block !important;
+            padding: 5px 8px !important;
+            max-height: none !important;
+        }
+
+        /* 5. HEADER COMPACTION */
+        .sticky-header {
+            position: relative !important;
+            top: auto !important;
+            padding: 0 !important;
+            margin-bottom: 10px !important;
+            border: none !important;
+            text-align: center;
+            grid-column: 1 / -1; /* Header spans full width */
+        }
+        
+        .batch-summary {
+            font-size: 14pt !important;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+        }
+
+        /* 6. DATA & INPUT COMPACTION */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 columns for inputs */
+            gap: 5px !important;
+            margin-bottom: 5px !important;
+        }
+
+        input, select {
+            border: none !important;
+            border-bottom: 1px dotted #999 !important;
+            background: transparent !important;
+            height: auto !important;
+            padding: 0 !important;
+            font-size: 9pt !important;
+            font-weight: 600;
+            color: #000 !important;
+        }
+        
+        label { 
+            font-size: 7pt !important; 
+            margin-bottom: 0 !important;
+            color: #666 !important;
+        }
+
+        /* 7. TABLE COMPACTION */
+        .data-table { margin-bottom: 5px !important; }
+        .data-table th { 
+            font-size: 7pt !important; 
+            padding: 2px !important; 
+            background: #ddd !important;
+            border: 1px solid #000;
+        }
+        .data-table td { 
+            font-size: 8pt !important; 
+            padding: 2px !important; 
+            border: 1px solid #000;
+        }
+
+        /* 8. COST BOX (Keep it but make it tiny) */
+        .cost-summary-box {
+            margin-top: 5px !important;
+            padding: 5px !important;
+            border: 1px solid #000 !important;
+            background: transparent !important;
+        }
+        .cost-row { margin-bottom: 2px !important; font-size: 8pt !important; color: #000 !important; }
+        .cost-total { font-size: 10pt !important; padding-top: 2px !important; border-top: 1px solid #000 !important; color: #000 !important; }
+        .cost-summary-box div[style*="font-weight: 800"] { color: #000 !important; margin-bottom: 5px !important; }
+    }
   </style>
 </head>
 <body>
@@ -1087,10 +1222,17 @@
                 <div style="font-size: 0.7rem; color: #4ade80; margin-top: 5px;">*Values based on unit pricing from Ingredient Inventory</div>
             </div>
             
-            <button class="btn-save-section" onclick="completeBrewLog()" style="margin-top: 20px;">Complete Brew & Sync</button>
+            <div style="margin-top: 30px; display: flex; gap: 15px; align-items: center; border-top: 1px solid #ddd; padding-top: 20px;">
+                <button class="btn-save-section" onclick="completeBrewLog()" style="flex: 2; background: #2563eb; font-size: 1rem;">
+                    ✓ Complete Brew & Sync
+                </button>
+
+                <button onclick="printLog()" style="flex: 1; background: #fff; border: 2px solid #2c3e50; color: #2c3e50; padding: 12px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    🖨️ Print Log
+                </button>
+            </div>
         </div>
     </div>
-</div>
     
     <div style="flex-grow:1;"></div>
     <footer class="app-footer">
@@ -1799,6 +1941,24 @@ async function handoffToCellar(brewData) {
         });
     }
 }
+  /**
+     * 🖨️ PRINT LOG HANDLER
+     * Expands all sections so data is visible, then triggers browser print.
+     */
+    function printLog() {
+        // 1. Expand all sections
+        document.querySelectorAll('.stage-content').forEach(el => {
+            el.classList.remove('collapsed');
+        });
+
+        // 2. Update all header icons to minus (-)
+        document.querySelectorAll('.toggle-indicator').forEach(el => {
+            el.innerText = "-";
+        });
+
+        // 3. Trigger Print
+        window.print();
+    }
 </script>
 </body>
 </html>
