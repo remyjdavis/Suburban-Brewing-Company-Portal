@@ -589,65 +589,71 @@
     });
 
     function initCalendar() {
-      var calendarEl = document.getElementById('calendar');
+  var calendarEl = document.getElementById('calendar');
+
+  var calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: window.innerWidth < 768 ? 'listWeek,dayGridMonth' : 'dayGridMonth,listWeek'
+    },
+    height: '100%',
+    navLinks: true,
+    editable: false,
+    dayMaxEvents: 4,
+    events: async function(info, successCallback, failureCallback) {
+      try {
+        const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`, {
+          method: 'GET',
+          mode: 'cors',
+          redirect: 'follow'
+        });
+
+        if (!res.ok) throw new Error("Network response was not ok");
+
+        const data = await res.json();
+        const cleanTasks = processEvents(data.tasks);
+        updateSidePanels(cleanTasks);
+
+        const events = cleanTasks.map(task => ({
+          title: task.title,
+          start: task.date,
+          allDay: true,
+          classNames: [`evt-${task.type}`, task.status === 'urgent' ? 'evt-urgent' : ''],
+          extendedProps: {
+            description: task.status,
+            type: task.type
+          }
+        }));
+
+        successCallback(events);
+        if (typeof Swal !== 'undefined' && Swal.isVisible()) Swal.close();
+      } catch (e) {
+        console.error("Fetch Error:", e);
+        failureCallback(e);
+      }
+    }, // <-- Added missing closing brace and comma
+    eventClick: function(info) {
+      const props = info.event.extendedProps;
+      let icon = props.type === 'logistics' ? 'warning' : (props.type === 'production' ? 'question' : 'info');
       
-      var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: window.innerWidth < 768 ? 'listWeek,dayGridMonth' : 'dayGridMonth,listWeek'
-        },
-        height: '100%',
-        navLinks: true,
-        editable: false, 
-        dayMaxEvents: 4, 
-       events: async function(info, successCallback, failureCallback) {
-  try {
-    const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`, {
-      method: 'GET',
-      mode: 'cors', // Force CORS mode
-      redirect: 'follow' // Follow Google's 302 redirects
-    });
-
-    if (!res.ok) throw new Error("Network response was not ok");
-    
-    const data = await res.json();
-    const cleanTasks = processEvents(data.tasks);
-    updateSidePanels(cleanTasks); 
-
-    const events = cleanTasks.map(task => ({
-      title: task.title,
-      start: task.date,
-      allDay: true,
-      classNames: [`evt-${task.type}`, task.status === 'urgent' ? 'evt-urgent' : ''],
-      extendedProps: { description: task.status, type: task.type }
-    }));
-    
-    successCallback(events);
-    Swal.close();
-  } catch (e) { 
-    console.error("Fetch Error:", e);
-    failureCallback(e); 
-  }
-}
-        eventClick: function(info) {
-          const props = info.event.extendedProps;
-          let icon = props.type === 'logistics' ? 'warning' : (props.type === 'production' ? 'question' : 'info');
-          Swal.fire({
-            title: info.event.title,
-            html: `<b>Date:</b> ${info.event.start.toLocaleDateString()}<br><b>Type:</b> ${props.type.toUpperCase()}<br><b>Status:</b> ${props.description}`,
-            icon: icon,
-            showCancelButton: props.type === 'production',
-            confirmButtonText: props.type === 'production' ? 'Start Brew Log' : 'OK'
-          }).then((result) => {
-            if (result.isConfirmed && props.type === 'production') window.location.href = "Brew-Log.html";
-          });
+      Swal.fire({
+        title: info.event.title,
+        html: `<b>Date:</b> ${info.event.start.toLocaleDateString()}<br><b>Type:</b> ${props.type.toUpperCase()}<br><b>Status:</b> ${props.description}`,
+        icon: icon,
+        showCancelButton: props.type === 'production',
+        confirmButtonText: props.type === 'production' ? 'Start Brew Log' : 'OK'
+      }).then((result) => {
+        if (result.isConfirmed && props.type === 'production') {
+            window.location.href = "Brew-Log.html";
         }
       });
-
-      calendar.render();
     }
+  });
+
+  calendar.render();
+}
 
     /**
      * PROCESSOR:
