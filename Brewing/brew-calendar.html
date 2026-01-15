@@ -107,7 +107,7 @@
       cursor: pointer; 
       display: flex; 
       justify-content: space-between; 
-      align-items: center;
+      align-items: center; 
       user-select: none;
     }
     .nav-section-header:hover { color: #fff; }
@@ -170,6 +170,49 @@
       align-items: center;
       margin-bottom: 20px;
     }
+
+    /* --- USER PROFILE STYLES (ADDED) --- */
+    .user-profile {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 8px;
+        transition: background 0.2s;
+        background: white; /* Make it pop against gray bg */
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .user-profile:hover { background: #f3f4f6; }
+    
+    .user-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        background-color: #e5e7eb; object-fit: cover; border: 2px solid var(--accent);
+    }
+    
+    .user-info-text { 
+        display: flex; flex-direction: column; line-height: 1.1; text-align: right; 
+    }
+    .user-name { font-weight: 700; font-size: 0.9rem; color: var(--primary-dark); }
+    .user-role { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    @media (max-width: 600px) { .user-info-text { display: none; } }
+
+    .user-dropdown-menu {
+        display: none; position: absolute; top: 55px; right: 0;
+        background-color: white; min-width: 180px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px;
+        z-index: 2000; overflow: hidden; border: 1px solid #e5e7eb;
+    }
+    .user-dropdown-menu.show { display: block; }
+    
+    .user-dropdown-menu a {
+        color: #374151; padding: 12px 16px; text-decoration: none;
+        display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    .user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
 
     .legend {
       display: flex;
@@ -336,28 +379,8 @@
 
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-      <span>System</span>
-    </div>
     
-    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-      <span class="icon">🚪</span> <span>Logout of Portal</span>
-    </a>
-
-    <script>
-     function handleLogout() {
-       sessionStorage.removeItem("sbc_auth");
-       const repoPath = "/Suburban-Brewing-Company-Portal/";
-       window.location.replace(repoPath + "login.html");
-    }
-    </script>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
-      <span>Main Menu</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-main" class="collapsible-content">
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    </div>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
       <span>Samplings</span><span class="chevron">▼</span>
@@ -413,10 +436,27 @@
 
   <main class="main-content">
     <div class="header">
-      <div>
+      <div style="flex-grow: 1;">
         <h1 style="margin:0; font-size:1.5rem; color:#111827;">Production Schedule</h1>
         <small style="color:#6b7280; font-weight:600;">AI Forecast & Task Management</small>
       </div>
+
+      <div class="user-profile" onclick="toggleUserMenu(event)">
+          <div class="user-info-text">
+              <span class="user-name" id="display-username">Loading...</span>
+              <span class="user-role" id="display-role">...</span>
+          </div>
+          <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
+          
+          <div id="userDropdown" class="user-dropdown-menu">
+              <a href="#" onclick="updateUserInfo()">⚙️ Update Info</a>
+              <div style="border-top: 1px solid #eee;"></div>
+              <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
+          </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px; display:flex; justify-content:flex-end;">
       <div class="legend">
         <span><span class="dot" style="background:#10b981;"></span>Cellar Action</span>
         <span><span class="dot" style="background:#3b82f6;"></span>Planned Brew</span>
@@ -490,8 +530,11 @@
     }
 
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
+    const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
 
     document.addEventListener('DOMContentLoaded', async function() {
+      setupUserProfile(); // Load User Info
+      
       // Set Year
       document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
@@ -529,12 +572,12 @@
         height: '100%',
         navLinks: true,
         editable: false, 
-        dayMaxEvents: true, // ⚠️ FIX: Prevents cell stretching by grouping excess events
+        dayMaxEvents: true, // Prevents cell stretching
         events: async function(info, successCallback, failureCallback) {
           try {
             const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`);
             const data = await res.json();
-            updateSidePanels(data.tasks);
+            updateSidePanels(data.tasks); // Send tasks to side panels logic
             const events = data.tasks.map(task => ({
               title: task.title,
               start: task.date,
@@ -564,30 +607,158 @@
       calendar.render();
     });
 
+    // --- LOGIC: UPDATE SIDE PANELS (With Duplicate Filtering) ---
     function updateSidePanels(tasks) {
       const alertContainer = document.getElementById('alert-list');
       const suggestContainer = document.getElementById('suggestion-list');
       alertContainer.innerHTML = ""; suggestContainer.innerHTML = "";
+      
       let alertCount = 0, suggestCount = 0;
+      let seenAlerts = new Set(); // Track unique alerts
 
       tasks.forEach(t => {
         const dateStr = new Date(t.date).toLocaleDateString();
+        
+        // 1. HANDLE SUPPLY CHAIN ALERTS
         if (t.type === 'logistics') {
-          alertCount++;
-          alertContainer.innerHTML += `<div class="alert-item"><div><b>${t.title}</b><br><small>By: ${dateStr}</small></div><button onclick="markOrdered(this)" style="border:1px solid #ef4444; color:#ef4444; background:none; border-radius:4px; padding:4px; cursor:pointer;">Ordered</button></div>`;
+            // Deduplication Logic: Create a unique key for the alert
+            const alertKey = t.title.toLowerCase().trim();
+            
+            if (!seenAlerts.has(alertKey)) {
+                seenAlerts.add(alertKey);
+                alertCount++;
+                alertContainer.innerHTML += `
+                    <div class="alert-item">
+                        <div><b>${t.title}</b><br><small>By: ${dateStr}</small></div>
+                        <button onclick="markOrdered(this)" style="border:1px solid #ef4444; color:#ef4444; background:none; border-radius:4px; padding:4px; cursor:pointer;">Ordered</button>
+                    </div>`;
+            }
         }
+        
+        // 2. HANDLE BREW SUGGESTIONS
         if (t.type === 'production') {
           suggestCount++;
           const urgentBadge = t.status === 'urgent' ? '🔥' : '';
           suggestContainer.innerHTML += `<div class="suggestion-item"><div><b>${urgentBadge} ${t.title.replace('🍺 ', '')}</b><br><small>Target: ${dateStr}</small></div><button class="btn-approve" onclick="approveBrew('${t.title}')">Approve</button></div>`;
         }
       });
+      
       document.getElementById('alert-count').innerText = alertCount;
       document.getElementById('suggest-count').innerText = suggestCount;
     }
 
     function approveBrew(title) { Swal.fire('Scheduled', 'Brew added to official schedule.', 'success'); }
     function markOrdered(btn) { btn.innerText = "Done"; btn.style.background = "#ef4444"; btn.style.color = "white"; btn.disabled = true; }
+
+    // --- USER PROFILE LOGIC ---
+    function setupUserProfile() {
+        const name = sessionStorage.getItem("user_name") || "Brewer";
+        const role = sessionStorage.getItem("user_role") || "Staff";
+        const pic = sessionStorage.getItem("user_pic");
+
+        document.getElementById("display-username").innerText = name;
+        document.getElementById("display-role").innerText = role;
+        if(pic) document.getElementById("display-avatar").src = pic;
+    }
+
+    function toggleUserMenu(event) {
+        event.stopPropagation();
+        document.getElementById("userDropdown").classList.toggle("show");
+    }
+
+    window.addEventListener('click', function(e) {
+        if (!e.target.closest('.user-profile')) {
+            const menu = document.getElementById("userDropdown");
+            if (menu) menu.classList.remove('show');
+        }
+    });
+
+    function handleLogout() {
+        if(confirm("Log out of portal?")) {
+            sessionStorage.removeItem("sbc_auth");
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            window.location.replace(repoPath + "login.html");
+        }
+    }
+
+    // --- PROFILE EDIT MODAL ---
+    async function updateUserInfo() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Edit Profile Settings',
+            background: '#1e293b',
+            color: '#ffffff',
+            html: `
+                <div style="text-align: left; padding: 10px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../SBC-Logo.png'}" 
+                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
+                        <br>
+                        <button type="button" onclick="document.getElementById('file-input').click()" 
+                                style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px;">
+                            Change Photo
+                        </button>
+                        <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
+                    </div>
+                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
+                    <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
+                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
+                    <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
+                    <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Security</label>
+                    <input id="p-pass" type="password" class="swal2-input" placeholder="New password (optional)">
+                </div>
+            `,
+            preConfirm: () => {
+                return {
+                    email: document.getElementById('p-email').value,
+                    phone: document.getElementById('p-phone').value,
+                    pass: document.getElementById('p-pass').value,
+                    pic: document.getElementById('preview-pic').src
+                }
+            }
+        });
+
+        if (formValues) saveProfile(formValues);
+    }
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('preview-pic').src = e.target.result; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function saveProfile(data) {
+        Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
+        
+        const username = sessionStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
+        
+        if (!username) {
+            Swal.fire('Session Error', 'Could not identify user. Please log out and log back in.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${MASTER_API_URL}`, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'updateProfile', user: username, ...data })
+            });
+            const result = await response.json();
+            
+            if (result.status === "success") {
+                sessionStorage.setItem("user_pic", data.pic);
+                sessionStorage.setItem("user_email", data.email);
+                sessionStorage.setItem("user_phone", data.phone);
+                
+                setupUserProfile(); 
+                Swal.fire('Saved!', 'Profile updated.', 'success');
+            } else {
+                throw new Error(result.message || "Update failed");
+            }
+        } catch (e) {
+            Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
+        }
+    }
   </script>
 </body>
 </html>
