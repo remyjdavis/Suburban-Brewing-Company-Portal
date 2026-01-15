@@ -1244,34 +1244,49 @@ async function updateUserInfo() {
         title: 'Edit Profile Settings',
         background: '#1e293b',
         color: '#ffffff',
+        padding: '2em',
+        width: '450px', // Fixed width for better consistency
+        showConfirmButton: true,
+        confirmButtonText: 'Save Changes',
+        confirmButtonColor: '#2563eb',
+        showCancelButton: true,
+        cancelButtonColor: '#475569',
         html: `
-            <div style="text-align: left; padding: 10px;">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../logo.png'}" 
-                         style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
-                    <br>
-                    <button type="button" onclick="document.getElementById('file-input').click()" 
-                            style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        Change Photo
-                    </button>
+            <div style="text-align: left; font-family: 'Inter', sans-serif;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="position: relative; display: inline-block;">
+                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../logo.png'}" 
+                             style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; background: #334155;">
+                        <button type="button" onclick="document.getElementById('file-input').click()" 
+                                style="position: absolute; bottom: 0; right: 0; background: #2563eb; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                            📷
+                        </button>
+                    </div>
                     <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
                 </div>
-                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
-                <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
-                
-                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
-                <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
-                
-                <label style="font-size: 11px; color: #f87171; text-transform: uppercase; margin-top: 15px; display: block;">Security</label>
-                <input id="p-pass" type="password" class="swal2-input" placeholder="Enter new password to change">
-                <small style="color: #64748b; font-size: 10px; display: block; margin-top: -10px;">Leave blank to keep current password</small>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Email Address</label>
+                    <input id="p-email" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" value="${sessionStorage.getItem('user_email') || ''}">
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Phone Number</label>
+                    <input id="p-phone" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" value="${sessionStorage.getItem('user_phone') || ''}">
+                </div>
+
+                <div style="border-top: 1px solid #334155; padding-top: 20px;">
+                    <label style="display: block; font-size: 10px; color: #f87171; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Security / Update Password</label>
+                    <input id="p-pass" type="password" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" placeholder="Enter new password (optional)">
+                    <p style="color: #64748b; font-size: 11px; margin-top: 8px; font-style: italic;">Leave blank to keep your current password.</p>
+                </div>
             </div>
         `,
         preConfirm: () => {
             return {
                 email: document.getElementById('p-email').value,
                 phone: document.getElementById('p-phone').value,
-                pass: document.getElementById('p-pass').value, // 🔴 Captures password
+                pass: document.getElementById('p-pass').value,
                 pic: document.getElementById('preview-pic').src
             }
         }
@@ -1279,7 +1294,6 @@ async function updateUserInfo() {
 
     if (formValues) saveProfile(formValues);
 }
-
 function handleFileSelect(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
