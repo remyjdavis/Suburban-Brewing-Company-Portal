@@ -529,8 +529,14 @@
         btn.innerText = isOpen ? '✕' : '☰';
     }
 
+    // 1. Calendar/Tasks API
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
+    
+    // 2. Profile/Backend API
     const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
+    
+    // 3. RECIPES API (CORRECT SOURCE FOR BRANDS)
+    const RECIPE_API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
 
     // Global Whitelist Set
     let CORE_BRANDS_WHITELIST = new Set();
@@ -555,16 +561,19 @@
         });
       });
 
-      // --- STEP 1: FORCE LOAD CORE BRANDS FIRST ---
+      // --- STEP 1: LOAD CORE BRANDS (FROM RECIPE API) ---
       Swal.fire({title: 'Initializing...', text: 'Loading Brand Portfolio', didOpen: () => Swal.showLoading()});
       
       try {
-          const rRes = await fetch(MASTER_API_URL);
+          // ⚠️ CHANGED: Fetching from RECIPE_API_URL now
+          const rRes = await fetch(RECIPE_API_URL, { method: 'GET', redirect: 'follow' });
           const rData = await rRes.json();
           
-          if (rData.recipes) {
-              rData.recipes.forEach(r => {
-                  // STRICTLY only add if category is explicitly 'Core'
+          // Data structure check: rData might be array or object with .recipes
+          const recipes = Array.isArray(rData) ? rData : (rData.recipes || []);
+
+          if (recipes.length > 0) {
+              recipes.forEach(r => {
                   if (r.category && r.category.trim() === 'Core') {
                       CORE_BRANDS_WHITELIST.add(r.name.trim().toLowerCase());
                   }
@@ -572,11 +581,10 @@
           }
           console.log("Allowed Core Brands:", Array.from(CORE_BRANDS_WHITELIST));
       } catch(e) { 
-          console.error("Critical Error loading Core Brands", e);
-          Swal.fire('Error', 'Could not verify Core Brands. Production suggestions disabled.', 'error');
+          console.error("Critical Error loading Core Brands:", e);
       }
 
-      // --- STEP 2: LOAD CALENDAR (Only after whitelist is ready) ---
+      // --- STEP 2: LOAD CALENDAR ---
       initCalendar();
     });
 
@@ -603,8 +611,7 @@
             const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`);
             const data = await res.json();
             
-            // FILTER USING THE GLOBALLY LOADED WHITELIST
-            const cleanTasks = processEvents(data.tasks);
+            const cleanTasks = processEvents(data.tasks); // Filter & Dedupe
 
             updateSidePanels(cleanTasks); 
 
@@ -660,7 +667,6 @@
         rawTasks.forEach(task => {
             
             // --- A. LOGISTICS (Alerts) ---
-            // Show for ALL beers, but remove duplicates
             if (task.type === 'logistics') {
                 const key = task.title.toLowerCase().trim();
                 if (!seenAlerts.has(key)) {
@@ -670,14 +676,12 @@
             }
             
             // --- B. PRODUCTION (Brew Suggestions) ---
-            // STRICT FILTER: Only show if it is in CORE_BRANDS_WHITELIST
             else if (task.type === 'production') {
                 const brandName = task.title.replace('🍺 ', '').trim();
                 const key = brandName.toLowerCase();
 
-                // 1. STRICT WHITELIST CHECK
-                if (!CORE_BRANDS_WHITELIST.has(key)) {
-                    // console.log("Skipping Non-Core Brew Suggestion:", brandName);
+                // 1. STRICT WHITELIST CHECK (Must be Core)
+                if (CORE_BRANDS_WHITELIST.size > 0 && !CORE_BRANDS_WHITELIST.has(key)) {
                     return; 
                 }
 
