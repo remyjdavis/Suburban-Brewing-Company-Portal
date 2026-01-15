@@ -712,6 +712,48 @@
         padding: 5px;
     }
 }
+    /* --- USER PROFILE STYLES --- */
+    .user-profile {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 8px;
+        transition: background 0.2s;
+        margin-left: auto; /* Pushes it to the far right */
+    }
+    .user-profile:hover { background: rgba(255, 255, 255, 0.1); }
+    
+    .user-avatar {
+        width: 35px; height: 35px; border-radius: 50%;
+        background-color: #3498db; object-fit: cover; border: 2px solid white;
+    }
+    
+    .user-info-text { 
+        display: flex; flex-direction: column; line-height: 1.1; text-align: right; 
+        /* Hide text on small mobile screens to save space */
+        @media (max-width: 600px) { display: none; }
+    }
+    
+    .user-name { font-weight: 700; font-size: 0.9rem; color: white; }
+    .user-role { font-size: 0.7rem; color: #bdc3c7; }
+    
+    .user-dropdown-menu {
+        display: none; position: absolute; top: 50px; right: 0;
+        background-color: white; min-width: 180px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 6px;
+        z-index: 2000; overflow: hidden; border: 1px solid #ddd;
+    }
+    .user-dropdown-menu.show { display: block; }
+    
+    .user-dropdown-menu a {
+        color: #333; padding: 12px 16px; text-decoration: none;
+        display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    .user-dropdown-menu a:hover { background-color: #f1f1f1; color: #2563eb; }
   </style>
 </head>
 <body>
@@ -797,13 +839,29 @@
   <main class="main">
     
     <div class="sticky-header">
-        <div class="batch-summary">
-            <span style="font-weight: bold;">BATCH: </span>
-            <span id="header-batch-id">---</span> | 
-            <span id="header-beer-name">New Entry</span>
+        <div style="display:flex; align-items:center; gap: 15px;">
+            <div class="batch-summary">
+                <span style="font-weight: bold;">BATCH: </span>
+                <span id="header-batch-id">---</span> | 
+                <span id="header-beer-name">New Entry</span>
+            </div>
+            <div id="active-stage-display" style="background: #27ae60; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.8em; white-space: nowrap;">
+                STAGE: 1. SETUP
+            </div>
         </div>
-        <div id="active-stage-display" style="background: #27ae60; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.8em;">
-            STAGE: 1. BATCH SETUP
+
+        <div class="user-profile" onclick="toggleUserMenu(event)">
+            <div class="user-info-text">
+                <span class="user-name" id="display-username">Brew Master</span>
+                <span class="user-role" id="display-role">Brewer</span>
+            </div>
+            <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'" alt="User">
+            
+            <div id="userDropdown" class="user-dropdown-menu">
+                <a href="#" onclick="updateUserInfo()">⚙️ Update Info</a>
+                <div style="border-top: 1px solid #eee;"></div>
+                <a href="#" onclick="handleLogout()" style="color: #e74c3c;">🚪 Logout</a>
+            </div>
         </div>
     </div>
 
@@ -1304,7 +1362,10 @@ document.querySelectorAll('.nav-link').forEach(link => {
     // ---------------------------------------------------------
     // 2. INITIALIZATION (Load Recipes with Redirect Handling)
     // ---------------------------------------------------------
-    window.onload = async function() {
+   window.onload = async function() {
+        // 1. Initialize User Profile (NEW)
+        setupUserProfile();
+
         // Set Year
         document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
@@ -1347,6 +1408,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
             console.error("Pull Error:", err); 
             Swal.fire('Connection Error', 'Check Recipe Script deployment.', 'error');
         }
+        
         addDeepCut('fw-cuts-container');
         addDeepCut('sp1-cuts-container');
         addDeepCut('sp2-cuts-container');
@@ -2016,6 +2078,44 @@ async function handoffToCellar(brewData) {
     // 7. TRIGGER PRINT
     window.print();
 }
+  // --- USER PROFILE LOGIC ---
+
+    function setupUserProfile() {
+        const name = sessionStorage.getItem("user_name") || "Brewer";
+        const role = sessionStorage.getItem("user_role") || "Staff";
+        const pic = sessionStorage.getItem("user_pic");
+
+        document.getElementById("display-username").innerText = name;
+        document.getElementById("display-role").innerText = role;
+        if(pic) document.getElementById("display-avatar").src = pic;
+    }
+
+    // 2. Toggle Menu
+    function toggleUserMenu(event) {
+        event.stopPropagation();
+        document.getElementById("userDropdown").classList.toggle("show");
+    }
+
+    // 3. Close Menu on Outside Click
+    window.addEventListener('click', function(e) {
+        if (!e.target.closest('.user-profile')) {
+            const menu = document.getElementById("userDropdown");
+            if (menu) menu.classList.remove('show');
+        }
+    });
+
+    // 4. Update Info Placeholder
+    function updateUserInfo() {
+        Swal.fire('Profile Settings', 'To update your profile, please return to the Command Center.', 'info');
+    }
+
+    // Ensure handleLogout is available globally
+    window.handleLogout = function() {
+        if(confirm("Log out of portal?")) {
+            sessionStorage.removeItem("sbc_auth");
+            window.location.replace("/Suburban-Brewing-Company-Portal/login.html");
+        }
+    };
 </script>
   <div id="print-template" style="display: none;">
     <div class="print-page">
