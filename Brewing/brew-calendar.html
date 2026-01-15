@@ -566,50 +566,46 @@
     let CORE_BRANDS_WHITELIST = new Set();
 
     document.addEventListener('DOMContentLoaded', async function() {
-      setupUserProfile(); 
-      document.getElementById('copyright-year').innerText = new Date().getFullYear();
+    // 1. Setup basic UI first
+    setupUserProfile(); 
+    document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
-      // Sidebar Logic
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) parentGroup.classList.remove('collapsed');
-      }
+    // 2. Initializing Loader
+    Swal.fire({title: 'Initializing...', text: 'Loading Brewery Data', didOpen: () => Swal.showLoading()});
 
-      document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => { 
-            if (window.innerWidth <= 1024) {
-                const sidebar = document.querySelector('.sidebar');
-                if (sidebar.classList.contains('open')) toggleMobileMenu();
-            }
-        });
-      });
+    try {
+        // 3. SINGLE FETCH for all Recipe Data
+        const rRes = await fetch(RECIPE_API_URL, { method: 'GET', redirect: 'follow' });
+        const rData = await rRes.json();
+        const recipes = Array.isArray(rData) ? rData : (rData.recipes || []);
 
-      // --- STEP 1: LOAD CORE BRANDS (FROM RECIPE API) ---
-      Swal.fire({title: 'Initializing...', text: 'Loading Brand Portfolio', didOpen: () => Swal.showLoading()});
-      
-      try {
-          // ⚠️ CHANGED: Fetching from RECIPE_API_URL now
-          const rRes = await fetch(RECIPE_API_URL, { method: 'GET', redirect: 'follow' });
-          const rData = await rRes.json();
-          
-          // Data structure check: rData might be array or object with .recipes
-          const recipes = Array.isArray(rData) ? rData : (rData.recipes || []);
+        if (recipes.length > 0) {
+            // A. Populate the Manual Entry Dropdown
+            const dropdown = document.getElementById('manual-brand');
+            dropdown.innerHTML = '<option value="" disabled selected>-- Select a Brand --</option>';
+            
+            // Sort alphabetically
+            recipes.sort((a, b) => a.name.localeCompare(b.name));
 
-          if (recipes.length > 0) {
-              recipes.forEach(r => {
-                  if (r.category && r.category.trim() === 'Core') {
-                      CORE_BRANDS_WHITELIST.add(r.name.trim().toLowerCase());
-                  }
-              });
-          }
-          console.log("Allowed Core Brands:", Array.from(CORE_BRANDS_WHITELIST));
-      } catch(e) { 
-          console.error("Critical Error loading Core Brands:", e);
-      }
+            recipes.forEach(r => {
+                // Populate Dropdown
+                const option = document.createElement('option');
+                option.value = r.name;
+                option.textContent = `${r.name} (${r.style || 'No Style'})`;
+                dropdown.appendChild(option);
 
-      // --- STEP 2: LOAD CALENDAR ---
-      initCalendar();
+                // Populate Core Whitelist for Calendar Logic
+                if (r.category && r.category.trim() === 'Core') {
+                    CORE_BRANDS_WHITELIST.add(r.name.trim().toLowerCase());
+                }
+            });
+        }
+    } catch(e) { 
+        console.error("Initialization Error:", e);
+    }
+
+    // 4. Load Calendar after data is ready
+    initCalendar();
     });
 
     function initCalendar() {
