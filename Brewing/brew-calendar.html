@@ -532,9 +532,6 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
     const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
 
-    // 🔴 CONFIGURATION: Add words here to auto-hide specific beer types
-    const BLOCKED_KEYWORDS = ["Seasonal", "Rotating", "Pilot", "Experimental", "One-Off"];
-
     document.addEventListener('DOMContentLoaded', async function() {
       setupUserProfile(); 
       document.getElementById('copyright-year').innerText = new Date().getFullYear();
@@ -559,7 +556,23 @@
         });
       });
 
-      // --- CALENDAR INITIALIZATION ---
+      // --- 1. BUILD CORE BRAND WHITELIST ---
+      // We fetch this so we know which beers are allowed to have "Brew Suggestions"
+      let coreBrands = new Set();
+      try {
+          const rRes = await fetch(MASTER_API_URL);
+          const rData = await rRes.json();
+          if (rData.recipes) {
+              rData.recipes.forEach(r => {
+                  if (r.category === 'Core') coreBrands.add(r.name.trim().toLowerCase());
+              });
+          }
+          console.log("Core Brands Whitelist:", coreBrands);
+      } catch(e) { 
+          console.error("Could not load Core Brands whitelist", e);
+      }
+
+      // --- 2. INITIALIZE CALENDAR ---
       var calendarEl = document.getElementById('calendar');
       Swal.fire({title: 'Loading Schedule...', didOpen: () => Swal.showLoading()});
 
@@ -573,19 +586,17 @@
         height: '100%',
         navLinks: true,
         editable: false, 
-        dayMaxEvents: 4, // Limits visible events per cell to prevent overflow
+        dayMaxEvents: 4, 
         events: async function(info, successCallback, failureCallback) {
           try {
             const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`);
             const data = await res.json();
             
-            // 1. FILTER & DEDUPLICATE DATA
-            const cleanTasks = processEvents(data.tasks);
+            // Pass the Whitelist to the processor
+            const cleanTasks = processEvents(data.tasks, coreBrands);
 
-            // 2. UPDATE SIDEBAR
             updateSidePanels(cleanTasks); 
 
-            // 3. MAP TO CALENDAR
             const events = cleanTasks.map(task => ({
               title: task.title,
               start: task.date,
@@ -621,15 +632,14 @@
     });
 
     /**
-     * CORE LOGIC: FILTERS & DEDUPLICATES TASKS
-     * 1. Sorts by date (so earliest tasks win)
-     * 2. Removes tasks with Blocked Keywords
-     * 3. Removes duplicate brand names (shows only the next necessary brew)
+     * PROCESSOR: The Logic Core
+     * 1. Logistics (Alerts) -> Show ALL brands (Deduplicated)
+     * 2. Production (Brewing) -> Show ONLY Core brands (Deduplicated)
      */
-    function processEvents(rawTasks) {
+    function processEvents(rawTasks, coreWhitelist) {
         if (!rawTasks) return [];
 
-        // Sort by Date Ascending
+        // 1. Sort by Date Ascending (Earliest first)
         rawTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         let seenBrands = new Set();
@@ -637,30 +647,42 @@
         let cleanList = [];
 
         rawTasks.forEach(task => {
-            // A. LOGISTICS (Alerts)
+            
+            // --- A. LOGISTICS (Alerts) ---
+            // RULE: Show alerts for ANY beer (Core or Seasonal)
             if (task.type === 'logistics') {
                 const key = task.title.toLowerCase().trim();
+                
+                // Deduplicate: If we already have an "Order Hops" alert for this beer, skip duplicates
                 if (!seenAlerts.has(key)) {
                     seenAlerts.add(key);
                     cleanList.push(task);
                 }
             }
-            // B. PRODUCTION (Brew Suggestions)
+            
+            // --- B. PRODUCTION (Brew Suggestions) ---
+            // RULE: Only show brew suggestions for CORE brands
             else if (task.type === 'production') {
                 const brandName = task.title.replace('🍺 ', '').trim();
-                
-                // Filter 1: Check Blocked Keywords (Seasonal/Rotating)
-                const isBlocked = BLOCKED_KEYWORDS.some(keyword => 
-                    brandName.toLowerCase().includes(keyword.toLowerCase())
-                );
-                if (isBlocked) return; // Skip this task
-
-                // Filter 2: Deduplicate (Only show first instance)
                 const key = brandName.toLowerCase();
+
+                // 1. CHECK WHITELIST: Is this a Core Brand?
+                // (Only filter if whitelist successfully loaded)
+                if (coreWhitelist.size > 0 && !coreWhitelist.has(key)) {
+                    return; // SKIP: It is a Seasonal/Rotating brand
+                }
+
+                // 2. DEDUPLICATE: Have we already suggested brewing this today/soon?
                 if (!seenBrands.has(key)) {
                     seenBrands.add(key);
                     cleanList.push(task);
                 }
+            }
+            
+            // --- C. CELLAR TASKS ---
+            // Keep all cellar tasks (Dry hops, crash, etc)
+            else if (task.type === 'cellar') {
+                cleanList.push(task);
             }
         });
 
