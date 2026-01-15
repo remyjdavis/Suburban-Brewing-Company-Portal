@@ -37,20 +37,20 @@
     .controls-area {
         background-color: #ffffff !important;
     }
-
-    /* --- NATIVE APP HEADER --- */
-    /* --- UPDATED HEADER CSS --- */
+   /* --- UPDATED HEADER CSS --- */
 .site-header { 
     background: #ffffff; 
     padding: 12px 20px; 
     display: flex; 
-    justify-content: space-between; /* Pushes left and right apart */
+    justify-content: space-between; 
     align-items: center; 
     gap: 12px;
     position: sticky;
     top: 0;
-    z-index: 1000;
+    /* 🔴 Z-INDEX INCREASED to 9002 so it sits ON TOP of the login screen */
+    z-index: 9002; 
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    height: 80px; /* Fixed height to keep layout stable */
 }
 
 .header-left {
@@ -59,18 +59,33 @@
     gap: 12px;
 }
 
+/* 🔴 RESTORED REP INFO STYLING */
+.header-info h1 { margin: 0; font-size: 1.1rem; font-weight: 800; color: #1e293b; }
+.header-info span { display: block; line-height: 1.3; }
+.sub-info { font-size: 0.75rem; color: #64748b; }
+.rep-info-line { font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-top: 2px; }
+
 .header-right {
     text-align: right;
-    font-size: 0.9rem;
 }
 
-/* User Badge Styles */
+/* User Badge Styles (Right Side) */
 .user-badge {
     background-color: #f3f4f6;
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
     border: 1px solid #e5e7eb;
     display: inline-block;
+    font-size: 0.9rem;
+    color: #1e293b;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* LOGIN SCREEN ADJUSTMENT */
+/* We push the login container down slightly so it doesn't get cut off by the header */
+.login-hero-container {
+    padding-top: 80px; 
 }
 
 .user-name {
@@ -647,15 +662,15 @@ body,
 
 <header class="site-header" id="mainHeader">
     <div class="header-left">
-        <img src="https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png" alt="SBC Logo" style="height:45px;">
+        <img src="https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png" alt="SBC Logo" style="height:50px;">
         <div class="header-info">
             <h1>Suburban Brewing Co.</h1>
-            <span style="font-size:0.7rem; color:#64748b;">3041 Horseshoe Pike, Honey Brook, PA</span>
+            <span class="sub-info">3041 Horseshoe Pike, Honey Brook, PA 19344</span>
+            <span class="rep-info-line">Sales Rep: Remy Davis | (908) 642-1019</span>
         </div>
     </div>
 
-    <div class="header-right" id="headerUser">
-        </div>
+    <div class="header-right" id="headerUser"></div>
 </header>
 
 <div class="container" id="app"></div>
@@ -779,10 +794,23 @@ async function init() {
 
     // --- RENDER VIEWS ---
     function render() {
-        const app = document.getElementById("app");
-        const liveBar = document.getElementById("live-bar");
-        const header = document.getElementById("mainHeader");
-        const headerUser = document.getElementById("headerUser"); // The Right Side Container
+    // 1. DEFINE VARIABLES
+    const app = document.getElementById("app");
+    const liveBar = document.getElementById("live-bar");
+    const header = document.getElementById("mainHeader");
+    const headerUser = document.getElementById("headerUser");
+
+    // --- LOGIC TO HANDLE HEADER RIGHT SIDE ---
+    // Only show the User Badge if we are logged in (Step 2 or 3) AND have a customer
+    if (state.step >= 2 && state.customer) {
+        headerUser.innerHTML = `
+            <div class="user-badge">
+                👤 ${state.customer.name}
+            </div>`;
+    } else {
+        // In Step 0 (Legal) and Step 1 (Login), keep the right side empty
+        headerUser.innerHTML = "";
+    }
 
         // STEP 0: LEGAL AGREEMENT
         if (state.step === 0) {
@@ -814,10 +842,10 @@ async function init() {
                     <button id="acceptBtn" class="btn btn-primary" style="width:100%;" disabled onclick="state.step=1;render()">I Accept & Agree</button>
                 </div>`;
         
-       // STEP 1: BREWHOUSE LOGIN (UPDATED)
-        } else if (state.step === 1) {
-            liveBar.style.display = "none";
-            header.style.display = "none"; // HIDE HEADER FOR IMMERSIVE BG
+       /// STEP 1: BREWHOUSE LOGIN
+    } else if (state.step === 1) {
+        liveBar.style.display = "none";
+            
             app.innerHTML = `
                 <div class="login-hero-container">
                     <div class="login-hero-bg"></div> <div class="login-card-hero">
@@ -839,7 +867,6 @@ async function init() {
        // STEP 2: PRODUCT GRID
     } else if (state.step === 2) {
         liveBar.style.display = "flex";
-        if(header) header.style.display = "flex"; // SHOW HEADER
         updateLiveTotals();
 
         // --- 🔴 INJECT USER INTO RIGHT SIDE ---
@@ -888,11 +915,10 @@ async function init() {
         app.innerHTML = html + `</div>`;
         
         // STEP 3: REVIEW ORDER
-        } else if (state.step === 3) {
-            liveBar.style.display = "none";
-            header.style.display = "flex";
-            const math = calculateOrderMath();
-            const showEmailPrompt = !state.customer.email;
+    } else if (state.step === 3) {
+        liveBar.style.display = "none";
+        const math = calculateOrderMath();
+        const showEmailPrompt = !state.customer.email;
             
             app.innerHTML = `
                 <div class="card">
