@@ -880,14 +880,13 @@ async function init() {
     const headerUser = document.getElementById("headerUser");
 
    // --- LOGIC TO HANDLE HEADER RIGHT SIDE ---
-    // Only show the User Badge if we are logged in (Step 2 or 3) AND have a customer
     if (state.step >= 2 && state.customer) {
+        // 🔴 Added onclick, cursor:pointer, and a small edit pencil (✎)
         headerUser.innerHTML = `
-            <div class="user-badge">
-                👤 ${state.customer.name}
+            <div class="user-badge" onclick="changeAccessKey()" style="cursor: pointer;" title="Tap to change your Secret Code">
+                👤 ${state.customer.name} <span style="opacity:0.5; margin-left:5px;">✎</span>
             </div>`; 
     } else {
-        // In Step 0 (Legal) and Step 1 (Login), keep the right side empty
         headerUser.innerHTML = "";
     }
 
@@ -1184,115 +1183,140 @@ async function init() {
         }
     }
     init();
-    // --- PWA INSTALL LOGIC ---
-let deferredPrompt;
-
-// 1. Listen for the browser event
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent Chrome 67 and earlier from automatically showing the prompt
-    e.preventDefault();
-    // Stash the event so it can be triggered later.
-    deferredPrompt = e;
-    // Update UI to notify the user they can add to home screen
-    const banner = document.getElementById('installBanner');
-    if (banner) banner.style.display = 'flex';
-});
-
-// 2. Function to trigger the install
-async function installPWA() {
-    if (deferredPrompt) {
-        // Show the install prompt
-        deferredPrompt.prompt();
-        // Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to the install prompt: ${outcome}`);
-        // We've used the prompt, so clear it
-        deferredPrompt = null;
-        // Hide the banner
-        hideInstallBanner();
-    }
-}
-
-function hideInstallBanner() {
-    document.getElementById('installBanner').style.display = 'none';
-}
-    // --- SMART INSTALL BANNER LOGIC ---
-// 1. Check if user is already in "App Mode" (Standalone)
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
-// 2. Detect Device Type
-const ua = navigator.userAgent;
-const isIOS = /iPhone|iPad|iPod/.test(ua);
-const isMacSafari = /Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome/.test(ua);
-
-let deferredPrompt; // To store the Chrome event
-
-// --- SCENARIO A: CHROME / ANDROID / EDGE (The "Easy" Way) ---
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    showBanner('native');
-});
-
-// --- SCENARIO B: SAFARI (iOS or Mac) ---
-// If not standalone and no "easy" prompt fired, check if it's Safari
-if (!isStandalone && !deferredPrompt) {
-    if (isIOS) {
-        // Wait a second to ensure Chrome didn't fire first
-        setTimeout(() => { if (!deferredPrompt) showBanner('ios'); }, 1000);
-    } else if (isMacSafari) {
-        setTimeout(() => { if (!deferredPrompt) showBanner('mac'); }, 1000);
-    }
-}
-
-function showBanner(type) {
-    const banner = document.getElementById('installBanner');
-    if (!banner) return;
+    // ===========================================
+    //  📲 SMART INSTALL BANNER LOGIC
+    // ===========================================
     
-    let html = '';
-    
-    if (type === 'native') {
-        html = `
-            <div class="install-text">
-                📲 <strong>Install App</strong>
-                <span class="install-sub">Add to home screen for quick access!</span>
-            </div>
-            <div class="install-actions">
-                <button class="btn-close-banner" onclick="closeBanner()">×</button>
-                <button class="btn-install" onclick="triggerNativeInstall()">Install</button>
-            </div>`;
-    } else if (type === 'ios') {
-        html = `
-            <div class="install-text">
-                📲 <strong>Install App</strong>
-                <span class="install-sub">Tap <img src="https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/share-icon.png" style="height:14px; vertical-align:middle;"> <strong>Share</strong> then "Add to Home Screen"</span>
-            </div>
-            <button class="btn-close-banner" onclick="closeBanner()">×</button>`;
-    } else if (type === 'mac') {
-        html = `
-            <div class="install-text">
-                💻 <strong>Install to Dock</strong>
-                <span class="install-sub">Click <strong>File</strong> in menu bar > <strong>Add to Dock</strong></span>
-            </div>
-            <button class="btn-close-banner" onclick="closeBanner()">×</button>`;
+    // 1. Define this GLOBALLY (Only Once!)
+    let deferredPrompt; 
+
+    // 2. Check if user is already in "App Mode" (Standalone)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    // 3. Detect Device Type
+    const ua = navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/.test(ua);
+    const isMacSafari = /Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome/.test(ua);
+
+    // --- SCENARIO A: CHROME / ANDROID / EDGE (The "Easy" Way) ---
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later
+        deferredPrompt = e;
+        // Show the banner
+        showBanner('native');
+    });
+
+    // --- SCENARIO B: SAFARI (iOS or Mac) ---
+    // If not standalone and no "native" prompt fired, check if it's Safari
+    if (!isStandalone) {
+        setTimeout(() => {
+            if (!deferredPrompt) {
+                if (isIOS) showBanner('ios');
+                else if (isMacSafari) showBanner('mac');
+            }
+        }, 1000);
     }
 
-    banner.innerHTML = html;
-    banner.style.display = 'flex';
-}
+    function showBanner(type) {
+        const banner = document.getElementById('installBanner');
+        if (!banner) return;
+        
+        let html = '';
+        
+        if (type === 'native') {
+            html = `
+                <div class="install-text">
+                    📲 <strong>Install App</strong>
+                    <span class="install-sub">Add to home screen for quick access!</span>
+                </div>
+                <div class="install-actions">
+                    <button class="btn-close-banner" onclick="closeBanner()">×</button>
+                    <button class="btn-install" onclick="triggerNativeInstall()">Install</button>
+                </div>`;
+        } else if (type === 'ios') {
+            html = `
+                <div class="install-text">
+                    📲 <strong>Install App</strong>
+                    <span class="install-sub">Tap <img src="https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/share-icon.png" style="height:14px; vertical-align:middle;"> <strong>Share</strong> then "Add to Home Screen"</span>
+                </div>
+                <button class="btn-close-banner" onclick="closeBanner()">×</button>`;
+        } else if (type === 'mac') {
+            html = `
+                <div class="install-text">
+                    💻 <strong>Install to Dock</strong>
+                    <span class="install-sub">Click <strong>File</strong> in menu bar > <strong>Add to Dock</strong></span>
+                </div>
+                <button class="btn-close-banner" onclick="closeBanner()">×</button>`;
+        }
 
-async function triggerNativeInstall() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        deferredPrompt = null;
-        closeBanner();
+        banner.innerHTML = html;
+        banner.style.display = 'flex';
     }
-}
 
-function closeBanner() {
-    document.getElementById('installBanner').style.display = 'none';
-}
+    async function triggerNativeInstall() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            closeBanner();
+        }
+    }
+
+    function closeBanner() {
+        document.getElementById('installBanner').style.display = 'none';
+    }
+
+    // ===========================================
+    //  🔑 CHANGE SECRET CODE LOGIC
+    // ===========================================
+    async function changeAccessKey() {
+        const { value: newCode } = await Swal.fire({
+            title: 'Change Secret Code',
+            text: 'Enter a new code that is easy for you to remember.',
+            input: 'text',
+            inputValue: state.customer.key, 
+            showCancelButton: true,
+            confirmButtonText: 'Save New Code',
+            confirmButtonColor: '#2563eb',
+            inputValidator: (value) => {
+                if (!value) return 'You need to write something!';
+                if (value.length < 4) return 'Code should be at least 4 characters.';
+            }
+        });
+
+        if (newCode && newCode !== state.customer.key) {
+            Swal.fire({ title: 'Updating...', didOpen: () => Swal.showLoading() });
+
+            try {
+                const payload = {
+                    action: 'updateCustomerKey',
+                    oldKey: state.customer.key,
+                    newKey: newCode.trim() 
+                };
+
+                await fetch(API_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: JSON.stringify(payload)
+                });
+
+                // Update local state immediately
+                state.customer.key = newCode.trim();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Code Updated!',
+                    text: `Your new login code is: ${newCode.trim()}`,
+                    confirmButtonColor: '#10b981'
+                });
+
+            } catch (e) {
+                Swal.fire('Error', 'Could not update code. Try again.', 'error');
+            }
+        }
+    }
 </script>
 
 <div id="scanner-container">
