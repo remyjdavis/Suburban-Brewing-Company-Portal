@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SBC History Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 1. SCREEN STYLES (The Search Interface) --- */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #f4f7f6; 
+            margin: 0; 
+            padding: 20px; 
+            color: #333;
+        }
+
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin-top: 0; color: #2c3e50; font-weight: 900; }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input#search-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1.1rem;
+        }
+
+        button.btn-search {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 0 25px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Results List */
+        .batch-list { list-style: none; padding: 0; margin: 0; }
+        
+        .batch-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        .batch-item:hover { background: #f8f9fa; }
+
+        .batch-info strong { display: block; font-size: 1.1rem; color: #2c3e50; }
+        .batch-info small { color: #7f8c8d; }
+
+        .action-buttons { display: flex; gap: 10px; }
+        
+        .btn-action {
+            padding: 8px 15px;
+            border-radius: 4px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .btn-brew { background: #e0e0e0; color: #333; }
+        .btn-brew:hover { background: #d0d0d0; }
+        
+        .btn-ferm { background: #2563eb; color: white; }
+        .btn-ferm:hover { background: #1d4ed8; }
+
+        /* --- 2. PRINT STYLES (Hidden Templates) --- */
+        @media screen {
+            #print-templates-wrapper { display: none; }
+        }
+
+        @media print {
+            /* Hide Screen Interface */
+            body > *:not(#print-templates-wrapper) { display: none !important; }
+            #print-templates-wrapper { display: block !important; }
+            
+            /* Reset Page */
+            @page { margin: 0.25in; }
+            html, body { 
+                background: white !important; 
+                margin: 0 !important; padding: 0 !important; 
+                zoom: 1.0; /* No shrink for clarity */
+            }
+
+            /* SHARED PRINT CSS (Matches previous Brew Log style) */
+            .print-page { width: 100%; page-break-after: always; font-family: 'Segoe UI', sans-serif; color: black; }
+            .p-header { border-bottom: 4px solid #000; margin-bottom: 15px; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end; }
+            .p-brand { font-size: 24pt; font-weight: 900; text-transform: uppercase; line-height: 1; }
+            .p-meta { text-align: right; }
+            .p-batch-row { font-size: 16pt; font-weight: 800; }
+            
+            /* SECTIONS & GRIDS */
+            .p-grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+            .p-section { border: 2px solid #000; border-radius: 4px; overflow: hidden; margin-bottom: 15px; break-inside: avoid; }
+            .p-sec-head { background: #222 !important; color: white !important; font-weight: 800; padding: 5px 10px; text-transform: uppercase; font-size: 12pt; border-bottom: 1px solid #000; -webkit-print-color-adjust: exact; }
+            .p-sec-body { padding: 8px; }
+
+            /* LINES & TABLES */
+            .p-line { margin-bottom: 5px; display: flex; align-items: baseline; }
+            .p-label { font-size: 9pt; font-weight: 800; color: #333; text-transform: uppercase; margin-right: 8px; width: 80px; }
+            .p-val { border-bottom: 1px solid #000; flex-grow: 1; font-weight: 700; font-size: 11pt; }
+            
+            .p-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+            .p-table th { background: #ddd !important; border: 1px solid #000; padding: 4px; font-size: 9pt; font-weight: 800; }
+            .p-table td { border: 1px solid #000; padding: 4px; font-size: 10pt; text-align: center; }
+
+            /* VISIBILITY CONTROL */
+            /* We use classes to toggle which form prints */
+            .show-brew-only .ferm-log-container { display: none !important; }
+            .show-ferm-only .brew-log-container { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="search-container">
+        <a href="index.html" style="text-decoration:none; color:#7f8c8d; font-weight:bold; font-size:0.8rem;">← BACK TO DASHBOARD</a>
+        <h1 style="margin-top:10px;">Batch History Search</h1>
+        
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Search Batch # (e.g., B-2025-001) or Beer Name..." onkeyup="filterBatches()">
+            <button class="btn-search">SEARCH</button>
+        </div>
+
+        <ul class="batch-list" id="results-list">
+            <li class="batch-item">
+                <div class="batch-info">
+                    <strong>B-2026-001 | Hazy IPA V3</strong>
+                    <small>Brewed: Jan 15, 2026</small>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-action btn-brew" onclick="printDocument('brew', 'B-2026-001')">🖨️ Brew Log</button>
+                    <button class="btn-action btn-ferm" onclick="printDocument('ferm', 'B-2026-001')">🖨️ Ferm Log</button>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div id="print-templates-wrapper">
+        
+        <div class="print-page brew-log-container">
+            <div class="p-header">
+                <div class="p-brand">SUBURBAN BREWING CO.</div>
+                <div class="p-meta">
+                    <div class="p-batch-row">BREW LOG: <span class="d-batch">---</span></div>
+                    <div>Date: <span class="d-date">---</span></div>
+                </div>
+            </div>
+            
+            <div class="p-grid-row">
+                <div class="p-section">
+                    <div class="p-sec-head">BATCH SUMMARY</div>
+                    <div class="p-sec-body">
+                        <div class="p-line"><span class="p-label">RECIPE:</span> <span class="p-val d-recipe">---</span></div>
+                        <div class="p-line"><span class="p-label">VOL:</span> <span class="p-val d-vol">---</span></div>
+                        <div class="p-line"><span class="p-label">OG:</span> <span class="p-val d-og">---</span></div>
+                    </div>
+                </div>
+                <div class="p-section">
+                    <div class="p-sec-head">MASH / WATER</div>
+                    <div class="p-sec-body">
+                        <div class="p-line"><span class="p-label">MASH TEMP:</span> <span class="p-val d-mash-temp">---</span></div>
+                        <div class="p-line"><span class="p-label">PH:</span> <span class="p-val d-ph">---</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-section">
+                <div class="p-sec-head">INGREDIENTS USED</div>
+                <div class="p-sec-body">
+                    <table class="p-table">
+                        <thead><tr><th>ITEM</th><th>TYPE</th><th>QTY</th><th>LOT #</th></tr></thead>
+                        <tbody id="d-ing-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div style="text-align: center; font-style: italic; margin-top: 20px;">
+                * Detailed brewhouse data stored in digital archive.
+            </div>
+        </div>
+
+        <div class="print-page ferm-log-container">
+            <div class="p-header">
+                <div class="p-brand">FERMENTATION LOG</div>
+                <div class="p-meta">
+                    <div class="p-batch-row">BATCH: <span class="d-batch">---</span></div>
+                    <div><span class="d-recipe" style="font-weight:bold;">---</span></div>
+                </div>
+            </div>
+
+            <div class="p-grid-row">
+                <div class="p-section">
+                    <div class="p-sec-head">YEAST DATA</div>
+                    <div class="p-sec-body">
+                        <div class="p-line"><span class="p-label">STRAIN:</span> <span class="p-val d-yeast">London III</span></div>
+                        <div class="p-line"><span class="p-label">SOURCE:</span> <span class="p-val d-source">Harvest Gen 4</span></div>
+                        <div class="p-line"><span class="p-label">PITCH DATE:</span> <span class="p-val d-date">---</span></div>
+                        <div class="p-line"><span class="p-label">TANK:</span> <span class="p-val d-tank">FV-01</span></div>
+                    </div>
+                </div>
+                <div class="p-section">
+                    <div class="p-sec-head">TARGETS</div>
+                    <div class="p-sec-body">
+                        <div class="p-line"><span class="p-label">ORIG GRAV:</span> <span class="p-val d-og">1.065</span></div>
+                        <div class="p-line"><span class="p-label">FIN GRAV:</span> <span class="p-val">1.012 (Est)</span></div>
+                        <div class="p-line"><span class="p-label">ABV:</span> <span class="p-val">7.0% (Est)</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-section">
+                <div class="p-sec-head">GRAVITY & TEMP LOG</div>
+                <div class="p-sec-body">
+                    <table class="p-table" style="height: 400px;"> <thead>
+                            <tr>
+                                <th style="width:15%">DATE</th>
+                                <th style="width:10%">DAY</th>
+                                <th style="width:15%">GRAVITY</th>
+                                <th style="width:10%">TEMP</th>
+                                <th style="width:10%">pH</th>
+                                <th>ACTION / NOTES</th>
+                                <th style="width:15%">OPERATOR</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <script>
+                                for(let i=0; i<14; i++) {
+                                    document.write('<tr><td style="height:25px;"></td><td>'+(i+1)+'</td><td></td><td></td><td></td><td></td><td></td></tr>');
+                                }
+                            </script>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="p-section">
+                <div class="p-sec-head">DRY HOP & ADDITIONS</div>
+                <div class="p-sec-body">
+                    <table class="p-table">
+                        <thead><tr><th>ADDITION</th><th>AMOUNT</th><th>TARGET DATE</th><th>ACTUAL DATE</th><th>INITIALS</th></tr></thead>
+                        <tbody>
+                            <tr><td>Dry Hop 1 (Citra)</td><td>22 lbs</td><td>Day 3</td><td></td><td></td></tr>
+                            <tr><td>Dry Hop 2 (Mosaic)</td><td>22 lbs</td><td>Day 7</td><td></td><td></td></tr>
+                            <tr><td>Fining / Biofine</td><td>1 L</td><td>Day 14</td><td></td><td></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="p-section">
+                <div class="p-sec-head">PACKAGING</div>
+                <div class="p-sec-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <div class="p-line"><span class="p-label">DATE:</span> <span class="p-val">&nbsp;</span></div>
+                            <div class="p-line"><span class="p-label">FIN CO2:</span> <span class="p-val">&nbsp;</span></div>
+                        </div>
+                        <div>
+                            <div class="p-line"><span class="p-label">YIELD (bbl):</span> <span class="p-val">&nbsp;</span></div>
+                            <div class="p-line"><span class="p-label">KEGS/CANS:</span> <span class="p-val">&nbsp;</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // MOCK DATA (In production, replace this with your Fetch API)
+        const mockDB = {
+            "B-2026-001": {
+                date: "2026-01-15", recipe: "Hazy IPA V3", vol: "10 BBL", og: "1.065", mash: "152°F", ph: "5.2",
+                ingredients: [
+                    {name: "2-Row", type: "Grain", qty: "800 lbs", lot: "L-123"},
+                    {name: "Citra", type: "Hop", qty: "22 lbs", lot: "H-456"}
+                ]
+            },
+            "B-2026-002": {
+                date: "2026-01-16", recipe: "Pilsner", vol: "20 BBL", og: "1.048", mash: "148°F", ph: "5.3",
+                ingredients: [
+                    {name: "Pilsner Malt", type: "Grain", qty: "1400 lbs", lot: "L-789"},
+                    {name: "Saaz", type: "Hop", qty: "10 lbs", lot: "H-999"}
+                ]
+            }
+        };
+
+        // 1. FILTER SEARCH LIST
+        function filterBatches() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const list = document.getElementById('results-list');
+            list.innerHTML = ""; // Clear list
+
+            // Find matching batches from mockDB
+            Object.keys(mockDB).forEach(batchId => {
+                const data = mockDB[batchId];
+                if (batchId.toLowerCase().includes(query) || data.recipe.toLowerCase().includes(query)) {
+                    const li = document.createElement('li');
+                    li.className = 'batch-item';
+                    li.innerHTML = `
+                        <div class="batch-info">
+                            <strong>${batchId} | ${data.recipe}</strong>
+                            <small>Brewed: ${data.date}</small>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-brew" onclick="printDocument('brew', '${batchId}')">🖨️ Brew Log</button>
+                            <button class="btn-action btn-ferm" onclick="printDocument('ferm', '${batchId}')">🖨️ Ferm Log</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                }
+            });
+        }
+
+        // Initialize with all batches
+        filterBatches();
+
+        // 2. PRINT HANDLER
+        function printDocument(type, batchId) {
+            const data = mockDB[batchId];
+            if(!data) return alert("Error: Batch data not found.");
+
+            // A. Populate Shared Fields
+            document.querySelectorAll('.d-batch').forEach(el => el.innerText = batchId);
+            document.querySelectorAll('.d-date').forEach(el => el.innerText = data.date);
+            document.querySelectorAll('.d-recipe').forEach(el => el.innerText = data.recipe);
+            document.querySelectorAll('.d-vol').forEach(el => el.innerText = data.vol);
+            document.querySelectorAll('.d-og').forEach(el => el.innerText = data.og);
+            document.querySelectorAll('.d-mash-temp').forEach(el => el.innerText = data.mash);
+            document.querySelectorAll('.d-ph').forEach(el => el.innerText = data.ph);
+
+            // B. Populate Brew Log Specifics (Ingredients Table)
+            const ingTable = document.getElementById('d-ing-body');
+            ingTable.innerHTML = data.ingredients.map(ing => 
+                `<tr><td>${ing.name}</td><td>${ing.type}</td><td>${ing.qty}</td><td>${ing.lot}</td></tr>`
+            ).join('');
+
+            // C. Toggle Visibility based on Type
+            const wrapper = document.getElementById('print-templates-wrapper');
+            if (type === 'brew') {
+                wrapper.className = 'show-brew-only';
+            } else {
+                wrapper.className = 'show-ferm-only';
+            }
+
+            // D. Print
+            window.print();
+        }
+    </script>
+</body>
+</html>
