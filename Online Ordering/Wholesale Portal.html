@@ -656,6 +656,53 @@ body,
         font-size: 16px;
         text-align: center;
     }
+       /* --- INSTALL BANNER --- */
+.install-banner {
+    display: none; 
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background-color: #1e293b; 
+    color: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    z-index: 9999;
+    align-items: center;
+    justify-content: space-between;
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.install-text { font-size: 0.9rem; font-weight: 500; }
+.install-sub { font-size: 0.8rem; opacity: 0.8; display: block; margin-top: 4px; }
+.install-actions { display: flex; gap: 10px; align-items: center;}
+
+.btn-install {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-close-banner {
+    background: transparent;
+    border: 1px solid #475569;
+    color: #cbd5e1;
+    padding: 5px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+}
 </style>
 </head>
 <body>
@@ -672,7 +719,18 @@ body,
 
     <div class="header-right" id="headerUser"></div>
 </header>
-
+    
+<div id="installBanner" class="install-banner">
+    <div class="install-text">
+        📲 <strong>Install App</strong><br>
+        <span style="font-size:0.8rem; opacity:0.8;">Add to home screen for quick access!</span>
+    </div>
+    <div class="install-actions">
+        <button class="btn-close-banner" onclick="hideInstallBanner()">✕</button>
+        <button class="btn-install" onclick="installPWA()">Install</button>
+    </div>
+</div>
+    
 <div class="container" id="app"></div>
 
 <div id="orderModal" class="order-modal">
@@ -693,7 +751,9 @@ body,
     </div>
     <button class="btn btn-primary" onclick="goToReview()">Review Order</button>
 </div>
-
+    
+<div id="installBanner" class="install-banner">
+    </div>
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbz2YK1MnItnIMJpNHNRCFXoo4hxRJPaF9NmO6ginxaJjfkm7FnbV-gO82_uL8X73AaR/exec?secret=SBC_SECURE_2026"; 
     const BASE_IMG_URL = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/";
@@ -1105,6 +1165,115 @@ async function init() {
         }
     }
     init();
+    // --- PWA INSTALL LOGIC ---
+let deferredPrompt;
+
+// 1. Listen for the browser event
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent Chrome 67 and earlier from automatically showing the prompt
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    deferredPrompt = e;
+    // Update UI to notify the user they can add to home screen
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'flex';
+});
+
+// 2. Function to trigger the install
+async function installPWA() {
+    if (deferredPrompt) {
+        // Show the install prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        // We've used the prompt, so clear it
+        deferredPrompt = null;
+        // Hide the banner
+        hideInstallBanner();
+    }
+}
+
+function hideInstallBanner() {
+    document.getElementById('installBanner').style.display = 'none';
+}
+    // --- SMART INSTALL BANNER LOGIC ---
+// 1. Check if user is already in "App Mode" (Standalone)
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+// 2. Detect Device Type
+const ua = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(ua);
+const isMacSafari = /Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome/.test(ua);
+
+let deferredPrompt; // To store the Chrome event
+
+// --- SCENARIO A: CHROME / ANDROID / EDGE (The "Easy" Way) ---
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    showBanner('native');
+});
+
+// --- SCENARIO B: SAFARI (iOS or Mac) ---
+// If not standalone and no "easy" prompt fired, check if it's Safari
+if (!isStandalone && !deferredPrompt) {
+    if (isIOS) {
+        // Wait a second to ensure Chrome didn't fire first
+        setTimeout(() => { if (!deferredPrompt) showBanner('ios'); }, 1000);
+    } else if (isMacSafari) {
+        setTimeout(() => { if (!deferredPrompt) showBanner('mac'); }, 1000);
+    }
+}
+
+function showBanner(type) {
+    const banner = document.getElementById('installBanner');
+    if (!banner) return;
+    
+    let html = '';
+    
+    if (type === 'native') {
+        html = `
+            <div class="install-text">
+                📲 <strong>Install App</strong>
+                <span class="install-sub">Add to home screen for quick access!</span>
+            </div>
+            <div class="install-actions">
+                <button class="btn-close-banner" onclick="closeBanner()">×</button>
+                <button class="btn-install" onclick="triggerNativeInstall()">Install</button>
+            </div>`;
+    } else if (type === 'ios') {
+        html = `
+            <div class="install-text">
+                📲 <strong>Install App</strong>
+                <span class="install-sub">Tap <img src="https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/share-icon.png" style="height:14px; vertical-align:middle;"> <strong>Share</strong> then "Add to Home Screen"</span>
+            </div>
+            <button class="btn-close-banner" onclick="closeBanner()">×</button>`;
+    } else if (type === 'mac') {
+        html = `
+            <div class="install-text">
+                💻 <strong>Install to Dock</strong>
+                <span class="install-sub">Click <strong>File</strong> in menu bar > <strong>Add to Dock</strong></span>
+            </div>
+            <button class="btn-close-banner" onclick="closeBanner()">×</button>`;
+    }
+
+    banner.innerHTML = html;
+    banner.style.display = 'flex';
+}
+
+async function triggerNativeInstall() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        closeBanner();
+    }
+}
+
+function closeBanner() {
+    document.getElementById('installBanner').style.display = 'none';
+}
 </script>
 
 <div id="scanner-container">
