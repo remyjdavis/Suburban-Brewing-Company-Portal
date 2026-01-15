@@ -579,128 +579,147 @@
         .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
     /* ============================================================
-       🖨️ READABLE DASHBOARD PRINT LAYOUT
+       🖨️ READABLE DASHBOARD LAYOUT (STRICT GRID)
        ============================================================ */
     @media print {
-        @page { margin: 0.2in; size: portrait; }
+        @page { margin: 0.25in; size: portrait; }
         
         html, body {
             background: white !important;
             color: black !important;
-            font-size: 10pt !important; /* Readable Font Size */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
             width: 100%;
             height: 100%;
             margin: 0;
             padding: 0;
-            zoom: 0.65; /* The Sweet Spot: Fits 1 page, still readable */
+            /* 0.65 is the "Sweet Spot" for one page + readable text */
+            zoom: 0.65; 
         }
 
-        /* --- 1. HIDE CLUTTER --- */
+        /* --- 1. CLEAN UP UI --- */
         .sidebar, #menu-toggle, .app-footer, .btn-save-section, 
         .btn-add-deep, .btn-now, .btn-delete, .btn-timer, 
         .timer-box, .toggle-indicator, button, .close-modal,
         #active-stage-display, small, .nav-section-header, 
-        .calc-result, .toggle-indicator, .cost-summary-box { 
+        .calc-result, .cost-summary-box { 
             display: none !important; 
         }
 
-        /* Hide "Suggested" columns in tables to save space for "Lot #" */
+        /* Hide "Suggested" columns to make room for "Actual" */
         td:nth-child(3), th:nth-child(3), 
         td:nth-child(6), th:nth-child(6) { 
             display: none !important; 
         }
 
-        /* --- 2. LAYOUT GRID --- */
+        /* --- 2. THE DASHBOARD GRID --- */
         .main { margin: 0 !important; padding: 0 !important; display: block !important; }
         
         #main-screen {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* Split page in half */
-            gap: 10px;
+            /* Define 3 main rows with specific heights if needed */
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px;
             align-items: start;
+            width: 100%;
         }
 
-        /* --- 3. SECTION PLACEMENT --- */
-        /* Header spans full width */
-        .sticky-header { grid-column: 1 / -1; margin-bottom: 5px !important; border-bottom: 2px solid #000; padding-bottom: 5px; }
-        .batch-summary { font-size: 16pt !important; font-weight: 900; }
+        /* HEADER: Spans top */
+        .sticky-header { 
+            grid-column: 1 / -1; 
+            border-bottom: 2px solid #000; 
+            margin-bottom: 10px !important;
+            text-align: center;
+        }
+        .batch-summary { font-size: 20pt !important; font-weight: 900; }
 
-        /* Stage 1 (Setup) & Stage 3 (Mash) share top row for compactness */
-        .brew-stage:nth-of-type(1) { grid-column: 1; } /* Setup Left */
-        .brew-stage:nth-of-type(3) { grid-column: 2; } /* Mash Right */
+        /* ROW 1: Setup (Left) & Mash (Right) */
+        .brew-stage:nth-of-type(1) { grid-column: 1; } 
+        .brew-stage:nth-of-type(3) { grid-column: 2; } 
 
-        /* Stage 2 (Grains) & Stage 5 (Boil) are TALL, so they get their own columns or full width */
-        .brew-stage:nth-of-type(2) { grid-column: 1 / -1; } /* Grain Bill Full Width */
-        .brew-stage:nth-of-type(5) { grid-column: 1 / -1; } /* Boil Full Width */
-        
-        /* Stage 4 (Lauter) & Stage 6 (Yeast) share bottom */
+        /* ROW 2: Grain Bill (Full Width) */
+        .brew-stage:nth-of-type(2) { grid-column: 1 / -1; } 
+
+        /* ROW 3: Lauter (Left) & Boil (Right) - Key Change to save vertical space */
         .brew-stage:nth-of-type(4) { grid-column: 1; } 
-        .brew-stage:nth-of-type(6) { grid-column: 2; }
+        .brew-stage:nth-of-type(5) { grid-column: 2; }
 
-        /* --- 4. STYLING RESTORATION --- */
+        /* ROW 4: Yeast (Full Width Bottom) */
+        .brew-stage:nth-of-type(6) { grid-column: 1 / -1; margin-top: 10px; }
+
+        /* --- 3. SECTION STYLING --- */
         .brew-stage {
-            border: 1px solid #000 !important;
+            border: 2px solid #000 !important;
+            border-radius: 4px;
             margin: 0 !important;
-            break-inside: avoid;
+            break-inside: avoid; /* Keeps box from cutting in half */
             background: transparent !important;
         }
 
         .stage-header {
-            background: #eee !important;
+            background: #ddd !important;
             border-bottom: 1px solid #000;
-            padding: 2px 5px !important;
+            padding: 2px 8px !important;
+            -webkit-print-color-adjust: exact;
         }
-        .stage-title { font-size: 11pt !important; font-weight: 800; color: #000 !important; margin: 0; }
-        .stage-content { padding: 5px !important; display: block !important; max-height: none !important; }
+        .stage-title { font-size: 12pt !important; font-weight: 800; color: #000 !important; margin: 0; }
+        .stage-content { padding: 8px !important; display: block !important; max-height: none !important; }
 
-        /* --- 5. DATA DENSITY --- */
+        /* --- 4. DATA INPUTS (Paper Form Look) --- */
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Inputs side-by-side */
-            gap: 5px !important;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px !important;
         }
 
-        .input-group { margin-bottom: 2px !important; }
+        .input-group { margin-bottom: 0 !important; }
 
         label { 
-            font-size: 8pt !important; 
+            font-size: 9pt !important; 
             font-weight: bold !important; 
             color: #444 !important; 
             text-transform: uppercase;
-            margin: 0 !important;
+            display: block;
         }
 
-        /* Turn inputs into solid text lines */
         input, select, .target-display, .actual-input {
             border: none !important;
-            border-bottom: 1px solid #000 !important; /* Solid line is easier to see than dots */
+            border-bottom: 1px solid #000 !important; 
             background: transparent !important;
-            font-size: 10pt !important;
-            font-weight: 700 !important;
+            font-size: 11pt !important;
+            font-weight: 600 !important;
             color: #000 !important;
             padding: 0 !important;
             height: auto !important;
             width: 100% !important;
         }
-        
-        /* --- 6. TABLE OPTIMIZATION --- */
+
+        /* --- 5. SPECIAL: COMPACT LAUTER SECTION --- */
+        /* Forces the 4 sub-sections of Lauter to be a 2x2 grid instead of a long list */
+        #lauter-content {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .lauter-header {
+            grid-column: 1 / -1; /* Titles span full width */
+            margin-top: 5px !important;
+            border-bottom: 1px dotted #000;
+        }
+
+        /* --- 6. TABLES --- */
         .data-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
         .data-table th { 
-            background: #ddd !important; 
-            font-size: 8pt !important; 
+            background: #eee !important; 
+            font-size: 9pt !important; 
             border: 1px solid #000; 
-            padding: 2px; 
+            padding: 4px; 
             color: #000;
         }
         .data-table td { 
             border: 1px solid #000; 
-            font-size: 9pt !important; 
-            padding: 2px; 
+            font-size: 10pt !important; 
+            padding: 4px; 
         }
-        
-        /* Fix Yeast Section Layout */
-        #ko-yeast-content .form-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
