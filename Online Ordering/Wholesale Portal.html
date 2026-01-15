@@ -801,14 +801,14 @@ async function init() {
     const headerUser = document.getElementById("headerUser");
 
    // --- LOGIC TO HANDLE HEADER RIGHT SIDE ---
-    // This makes sure the Right Side only shows the Customer Name (No Rep Info)
+    // Only show the User Badge if we are logged in (Step 2 or 3) AND have a customer
     if (state.step >= 2 && state.customer) {
         headerUser.innerHTML = `
             <div class="user-badge">
                 👤 ${state.customer.name}
-            </div>`;
+            </div>`; 
     } else {
-        // Keeps it empty during User Agreement (Step 0) and Login (Step 1)
+        // In Step 0 (Legal) and Step 1 (Login), keep the right side empty
         headerUser.innerHTML = "";
     }
 
