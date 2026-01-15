@@ -532,6 +532,9 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
     const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
 
+    // Global Whitelist Set
+    let CORE_BRANDS_WHITELIST = new Set();
+
     document.addEventListener('DOMContentLoaded', async function() {
       setupUserProfile(); 
       document.getElementById('copyright-year').innerText = new Date().getFullYear();
@@ -540,11 +543,7 @@
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) header.classList.remove('collapsed');
-        }
+        if (parentGroup) parentGroup.classList.remove('collapsed');
       }
 
       document.querySelectorAll('.nav-link').forEach(link => {
@@ -556,26 +555,34 @@
         });
       });
 
-      // --- 1. BUILD CORE BRAND WHITELIST ---
-      // We fetch this so we know which beers are allowed to have "Brew Suggestions"
-      let coreBrands = new Set();
+      // --- STEP 1: FORCE LOAD CORE BRANDS FIRST ---
+      Swal.fire({title: 'Initializing...', text: 'Loading Brand Portfolio', didOpen: () => Swal.showLoading()});
+      
       try {
           const rRes = await fetch(MASTER_API_URL);
           const rData = await rRes.json();
+          
           if (rData.recipes) {
               rData.recipes.forEach(r => {
-                  if (r.category === 'Core') coreBrands.add(r.name.trim().toLowerCase());
+                  // STRICTLY only add if category is explicitly 'Core'
+                  if (r.category && r.category.trim() === 'Core') {
+                      CORE_BRANDS_WHITELIST.add(r.name.trim().toLowerCase());
+                  }
               });
           }
-          console.log("Core Brands Whitelist:", coreBrands);
+          console.log("Allowed Core Brands:", Array.from(CORE_BRANDS_WHITELIST));
       } catch(e) { 
-          console.error("Could not load Core Brands whitelist", e);
+          console.error("Critical Error loading Core Brands", e);
+          Swal.fire('Error', 'Could not verify Core Brands. Production suggestions disabled.', 'error');
       }
 
-      // --- 2. INITIALIZE CALENDAR ---
-      var calendarEl = document.getElementById('calendar');
-      Swal.fire({title: 'Loading Schedule...', didOpen: () => Swal.showLoading()});
+      // --- STEP 2: LOAD CALENDAR (Only after whitelist is ready) ---
+      initCalendar();
+    });
 
+    function initCalendar() {
+      var calendarEl = document.getElementById('calendar');
+      
       var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
         headerToolbar: {
@@ -589,11 +596,15 @@
         dayMaxEvents: 4, 
         events: async function(info, successCallback, failureCallback) {
           try {
+            // Update Loading Message
+            if(Swal.isVisible()) Swal.update({ title: 'Loading Schedule...' });
+            else Swal.fire({title: 'Loading Schedule...', didOpen: () => Swal.showLoading()});
+
             const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`);
             const data = await res.json();
             
-            // Pass the Whitelist to the processor
-            const cleanTasks = processEvents(data.tasks, coreBrands);
+            // FILTER USING THE GLOBALLY LOADED WHITELIST
+            const cleanTasks = processEvents(data.tasks);
 
             updateSidePanels(cleanTasks); 
 
@@ -629,17 +640,17 @@
       });
 
       calendar.render();
-    });
+    }
 
     /**
-     * PROCESSOR: The Logic Core
+     * PROCESSOR:
      * 1. Logistics (Alerts) -> Show ALL brands (Deduplicated)
      * 2. Production (Brewing) -> Show ONLY Core brands (Deduplicated)
      */
-    function processEvents(rawTasks, coreWhitelist) {
+    function processEvents(rawTasks) {
         if (!rawTasks) return [];
 
-        // 1. Sort by Date Ascending (Earliest first)
+        // Sort by Date Ascending
         rawTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         let seenBrands = new Set();
@@ -649,11 +660,9 @@
         rawTasks.forEach(task => {
             
             // --- A. LOGISTICS (Alerts) ---
-            // RULE: Show alerts for ANY beer (Core or Seasonal)
+            // Show for ALL beers, but remove duplicates
             if (task.type === 'logistics') {
                 const key = task.title.toLowerCase().trim();
-                
-                // Deduplicate: If we already have an "Order Hops" alert for this beer, skip duplicates
                 if (!seenAlerts.has(key)) {
                     seenAlerts.add(key);
                     cleanList.push(task);
@@ -661,18 +670,18 @@
             }
             
             // --- B. PRODUCTION (Brew Suggestions) ---
-            // RULE: Only show brew suggestions for CORE brands
+            // STRICT FILTER: Only show if it is in CORE_BRANDS_WHITELIST
             else if (task.type === 'production') {
                 const brandName = task.title.replace('🍺 ', '').trim();
                 const key = brandName.toLowerCase();
 
-                // 1. CHECK WHITELIST: Is this a Core Brand?
-                // (Only filter if whitelist successfully loaded)
-                if (coreWhitelist.size > 0 && !coreWhitelist.has(key)) {
-                    return; // SKIP: It is a Seasonal/Rotating brand
+                // 1. STRICT WHITELIST CHECK
+                if (!CORE_BRANDS_WHITELIST.has(key)) {
+                    // console.log("Skipping Non-Core Brew Suggestion:", brandName);
+                    return; 
                 }
 
-                // 2. DEDUPLICATE: Have we already suggested brewing this today/soon?
+                // 2. DEDUPLICATE
                 if (!seenBrands.has(key)) {
                     seenBrands.add(key);
                     cleanList.push(task);
@@ -680,7 +689,6 @@
             }
             
             // --- C. CELLAR TASKS ---
-            // Keep all cellar tasks (Dry hops, crash, etc)
             else if (task.type === 'cellar') {
                 cleanList.push(task);
             }
