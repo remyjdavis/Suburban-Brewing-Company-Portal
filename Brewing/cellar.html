@@ -1243,14 +1243,20 @@ async function updateUserInfo() {
                 </div>
                 <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
                 <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
+                
                 <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
                 <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
+                
+                <label style="font-size: 11px; color: #f87171; text-transform: uppercase; margin-top: 15px; display: block;">Security</label>
+                <input id="p-pass" type="password" class="swal2-input" placeholder="Enter new password to change">
+                <small style="color: #64748b; font-size: 10px; display: block; margin-top: -10px;">Leave blank to keep current password</small>
             </div>
         `,
         preConfirm: () => {
             return {
                 email: document.getElementById('p-email').value,
                 phone: document.getElementById('p-phone').value,
+                pass: document.getElementById('p-pass').value, // 🔴 Captures password
                 pic: document.getElementById('preview-pic').src
             }
         }
@@ -1274,16 +1280,22 @@ async function saveProfile(data) {
     try {
         const response = await fetch(MASTER_API_URL, {
             method: 'POST',
-            body: JSON.stringify({ action: 'updateProfile', user: username, ...data })
+            body: JSON.stringify({ 
+                action: 'updateProfile', 
+                user: username, 
+                ...data // 🔴 This now includes email, phone, pic, AND pass
+            })
         });
         const result = await response.json();
         
         if (result.status === "success") {
+            // Update session storage for non-sensitive info
             sessionStorage.setItem("user_pic", data.pic);
             sessionStorage.setItem("user_email", data.email);
             sessionStorage.setItem("user_phone", data.phone);
+            
             setupUserProfile();
-            Swal.fire('Saved!', 'Profile updated.', 'success');
+            Swal.fire('Saved!', 'Profile and Security settings updated.', 'success');
         } else {
             throw new Error(result.message || "Update failed");
         }
