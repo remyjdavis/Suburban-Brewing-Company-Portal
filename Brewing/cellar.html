@@ -438,6 +438,41 @@
       .footer-links a { margin: 0 10px; }
       .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
+    /* --- USER PROFILE STYLES --- */
+.user-profile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 8px;
+    transition: background 0.2s;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.user-profile:hover { background: #f3f4f6; }
+.user-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background-color: #e5e7eb; object-fit: cover; border: 2px solid var(--accent);
+}
+.user-info-text { display: flex; flex-direction: column; line-height: 1.1; text-align: right; }
+.user-name { font-weight: 700; font-size: 0.9rem; color: var(--primary-dark); }
+.user-role { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.user-dropdown-menu {
+    display: none; position: absolute; top: 55px; right: 0;
+    background-color: white; min-width: 180px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px;
+    z-index: 2000; overflow: hidden; border: 1px solid #e5e7eb;
+}
+.user-dropdown-menu.show { display: block; }
+.user-dropdown-menu a {
+    color: #374151; padding: 12px 16px; text-decoration: none;
+    display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+    transition: background 0.2s;
+}
+.user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
   </style>
 </head>
 <body>
@@ -446,27 +481,8 @@
   
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-title"><span>System</span></div>
-    <div class="collapsible-content">
-      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-        <span class="icon">🚪</span> <span>Logout of Portal</span>
-      </a>
-    </div>
-
-    <script>
-     function handleLogout() {
-       sessionStorage.removeItem("sbc_auth");
-       const repoPath = "/Suburban-Brewing-Company-Portal/";
-       window.location.replace(repoPath + "login.html");
-    }
-    </script>
-    
-    <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
-      <span>Main Menu</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-main" class="collapsible-content">
+  
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    </div>
     
     <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
       <span>Samplings</span><span class="chevron">▼</span>
@@ -521,13 +537,29 @@
   </aside>
 
   <main class="main-content">
-    <div class="header">
+  <div class="header">
+    <div style="flex-grow: 1;">
       <span style="font-weight: 600; color: #6b7280;">Brewing Operations</span>
-      <span style="font-size: 0.9rem; font-weight: bold;">Cellar Overview</span>
+      <h1 style="margin:0; font-size:1.5rem; color:#111827;">Cellar Management</h1>
     </div>
 
-    <div class="container">
-      <div class="dashboard-row">
+    <div class="user-profile" onclick="toggleUserMenu(event)">
+      <div class="user-info-text">
+        <span class="user-name" id="display-username">Loading...</span>
+        <span class="user-role" id="display-role">...</span>
+      </div>
+      <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
+
+      <div id="userDropdown" class="user-dropdown-menu">
+        <a href="#" onclick="updateUserInfo()">⚙️ Update Info</a>
+        <div style="border-top: 1px solid #eee;"></div>
+        <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="dashboard-row">
         <div class="stat-card">
           <div class="stat-label">Total Volume in Cellar</div>
           <div class="stat-value" id="stat-total-bbl">-- BBL</div>
@@ -1167,6 +1199,61 @@
       const opt = select.options[select.selectedIndex];
       document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
     }
+   // --- USER MANAGEMENT & INITIALIZATION ---
+function setupUserProfile() {
+    const name = sessionStorage.getItem("user_name") || "Brewer";
+    const role = sessionStorage.getItem("user_role") || "Staff";
+    const pic = sessionStorage.getItem("user_pic");
+
+    document.getElementById("display-username").innerText = name;
+    document.getElementById("display-role").innerText = role;
+    if(pic) document.getElementById("display-avatar").src = pic;
+}
+
+function toggleUserMenu(event) {
+    event.stopPropagation();
+    document.getElementById("userDropdown").classList.toggle("show");
+}
+
+function handleLogout() {
+    if(confirm("Log out of portal?")) {
+        sessionStorage.removeItem("sbc_auth");
+        const repoPath = "/Suburban-Brewing-Company-Portal/";
+        window.location.replace(repoPath + "login.html");
+    }
+}
+
+// SINGLE DOMContentLoaded BLOCK
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Initial UI Setup
+    setupUserProfile();
+    document.getElementById('copyright-year').innerText = new Date().getFullYear();
+
+    // 2. Sidebar Auto-expand
+    const activeLink = document.querySelector('.nav-link.active');
+    if (activeLink) {
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) parentGroup.classList.remove('collapsed');
+    }
+
+    // 3. Mobile Navigation logic
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) {
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar.classList.contains('open')) toggleMobileMenu();
+            }
+        });
+    });
+});
+
+// Close dropdown if clicking outside
+window.addEventListener('click', function(e) {
+    const menu = document.getElementById("userDropdown");
+    if (menu && !e.target.closest('.user-profile')) {
+        menu.classList.remove('show');
+    }
+});
   </script>
 </body>
 </html>
