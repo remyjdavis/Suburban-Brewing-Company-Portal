@@ -510,7 +510,7 @@
     </footer>
   </main>
 
-  <script>
+ <script>
     // --- SIDEBAR TOGGLE ---
     function toggleGroup(contentId, headerEl) {
       const content = document.getElementById(contentId);
@@ -532,13 +532,14 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec"; 
     const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
 
+    // 🔴 CONFIGURATION: Add words here to auto-hide specific beer types
+    const BLOCKED_KEYWORDS = ["Seasonal", "Rotating", "Pilot", "Experimental", "One-Off"];
+
     document.addEventListener('DOMContentLoaded', async function() {
-      setupUserProfile(); // Load User Info
-      
-      // Set Year
+      setupUserProfile(); 
       document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
-      // Auto-open current group
+      // Sidebar Logic
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -549,7 +550,6 @@
         }
       }
 
-      // Auto-close menu on link click
       document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => { 
             if (window.innerWidth <= 1024) {
@@ -559,6 +559,7 @@
         });
       });
 
+      // --- CALENDAR INITIALIZATION ---
       var calendarEl = document.getElementById('calendar');
       Swal.fire({title: 'Loading Schedule...', didOpen: () => Swal.showLoading()});
 
@@ -572,22 +573,34 @@
         height: '100%',
         navLinks: true,
         editable: false, 
-        dayMaxEvents: true, // Prevents cell stretching
+        dayMaxEvents: 4, // Limits visible events per cell to prevent overflow
         events: async function(info, successCallback, failureCallback) {
           try {
             const res = await fetch(`${API_URL}?action=getBrewCalendarEvents`);
             const data = await res.json();
-            updateSidePanels(data.tasks); // Send tasks to side panels logic
-            const events = data.tasks.map(task => ({
+            
+            // 1. FILTER & DEDUPLICATE DATA
+            const cleanTasks = processEvents(data.tasks);
+
+            // 2. UPDATE SIDEBAR
+            updateSidePanels(cleanTasks); 
+
+            // 3. MAP TO CALENDAR
+            const events = cleanTasks.map(task => ({
               title: task.title,
               start: task.date,
               allDay: true,
               classNames: [`evt-${task.type}`, task.status === 'urgent' ? 'evt-urgent' : ''],
               extendedProps: { description: task.status, type: task.type }
             }));
+            
             Swal.close();
             successCallback(events);
-          } catch (e) { failureCallback(e); }
+          } catch (e) { 
+            console.error(e);
+            Swal.fire('Error', 'Could not load calendar data.', 'error');
+            failureCallback(e); 
+          }
         },
         eventClick: function(info) {
           const props = info.event.extendedProps;
@@ -607,52 +620,82 @@
       calendar.render();
     });
 
-    // --- LOGIC: UPDATE SIDE PANELS (With FULL Deduplication) ---
+    /**
+     * CORE LOGIC: FILTERS & DEDUPLICATES TASKS
+     * 1. Sorts by date (so earliest tasks win)
+     * 2. Removes tasks with Blocked Keywords
+     * 3. Removes duplicate brand names (shows only the next necessary brew)
+     */
+    function processEvents(rawTasks) {
+        if (!rawTasks) return [];
+
+        // Sort by Date Ascending
+        rawTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        let seenBrands = new Set();
+        let seenAlerts = new Set();
+        let cleanList = [];
+
+        rawTasks.forEach(task => {
+            // A. LOGISTICS (Alerts)
+            if (task.type === 'logistics') {
+                const key = task.title.toLowerCase().trim();
+                if (!seenAlerts.has(key)) {
+                    seenAlerts.add(key);
+                    cleanList.push(task);
+                }
+            }
+            // B. PRODUCTION (Brew Suggestions)
+            else if (task.type === 'production') {
+                const brandName = task.title.replace('🍺 ', '').trim();
+                
+                // Filter 1: Check Blocked Keywords (Seasonal/Rotating)
+                const isBlocked = BLOCKED_KEYWORDS.some(keyword => 
+                    brandName.toLowerCase().includes(keyword.toLowerCase())
+                );
+                if (isBlocked) return; // Skip this task
+
+                // Filter 2: Deduplicate (Only show first instance)
+                const key = brandName.toLowerCase();
+                if (!seenBrands.has(key)) {
+                    seenBrands.add(key);
+                    cleanList.push(task);
+                }
+            }
+        });
+
+        return cleanList;
+    }
+
+    // --- SIDE PANEL RENDERER ---
     function updateSidePanels(tasks) {
       const alertContainer = document.getElementById('alert-list');
       const suggestContainer = document.getElementById('suggestion-list');
       alertContainer.innerHTML = ""; suggestContainer.innerHTML = "";
       
       let alertCount = 0, suggestCount = 0;
-      let seenAlerts = new Set();       // Track unique alerts
-      let seenSuggestions = new Set();  // Track unique brew suggestions
 
       tasks.forEach(t => {
         const dateStr = new Date(t.date).toLocaleDateString();
         
-        // 1. HANDLE SUPPLY CHAIN ALERTS (Deduplicated)
         if (t.type === 'logistics') {
-            const alertKey = t.title.toLowerCase().trim();
-            
-            if (!seenAlerts.has(alertKey)) {
-                seenAlerts.add(alertKey);
-                alertCount++;
-                alertContainer.innerHTML += `
-                    <div class="alert-item">
-                        <div><b>${t.title}</b><br><small>By: ${dateStr}</small></div>
-                        <button onclick="markOrdered(this)" style="border:1px solid #ef4444; color:#ef4444; background:none; border-radius:4px; padding:4px; cursor:pointer;">Ordered</button>
-                    </div>`;
-            }
+            alertCount++;
+            alertContainer.innerHTML += `
+                <div class="alert-item">
+                    <div><b>${t.title}</b><br><small>By: ${dateStr}</small></div>
+                    <button onclick="markOrdered(this)" style="border:1px solid #ef4444; color:#ef4444; background:none; border-radius:4px; padding:4px; cursor:pointer;">Ordered</button>
+                </div>`;
         }
         
-        // 2. HANDLE BREW SUGGESTIONS (Deduplicated)
         if (t.type === 'production') {
-          // Clean the title to ensure "🍺 IPA" and "IPA" count as the same beer
+          suggestCount++;
           const cleanTitle = t.title.replace('🍺 ', '').trim();
-          const suggestKey = cleanTitle.toLowerCase();
-
-          // Only add if we haven't suggested this beer yet
-          if (!seenSuggestions.has(suggestKey)) {
-              seenSuggestions.add(suggestKey); // Mark as seen
-              suggestCount++;
-              
-              const urgentBadge = t.status === 'urgent' ? '🔥' : '';
-              suggestContainer.innerHTML += `
-                <div class="suggestion-item">
-                    <div><b>${urgentBadge} ${cleanTitle}</b><br><small>Target: ${dateStr}</small></div>
-                    <button class="btn-approve" onclick="approveBrew('${t.title}')">Approve</button>
-                </div>`;
-          }
+          const urgentBadge = t.status === 'urgent' ? '🔥' : '';
+          suggestContainer.innerHTML += `
+            <div class="suggestion-item">
+                <div><b>${urgentBadge} ${cleanTitle}</b><br><small>Target: ${dateStr}</small></div>
+                <button class="btn-approve" onclick="approveBrew('${t.title}')">Approve</button>
+            </div>`;
         }
       });
       
