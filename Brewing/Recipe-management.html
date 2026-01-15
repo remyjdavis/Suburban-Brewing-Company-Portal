@@ -163,6 +163,46 @@
         top: 0; 
         z-index: 900; 
     }
+    /* --- USER PROFILE STYLES --- */
+    .user-profile {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+    .user-profile:hover { background: #f3f4f6; }
+    
+    .user-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        background-color: #e5e7eb; object-fit: cover; border: 2px solid var(--accent);
+    }
+    
+    .user-info-text { 
+        display: flex; flex-direction: column; line-height: 1.1; text-align: right; 
+    }
+    .user-name { font-weight: 700; font-size: 0.9rem; color: var(--primary-dark); }
+    .user-role { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    @media (max-width: 600px) { .user-info-text { display: none; } }
+
+    .user-dropdown-menu {
+        display: none; position: absolute; top: 55px; right: 0;
+        background-color: white; min-width: 180px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px;
+        z-index: 2000; overflow: hidden; border: 1px solid #e5e7eb;
+    }
+    .user-dropdown-menu.show { display: block; }
+    
+    .user-dropdown-menu a {
+        color: #374151; padding: 12px 16px; text-decoration: none;
+        display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    .user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
     .container { padding: 20px; flex-grow: 1; overflow-y: auto; }
     
     /* --- EDITOR STYLES --- */
@@ -296,28 +336,8 @@
   
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-      <span>System</span>
-    </div>
-    
-    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-      <span class="icon">🚪</span> <span>Logout of Portal</span>
-    </a>
 
-    <script>
-      function handleLogout() {
-        sessionStorage.removeItem("sbc_auth");
-        const repoPath = "/Suburban-Brewing-Company-Portal/";
-        window.location.replace(repoPath + "login.html");
-      }
-    </script>
-    
-    <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
-      <span>Main Menu</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-main" class="nav-group">
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    </div>
     
     <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
       <span>Samplings</span><span class="chevron">▼</span>
@@ -373,10 +393,26 @@
 
   <div class="main-content">
     <div class="header">
-      <span style="font-weight: 600; color: #6b7280;">Brewing Portal</span>
-      <button onclick="openEditor('NEW')" style="background: var(--primary-dark); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">+ New Recipe</button>
-    </div>
+      <div style="display:flex; align-items:center; gap:15px;">
+          <span style="font-weight: 600; color: #6b7280; font-size:1.1rem;">Recipe Management</span>
+          <button onclick="openEditor('NEW')" style="background: var(--primary-dark); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight:bold;">+ New Recipe</button>
+      </div>
 
+      <div class="user-profile" onclick="toggleUserMenu(event)">
+          <div class="user-info-text">
+              <span class="user-name" id="display-username">Loading...</span>
+              <span class="user-role" id="display-role">...</span>
+          </div>
+          <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
+          
+          <div id="userDropdown" class="user-dropdown-menu">
+              <a href="#" onclick="updateUserInfo()">⚙️ Update Info</a>
+              <div style="border-top: 1px solid #eee;"></div>
+              <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
+          </div>
+      </div>
+    </div>
+    
     <div class="container">
       <div id="master-editor" class="editor-card" style="display:none;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -525,6 +561,122 @@
   </div>
 
 <script>
+  // --- API CONFIGURATION ---
+  const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
+
+  // --- USER PROFILE LOGIC ---
+  function setupUserProfile() {
+        const name = sessionStorage.getItem("user_name") || "Brewer";
+        const role = sessionStorage.getItem("user_role") || "Staff";
+        const pic = sessionStorage.getItem("user_pic");
+
+        document.getElementById("display-username").innerText = name;
+        document.getElementById("display-role").innerText = role;
+        if(pic) document.getElementById("display-avatar").src = pic;
+  }
+
+  function toggleUserMenu(event) {
+        event.stopPropagation();
+        document.getElementById("userDropdown").classList.toggle("show");
+  }
+
+  window.addEventListener('click', function(e) {
+        if (!e.target.closest('.user-profile')) {
+            const menu = document.getElementById("userDropdown");
+            if (menu) menu.classList.remove('show');
+        }
+  });
+
+  function handleLogout() {
+        if(confirm("Log out of portal?")) {
+            sessionStorage.removeItem("sbc_auth");
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            window.location.replace(repoPath + "login.html");
+        }
+  }
+
+  // --- PROFILE EDIT MODAL ---
+  async function updateUserInfo() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Edit Profile Settings',
+            background: '#1e293b',
+            color: '#ffffff',
+            html: `
+                <div style="text-align: left; padding: 10px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../SBC-Logo.png'}" 
+                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
+                        <br>
+                        <button type="button" onclick="document.getElementById('file-input').click()" 
+                                style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px;">
+                            Change Photo
+                        </button>
+                        <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
+                    </div>
+                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
+                    <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
+                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
+                    <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
+                    <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Security</label>
+                    <input id="p-pass" type="password" class="swal2-input" placeholder="New password (optional)">
+                </div>
+            `,
+            preConfirm: () => {
+                return {
+                    email: document.getElementById('p-email').value,
+                    phone: document.getElementById('p-phone').value,
+                    pass: document.getElementById('p-pass').value,
+                    pic: document.getElementById('preview-pic').src
+                }
+            }
+        });
+
+        if (formValues) saveProfile(formValues);
+    }
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('preview-pic').src = e.target.result; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+ function handleLogout() {
+        sessionStorage.removeItem("sbc_auth");
+        const repoPath = "/Suburban-Brewing-Company-Portal/";
+        window.location.replace(repoPath + "login.html");
+      }
+    async function saveProfile(data) {
+        Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
+        
+        const username = sessionStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
+        
+        if (!username) {
+            Swal.fire('Session Error', 'Could not identify user. Please log out and log back in.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${MASTER_API_URL}`, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'updateProfile', user: username, ...data })
+            });
+            const result = await response.json();
+            
+            if (result.status === "success") {
+                sessionStorage.setItem("user_pic", data.pic);
+                sessionStorage.setItem("user_email", data.email);
+                sessionStorage.setItem("user_phone", data.phone);
+                
+                setupUserProfile(); 
+                Swal.fire('Saved!', 'Profile updated.', 'success');
+            } else {
+                throw new Error(result.message || "Update failed");
+            }
+        } catch (e) {
+            Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
+        }
+    }
   // --- SIDEBAR TOGGLE ---
   function toggleGroup(contentId, headerEl) {
     const content = document.getElementById(contentId);
@@ -546,7 +698,8 @@ function toggleMobileMenu() {
 
 // --- UPDATE YOUR DOMContentLoaded ---
 window.addEventListener('DOMContentLoaded', () => {
-    // Set Year
+   setupUserProfile(); 
+  // Set Year
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
     // Auto-expand sidebar section based on active link
