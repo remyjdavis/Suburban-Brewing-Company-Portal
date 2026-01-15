@@ -392,6 +392,46 @@
         .main { padding: 20px 15px; } /* Smaller padding for phones */
         .content { padding-top: 20px; }
     }
+    /* --- USER DROPDOWN MENU STYLES --- */
+    .user-profile-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .user-dropdown-menu {
+        display: none; /* Hidden by default */
+        position: absolute;
+        right: 0;
+        top: 100%; /* Position below the profile */
+        margin-top: 10px;
+        background-color: white;
+        min-width: 180px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        z-index: 5000;
+        overflow: hidden;
+    }
+
+    .user-dropdown-menu.show { display: block; animation: fadeIn 0.2s ease; }
+
+    .user-dropdown-menu a {
+        color: var(--text-main);
+        padding: 12px 16px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: background 0.2s;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .user-dropdown-menu a:last-child { border-bottom: none; }
+    .user-dropdown-menu a:hover { background-color: #f8fafc; color: var(--accent); }
+    
+    .menu-icon { width: 16px; text-align: center; font-size: 14px; }
 </style>
 </head>
 
@@ -889,21 +929,35 @@
         } catch (e) { console.error("Cellar Error", e); }
     }
 
-    // --- PROFILE & USER UI ---
+   // --- UPDATED USER UI SETUP ---
     function setupWelcomeUI() {
         const userName = sessionStorage.getItem("user_name");
         const userRole = sessionStorage.getItem("user_role");
         const userPic = sessionStorage.getItem("user_pic") || "./Online Ordering/logo.png";
         
         const welcomeTarget = document.getElementById('welcome-target');
+        
         if (userName && welcomeTarget) {
             welcomeTarget.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="openProfileModal()">
-                    <div style="text-align: right;">
-                        <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
-                        <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userRole}</span>
+                <div class="user-profile-container">
+                    <div style="display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="toggleUserMenu(event)">
+                        <div style="text-align: right;">
+                            <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
+                            <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userRole}</span>
+                        </div>
+                        <img id="user-avatar" src="${userPic}" 
+                             style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;" 
+                             onerror="this.src='./Online Ordering/logo.png'">
                     </div>
-                    <img id="user-avatar" src="${userPic}" style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;" onerror="this.src='./Online Ordering/logo.png'">
+                    
+                    <div id="user-dropdown" class="user-dropdown-menu">
+                        <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
+                            <span class="menu-icon">⚙️</span> Update Info
+                        </a>
+                        <a href="#" onclick="handleLogout(); toggleUserMenu(event);" style="color: #ef4444;">
+                            <span class="menu-icon">🚪</span> Logout
+                        </a>
+                    </div>
                 </div>
             `;
         }
@@ -975,6 +1029,23 @@
             Swal.fire('Saved!', 'Profile updated.', 'success').then(() => location.reload());
         }
     }
+   // --- TOGGLE LOGIC ---
+    function toggleUserMenu(event) {
+        if(event) event.stopPropagation();
+        const menu = document.getElementById("user-dropdown");
+        if(menu) menu.classList.toggle("show");
+    }
+
+    // Close dropdown if clicked outside
+    window.addEventListener('click', function(e) {
+        const menu = document.getElementById("user-dropdown");
+        if (menu && menu.classList.contains('show')) {
+            // If the click is NOT inside the dropdown or the profile container, close it
+            if (!e.target.closest('.user-profile-container')) {
+                menu.classList.remove('show');
+            }
+        }
+    });
 </script>
   
 </body>
