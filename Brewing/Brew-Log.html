@@ -762,27 +762,8 @@
     
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-      <span>System</span>
-    </div>
-    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-      <span class="icon">🚪</span> <span>Logout of Portal</span>
-    </a>
-
-    <script>
-      function handleLogout() {
-        sessionStorage.removeItem("sbc_auth");
-        const repoPath = "/Suburban-Brewing-Company-Portal/";
-        window.location.replace(repoPath + "login.html");
-      }
-    </script>
     
-    <div class="nav-section-title" onclick="toggleGroup('grp-main', this)">
-      <span>Main Menu</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-main" class="collapsible-content">
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    </div>
     
     <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
       <span>Samplings</span><span class="chevron">▼</span>
@@ -1352,7 +1333,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
 
     // SAVES Brew Log data TO Production & Brew Log Sheet
     const LOG_SAVE_URL = "https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec"; 
-
+    const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
     let allData = {}; // Stores Hydrated object from Backend
     let allRecipes = [];
     let timerInterval = null;
@@ -1413,7 +1394,114 @@ document.querySelectorAll('.nav-link').forEach(link => {
         addDeepCut('sp1-cuts-container');
         addDeepCut('sp2-cuts-container');
     };
+// --- USER PROFILE LOGIC ---
 
+    function setupUserProfile() {
+        const name = sessionStorage.getItem("user_name") || "Brewer";
+        const role = sessionStorage.getItem("user_role") || "Staff";
+        const pic = sessionStorage.getItem("user_pic");
+
+        document.getElementById("display-username").innerText = name;
+        document.getElementById("display-role").innerText = role;
+        if(pic) document.getElementById("display-avatar").src = pic;
+    }
+
+    function toggleUserMenu(event) {
+        event.stopPropagation();
+        document.getElementById("userDropdown").classList.toggle("show");
+    }
+
+    window.addEventListener('click', function(e) {
+        if (!e.target.closest('.user-profile')) {
+            const menu = document.getElementById("userDropdown");
+            if (menu) menu.classList.remove('show');
+        }
+    });
+
+    // 1. OPEN EDIT MODAL
+    async function updateUserInfo() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Edit Profile Settings',
+            background: '#1e293b',
+            color: '#ffffff',
+            html: `
+                <div style="text-align: left; padding: 10px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../SBC-Logo.png'}" 
+                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
+                        <br>
+                        <button type="button" onclick="document.getElementById('file-input').click()" 
+                                style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px;">
+                            Change Photo
+                        </button>
+                        <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
+                    </div>
+                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
+                    <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
+                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
+                    <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
+                    <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Security</label>
+                    <input id="p-pass" type="password" class="swal2-input" placeholder="New password (optional)">
+                </div>
+            `,
+            preConfirm: () => {
+                return {
+                    email: document.getElementById('p-email').value,
+                    phone: document.getElementById('p-phone').value,
+                    pass: document.getElementById('p-pass').value,
+                    pic: document.getElementById('preview-pic').src
+                }
+            }
+        });
+
+        if (formValues) saveProfile(formValues);
+    }
+
+    // 2. HANDLE IMAGE SELECTION
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('preview-pic').src = e.target.result; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // 3. SAVE TO GOOGLE SHEET
+    async function saveProfile(data) {
+        Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
+        const username = sessionStorage.getItem("user_login_id"); 
+        
+        try {
+            const response = await fetch(`${MASTER_API_URL}`, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'updateProfile', user: username, ...data })
+            });
+            const result = await response.json();
+            
+            if (result.status === "success") {
+                // Update Session Storage so UI updates instantly
+                sessionStorage.setItem("user_pic", data.pic);
+                sessionStorage.setItem("user_email", data.email);
+                sessionStorage.setItem("user_phone", data.phone);
+                
+                setupUserProfile(); // Refresh Header
+                Swal.fire('Saved!', 'Profile updated successfully.', 'success');
+            } else {
+                throw new Error(result.message || "Update failed");
+            }
+        } catch (e) {
+            Swal.fire('Error', 'Could not save profile: ' + e.message, 'error');
+        }
+    }
+
+    // 4. LOGOUT
+    function handleLogout() {
+        if(confirm("Log out of portal?")) {
+            sessionStorage.removeItem("sbc_auth");
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            window.location.replace(repoPath + "login.html");
+        }
+    }
     // ---------------------------------------------------------
     // 3. RECIPE LOADING LOGIC (RESTORED FULL ENGINE + QC MATH)
     // ---------------------------------------------------------
@@ -2078,44 +2166,6 @@ async function handoffToCellar(brewData) {
     // 7. TRIGGER PRINT
     window.print();
 }
-  // --- USER PROFILE LOGIC ---
-
-    function setupUserProfile() {
-        const name = sessionStorage.getItem("user_name") || "Brewer";
-        const role = sessionStorage.getItem("user_role") || "Staff";
-        const pic = sessionStorage.getItem("user_pic");
-
-        document.getElementById("display-username").innerText = name;
-        document.getElementById("display-role").innerText = role;
-        if(pic) document.getElementById("display-avatar").src = pic;
-    }
-
-    // 2. Toggle Menu
-    function toggleUserMenu(event) {
-        event.stopPropagation();
-        document.getElementById("userDropdown").classList.toggle("show");
-    }
-
-    // 3. Close Menu on Outside Click
-    window.addEventListener('click', function(e) {
-        if (!e.target.closest('.user-profile')) {
-            const menu = document.getElementById("userDropdown");
-            if (menu) menu.classList.remove('show');
-        }
-    });
-
-    // 4. Update Info Placeholder
-    function updateUserInfo() {
-        Swal.fire('Profile Settings', 'To update your profile, please return to the Command Center.', 'info');
-    }
-
-    // Ensure handleLogout is available globally
-    window.handleLogout = function() {
-        if(confirm("Log out of portal?")) {
-            sessionStorage.removeItem("sbc_auth");
-            window.location.replace("/Suburban-Brewing-Company-Portal/login.html");
-        }
-    };
 </script>
   <div id="print-template" style="display: none;">
     <div class="print-page">
