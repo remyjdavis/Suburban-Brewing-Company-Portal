@@ -579,60 +579,101 @@
         .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
     }
     /* ============================================================
-   🖨️ SHADOW PRINT CSS (STYLES THE HIDDEN TEMPLATE)
+   🖨️ FINAL PRINT FIX (FORCES WHITE THEME & GRID)
    ============================================================ */
 @media print {
     @page { margin: 0.25in; size: portrait; }
     
-    /* 1. HIDE THE REAL APP */
+    /* 1. HIDE THE REAL APP COMPLETELY */
     body > *:not(#print-template) { display: none !important; }
     
     /* 2. SHOW THE PRINT TEMPLATE */
     #print-template { display: block !important; }
     
-    /* 3. RESET PAGE SETTINGS */
+    /* 3. RESET PAGE SETTINGS & FORCE WHITE BACKGROUND */
     html, body {
-        background: white !important; margin: 0; padding: 0;
-        zoom: 0.65; /* Adjust this if it bleeds to page 2 */
-        font-family: 'Segoe UI', sans-serif !important;
+        background-color: #ffffff !important; 
+        background-image: none !important;
+        color: #000000 !important;
+        margin: 0 !important; 
+        padding: 0 !important;
+        zoom: 0.65;
+        font-family: 'Segoe UI', Tahoma, sans-serif !important;
         -webkit-print-color-adjust: exact;
     }
 
-    /* 4. TEMPLATE STYLING (The "Screenshot" Look) */
-    .print-page { width: 100%; }
+    /* 4. TEMPLATE CONTAINER */
+    .print-page { width: 100%; max-width: 100%; }
     
+    /* HEADER */
     .p-header {
         border-bottom: 3px solid #000; margin-bottom: 10px; padding-bottom: 5px;
         display: flex; justify-content: space-between; align-items: flex-end;
     }
-    .p-brand { font-size: 24pt; font-weight: 900; text-transform: uppercase; }
+    .p-brand { font-size: 24pt; font-weight: 900; text-transform: uppercase; color: #000; }
     .p-meta { text-align: right; }
-    .p-batch-row { font-size: 16pt; font-weight: 800; }
+    .p-batch-row { font-size: 16pt; font-weight: 800; color: #000; }
 
-    .p-grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    /* SECTIONS */
+    .p-grid-row { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 10px; 
+        margin-bottom: 10px; 
+    }
     
-    .p-section { border: 2px solid #333; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
-    .p-sec-head { background: #333; color: white; font-weight: 800; padding: 4px 8px; text-transform: uppercase; font-size: 11pt; }
-    .p-sec-body { padding: 5px; }
+    .p-section { 
+        border: 2px solid #333; 
+        border-radius: 4px; 
+        overflow: hidden; 
+        background: white !important; /* Forces White Box */
+        color: black !important;
+        break-inside: avoid;
+    }
+    
+    .p-sec-head { 
+        background: #333 !important; /* Dark Header */
+        color: white !important; /* White Text */
+        font-weight: 800; 
+        padding: 4px 8px; 
+        text-transform: uppercase; 
+        font-size: 11pt; 
+        border-bottom: 1px solid #000;
+    }
+    
+    .p-sec-body { padding: 5px; background: white !important; }
 
-    .p-line { border-bottom: 1px solid #000; margin-bottom: 2px; font-size: 10pt; font-weight: 600; padding-left: 2px; }
-    .p-label { font-size: 8pt; font-weight: bold; color: #555; text-transform: uppercase; margin-right: 5px; }
+    /* LINES & LABELS */
+    .p-line { margin-bottom: 2px; font-size: 10pt; font-weight: 600; display: flex; align-items: baseline; }
+    .p-label { font-size: 8pt; font-weight: bold; color: #444; text-transform: uppercase; margin-right: 5px; min-width: 60px; }
+    .p-val { font-weight: 800; border-bottom: 1px solid #000; flex-grow: 1; text-align: center; }
+    .p-input { border-bottom: 1px solid #000; min-width: 50px; display: inline-block; flex-grow: 1; height: 14px;}
     
-    .p-row-split { display: flex; justify-content: space-between; margin-bottom: 4px; }
-    .p-water-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dotted #ccc; padding-bottom: 4px; }
+    .p-row-split { display: flex; justify-content: space-between; margin-bottom: 4px; gap: 10px; }
+    .p-water-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dotted #ccc; padding-bottom: 4px; font-size: 9pt; font-weight: 800;}
 
     /* TABLES */
     .p-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
-    .p-table th { background: #eee; border: 1px solid #999; padding: 2px; font-size: 8pt; text-align: left; }
-    .p-table td { border: 1px solid #999; padding: 3px; font-weight: 600; }
+    .p-table th { background: #eee !important; border: 1px solid #999; padding: 2px; font-size: 7pt; text-align: center; color: #000;}
+    .p-table td { border: 1px solid #999; padding: 3px; font-weight: 600; text-align: center; color: #000;}
 
-    /* LAUTER GRID */
-    .p-lauter-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 5px; padding: 5px; }
-    .p-sub-box { border: 1px solid #ccc; padding: 4px; }
-    .p-sub-box strong { display: block; font-size: 9pt; text-decoration: underline; margin-bottom: 2px; }
+    /* LAUTER 2x2 GRID FIX */
+    .p-lauter-inner {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+        padding: 5px;
+        background: white !important;
+    }
+    .p-sub-box { 
+        border: 1px solid #ccc; 
+        padding: 4px; 
+        background: white !important;
+    }
+    .p-sub-box strong { display: block; font-size: 8pt; text-decoration: underline; margin-bottom: 2px; text-transform: uppercase; }
 
     /* YEAST GRID */
-    .p-yeast-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .p-yeast-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 9pt;}
 }
   </style>
 </head>
@@ -1862,68 +1903,80 @@ async function handoffToCellar(brewData) {
         });
     }
 }
-  // ===========================================
-// 🖨️ NEW PRINT HANDLER (Syncs Data to Shadow Template)
-// ===========================================
-function printLog() {
+  function printLog() {
     // 1. SYNC HEADER INFO
-    document.getElementById('p-batch-id').innerText = document.getElementById('batchId').value || "---";
-    document.getElementById('p-batch-id-2').innerText = document.getElementById('batchId').value || "---";
-    document.getElementById('p-date').innerText = document.getElementById('brewDate').value || "--/--/----";
-    document.getElementById('p-recipe').innerText = document.getElementById('header-beer-name').innerText;
-    document.getElementById('p-vol').innerText = document.getElementById('setup-batch-size').value + " BBL";
+    const batch = document.getElementById('batchId').value || "B-XXXX";
+    document.getElementById('p-batch-id').innerText = batch;
+    document.getElementById('p-batch-id-2').innerText = batch;
+    document.getElementById('p-date').innerText = document.getElementById('brewDate').value || new Date().toLocaleDateString();
+    
+    // Check if beer name exists in header, otherwise fallback
+    const beerName = document.getElementById('header-beer-name') ? document.getElementById('header-beer-name').innerText : "New Entry";
+    document.getElementById('p-recipe').innerText = beerName;
+    
+    document.getElementById('p-vol').innerText = (document.getElementById('setup-batch-size').value || "10") + " BBL";
     
     // 2. SYNC MASH
-    document.getElementById('p-mash-temp').innerText = document.getElementById('t-mash-temp').innerText;
-    document.getElementById('p-mash-ph').innerText = document.getElementById('t-ph').innerText;
-    document.getElementById('p-mash-temp-act').innerText = (document.querySelector('#mash-content .actual-input').value || "__") + "°F";
+    document.getElementById('p-mash-temp').innerText = document.getElementById('t-mash-temp') ? document.getElementById('t-mash-temp').innerText : "-";
+    document.getElementById('p-mash-ph').innerText = document.getElementById('t-ph') ? document.getElementById('t-ph').innerText : "-";
     
     // 3. SYNC WATER
-    document.getElementById('p-foundation').innerText = document.getElementById('t-foundation').innerText;
-    document.getElementById('p-mashin').innerText = document.getElementById('t-mash').innerText;
-    document.getElementById('p-sparge').innerText = document.getElementById('t-sparge').innerText;
+    document.getElementById('p-foundation').innerText = document.getElementById('t-foundation') ? document.getElementById('t-foundation').innerText : "-";
+    document.getElementById('p-mashin').innerText = document.getElementById('t-mash') ? document.getElementById('t-mash').innerText : "-";
+    document.getElementById('p-sparge').innerText = document.getElementById('t-sparge') ? document.getElementById('t-sparge').innerText : "-";
 
-    // 4. SYNC GRAINS (Loop through table)
+    // 4. SYNC GRAINS (Loop through main table)
     const grainHTML = [];
     document.querySelectorAll('#grain-body tr').forEach(row => {
         const cols = row.querySelectorAll('td');
-        const name = cols[0].innerText;
-        const target = cols[1].innerText;
-        const actual = row.querySelector('.ing-qty').value || "___";
-        const lot = row.querySelector('.ing-lot').value || "___";
-        grainHTML.push(`<tr><td>${name}</td><td>${target}</td><td>${actual}</td><td>${lot}</td></tr>`);
+        if(cols.length > 0) {
+            const name = cols[0].innerText;
+            const target = cols[1].innerText;
+            const actualInput = row.querySelector('.ing-qty');
+            const actual = actualInput ? actualInput.value : "___";
+            const lotInput = row.querySelector('.ing-lot');
+            const lot = lotInput ? lotInput.value : "___";
+            grainHTML.push(`<tr><td>${name}</td><td>${target}</td><td>${actual}</td><td>${lot}</td></tr>`);
+        }
     });
     document.getElementById('p-grain-body').innerHTML = grainHTML.join('');
 
-    // 5. SYNC BOIL (Loop through table)
-    const boilHTML = [];
-    document.getElementById('p-pre-g').innerText = document.getElementById('t-pre-g').innerText;
-    document.getElementById('p-post-g').innerText = document.getElementById('t-post-g').innerText;
+    // 5. SYNC BOIL
+    document.getElementById('p-pre-g').innerText = document.getElementById('t-pre-g') ? document.getElementById('t-pre-g').innerText : "-";
+    document.getElementById('p-post-g').innerText = document.getElementById('t-post-g') ? document.getElementById('t-post-g').innerText : "-";
     
+    const boilHTML = [];
     document.querySelectorAll('#boil-body tr').forEach(row => {
         const cols = row.querySelectorAll('td');
-        const name = cols[0].innerText;
-        const time = cols[1].innerText;
-        const amt = cols[2].innerText;
-        const actual = row.querySelector('.ing-qty').value || "___";
-        boilHTML.push(`<tr><td>${name}</td><td>${time}</td><td>${amt}</td><td>${actual}</td></tr>`);
+        if(cols.length > 0) {
+            const name = cols[0].innerText;
+            const time = cols[1].innerText;
+            const amt = cols[2].innerText;
+            const actualInput = row.querySelector('.ing-qty');
+            const actual = actualInput ? actualInput.value : "___";
+            boilHTML.push(`<tr><td>${name}</td><td>${time}</td><td>${amt}</td><td>${actual}</td></tr>`);
+        }
     });
     document.getElementById('p-boil-body').innerHTML = boilHTML.join('');
 
-    // 6. SYNC LAUTER (Values)
-    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value || "___" : "___";
-    document.getElementById('p-fw-start').innerText = getVal('fw-start');
-    document.getElementById('p-sp1-start').innerText = getVal('sp1-start');
-    document.getElementById('p-sp2-start').innerText = getVal('sp2-start');
-    document.getElementById('p-fr-start').innerText = getVal('fr-start');
+    // 6. SYNC YEAST & LAUTER
+    if(document.getElementById('t-yeast')) document.getElementById('p-ystrain').innerText = document.getElementById('t-yeast').innerText;
+    if(document.getElementById('yeast-source')) document.getElementById('p-ysource').innerText = document.getElementById('yeast-source').value;
+    if(document.getElementById('ko-actual-pitch')) document.getElementById('p-ypitch').innerText = document.getElementById('ko-actual-pitch').value;
+    if(document.getElementById('ko-vessel-select')) document.getElementById('p-yvessel').innerText = document.getElementById('ko-vessel-select').value;
+    
+    const setVal = (pid, sourceId) => {
+        if(document.getElementById(sourceId) && document.getElementById(pid)) {
+            document.getElementById(pid).innerText = document.getElementById(sourceId).value || "__:__";
+        }
+    };
+    setVal('p-fw-start', 'fw-start');
+    setVal('p-sp1-start', 'sp1-start');
+    setVal('p-sp2-start', 'sp2-start');
+    setVal('p-fr-start', 'fr-start');
+    setVal('p-fw-g', 'fw-gravity'); // Assuming you have an ID for gravity
 
-    // 7. SYNC YEAST
-    document.getElementById('p-ystrain').innerText = document.getElementById('t-yeast').innerText;
-    document.getElementById('p-ysource').innerText = document.getElementById('yeast-source').value;
-    document.getElementById('p-ypitch').innerText = document.getElementById('ko-actual-pitch').value || "___";
-    document.getElementById('p-yvessel').innerText = document.getElementById('ko-vessel-select').value;
-
-    // 8. TRIGGER PRINT
+    // 7. TRIGGER PRINT
     window.print();
 }
 </script>
@@ -1941,23 +1994,24 @@ function printLog() {
             <div class="p-section">
                 <div class="p-sec-head">1. BATCH SETUP</div>
                 <div class="p-sec-body">
-                    <div class="p-line"><span class="p-label">RECIPE:</span> <span id="p-recipe">---</span></div>
-                    <div class="p-line"><span class="p-label">BATCH ID:</span> <span id="p-batch-id-2">---</span></div>
-                    <div class="p-line"><span class="p-label">TARGET VOL:</span> <span id="p-vol">---</span></div>
-                    <div class="p-line"><span class="p-label">EXP ABV:</span> <span id="p-abv">---</span></div>
+                    <div class="p-line"><span class="p-label">RECIPE:</span> <span id="p-recipe" class="p-val">---</span></div>
+                    <div class="p-line"><span class="p-label">BATCH ID:</span> <span id="p-batch-id-2" class="p-val">---</span></div>
+                    <div class="p-line"><span class="p-label">TARGET VOL:</span> <span id="p-vol" class="p-val">---</span></div>
+                    <div class="p-line"><span class="p-label">EXP ABV:</span> <span id="p-abv" class="p-val">---</span></div>
                 </div>
             </div>
             <div class="p-section">
                 <div class="p-sec-head">3. MASH SCHEDULE</div>
                 <div class="p-sec-body">
                     <div class="p-row-split">
-                        <div><span class="p-label">TARGET TEMP:</span> <span id="p-mash-temp">---</span></div>
-                        <div><span class="p-label">ACTUAL:</span> <span id="p-mash-temp-act">___°F</span></div>
+                        <div><span class="p-label">TARGET TEMP:</span> <span id="p-mash-temp" class="p-val">---</span></div>
+                        <div><span class="p-label">ACTUAL:</span> <span id="p-mash-temp-act" class="p-input">______°F</span></div>
                     </div>
                     <div class="p-row-split">
-                        <div><span class="p-label">TARGET PH:</span> <span id="p-mash-ph">---</span></div>
-                        <div><span class="p-label">ACTUAL:</span> <span id="p-mash-ph-act">___</span></div>
+                        <div><span class="p-label">TARGET PH:</span> <span id="p-mash-ph" class="p-val">---</span></div>
+                        <div><span class="p-label">ACTUAL:</span> <span id="p-mash-ph-act" class="p-input">______</span></div>
                     </div>
+                    <div class="p-line"><span class="p-label">REST TIME:</span> <span class="p-val">60 Min</span></div>
                 </div>
             </div>
         </div>
@@ -1966,41 +2020,43 @@ function printLog() {
             <div class="p-sec-head">2. WATER & GRAIN BILL</div>
             <div class="p-sec-body">
                 <div class="p-water-row">
-                    <span><span class="p-label">FOUNDATION:</span> <span id="p-foundation">---</span></span>
-                    <span><span class="p-label">MASH IN:</span> <span id="p-mashin">---</span></span>
-                    <span><span class="p-label">SPARGE:</span> <span id="p-sparge">---</span></span>
+                    <span><span class="p-label">FOUNDATION:</span> <span id="p-foundation" class="p-val">---</span></span>
+                    <span><span class="p-label">MASH IN:</span> <span id="p-mashin" class="p-val">---</span></span>
+                    <span><span class="p-label">SPARGE:</span> <span id="p-sparge" class="p-val">---</span></span>
                 </div>
                 <table class="p-table">
                     <thead><tr><th>MALT / GRAIN</th><th>TARGET (lbs)</th><th>ACTUAL (lbs)</th><th>LOT #</th></tr></thead>
-                    <tbody id="p-grain-body">
-                        </tbody>
+                    <tbody id="p-grain-body"></tbody>
                 </table>
             </div>
         </div>
 
         <div class="p-grid-row">
-            <div class="p-section p-lauter-grid">
-                <div class="p-sec-head" style="grid-column: 1/-1;">4. LAUTER & SPARGE</div>
-                
-                <div class="p-sub-box">
-                    <strong>First Wort</strong>
-                    <div class="p-line"><span class="p-label">Start:</span> <span id="p-fw-start">__:__</span></div>
-                    <div class="p-line"><span class="p-label">Grav:</span> <span id="p-fw-g">1.___</span></div>
-                </div>
-                <div class="p-sub-box">
-                    <strong>First Sparge</strong>
-                    <div class="p-line"><span class="p-label">Start:</span> <span id="p-sp1-start">__:__</span></div>
-                    <div class="p-line"><span class="p-label">End:</span> <span id="p-sp1-end">__:__</span></div>
-                </div>
-                <div class="p-sub-box">
-                    <strong>Second Sparge</strong>
-                    <div class="p-line"><span class="p-label">Start:</span> <span id="p-sp2-start">__:__</span></div>
-                    <div class="p-line"><span class="p-label">End:</span> <span id="p-sp2-end">__:__</span></div>
-                </div>
-                <div class="p-sub-box">
-                    <strong>Final Runnings</strong>
-                    <div class="p-line"><span class="p-label">Start:</span> <span id="p-fr-start">__:__</span></div>
-                    <div class="p-line"><span class="p-label">Grav:</span> <span id="p-fr-g">1.___</span></div>
+            <div class="p-section">
+                <div class="p-sec-head">4. LAUTER & SPARGE</div>
+                <div class="p-lauter-inner">
+                    <div class="p-sub-box">
+                        <strong>First Wort</strong>
+                        <div class="p-line"><span class="p-label">Start:</span> <span id="p-fw-start" class="p-input">__:__</span></div>
+                        <div class="p-line"><span class="p-label">End:</span> <span class="p-input">__:__</span></div>
+                        <div class="p-line"><span class="p-label">Grav:</span> <span id="p-fw-g" class="p-input">1.___</span></div>
+                    </div>
+                    <div class="p-sub-box">
+                        <strong>First Sparge</strong>
+                        <div class="p-line"><span class="p-label">Start:</span> <span id="p-sp1-start" class="p-input">__:__</span></div>
+                        <div class="p-line"><span class="p-label">End:</span> <span class="p-input">__:__</span></div>
+                        <div class="p-line"><span class="p-label">Cut:</span> <span class="p-val">No</span></div>
+                    </div>
+                    <div class="p-sub-box">
+                        <strong>Second Sparge</strong>
+                        <div class="p-line"><span class="p-label">Start:</span> <span id="p-sp2-start" class="p-input">__:__</span></div>
+                        <div class="p-line"><span class="p-label">End:</span> <span class="p-input">__:__</span></div>
+                    </div>
+                    <div class="p-sub-box">
+                        <strong>Final Runnings</strong>
+                        <div class="p-line"><span class="p-label">Start:</span> <span id="p-fr-start" class="p-input">__:__</span></div>
+                        <div class="p-line"><span class="p-label">End:</span> <span class="p-input">__:__</span></div>
+                    </div>
                 </div>
             </div>
 
@@ -2008,13 +2064,12 @@ function printLog() {
                 <div class="p-sec-head">5. BOIL ADDITIONS</div>
                 <div class="p-sec-body">
                     <div class="p-row-split">
-                        <div><span class="p-label">PRE-BOIL G:</span> <span id="p-pre-g">---</span></div>
-                        <div><span class="p-label">POST G:</span> <span id="p-post-g">---</span></div>
+                        <div><span class="p-label">PRE-BOIL G:</span> <span id="p-pre-g" class="p-val">---</span></div>
+                        <div><span class="p-label">POST G:</span> <span id="p-post-g" class="p-val">---</span></div>
                     </div>
                     <table class="p-table" style="margin-top:5px;">
                         <thead><tr><th>ADDITION</th><th>TIME</th><th>AMT</th><th>ACTUAL</th></tr></thead>
-                        <tbody id="p-boil-body">
-                            </tbody>
+                        <tbody id="p-boil-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -2024,12 +2079,12 @@ function printLog() {
             <div class="p-sec-head">6. KNOCKOUT & YEAST PITCH</div>
             <div class="p-sec-body">
                 <div class="p-yeast-grid">
-                    <div><span class="p-label">STRAIN:</span> <span id="p-ystrain">---</span></div>
-                    <div><span class="p-label">SOURCE:</span> <span id="p-ysource">---</span></div>
-                    <div><span class="p-label">GEN #:</span> <span id="p-ygen">---</span></div>
-                    <div><span class="p-label">PITCH VOL:</span> <span id="p-ypitch">---</span></div>
-                    <div><span class="p-label">KO TEMP:</span> <span id="p-yko">___°F</span></div>
-                    <div><span class="p-label">VESSEL:</span> <span id="p-yvessel">---</span></div>
+                    <div><span class="p-label">STRAIN:</span> <span id="p-ystrain" class="p-val">---</span></div>
+                    <div><span class="p-label">PITCH VOL:</span> <span id="p-ypitch" class="p-val">---</span></div>
+                    <div><span class="p-label">SOURCE:</span> <span id="p-ysource" class="p-val">---</span></div>
+                    <div><span class="p-label">GEN #:</span> <span id="p-ygen" class="p-input">______</span></div>
+                    <div><span class="p-label">KO TEMP:</span> <span id="p-yko" class="p-input">______°F</span></div>
+                    <div><span class="p-label">VESSEL:</span> <span id="p-yvessel" class="p-val">---</span></div>
                 </div>
             </div>
         </div>
