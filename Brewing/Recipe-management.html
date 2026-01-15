@@ -141,17 +141,21 @@
     /* ⚠️ FIX: Ensures icon isn't touching text */
     .logout-link span.icon { margin-right: 12px; font-size: 16px; }
 
-    /* --- MAIN LAYOUT --- */
+    /* --- FIX: MAIN LAYOUT CONSTRAINT --- */
     .main-content { 
         margin-left: 260px; 
         flex-grow: 1; 
         display: flex; 
         flex-direction: column; 
-        width: 100%; 
+        /* 🔴 CRITICAL: Forces main content to respect screen width */
+        width: calc(100% - 260px); 
+        max-width: 100vw;
+        overflow-x: hidden; 
         transition: all 0.3s ease; 
         min-height: 100vh;
     }
 
+    /* --- FIX: HEADER LAYOUT --- */
     .header { 
         background: white; 
         padding: 15px 30px; 
@@ -162,6 +166,9 @@
         position: sticky; 
         top: 0; 
         z-index: 900; 
+        /* 🔴 CRITICAL: Ensures header never exceeds viewport */
+        width: 100%;
+        box-sizing: border-box;
     }
     /* --- USER PROFILE STYLES --- */
     .user-profile {
@@ -203,8 +210,14 @@
         transition: background 0.2s;
     }
     .user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
-    .container { padding: 20px; flex-grow: 1; overflow-y: auto; }
-    
+    .container { 
+        padding: 20px; 
+        flex-grow: 1; 
+        overflow-y: auto; 
+        /* 🔴 CRITICAL: Prevents children from stretching the container */
+        max-width: 100%;
+        overflow-x: hidden; 
+    }
     /* --- EDITOR STYLES --- */
     .editor-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 2px solid var(--accent); }
     .collapsible-header { background: #f8f9fa; padding: 12px 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: #374151; display: flex; justify-content: space-between; }
@@ -228,7 +241,18 @@
     /* PORTFOLIO LIST */
     .category-group { margin-bottom: 30px; }
     .category-header { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 15px; border-left: 5px solid var(--accent); padding-left: 10px; text-transform: uppercase; }
-    .horizontal-scroll-container { display: flex; gap: 20px; overflow-x: auto; padding: 10px 5px 25px 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+   /* --- FIX: CARD SCROLLING --- */
+    .horizontal-scroll-container { 
+        display: flex; 
+        gap: 20px; 
+        overflow-x: auto; /* This enables the scroll */
+        padding: 10px 5px 25px 5px; 
+        scrollbar-width: none; 
+        -webkit-overflow-scrolling: touch; 
+        /* 🔴 CRITICAL: Forces this specific box to handle the overflow */
+        width: 100%; 
+        max-width: 100%;
+    }
     .recipe-card { background: white; border-radius: 15px; border: 1px solid #ddd; padding: 20px; min-width: 280px; max-width: 280px; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
 
     /* --- FOOTER STYLES (MATCHES INDEX) --- */
@@ -293,7 +317,10 @@
     @media (max-width: 1024px) {
       .sidebar { left: -260px; z-index: 1001; }
       .sidebar.open { left: 0; }
-      .main-content { margin-left: 0; }
+      .main-content { 
+          margin-left: 0; 
+          width: 100%; /* Reset width for mobile */
+      }
       .menu-overlay.active { display: block; }
       
       #menu-toggle {
@@ -302,13 +329,15 @@
         border-radius: 50%; justify-content: center; align-items: center;
         font-size: 28px; z-index: 1002; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
       }
-      .header { padding: 10px 20px; }
+      .header { padding: 10px 15px; }
       .header span { display: none; } /* Hide "Brewing Portal" text on mobile */
       
       /* Footer Stack */
       .app-footer { flex-direction: column; gap: 15px; text-align: center; }
       .footer-links a { margin: 0 10px; }
       .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
+      
+      .user-info-text { display: none; } 
     }
 
     @media (max-width: 600px) {
