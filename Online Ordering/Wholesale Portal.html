@@ -550,6 +550,64 @@ body,
     /* 🔴 Forces Safari to render the blend mode correctly */
     isolation: isolate;
 }
+        /* =========================================
+       NEW LOGIN SCREEN STYLES (BREWHOUSE BG)
+       ========================================= */
+    .login-hero-container {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        width: 100%; height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9000; /* Sit on top of everything */
+        overflow: hidden;
+    }
+
+    .login-hero-bg {
+        position: absolute;
+        top: -20px; left: -20px; right: -20px; bottom: -20px;
+        background: url('Brewery.jpg') no-repeat center center;
+        background-size: cover;
+        filter: brightness(0.4) blur(6px); /* The Dark & Blur Effect */
+        z-index: -1;
+    }
+
+    .login-card-hero {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 40px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        text-align: center;
+    }
+
+    .login-logo-area h1 {
+        margin: 0;
+        color: var(--accent);
+        letter-spacing: 2px;
+        font-size: 28px;
+    }
+
+    .login-logo-area p {
+        margin: 0;
+        font-size: 10px;
+        letter-spacing: 4px;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .login-input-styled {
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 16px;
+        text-align: center;
+    }
 </style>
 </head>
 <body>
@@ -717,13 +775,26 @@ async function init() {
                     <button id="acceptBtn" class="btn btn-primary" style="width:100%;" disabled onclick="state.step=1;render()">I Accept & Agree</button>
                 </div>`;
         
-        // STEP 1: LOGIN
+       // STEP 1: BREWHOUSE LOGIN (UPDATED)
         } else if (state.step === 1) {
+            liveBar.style.display = "none";
+            header.style.display = "none"; // HIDE HEADER FOR IMMERSIVE BG
             app.innerHTML = `
-                <div class="card" style="max-width:400px; margin:auto; text-align:center;">
-                    <h3>Wholesale Login</h3>
-                    <input type="text" id="loginInput" placeholder="ENTER UNIQUE KEY" style="width:100%; padding:15px; margin-bottom:15px; border:2px solid #1a1a1a; border-radius:8px; text-align:center; font-size:1.2rem;">
-                    <button class="btn btn-primary" style="width:100%;" onclick="attemptLogin()">Log In</button>
+                <div class="login-hero-container">
+                    <div class="login-hero-bg"></div> <div class="login-card-hero">
+                        <div class="login-logo-area">
+                            <h1>SUBURBAN</h1>
+                            <p>BREWING CO.</p>
+                        </div>
+                        
+                        <h2 style="margin-bottom:20px; color:#333;">Wholesale Portal</h2>
+                        
+                        <input type="text" id="loginInput" class="login-input-styled" placeholder="ENTER UNIQUE KEY">
+                        
+                        <button class="btn btn-primary" style="width:100%; padding:15px; font-size:1.1rem;" onclick="attemptLogin()">Log In</button>
+                        
+                        <p style="margin-top:20px; font-size:12px; color:#888;">Having trouble? Contact your Sales Rep.</p>
+                    </div>
                 </div>`;
         
         // STEP 2: PRODUCT GRID
