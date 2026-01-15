@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Brew Log Print Template</title>
+    <style>
+        /* --- VISUAL RENDER STYLES --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #eee; /* Grey background for screen preview */
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* SIMULATE A SHEET OF PAPER */
+        .page {
+            width: 8.5in;
+            height: 11in;
+            background: white;
+            padding: 0.25in;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2 Column Grid */
+            grid-template-rows: auto auto auto 1fr auto; /* Rows adapt to content */
+            gap: 8px;
+            align-content: start;
+            box-sizing: border-box;
+        }
+
+        /* --- SECTIONS --- */
+        .section {
+            border: 2px solid #333;
+            border-radius: 4px;
+            padding: 0;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .section-header {
+            background: #333;
+            color: white;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 10pt;
+            padding: 3px 8px;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .section-body {
+            padding: 5px;
+        }
+
+        /* --- GRID PLACEMENT --- */
+        /* Header */
+        .header-area { grid-column: 1 / -1; border-bottom: 3px solid #000; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;}
+        
+        /* Row 1 */
+        .sec-setup { grid-column: 1; }
+        .sec-mash { grid-column: 2; }
+        
+        /* Row 2 */
+        .sec-grain { grid-column: 1 / -1; } /* Full Width */
+        
+        /* Row 3 */
+        .sec-lauter { grid-column: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        .sec-boil { grid-column: 2; }
+
+        /* Row 4 */
+        .sec-yeast { grid-column: 1 / -1; }
+
+        /* --- TYPOGRAPHY & INPUTS --- */
+        .row { display: flex; justify-content: space-between; margin-bottom: 3px; align-items: baseline; }
+        label { font-size: 8pt; font-weight: bold; color: #555; text-transform: uppercase; margin-right: 5px; }
+        .input-line { 
+            border-bottom: 1px solid #000; 
+            flex-grow: 1; 
+            font-weight: bold; 
+            font-size: 10pt; 
+            min-height: 14px; 
+            text-align: center;
+        }
+
+        /* --- TABLES --- */
+        table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+        th { background: #ddd; border: 1px solid #999; padding: 2px; font-size: 7pt; }
+        td { border: 1px solid #999; padding: 2px; text-align: center; font-weight: 600; }
+        
+        /* --- LAUTER SUB-GRID --- */
+        /* This makes the 4 lauter steps sit 2x2 */
+        .lauter-step { border: 1px solid #ccc; padding: 2px; }
+        .lauter-title { font-size: 8pt; font-weight: 800; text-decoration: underline; margin-bottom: 2px; display: block; }
+
+        /* --- PRINT ONLY TWEAKS --- */
+        @media print {
+            body { background: white; padding: 0; }
+            .page { box-shadow: none; width: 100%; height: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page">
+        <div class="header-area">
+            <div style="font-size: 24pt; font-weight: 900;">SUBURBAN BREWING CO.</div>
+            <div style="text-align: right;">
+                <div style="font-size: 14pt; font-weight: bold;">BATCH: <span style="text-decoration: underline;">B-2026-001</span></div>
+                <div style="font-size: 10pt;">Date: 01/15/2026</div>
+            </div>
+        </div>
+
+        <div class="section sec-setup">
+            <div class="section-header">1. Batch Setup</div>
+            <div class="section-body">
+                <div class="row"><label>Recipe:</label><div class="input-line">HAZY IPA V3</div></div>
+                <div class="row"><label>Batch ID:</label><div class="input-line">B-2026-001</div></div>
+                <div class="row"><label>Target Vol:</label><div class="input-line">10 BBL</div></div>
+                <div class="row"><label>Exp ABV:</label><div class="input-line">6.5%</div></div>
+            </div>
+        </div>
+
+        <div class="section sec-mash">
+            <div class="section-header">3. Mash Schedule</div>
+            <div class="section-body">
+                <div class="row">
+                    <label>Target Temp:</label><div class="input-line">152°F</div>
+                    <label style="margin-left:10px">Actual:</label><div class="input-line">____°F</div>
+                </div>
+                <div class="row">
+                    <label>Target pH:</label><div class="input-line">5.20</div>
+                    <label style="margin-left:10px">Actual:</label><div class="input-line">____</div>
+                </div>
+                <div class="row"><label>Rest Time:</label><div class="input-line">60 Min</div></div>
+            </div>
+        </div>
+
+        <div class="section sec-grain">
+            <div class="section-header">2. Water & Grain Bill</div>
+            <div class="section-body">
+                <div class="row" style="margin-bottom: 8px;">
+                    <label>Foundation:</label><div class="input-line">50 Gal</div>
+                    <label style="margin-left:15px">Mash In:</label><div class="input-line">120 Gal</div>
+                    <label style="margin-left:15px">Sparge:</label><div class="input-line">200 Gal</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>MALT / GRAIN</th><th>TARGET (lbs)</th><th>ACTUAL (lbs)</th><th>LOT #</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>2-Row Pale</td><td>800</td><td>_______</td><td>_______</td></tr>
+                        <tr><td>Flaked Oats</td><td>150</td><td>_______</td><td>_______</td></tr>
+                        <tr><td>Wheat Malt</td><td>100</td><td>_______</td><td>_______</td></tr>
+                        <tr><td>Acidulated</td><td>15</td><td>_______</td><td>_______</td></tr>
+                        <tr><td><strong>TOTAL</strong></td><td><strong>1065</strong></td><td>_______</td><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section sec-lauter">
+            <div class="section-header" style="grid-column: 1/-1">4. Lauter & Sparge</div>
+            
+            <div class="lauter-step">
+                <span class="lauter-title">First Wort</span>
+                <div class="row"><label>Start:</label><div class="input-line">__:__</div></div>
+                <div class="row"><label>End:</label><div class="input-line">__:__</div></div>
+                <div class="row"><label>Grav:</label><div class="input-line">1.___</div></div>
+            </div>
+            <div class="lauter-step">
+                <span class="lauter-title">First Sparge</span>
+                <div class="row"><label>Start:</label><div class="input-line">__:__</div></div>
+                <div class="row"><label>End:</label><div class="input-line">__:__</div></div>
+                <div class="row"><label>Cut:</label><div class="input-line">No</div></div>
+            </div>
+            <div class="lauter-step">
+                <span class="lauter-title">Second Sparge</span>
+                <div class="row"><label>Start:</label><div class="input-line">__:__</div></div>
+                <div class="row"><label>End:</label><div class="input-line">__:__</div></div>
+                <div class="row"><label>Cut:</label><div class="input-line">No</div></div>
+            </div>
+            <div class="lauter-step">
+                <span class="lauter-title">Final Runnings</span>
+                <div class="row"><label>Start:</label><div class="input-line">__:__</div></div>
+                <div class="row"><label>End:</label><div class="input-line">__:__</div></div>
+                <div class="row"><label>Grav:</label><div class="input-line">1.___</div></div>
+            </div>
+        </div>
+
+        <div class="section sec-boil">
+            <div class="section-header">5. Boil Additions</div>
+            <div class="section-body">
+                <div class="row">
+                    <label>Pre-Boil G:</label><div class="input-line">1.045</div>
+                    <label style="margin-left:5px">Post G:</label><div class="input-line">1.065</div>
+                </div>
+                <table style="margin-top: 5px;">
+                    <thead>
+                        <tr><th>ADDITION</th><th>TIME</th><th>AMT</th><th>ACTUAL</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Magnum</td><td>60</td><td>20oz</td><td>______</td></tr>
+                        <tr><td>Citra</td><td>15</td><td>30oz</td><td>______</td></tr>
+                        <tr><td>Mosaic</td><td>0</td><td>80oz</td><td>______</td></tr>
+                        <tr><td>Whirlfloc</td><td>10</td><td>5 T</td><td>______</td></tr>
+                        <tr><td>Nutrient</td><td>10</td><td>200g</td><td>______</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section sec-yeast">
+            <div class="section-header">6. Knockout & Yeast</div>
+            <div class="section-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                    <div>
+                        <div class="row"><label>Strain:</label><div class="input-line">London III</div></div>
+                        <div class="row"><label>Source:</label><div class="input-line">Harvest</div></div>
+                    </div>
+                    <div>
+                        <div class="row"><label>Gen #:</label><div class="input-line">4</div></div>
+                        <div class="row"><label>Pitch Vol:</label><div class="input-line">____ L</div></div>
+                    </div>
+                    <div>
+                        <div class="row"><label>KO Temp:</label><div class="input-line">68°F</div></div>
+                        <div class="row"><label>Vessel:</label><div class="input-line">FV-04</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
