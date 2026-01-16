@@ -260,12 +260,12 @@
     }
 
     /* ===== PRODUCT TABLE ===== */
-    table.invoice-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-      margin-top: 8px;
-    }
+    /* forces the table to respect paper width */
+table.invoice-table {
+  width: 100% !important;
+  table-layout: fixed; 
+  border-collapse: collapse;
+}
 
     table.invoice-table th,
     table.invoice-table td {
@@ -447,20 +447,28 @@
       .invoice-footer { margin-top: auto; }
     }
     
-    /* ===== BARCODE COLUMN OPTIMIZATION ===== */
-.invoice-table td:nth-child(5) { 
-    width: 35% !important; /* Increased from 30% */
-    padding: 12px !important; 
-    vertical-align: middle;
-    text-align: center;
+    /* barcode column: gives it nearly 40% of the table width */
+.invoice-table th:nth-child(5), 
+.invoice-table td:nth-child(5) {
+  width: 38% !important;
+  text-align: center;
+  vertical-align: middle;
+  padding: 5px !important;
 }
 
-.invoice-table svg.line-barcode { 
-    max-width: 100%; 
-    height: auto; 
-    /* Ensures the barcode doesn't shrink when printed */
-    min-width: 180px; 
+/* ensure the barcode scales to its box but never overflows */
+.invoice-table td:nth-child(5) svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
+    /* tighten other columns to make room */
+.invoice-table th:nth-child(1) { width: 20%; } /* Product */
+.invoice-table th:nth-child(2) { width: 12%; } /* Type */
+.invoice-table th:nth-child(3) { width: 10%; } /* Qty */
+.invoice-table th:nth-child(4) { width: 10%; } /* Price */
+.invoice-table th:nth-child(6) { width: 10%; } /* Line Total */
 
     /* --- MOBILE & TABLET DRAWER LOGIC --- */
     #menu-toggle { display: none; }
