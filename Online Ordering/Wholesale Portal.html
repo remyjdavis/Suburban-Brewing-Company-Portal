@@ -856,18 +856,29 @@ async function init() {
    function processProducts(rawList) {
     groupedProducts = {};
     rawList.forEach(p => {
+        // 1. Clean the UPC from the raw data
+        const incomingUpc = p.upc ? String(p.upc).trim() : "";
+
         if (!groupedProducts[p.name]) {
+            // CREATE NEW PRODUCT GROUP
             groupedProducts[p.name] = { 
                 name: p.name, 
                 lifecycle: p.lifecycle || "Rotating", 
-                // 🔴 FIX: Force UPC to be a string so it matches the scanner text
-                upc: p.upc ? String(p.upc).trim() : "",
+                upc: incomingUpc, // Set initial UPC
                 abv: p.abv || "TBD",
                 desc: p.description || p.desc || "No description available.",
                 image: p.image || p.name.split(' ')[0].toLowerCase() + ".jpg", 
                 variants: [] 
             };
+        } else {
+            // 🔴 THE FIX: If the group exists but has no UPC, check if THIS row has one.
+            // (This fixes the issue where a Keg row [no barcode] hides the Case row [has barcode])
+            if (!groupedProducts[p.name].upc && incomingUpc) {
+                groupedProducts[p.name].upc = incomingUpc;
+            }
         }
+        
+        // Add variant (Case, Keg, etc.)
         groupedProducts[p.name].variants.push({ type: p.type, price: p.price, stock: p.stock });
     });
 }
