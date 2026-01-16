@@ -447,16 +447,17 @@
       .invoice-footer { margin-top: auto; }
     }
     
-    /* ===== BARCODE COLUMN UPDATED ===== */
-.invoice-table td:nth-child(5), .invoice-table th:nth-child(5) { 
-    width: 30%; /* Gave it a bit more room */
+    /* ===== BARCODE COLUMN UPDATED FOR SCANNING ===== */
+.invoice-table td:nth-child(5), 
+.invoice-table th:nth-child(5) { 
+    width: 35%;      /* Gave it even more room (up from 30%) */
     text-align: center; 
     vertical-align: middle;
+    padding: 10px;   /* Added padding to prevent ink bleed at edges */
 }
 
 .invoice-table td:nth-child(5) svg { 
     max-width: 100%; 
-    /* removed fixed height so it can grow */
     height: auto; 
     display: block; 
     margin: 0 auto; 
@@ -1296,27 +1297,28 @@
           priceCell.appendChild(priceWrap);
 
           /* ---------- BARCODE (CASE ONLY) ---------- */
-          if (type === "Case") {
-            barcodeCell.innerHTML = "";
-            const sku = groupedProducts[product][type].sku;
-            if (!sku) {
-              barcodeCell.innerHTML = `<em style="font-size:10px;color:#6b7280;">SKU missing</em>`;
-            } else {
-                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                svg.classList.add("line-barcode");
-                barcodeCell.appendChild(svg);
-               // Increased width to 2.0 (standard for retail) and height to 45
-JsBarcode(svg, sku, { 
-    format: "CODE128", 
-    width: 2.0, 
-    height: 45, 
-    margin: 5, // added margin to prevent cutting off edges
-    displayValue: true, // Optional: Shows the number below bars for manual entry if scan fails
-    fontSize: 12
-});
-            }
-          }
-        }
+if (type === "Case") {
+    barcodeCell.innerHTML = "";
+    const sku = groupedProducts[product][type].sku;
+    if (!sku) {
+        barcodeCell.innerHTML = `<em style="font-size:10px;color:#6b7280;">SKU missing</em>`;
+    } else {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.classList.add("line-barcode");
+        barcodeCell.appendChild(svg);
+
+        // 🔴 HIGH-VISIBILITY RETAIL SETTINGS
+        JsBarcode(svg, sku, { 
+            format: "CODE128", 
+            width: 2.5,       // Thickened bars for hardware scanners
+            height: 65,      // Increased height for easier vertical targeting
+            margin: 10,      // Provided larger "Quiet Zone" to prevent scan errors
+            displayValue: true, 
+            fontSize: 14,    // Larger text for manual entry fallback
+            fontOptions: "bold"
+        });
+    }
+}
         
         // REMOVE TYPE
         if (!cb.checked && existingQty) {
@@ -1627,7 +1629,6 @@ JsBarcode(svg, sku, {
     document.getElementById("print-invoice-btn").disabled = true;
     document.getElementById("email-invoice-btn").disabled = true;
 
-    /* ===== SAVE INVOICE FUNCTION ===== */
    /* ===== SAVE INVOICE FUNCTION (UPDATED) ===== */
 function saveInvoice() {
   const payload = buildInvoicePayload();
