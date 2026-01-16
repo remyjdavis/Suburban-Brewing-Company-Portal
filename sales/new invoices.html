@@ -260,7 +260,7 @@
     }
 
     /* ===== PRODUCT TABLE ===== */
-    /* forces the table to respect paper width */
+    /* forces the table to stay within paper boundaries */
 table.invoice-table {
   width: 100% !important;
   table-layout: fixed; 
@@ -447,28 +447,27 @@ table.invoice-table {
       .invoice-footer { margin-top: auto; }
     }
     
-    /* barcode column: gives it nearly 40% of the table width */
-.invoice-table th:nth-child(5), 
+    /* prevents the high-res barcode from pushing into price/qty */
 .invoice-table td:nth-child(5) {
-  width: 38% !important;
   text-align: center;
   vertical-align: middle;
   padding: 5px !important;
+  overflow: hidden; /* safety gate */
 }
 
-/* ensure the barcode scales to its box but never overflows */
 .invoice-table td:nth-child(5) svg {
   max-width: 100%;
   height: auto;
   display: block;
   margin: 0 auto;
 }
-    /* tighten other columns to make room */
-.invoice-table th:nth-child(1) { width: 20%; } /* Product */
-.invoice-table th:nth-child(2) { width: 12%; } /* Type */
-.invoice-table th:nth-child(3) { width: 10%; } /* Qty */
-.invoice-table th:nth-child(4) { width: 10%; } /* Price */
-.invoice-table th:nth-child(6) { width: 10%; } /* Line Total */
+    /* Rebalanced Column Widths */
+.invoice-table th:nth-child(1), .invoice-table td:nth-child(1) { width: 22%; } /* Product */
+.invoice-table th:nth-child(2), .invoice-table td:nth-child(2) { width: 14%; } /* Type */
+.invoice-table th:nth-child(3), .invoice-table td:nth-child(3) { width: 10%; } /* Qty */
+.invoice-table th:nth-child(4), .invoice-table td:nth-child(4) { width: 10%; } /* Price */
+.invoice-table th:nth-child(5), .invoice-table td:nth-child(5) { width: 34%; } /* Barcode */
+.invoice-table th:nth-child(6), .invoice-table td:nth-child(6) { width: 10%; } /* Line Total */
 
     /* --- MOBILE & TABLET DRAWER LOGIC --- */
     #menu-toggle { display: none; }
