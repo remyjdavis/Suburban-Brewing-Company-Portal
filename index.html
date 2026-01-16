@@ -432,17 +432,56 @@
     .user-dropdown-menu a:hover { background-color: #f8fafc; color: var(--accent); }
     
     .menu-icon { width: 16px; text-align: center; font-size: 14px; }
-    /* Ensure the mobile button can actually show the sidebar */
+    /* ============================================================
+   MOBILE & TABLET DRAWER LOGIC (FIXED)
+   ============================================================ */
 @media (max-width: 1024px) {
-    .sidebar.open {
-        transform: translateX(0) !important; /* Forces it to show */
-        box-shadow: 10px 0 25px rgba(0,0,0,0.5);
+    /* Reset the "Phantom Drawer" logic for mobile */
+    .sidebar { 
+        left: -260px !important; 
+        transform: none !important; 
+        transition: left 0.3s ease !important;
+        overflow-y: auto !important;
     }
-    
-    /* Ensure overlay shows when active */
+
+    /* Force the sidebar to show when .open is applied via JS */
+    .sidebar.open { 
+        left: 0 !important; 
+        box-shadow: 10px 0 25px rgba(0,0,0,0.5); 
+        z-index: 10001;
+    }
+
+    /* Floating Menu Button */
+    #menu-toggle {
+        display: flex;
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        width: 65px;
+        height: 65px;
+        background: var(--accent);
+        color: white;
+        border-radius: 50%;
+        justify-content: center;
+        align-items: center;
+        font-size: 28px;
+        z-index: 10002;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        cursor: pointer;
+        border: none;
+    }
+
+    /* Ensure background overlay is visible when active */
     .menu-overlay.active {
         display: block !important;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(2px);
     }
+
+    /* Standard mobile layout tweaks */
+    .main { padding: 20px 15px !important; margin-left: 0 !important; }
+    .tier-1, .tier-2, .tier-3, .tier-4 { flex-direction: column !important; }
+    .card, .ml-card, .tank-card { flex: 1 1 100% !important; width: 100% !important; }
 }
 </style>
 </head>
@@ -677,17 +716,18 @@
     const overlay = document.getElementById('menu-overlay');
     const btn = document.getElementById('menu-toggle');
     
-    // Toggle the classes
+    // 1. Toggle Sidebar
     const isOpen = sidebar.classList.toggle('open');
+    
+    // 2. Toggle Background Overlay
     overlay.classList.toggle('active');
     
-    // Change the icon from Hamburger to X
+    // 3. Change Icon
     btn.innerText = isOpen ? '✕' : '☰';
     
-    // Prevent the background from scrolling while menu is open
+    // 4. Lock background scroll when menu is open
     document.body.style.overflow = isOpen ? 'hidden' : '';
 }
-
     function toggleGroup(id, el) {
         document.getElementById(id).classList.toggle('collapsed');
         el.classList.toggle('collapsed');
