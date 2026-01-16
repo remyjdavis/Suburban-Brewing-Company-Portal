@@ -773,27 +773,40 @@ body,
     let html5QrCode;
 
     // --- SCANNER LOGIC ---
-    async function startScanner() {
-        document.getElementById('scanner-container').style.display = 'flex';
-        html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-        try {
-            await html5QrCode.start(
-                { facingMode: "environment" }, 
-                config,
-                (decodedText) => {
-                    document.getElementById('searchInput').value = decodedText;
-                    filterProducts();
-                    stopScanner();
-                    Swal.fire({ icon: 'success', title: 'Scanned!', timer: 1000, showConfirmButton: false });
-                },
-                (errorMessage) => { }
-            );
-        } catch (err) {
-            Swal.fire("Camera Error", "Please allow camera access.", "error");
-            stopScanner();
-        }
+async function startScanner() {
+    document.getElementById('scanner-container').style.display = 'flex';
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+    try {
+        await html5QrCode.start(
+            { facingMode: "environment" }, 
+            config,
+            (decodedText) => {
+                // 1. Put text in search bar
+                document.getElementById('searchInput').value = decodedText;
+
+                // 🔴 FIX: Force Category to 'All' so the product isn't hidden
+                state.category = 'All';
+                
+                // 🔴 FIX: Visually update the buttons to show 'All' is active
+                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                // Assuming the first button is always "All"
+                const allBtn = document.querySelector('.cat-bar .cat-btn'); 
+                if(allBtn) allBtn.classList.add('active');
+
+                // 2. Run the search
+                filterProducts();
+                
+                stopScanner();
+                Swal.fire({ icon: 'success', title: 'Scanned!', timer: 1000, showConfirmButton: false });
+            },
+            (errorMessage) => { }
+        );
+    } catch (err) {
+        Swal.fire("Camera Error", "Please allow camera access.", "error");
+        stopScanner();
     }
+}
 
     async function stopScanner() {
         if (html5QrCode) {
@@ -841,14 +854,15 @@ async function init() {
 
     document.body.appendChild(script);
 }
-    function processProducts(rawList) {
+   function processProducts(rawList) {
     groupedProducts = {};
     rawList.forEach(p => {
         if (!groupedProducts[p.name]) {
             groupedProducts[p.name] = { 
                 name: p.name, 
                 lifecycle: p.lifecycle || "Rotating", 
-                upc: p.upc,
+                // 🔴 FIX: Force UPC to be a string and trim whitespace
+                upc: p.upc ? String(p.upc).trim() : "",
                 abv: p.abv || "TBD",
                 desc: p.description || p.desc || "No description available.",
                 image: p.image || p.name.split(' ')[0].toLowerCase() + ".jpg", 
