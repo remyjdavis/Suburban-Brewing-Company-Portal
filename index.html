@@ -432,6 +432,18 @@
     .user-dropdown-menu a:hover { background-color: #f8fafc; color: var(--accent); }
     
     .menu-icon { width: 16px; text-align: center; font-size: 14px; }
+    /* Ensure the mobile button can actually show the sidebar */
+@media (max-width: 1024px) {
+    .sidebar.open {
+        transform: translateX(0) !important; /* Forces it to show */
+        box-shadow: 10px 0 25px rgba(0,0,0,0.5);
+    }
+    
+    /* Ensure overlay shows when active */
+    .menu-overlay.active {
+        display: block !important;
+    }
+}
 </style>
 </head>
 
@@ -661,13 +673,20 @@
 
     // --- DRAWER & UI TOGGLES ---
     function toggleMobileMenu() {
-        const sidebar = document.querySelector('.sidebar');
-        const overlay = document.getElementById('menu-overlay');
-        const btn = document.getElementById('menu-toggle');
-        const isOpen = sidebar.classList.toggle('open');
-        overlay.classList.toggle('active');
-        btn.innerText = isOpen ? '✕' : '☰';
-    }
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('menu-overlay');
+    const btn = document.getElementById('menu-toggle');
+    
+    // Toggle the classes
+    const isOpen = sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    
+    // Change the icon from Hamburger to X
+    btn.innerText = isOpen ? '✕' : '☰';
+    
+    // Prevent the background from scrolling while menu is open
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+}
 
     function toggleGroup(id, el) {
         document.getElementById(id).classList.toggle('collapsed');
