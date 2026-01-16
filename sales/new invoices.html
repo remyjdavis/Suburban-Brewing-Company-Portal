@@ -447,20 +447,19 @@
       .invoice-footer { margin-top: auto; }
     }
     
-    /* ===== BARCODE COLUMN UPDATED FOR SCANNING ===== */
-.invoice-table td:nth-child(5), 
-.invoice-table th:nth-child(5) { 
-    width: 35%;      /* Gave it even more room (up from 30%) */
-    text-align: center; 
+    /* ===== BARCODE COLUMN OPTIMIZATION ===== */
+.invoice-table td:nth-child(5) { 
+    width: 35% !important; /* Increased from 30% */
+    padding: 12px !important; 
     vertical-align: middle;
-    padding: 10px;   /* Added padding to prevent ink bleed at edges */
+    text-align: center;
 }
 
-.invoice-table td:nth-child(5) svg { 
+.invoice-table svg.line-barcode { 
     max-width: 100%; 
     height: auto; 
-    display: block; 
-    margin: 0 auto; 
+    /* Ensures the barcode doesn't shrink when printed */
+    min-width: 180px; 
 }
 
     /* --- MOBILE & TABLET DRAWER LOGIC --- */
@@ -1296,40 +1295,39 @@
           priceWrap.appendChild(priceInput);
           priceCell.appendChild(priceWrap);
 
-          /* ---------- BARCODE (CASE ONLY) ---------- */
-if (type === "Case") {
-    barcodeCell.innerHTML = "";
-    const sku = groupedProducts[product][type].sku;
-    if (!sku) {
-        barcodeCell.innerHTML = `<em style="font-size:10px;color:#6b7280;">SKU missing</em>`;
-    } else {
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.classList.add("line-barcode");
-        barcodeCell.appendChild(svg);
-
-        // 🔴 HIGH-VISIBILITY RETAIL SETTINGS
-        JsBarcode(svg, sku, { 
-            format: "CODE128", 
-            width: 2.5,       // Thickened bars for hardware scanners
-            height: 65,      // Increased height for easier vertical targeting
-            margin: 10,      // Provided larger "Quiet Zone" to prevent scan errors
-            displayValue: true, 
-            fontSize: 14,    // Larger text for manual entry fallback
-            fontOptions: "bold"
-        });
-    }
-}
-        
-        // REMOVE TYPE
-        if (!cb.checked && existingQty) {
-          existingQty.remove();
-          if (existingPrice) existingPrice.remove();
-          if (type === "Case") barcodeCell.innerHTML = "";
+        /* ---------- BARCODE (CASE ONLY) ---------- */
+        if (type === "Case") {
+            barcodeCell.innerHTML = "";
+            const sku = groupedProducts[product][type].sku;
+            if (!sku) {
+                barcodeCell.innerHTML = `<em style="font-size:10px;color:#6b7280;">SKU missing</em>`;
+            } else {
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.classList.add("line-barcode");
+                barcodeCell.appendChild(svg);
+                JsBarcode(svg, sku, { 
+                    format: "CODE128", 
+                    width: 2.5, 
+                    height: 65, 
+                    margin: 10, 
+                    displayValue: true, 
+                    fontSize: 14, 
+                    fontOptions: "bold" 
+                });
+            }
         }
-      });
-
-      recalcLine(row, product);
     }
+        
+        // REMOVE TYPE logic
+    if (!cb.checked && existingQty) {
+      existingQty.remove();
+      if (existingPrice) existingPrice.remove();
+      if (type === "Case") barcodeCell.innerHTML = "";
+    }
+  }); // This closes the forEach
+      recalcLine(row, product);
+} // This closes the function
+    
     /* ===== FOCUS FIRST PRODUCT ROW FUNCTION ===== */
     function focusFirstProductRow() {
       const firstProductInput = document.querySelector(".product-input");
