@@ -772,7 +772,7 @@ body,
     let currentModalProduct = null;
     let html5QrCode;
 
-    // --- SCANNER LOGIC ---
+   // --- SCANNER LOGIC ---
 async function startScanner() {
     document.getElementById('scanner-container').style.display = 'flex';
     html5QrCode = new Html5Qrcode("reader");
@@ -788,9 +788,8 @@ async function startScanner() {
                 // 🔴 FIX: Force Category to 'All' so the product isn't hidden
                 state.category = 'All';
                 
-                // 🔴 FIX: Visually update the buttons to show 'All' is active
+                // 🔴 FIX: Visually update the buttons
                 document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-                // Assuming the first button is always "All"
                 const allBtn = document.querySelector('.cat-bar .cat-btn'); 
                 if(allBtn) allBtn.classList.add('active');
 
@@ -861,7 +860,7 @@ async function init() {
             groupedProducts[p.name] = { 
                 name: p.name, 
                 lifecycle: p.lifecycle || "Rotating", 
-                // 🔴 FIX: Force UPC to be a string and trim whitespace
+                // 🔴 FIX: Force UPC to be a string so it matches the scanner text
                 upc: p.upc ? String(p.upc).trim() : "",
                 abv: p.abv || "TBD",
                 desc: p.description || p.desc || "No description available.",
@@ -936,7 +935,8 @@ async function init() {
                         
                         <h2 style="margin-bottom:20px; color:#333;">Wholesale Portal</h2>
                         
-                        <input type="text" id="loginInput" class="login-input-styled" placeholder="ENTER UNIQUE KEY">
+                        <input type="text" id="loginInput" class="login-input-styled" placeholder="ENTER UNIQUE KEY" 
+       onkeydown="if(event.key === 'Enter') attemptLogin()">
                         
                         <button class="btn btn-primary" style="width:100%; padding:15px; font-size:1.1rem;" onclick="attemptLogin()">Log In</button>
                         
@@ -955,7 +955,9 @@ async function init() {
         let html = `
             <div class="controls-area">
                 <div class="search-wrapper">
-                    <input type="text" id="searchInput" class="search-input" placeholder="Search products..." oninput="filterProducts()">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search products..." 
+       oninput="filterProducts()" 
+       onkeydown="if(event.key === 'Enter') this.blur()">
                     <button class="scan-btn" onclick="startScanner()">📷</button>
                 </div>
                 <div class="cat-bar">
