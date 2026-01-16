@@ -260,7 +260,7 @@
     }
 
     /* ===== PRODUCT TABLE ===== */
-    /* 1. Force the table to respect the paper width */
+   /* forces the table to stay within 8.5in paper boundaries */
 table.invoice-table {
   width: 100% !important;
   table-layout: fixed !important; 
@@ -446,37 +446,45 @@ table.invoice-table {
       .price-edit-input { border: none; background: transparent; padding: 0; color: #000; width: auto; text-align: right; }
       .invoice-footer { margin-top: auto; }
     }
-    
-    /* prevents the high-res barcode from pushing into price/qty */
-.invoice-table td:nth-child(5) {
-  text-align: center;
-  vertical-align: middle;
+    /* 1. Reduce Font Size for Product & Type */
+.invoice-table td:nth-child(1), /* Product Cell */
+.invoice-table td:nth-child(2) { /* Type Cell */
+  font-size: 10px !important;    /* 🔴 Reduced from 12px */
+  font-weight: 600;
+  vertical-align: middle !important;
+  word-wrap: break-word;
   padding: 5px !important;
-  overflow: hidden; /* safety gate */
+}
+   /* 2. Center and Align the Barcode */
+.invoice-table td:nth-child(5) {
+  text-align: center !important; 
+  vertical-align: middle !important;
+  padding: 5px !important;
 }
 
-invoice-table td:nth-child(5) svg {
-  max-width: 100%; /* Scales bars to fit the 30% column width */
+.invoice-table td:nth-child(5) svg {
+  display: block !important;
+  margin: 0 auto !important;
+  max-width: 100%;
   height: auto;
-  display: block;
-  margin: 0 auto;
 }
-    /* 2. Re-allocate column widths to stop the squishing */
+   /* 3. Re-balance widths so Barcode has the most room */
 .invoice-table th:nth-child(1) { width: 18%; } /* Product */
 .invoice-table th:nth-child(2) { width: 12%; } /* Type */
-.invoice-table th:nth-child(3) { width: 18%; } /* Quantity (Wide enough for 'Case: 0') */
-.invoice-table th:nth-child(4) { width: 12%; } /* Price (Stops the black box) */
-.invoice-table th:nth-child(5) { width: 30%; } /* Barcode (Large for retail) */
+.invoice-table th:nth-child(3) { width: 16%; } /* Quantity */
+.invoice-table th:nth-child(4) { width: 10%; } /* Price */
+.invoice-table th:nth-child(5) { width: 34%; } /* Barcode (Large Target) */
 .invoice-table th:nth-child(6) { width: 10%; } /* Line Total */
-/* 3. Force inputs to fit their containers */
+
+    /* 3. Force inputs to fit their containers */
 .qty-group input, 
 .price-cell input {
     width: 90% !important;
-    font-size: 13px !important;
+    font-size: 11px !important;
+    height: 24px !important;
     padding: 2px !important;
-    height: 28px !important;
     text-align: center;
-    box-sizing: border-box;
+    box-sizing: border-box; /* 🔴 Prevents border from adding width */
 }
 
 /* Align labels within the Quantity group */
@@ -1321,26 +1329,22 @@ invoice-table td:nth-child(5) svg {
           priceCell.appendChild(priceWrap);
 
         /* ---------- BARCODE (CASE ONLY) ---------- */
-        if (type === "Case") {
-            barcodeCell.innerHTML = "";
-            const sku = groupedProducts[product][type].sku;
-            if (!sku) {
-                barcodeCell.innerHTML = `<em style="font-size:10px;color:#6b7280;">SKU missing</em>`;
-            } else {
-                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                svg.classList.add("line-barcode");
-                barcodeCell.appendChild(svg);
-                JsBarcode(svg, sku, { 
-                    format: "CODE128", 
-                    width: 2.5, 
-                    height: 65, 
-                    margin: 10, 
-                    displayValue: true, 
-                    fontSize: 14, 
-                    fontOptions: "bold" 
-                });
-            }
-        }
+if (type === "Case") {
+    barcodeCell.innerHTML = "";
+    const sku = groupedProducts[product][type].sku;
+    if (sku) {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        // Ensure no inline "float" or "right" styles are applied here
+        barcodeCell.appendChild(svg);
+        JsBarcode(svg, sku, { 
+            format: "CODE128", 
+            width: 2.2, 
+            height: 55, 
+            displayValue: true, 
+            fontSize: 12 
+        });
+    }
+}
     }
         
         // REMOVE TYPE logic
