@@ -468,7 +468,24 @@ table.invoice-table {
 .invoice-table th:nth-child(4), .invoice-table td:nth-child(4) { width: 10%; } /* Price */
 .invoice-table th:nth-child(5), .invoice-table td:nth-child(5) { width: 34%; } /* Barcode */
 .invoice-table th:nth-child(6), .invoice-table td:nth-child(6) { width: 10%; } /* Line Total */
+/* Fix for Quantity and Price input sizing */
+.qty-group input, 
+.price-cell input {
+    font-size: 13px !important; /* Reduced from default to fit the row */
+    padding: 4px !important;
+    height: 30px !important;
+    width: 55px !important;
+    text-align: center;
+}
 
+/* Align labels within the Quantity group */
+.qty-group div {
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
     /* --- MOBILE & TABLET DRAWER LOGIC --- */
     #menu-toggle { display: none; }
     .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
@@ -495,6 +512,7 @@ table.invoice-table {
     .logout-link { margin-top: 12px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
     .logout-link span.icon { margin-right: 12px; font-size: 16px; }
+  
   </style>
 </head>
 <body>
@@ -631,15 +649,14 @@ table.invoice-table {
 
       <table class="invoice-table">
         <thead>
-          <tr>
-            <th style="width:24%;">Product</th>
-            <th style="width:16%;">Type</th>
-            <th style="width:12%;">Quantity</th>
-            <th style="width:10%;">Price</th>
-            <th style="width:26%;">Barcode</th>
-            <th style="width:12%;">Line Total</th>
-          </tr>
-        </thead>
+  <tr>
+    <th style="width:20%;">Product</th>
+    <th style="width:14%;">Type</th>
+    <th style="width:14%;">Quantity</th> <th style="width:10%;">Price</th>
+    <th style="width:32%;">Barcode</th>
+    <th style="width:10%;">Line Total</th>
+  </tr>
+</thead>
         <tbody id="product-body"></tbody>
       </table>
       
@@ -1230,9 +1247,9 @@ table.invoice-table {
           qtyInput.type = "number";
           qtyInput.min = 0;
           qtyInput.value = 0;
-          qtyInput.style.width = "60px";
-          qtyInput.style.padding = "8px";
-          qtyInput.style.fontSize = "16px"; 
+          qtyInput.style.width = "50px"; 
+          qtyInput.style.padding = "4px";
+          qtyInput.style.fontSize = "13px";
           
           qtyInput.oninput = () => {
             const max = inventoryMap[product]?.[type];
