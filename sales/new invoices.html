@@ -457,12 +457,17 @@ table.invoice-table {
   vertical-align: middle !important;
   padding: 5px !important;
 }
-/* 2. Standardize Type column checkboxes */
+    /* 1. Grey out disabled items */
+.out-of-stock-grey {
+    color: #94a3b8 !important; /* Muted grey */
+    opacity: 0.5;
+    cursor: not-allowed !important;
+}
+/* 2. Lock the Type cell for hover docking */
 .invoice-table td:nth-child(2) {
-  white-space: nowrap !important; 
-  font-size: 9px !important;
-  vertical-align: middle !important;
-  padding: 5px !important;
+    position: relative; /* 🔴 Essential: Keeps hover box near the checkbox */
+    width: 14% !important;
+    white-space: nowrap !important;
 }
    /* 2. Center and Align the Barcode */
 .invoice-table td:nth-child(5) {
@@ -537,6 +542,25 @@ table.invoice-table {
     color: #94a3b8;
     cursor: not-allowed;
     opacity: 0.6;
+}
+    /* 3. Hide hover text by default */
+.stock-status {
+    display: none;
+    position: absolute;
+    background: #1e293b;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    z-index: 2000;
+    left: 85%; /* Positions box to the right of text */
+    top: 0;
+    white-space: nowrap;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+    /* 4. Show only on hover */
+.type-label:hover .stock-status {
+    display: inline-block;
 }
     /* --- MOBILE & TABLET DRAWER LOGIC --- */
     #menu-toggle { display: none; }
@@ -1205,7 +1229,7 @@ table.invoice-table {
       qtyCell.innerHTML = "";
       barcodeCell.innerHTML = "";
 
-      /* ===== UPDATED SELECT PRODUCT (HOVER STATUS) ===== */
+    /* ===== UPDATED SELECT PRODUCT (GREYED & HOVER) ===== */
 ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
   if (groupedProducts[product][type] === undefined) return;
 
@@ -1213,34 +1237,41 @@ table.invoice-table {
                 ? Number(inventoryMap[product][type]) : null;
 
   const label = document.createElement("label");
-  label.className = "type-label"; // For CSS targeting
+  label.className = "type-label"; 
 
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.value = type;
 
-  // Create the hover status span
   const statusSpan = document.createElement("span");
   statusSpan.className = "stock-status";
 
   if (stock === 0) {
-    checkbox.disabled = true;
-    label.classList.add("out-of-stock");
-    statusSpan.textContent = "Out of Stock"; // This stays hidden until hover
-    label.appendChild(checkbox);
-    label.append(` ${type}`);
-    label.appendChild(statusSpan);
-  } 
-  else if (stock !== null && stock < 10) {
-    statusSpan.textContent = `Low Stock (${stock})`;
+    // 1. Grey out and disable selection
+    checkbox.disabled = true; 
+    label.classList.add("out-of-stock-grey"); 
+    
+    // 2. Set hover text
+    statusSpan.textContent = "Out of Stock"; 
+    
     label.appendChild(checkbox);
     label.append(` ${type}`);
     label.appendChild(statusSpan);
   } 
   else {
+    // Normal selectable items
     label.appendChild(checkbox);
     label.append(` ${type}`);
+    
+    if (stock !== null && stock < 10) {
+      statusSpan.textContent = `Low Stock (${stock})`;
+      label.appendChild(statusSpan);
+    }
   }
+
+  checkbox.onchange = () => updateQuantities(row, product);
+  typesCell.appendChild(label);
+});
 
   // Lifecycle logic remains the same...
   const lifecycleNote = getLifecycleWarning(product, type);
