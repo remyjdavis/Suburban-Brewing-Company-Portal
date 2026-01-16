@@ -1229,64 +1229,58 @@ table.invoice-table {
       qtyCell.innerHTML = "";
       barcodeCell.innerHTML = "";
 
-    /* ===== UPDATED SELECT PRODUCT (GREYED & HOVER) ===== */
+  /* ===== FIXED SELECT PRODUCT FUNCTION ===== */
 ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
-  if (groupedProducts[product][type] === undefined) return;
+    if (groupedProducts[product][type] === undefined) return;
 
-  const stock = inventoryMap[product] && inventoryMap[product][type] !== undefined 
-                ? Number(inventoryMap[product][type]) : null;
+    const stock = inventoryMap[product] && inventoryMap[product][type] !== undefined 
+                  ? Number(inventoryMap[product][type]) : null;
 
-  const label = document.createElement("label");
-  label.className = "type-label"; 
+    const label = document.createElement("label");
+    label.className = "type-label"; 
 
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.value = type;
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = type;
 
-  const statusSpan = document.createElement("span");
-  statusSpan.className = "stock-status";
+    const statusSpan = document.createElement("span");
+    statusSpan.className = "stock-status";
 
-  if (stock === 0) {
-    // 1. Grey out and disable selection
-    checkbox.disabled = true; 
-    label.classList.add("out-of-stock-grey"); 
-    
-    // 2. Set hover text
-    statusSpan.textContent = "Out of Stock"; 
-    
-    label.appendChild(checkbox);
-    label.append(` ${type}`);
-    label.appendChild(statusSpan);
-  } 
-  else {
-    // Normal selectable items
-    label.appendChild(checkbox);
-    label.append(` ${type}`);
-    
-    if (stock !== null && stock < 10) {
-      statusSpan.textContent = `Low Stock (${stock})`;
-      label.appendChild(statusSpan);
+    if (stock === 0) {
+        // Grey out and disable selection
+        checkbox.disabled = true; 
+        label.classList.add("out-of-stock-grey"); 
+        statusSpan.textContent = "Out of Stock"; 
+        
+        label.appendChild(checkbox);
+        label.append(` ${type}`);
+        label.appendChild(statusSpan);
+    } 
+    else {
+        // Normal selectable items
+        label.appendChild(checkbox);
+        label.append(` ${type}`);
+        
+        if (stock !== null && stock < 10) {
+            statusSpan.textContent = `Low Stock (${stock})`;
+            label.appendChild(statusSpan);
+        }
     }
-  }
 
-  checkbox.onchange = () => updateQuantities(row, product);
-  typesCell.appendChild(label);
-});
+    // Lifecycle logic - kept inside the loop once
+    const lifecycleNote = getLifecycleWarning(product, type);
+    if (lifecycleNote) {
+        const note = document.createElement("div");
+        note.className = "lifecycle-note";
+        note.style.fontSize = "8px";
+        note.textContent = lifecycleNote;
+        label.appendChild(note);
+    }
 
-  // Lifecycle logic remains the same...
-  const lifecycleNote = getLifecycleWarning(product, type);
-  if (lifecycleNote) {
-    const note = document.createElement("div");
-    note.className = "lifecycle-note";
-    note.textContent = lifecycleNote;
-    label.appendChild(note);
-  }
-
-  checkbox.onchange = () => updateQuantities(row, product);
-  typesCell.appendChild(label);
-});
+    checkbox.onchange = () => updateQuantities(row, product);
+    typesCell.appendChild(label);
+}); // This is the ONLY closing bracket needed for the loop
   
-
     /* ===== LIFECYLCE WARNING FUNCTION ===== */
     function getLifecycleWarning(product, type) {
       const lifecycle = products.find(
