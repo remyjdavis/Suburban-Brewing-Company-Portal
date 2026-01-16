@@ -446,14 +446,16 @@ table.invoice-table {
       .price-edit-input { border: none; background: transparent; padding: 0; color: #000; width: auto; text-align: right; }
       .invoice-footer { margin-top: auto; }
     }
-   /* 1. Force Product name to stay on ONE LINE with small font */
+   /* forces the cell to REMAIN at 9px after you select a product */
 .invoice-table td:nth-child(1) { 
-  font-size: 9px !important;       /* 🔴 Smallest readable size */
-  white-space: nowrap !important;  /* 🔴 Forbid wrapping to second line */
-  overflow: visible !important;    /* 🔴 Ensure name isn't cut off */
-  font-weight: 700;
+  width: 25% !important;
+  font-size: 9px !important;       /* 🔴 Locked: No more jumping sizes */
+  white-space: nowrap !important;  /* 🔴 Locked: Keeps it on one line */
+  overflow: hidden !important;
+  text-overflow: ellipsis; 
+  font-weight: 800;
   vertical-align: middle !important;
-  padding: 8px 5px !important;
+  padding: 5px !important;
 }
 /* 2. Standardize Type column checkboxes */
 .invoice-table td:nth-child(2) {
@@ -493,7 +495,16 @@ table.invoice-table {
     text-align: center;
     box-sizing: border-box; /* 🔴 Prevents border from adding width */
 }
-
+/* forces the search input to match the 9px display font */
+.product-input {
+    font-size: 9px !important; 
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 800 !important;
+    padding: 2px 4px !important;
+    border: 1px solid #e5e7eb;
+    height: 24px !important;
+    width: 100%;
+}
 /* Align labels within the Quantity group */
 .qty-group div {
     font-size: 11px;
