@@ -260,10 +260,10 @@
     }
 
     /* ===== PRODUCT TABLE ===== */
-    /* forces the table to stay within paper boundaries */
+    /* 1. Force the table to respect the paper width */
 table.invoice-table {
   width: 100% !important;
-  table-layout: fixed; 
+  table-layout: fixed !important; 
   border-collapse: collapse;
 }
 
@@ -455,27 +455,28 @@ table.invoice-table {
   overflow: hidden; /* safety gate */
 }
 
-.invoice-table td:nth-child(5) svg {
-  max-width: 100%;
+invoice-table td:nth-child(5) svg {
+  max-width: 100%; /* Scales bars to fit the 30% column width */
   height: auto;
   display: block;
   margin: 0 auto;
 }
-    /* Rebalanced Column Widths */
-.invoice-table th:nth-child(1), .invoice-table td:nth-child(1) { width: 22%; } /* Product */
-.invoice-table th:nth-child(2), .invoice-table td:nth-child(2) { width: 14%; } /* Type */
-.invoice-table th:nth-child(3), .invoice-table td:nth-child(3) { width: 10%; } /* Qty */
-.invoice-table th:nth-child(4), .invoice-table td:nth-child(4) { width: 10%; } /* Price */
-.invoice-table th:nth-child(5), .invoice-table td:nth-child(5) { width: 34%; } /* Barcode */
-.invoice-table th:nth-child(6), .invoice-table td:nth-child(6) { width: 10%; } /* Line Total */
-/* Fix for Quantity and Price input sizing */
+    /* 2. Re-allocate column widths to stop the squishing */
+.invoice-table th:nth-child(1) { width: 18%; } /* Product */
+.invoice-table th:nth-child(2) { width: 12%; } /* Type */
+.invoice-table th:nth-child(3) { width: 18%; } /* Quantity (Wide enough for 'Case: 0') */
+.invoice-table th:nth-child(4) { width: 12%; } /* Price (Stops the black box) */
+.invoice-table th:nth-child(5) { width: 30%; } /* Barcode (Large for retail) */
+.invoice-table th:nth-child(6) { width: 10%; } /* Line Total */
+/* 3. Force inputs to fit their containers */
 .qty-group input, 
 .price-cell input {
-    font-size: 13px !important; /* Reduced from default to fit the row */
-    padding: 4px !important;
-    height: 30px !important;
-    width: 55px !important;
+    width: 90% !important;
+    font-size: 13px !important;
+    padding: 2px !important;
+    height: 28px !important;
     text-align: center;
+    box-sizing: border-box;
 }
 
 /* Align labels within the Quantity group */
