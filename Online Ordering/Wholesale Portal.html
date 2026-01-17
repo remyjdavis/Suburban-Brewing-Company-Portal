@@ -1032,7 +1032,7 @@ async function init() {
                 <div class="product-name-area"><h4>${p.name}</h4></div>
             </div>`;
         }
-        app.innerHTML = html + `</div>`;
+        orderView.innerHTML = html + `</div>`;
         
        // STEP 3: REVIEW ORDER
     } else if (state.step === 3 && state.tab === 'order') {
@@ -1040,74 +1040,74 @@ async function init() {
         const math = calculateOrderMath();
         const showEmailPrompt = !state.customer.email;
 
-        // 🔴 IMPORTANT: We write to 'orderView', NOT 'app'
+        // 🔴 THIS WAS THE FIX: Use orderView.innerHTML, NOT app.innerHTML
         orderView.innerHTML = `
-        <div class="card">
-            <div style="display:flex; justify-content:space-between;">
-                <strong>Suburban Brewing Co.</strong>
-                <span>${new Date().toLocaleDateString()}</span>
-            </div>
-            <hr>
-            <div style="margin:20px 0;">
-                <strong>BILL TO:</strong><br>
-                ${state.customer.name}<br>
-                <span style="font-size:0.85rem; color:#666">${state.customer.address}</span>
-            </div>
-            
-            ${showEmailPrompt ? `<div style="margin-bottom:20px; padding:15px; background:#fff3cd; border-radius:8px;"><strong>Confirmation Email:</strong><br><input type="email" id="custEmail" placeholder="Enter email for PDF receipt" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:4px;"></div>` : `<p style="font-size:0.85rem; color:#666;">PDF Confirmation will be sent to: ${state.customer.email}</p>`}
-            
-            <table class="review-table">
-                <thead>
-                    <tr>
-                        <th style="width:45%">Item</th>
-                        <th style="width:25%; text-align:center;">Qty</th>
-                        <th style="width:20%; text-align:right;">Total</th>
-                        <th style="width:10%"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${Object.entries(state.cart).map(([key, i]) => `
-                    <tr>
-                        <td>
-                            <div style="font-weight:600;">${i.beer}</div>
-                            <div style="font-size:0.75rem; color:#64748b;">${i.type} ($${i.price})</div>
-                        </td>
-                        <td style="text-align:center;">
-                            <input type="number" 
-                                   value="${i.qty}" 
-                                   min="0" 
-                                   style="width:50px; padding:6px; border:1px solid #cbd5e1; border-radius:6px; text-align:center; font-size:16px;"
-                                   data-key="${key}"
-                                   onchange="updateCartItem(this.dataset.key, this.value)">
-                        </td>
-                        <td style="text-align:right;">$${(i.qty * i.price).toFixed(2)}</td>
-                        <td style="text-align:center;">
-                            <button style="background:none; border:none; color:#ef4444; font-size:1.4rem; font-weight:bold; cursor:pointer; padding:0 8px;"
-                                    data-key="${key}"
-                                    onclick="updateCartItem(this.dataset.key, 0)">
-                                &times;
-                            </button>
-                        </td>
-                    </tr>`).join('')}
-                </tbody>
-            </table>
-            
-            <div style="text-align:right; margin-top:20px; font-size:0.95rem;">
-                <div style="margin-bottom:4px;">Subtotal: $${math.subtotal}</div>
-                ${parseFloat(math.discount) > 0 ? `<div style="color:#d63031; margin-bottom:4px;">10% Volume Case Discount: -$${math.discount}</div>` : ''}
-                <div style="margin-bottom:4px;">Keg Deposits ($30/ea): $${math.deposits}</div>
-                <div style="font-size:1.4rem; color:#007bff; margin-top:8px; border-top:1px solid #eee; padding-top:8px;">
-                    <strong>TOTAL: $${math.grandTotal}</strong>
+            <div class="card">
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>Suburban Brewing Co.</strong>
+                    <span>${new Date().toLocaleDateString()}</span>
                 </div>
-            </div>
-            
-            <div style="display:flex; gap:10px; margin-top:40px;">
-                <button class="btn btn-outline" onclick="state.step=2;render()">+ Add More</button>
-                <button class="btn btn-success" style="flex:1;" onclick="submitFinalOrder()">Confirm Order</button>
-            </div>
-        </div>`;
-    } 
-} // <--- 🔴 YOU WERE MISSING THIS CLOSING BRACKET FOR THE RENDER FUNCTION
+                <hr>
+                <div style="margin:20px 0;">
+                    <strong>BILL TO:</strong><br>
+                    ${state.customer.name}<br>
+                    <span style="font-size:0.85rem; color:#666">${state.customer.address}</span>
+                </div>
+                
+                ${showEmailPrompt ? `<div style="margin-bottom:20px; padding:15px; background:#fff3cd; border-radius:8px;"><strong>Confirmation Email:</strong><br><input type="email" id="custEmail" placeholder="Enter email for PDF receipt" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:4px;"></div>` : `<p style="font-size:0.85rem; color:#666;">PDF Confirmation will be sent to: ${state.customer.email}</p>`}
+                
+                <table class="review-table">
+                    <thead>
+                        <tr>
+                            <th style="width:45%">Item</th>
+                            <th style="width:25%; text-align:center;">Qty</th>
+                            <th style="width:20%; text-align:right;">Total</th>
+                            <th style="width:10%"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(state.cart).map(([key, i]) => `
+                        <tr>
+                            <td>
+                                <div style="font-weight:600;">${i.beer}</div>
+                                <div style="font-size:0.75rem; color:#64748b;">${i.type} ($${i.price})</div>
+                            </td>
+                            <td style="text-align:center;">
+                                <input type="number" 
+                                       value="${i.qty}" 
+                                       min="0" 
+                                       style="width:50px; padding:6px; border:1px solid #cbd5e1; border-radius:6px; text-align:center; font-size:16px;"
+                                       data-key="${key}"
+                                       onchange="updateCartItem(this.dataset.key, this.value)">
+                            </td>
+                            <td style="text-align:right;">$${(i.qty * i.price).toFixed(2)}</td>
+                            <td style="text-align:center;">
+                                <button style="background:none; border:none; color:#ef4444; font-size:1.4rem; font-weight:bold; cursor:pointer; padding:0 8px;"
+                                        data-key="${key}"
+                                        onclick="updateCartItem(this.dataset.key, 0)">
+                                    &times;
+                                </button>
+                            </td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+                
+                <div style="text-align:right; margin-top:20px; font-size:0.95rem;">
+                    <div style="margin-bottom:4px;">Subtotal: $${math.subtotal}</div>
+                    ${parseFloat(math.discount) > 0 ? `<div style="color:#d63031; margin-bottom:4px;">10% Volume Case Discount: -$${math.discount}</div>` : ''}
+                    <div style="margin-bottom:4px;">Keg Deposits ($30/ea): $${math.deposits}</div>
+                    <div style="font-size:1.4rem; color:#007bff; margin-top:8px; border-top:1px solid #eee; padding-top:8px;">
+                        <strong>TOTAL: $${math.grandTotal}</strong>
+                    </div>
+                </div>
+                
+                <div style="display:flex; gap:10px; margin-top:40px;">
+                    <button class="btn btn-outline" onclick="state.step=2;render()">+ Add More</button>
+                    <button class="btn btn-success" style="flex:1;" onclick="submitFinalOrder()">Confirm Order</button>
+                </div>
+            </div>`;
+    }
+}// <--- 🔴 YOU WERE MISSING THIS CLOSING BRACKET FOR THE RENDER FUNCTION
 
     // --- MODAL LOGIC ---
     function openOrderModal(productName) {
