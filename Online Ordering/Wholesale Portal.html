@@ -1930,9 +1930,12 @@ function renderPOSDownloads() {
 }
 
 // --- GENERATOR ENGINE ---
+// --- GENERATOR ENGINE (Updated with Logo) ---
 function generateDocs(type) {
     const printArea = document.getElementById('print-area');
     const inputs = document.querySelectorAll('.product-selector input:checked');
+    // Using your hosted logo URL
+    const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
     
     if (inputs.length === 0) {
         return Swal.fire("Select Products", "Please check at least one product.", "warning");
@@ -1947,7 +1950,8 @@ function generateDocs(type) {
             const p = groupedProducts[input.value];
             html += `
             <div class="talker-card">
-                <div style="font-size:10px; letter-spacing:2px; margin-bottom:5px;">SUBURBAN BREWING CO.</div>
+                <img src="${logoUrl}" style="height: 50px; margin: 0 auto 10px auto; display: block;">
+                
                 <div class="talker-header">${p.name}</div>
                 <div class="talker-sub">${p.abv} ABV</div>
                 <div class="talker-desc">${p.desc}</div>
@@ -1962,6 +1966,7 @@ function generateDocs(type) {
         html = `
         <div class="print-menu-list">
             <div style="text-align:center; margin-bottom:40px;">
+                <img src="${logoUrl}" style="height: 80px; margin-bottom: 10px;">
                 <h1>FRESH TAP LIST</h1>
                 <p>Suburban Brewing Co. | Honey Brook, PA</p>
             </div>`;
@@ -1982,7 +1987,7 @@ function generateDocs(type) {
 
     // Write to print area and trigger print
     printArea.innerHTML = html;
-    setTimeout(() => window.print(), 500); // Small delay to let styles render
+    setTimeout(() => window.print(), 500); 
 }
 
 // Helper for the static downloads
