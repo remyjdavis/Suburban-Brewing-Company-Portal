@@ -1929,7 +1929,7 @@ function renderPOSDownloads() {
         </div>`;
 }
 
-// --- GENERATOR ENGINE (With % Added) ---
+// --- GENERATOR ENGINE (Updated Menu Layout) ---
 function generateDocs(type) {
     const printArea = document.getElementById('print-area');
     const inputs = document.querySelectorAll('.product-selector input[type="checkbox"]:checked');
@@ -1942,10 +1942,10 @@ function generateDocs(type) {
     let html = "";
 
     if (type === 'shelf') {
+        // --- SHELF TALKERS ---
         html = `<div class="print-grid-talkers">`;
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
-            // Get price if entered
             const priceVal = document.getElementById(`price-${input.value}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "$_______";
 
@@ -1953,19 +1953,15 @@ function generateDocs(type) {
             <div class="talker-card">
                 <img src="${logoUrl}" class="talker-logo">
                 <div class="talker-header">${p.name}</div>
-                
                 <div class="talker-sub">${p.abv}% ABV • 4-PACK / 16oz</div>
-                
                 <div class="talker-desc">${p.desc}</div>
-                
-                <div>
-                    <div class="talker-price-area">${displayPrice}</div>
-                </div>
+                <div><div class="talker-price-area">${displayPrice}</div></div>
             </div>`;
         });
         html += `</div>`;
     } 
     else if (type === 'menu') {
+        // --- MENU INSERT ---
         html = `
         <div class="print-menu-list">
             <div style="text-align:center; margin-bottom:40px;">
@@ -1976,17 +1972,22 @@ function generateDocs(type) {
             
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
+            // Get price from the input box
             const priceVal = document.getElementById(`price-${input.value}`).value;
-            const priceSpan = priceVal ? `<span style="float:right; font-weight:bold;">$${priceVal}</span>` : '';
+            const displayPrice = priceVal ? `$${priceVal}` : "";
 
             html += `
             <div class="menu-item">
-                <div class="menu-header">
-                    <span>${p.name} ${priceSpan}</span>
-                    
-                    <span>${p.abv}%</span>
+                <div class="menu-header" style="align-items:flex-end;">
+                    <span style="font-size:1.3rem;">${p.name}</span>
+                    <span style="font-weight:bold; font-size:1.2rem;">${displayPrice}</span>
                 </div>
-                <div style="font-size:14px; color:#444; margin-top:5px;">${p.desc}</div>
+                
+                <div style="font-weight:bold; color:#64748b; font-size:0.9rem; margin-bottom:6px;">
+                    ${p.abv}% ABV
+                </div>
+
+                <div style="font-size:14px; color:#334155; line-height:1.4;">${p.desc}</div>
             </div>`;
         });
         html += `</div>`;
