@@ -1394,6 +1394,125 @@ function updateCartItem(key, newQty) {
             }
         }
     }
+    // --- 1. AUTO-SAVE & EMAIL MEMORY ---
+
+// Call this function whenever the cart changes (inside updateCartUI or addToCart)
+function saveDraft() {
+  localStorage.setItem('sbc_cart_draft', JSON.stringify(cart));
+}
+
+// Call this when the user types in the email field
+function saveEmailDraft() {
+  const email = document.getElementById('customerEmail').value;
+  if (email) localStorage.setItem('sbc_customer_email', email);
+}
+
+// Call this inside window.onload to restore everything
+function loadDrafts() {
+  // Restore Cart
+  const savedCart = localStorage.getItem('sbc_cart_draft');
+  if (savedCart) {
+    cart = JSON.parse(savedCart);
+    updateCartUI(); // This redraws your cart with the saved items
+    console.log("🛒 Draft Cart Restored");
+  }
+
+  // Restore Email
+  const savedEmail = localStorage.getItem('sbc_customer_email');
+  if (savedEmail) {
+    const emailInput = document.getElementById('customerEmail');
+    if (emailInput) emailInput.value = savedEmail;
+  }
+}
+
+// Call this inside submitOrder() on SUCCESS to wipe the save
+function clearDrafts() {
+  localStorage.removeItem('sbc_cart_draft');
+  // We DO NOT clear the email, so it remembers them for next time!
+}
+
+
+// --- 2. ORDER HISTORY LOGIC ---
+
+function fetchOrderHistory() {
+  const customerName = document.getElementById('customerSelect').value; // Or however you get the name
+  
+  if (!customerName) {
+    alert("Please select a customer first.");
+    return;
+  }
+
+  // Show loading state
+  const container = document.getElementById('historyContainer');
+  container.innerHTML = '<p>Loading history...</p>';
+  document.getElementById('historyModal').style.display = 'block';
+
+  const payload = {
+    action: 'getOrderHistory',
+    customerName: customerName,
+    secret: 'SBC_SECURE_2026'
+  };
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'success') {
+      renderHistoryTable(data.history);
+    } else {
+      container.innerHTML = '<p>No history found.</p>';
+    }
+  })
+  .catch(err => {
+    container.innerHTML = '<p>Error loading history.</p>';
+  });
+}
+
+function renderHistoryTable(history) {
+  const container = document.getElementById('historyContainer');
+  
+  if (history.length === 0) {
+    container.innerHTML = "<p>No past orders found.</p>";
+    return;
+  }
+
+  let html = `
+    <table style="width:100%; border-collapse: collapse; margin-top:10px;">
+      <thead>
+        <tr style="background:#eee; text-align:left;">
+          <th style="padding:8px;">Date</th>
+          <th style="padding:8px;">Invoice</th>
+          <th style="padding:8px;">Total</th>
+          <th style="padding:8px;">Status</th>
+          <th style="padding:8px;">PDF</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  history.forEach(order => {
+    html += `
+      <tr style="border-bottom:1px solid #ddd;">
+        <td style="padding:8px;">${order.date}</td>
+        <td style="padding:8px;">${order.invoice}</td>
+        <td style="padding:8px;">$${order.total}</td>
+        <td style="padding:8px;">${order.status}</td>
+        <td style="padding:8px;">
+          ${order.pdf ? `<a href="${order.pdf}" target="_blank" style="color:blue; text-decoration:underline;">Download</a>` : "Pending"}
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+}
+
+function closeHistoryModal() {
+  document.getElementById('historyModal').style.display = 'none';
+}
 </script>
 
 <div id="scanner-container">
