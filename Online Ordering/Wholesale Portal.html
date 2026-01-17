@@ -1929,7 +1929,7 @@ function renderPOSDownloads() {
         </div>`;
 }
 
-// --- GENERATOR ENGINE (Updated Menu Layout) ---
+// --- GENERATOR ENGINE (Logo Per Item on Menu) ---
 function generateDocs(type) {
     const printArea = document.getElementById('print-area');
     const inputs = document.querySelectorAll('.product-selector input[type="checkbox"]:checked');
@@ -1942,7 +1942,7 @@ function generateDocs(type) {
     let html = "";
 
     if (type === 'shelf') {
-        // --- SHELF TALKERS ---
+        // --- SHELF TALKERS (Unchanged: Split Layout) ---
         html = `<div class="print-grid-talkers">`;
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
@@ -1950,44 +1950,52 @@ function generateDocs(type) {
             const displayPrice = priceVal ? `$${priceVal}` : "$_______";
 
             html += `
-            <div class="talker-card">
-                <img src="${logoUrl}" class="talker-logo">
-                <div class="talker-header">${p.name}</div>
-                <div class="talker-sub">${p.abv}% ABV • 4-PACK / 16oz</div>
-                <div class="talker-desc">${p.desc}</div>
-                <div><div class="talker-price-area">${displayPrice}</div></div>
+            <div class="talker-card" style="flex-direction: row; align-items: center; text-align: left; padding: 15px;">
+                <div style="flex: 0 0 35%; display:flex; align-items:center; justify-content:center; border-right:2px solid #eee; padding-right:15px; margin-right:15px; height:100%;">
+                    <img src="${logoUrl}" style="width: 100%; max-height: 100%; object-fit: contain;">
+                </div>
+                <div style="flex: 1; display:flex; flex-direction:column; justify-content:center;">
+                    <div class="talker-header" style="font-size:1.1rem; margin-bottom:5px;">${p.name}</div>
+                    <div class="talker-sub" style="font-size:0.8rem; margin-bottom:8px;">${p.abv}% ABV • 4-PACK</div>
+                    <div class="talker-desc" style="font-size:0.75rem; margin-bottom:10px;">${p.desc}</div>
+                    <div style="align-self: flex-start;">
+                        <div class="talker-price-area" style="font-size:1.2rem; padding:4px 8px;">${displayPrice}</div>
+                    </div>
+                </div>
             </div>`;
         });
         html += `</div>`;
     } 
     else if (type === 'menu') {
-        // --- MENU INSERT ---
-        html = `
-        <div class="print-menu-list">
-            <div style="text-align:center; margin-bottom:40px;">
-                <img src="${logoUrl}" style="height: 80px; margin-bottom: 10px;">
-                <h1>FRESH TAP LIST</h1>
-                <p>Suburban Brewing Co. | Honey Brook, PA</p>
-            </div>`;
+        // --- MENU INSERT (Logo Next to Product, No Header) ---
+        html = `<div class="print-menu-list" style="padding-top:20px;">`;
             
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
-            // Get price from the input box
             const priceVal = document.getElementById(`price-${input.value}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "";
 
             html += `
-            <div class="menu-item">
-                <div class="menu-header" style="align-items:flex-end;">
-                    <span style="font-size:1.3rem;">${p.name}</span>
-                    <span style="font-weight:bold; font-size:1.2rem;">${displayPrice}</span>
-                </div>
+            <div class="menu-item" style="display:flex; align-items:center; margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #e2e8f0;">
                 
-                <div style="font-weight:bold; color:#64748b; font-size:0.9rem; margin-bottom:6px;">
-                    ${p.abv}% ABV
+                <div style="flex: 0 0 80px; margin-right:20px; display:flex; align-items:center;">
+                     <img src="${logoUrl}" style="width:100%; object-fit:contain;">
                 </div>
 
-                <div style="font-size:14px; color:#334155; line-height:1.4;">${p.desc}</div>
+                <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                        <span style="font-size:1.4rem; font-weight:800; text-transform:uppercase;">${p.name}</span>
+                        <span style="font-weight:bold; font-size:1.3rem;">${displayPrice}</span>
+                    </div>
+                    
+                    <div style="font-weight:bold; color:#64748b; font-size:0.95rem; margin-bottom:6px;">
+                        ${p.abv}% ABV
+                    </div>
+
+                    <div style="font-size:0.9rem; color:#334155; line-height:1.4; font-style:italic;">
+                        ${p.desc}
+                    </div>
+                </div>
             </div>`;
         });
         html += `</div>`;
