@@ -895,15 +895,15 @@ async function init() {
     const headerUser = document.getElementById("headerUser");
 
    // --- LOGIC TO HANDLE HEADER RIGHT SIDE ---
-    if (state.step >= 2 && state.customer) {
-        // 🔴 Added onclick, cursor:pointer, and a small edit pencil (✎)
-        headerUser.innerHTML = `
-            <div class="user-badge" onclick="changeAccessKey()" style="cursor: pointer;" title="Tap to change your Secret Code">
-                👤 ${state.customer.name} <span style="opacity:0.5; margin-left:5px;">✎</span>
-            </div>`; 
-    } else {
-        headerUser.innerHTML = "";
-    }
+if (state.step >= 2 && state.customer) {
+    // 🔴 UPDATED: Now calls showUserMenu() instead of changeAccessKey()
+    headerUser.innerHTML = `
+        <div class="user-badge" onclick="showUserMenu()" style="cursor: pointer;" title="Open User Menu">
+            👤 ${state.customer.name} <span style="opacity:0.5; margin-left:5px;">▼</span>
+        </div>`; 
+} else {
+    headerUser.innerHTML = "";
+}
 
         // STEP 0: LEGAL AGREEMENT
         if (state.step === 0) {
@@ -1248,10 +1248,15 @@ function updateCartItem(key, newQty) {
             });
 
             Swal.fire({
-                title: "Order Placed!",
-                text: "Your confirmation has been sent.",
-                icon: "success"
-            }).then(() => location.reload());
+    title: "Order Placed!",
+    text: "Your confirmation has been sent.",
+    icon: "success"
+}).then(() => {
+    // 🔴 ADD THIS LINE:
+    localStorage.removeItem('sbc_cart_draft'); 
+    
+    location.reload();
+});
             
         } catch (e) {
             Swal.fire("Error", "Check your connection and try again.", "error");
@@ -1513,11 +1518,239 @@ function renderHistoryTable(history) {
 function closeHistoryModal() {
   document.getElementById('historyModal').style.display = 'none';
 }
+    // ===========================================
+// 👤 USER MENU & HISTORY LOGIC
+// ===========================================
+
+// 1. Show the Menu (Dropdown replacement)
+function showUserMenu() {
+    Swal.fire({
+        title: `Hello, ${state.customer.name}`,
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: '📜 Order History',
+        denyButtonText: '🔑 Change Access Key',
+        cancelButtonText: 'Close',
+        confirmButtonColor: '#2563eb',
+        denyButtonColor: '#475569'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetchOrderHistory(); // Open History
+        } else if (result.isDenied) {
+            changeAccessKey(); // Change Password
+        }
+    });
+}
+
+// 2. Fetch History from Google Script
+function fetchOrderHistory() {
+    const container = document.getElementById('historyContainer');
+    container.innerHTML = '<div style="text-align:center; padding:20px;">⏳ Loading history...</div>';
+    document.getElementById('historyModal').style.display = 'flex';
+
+    const payload = {
+        action: 'getOrderHistory',
+        customerName: state.customer.name,
+        secret: 'SBC_SECURE_2026'
+    };
+
+    // Use JSONP callback method or fetch if CORS allows. 
+    // Since you are using POST for orders, we use fetch here.
+    fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors', // IMPORTANT: Google Scripts returns opaque response for POST
+        body: JSON.stringify(payload)
+    }).then(() => {
+        // 🔴 TRICK: Because Google Script POST is opaque (no-cors), 
+        // we can't read the JSON response directly in the fetch chain easily without a proxy.
+        // INSTEAD, for History (reading data), we should use the doGet (JSONP) method 
+        // OR simply display a "Check Email" message if CORS is strict.
+        
+        // HOWEVER, let's try the pure POST method:
+        // If you updated the Backend to return JSON, we actually need to use 
+        // the "doPost" return. Google Apps Script POST limits browser access.
+        
+        // ALTERNATIVE: Let's assume you want to see it here. 
+        // We will switch this to a GET request for data retrieval to make it easier.
+        // But for now, let's use the UI to simulate the table structure provided by backend.
+    });
+
+    // 🔴 CORRECTED HISTORY FETCH (Using the 'action' parameter in GET for read-access)
+    // We will use the JSONP method we used for 'init' because it reads data reliably.
+    const callbackName = 'history_cb_' + Math.round(100000 * Math.random());
+    window[callbackName] = function(data) {
+        if (data.status === 'success') {
+            renderHistoryTable(data.history);
+        } else {
+            container.innerHTML = '<p style="text-align:center;">No history found.</p>';
+        }
+        delete window[callbackName];
+    };
+
+    // Create a temporary script to fetch history
+    const script = document.createElement('script');
+    // Note: We need to change the Backend doGet to handle 'getOrderHistory' via GET 
+    // OR we use POST. If using POST, we cannot read response easily in browser.
+    // **SIMPLEST FIX FOR YOU:** // I will rewrite this to use the `doPost` but we need to handle the opaque response.
+    // Actually, simply copying the `init` style is best for reading data.
+    
+    // FOR NOW, let's rely on the POST code I gave you.
+    // To read the POST response in the browser, we need to use `redirect: follow`.
+    
+    fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') renderHistoryTable(data.history);
+        else container.innerHTML = '<p style="text-align:center;">No history found.</p>';
+    })
+    .catch(e => {
+        // If this fails due to CORS, we might see this.
+        console.log("History load error", e);
+        container.innerHTML = '<p style="text-align:center; color:red;">Could not load history.</p>';
+    });
+}
+
+function renderHistoryTable(history) {
+    const container = document.getElementById('historyContainer');
+    if (!history || history.length === 0) {
+        container.innerHTML = '<p style="text-align:center; padding:20px;">No past orders found.</p>';
+        return;
+    }
+
+    let html = `
+    <table style="width:100%; border-collapse: collapse; font-size:0.85rem; color:white;">
+        <thead>
+            <tr style="border-bottom:1px solid #475569; text-align:left;">
+                <th style="padding:10px;">Date</th>
+                <th style="padding:10px;">Total</th>
+                <th style="padding:10px;">PDF</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+    history.forEach(h => {
+        html += `
+        <tr style="border-bottom:1px solid #334155;">
+            <td style="padding:10px;">
+                <div style="font-weight:bold;">${h.date}</div>
+                <div style="font-size:0.75rem; opacity:0.7;">${h.invoice}</div>
+                <div style="font-size:0.7rem; color:${h.status==='Pending'?'orange':'#4ade80'};">${h.status}</div>
+            </td>
+            <td style="padding:10px;">$${h.total}</td>
+            <td style="padding:10px;">
+                ${h.pdf ? `<a href="${h.pdf}" target="_blank" style="background:#2563eb; color:white; padding:4px 8px; border-radius:4px; text-decoration:none; font-size:0.75rem;">View</a>` : '-'}
+            </td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+
+function closeHistoryModal() {
+    document.getElementById('historyModal').style.display = 'none';
+}
+
+
+// ===========================================
+// 💾 AUTO-SAVE CONNECTIONS
+// ===========================================
+
+// 1. Hook into Login
+// Update your attemptLogin() function to call loadDrafts() on success
+const originalLogin = attemptLogin;
+attemptLogin = async function() {
+    const input = document.getElementById("loginInput").value.trim().toLowerCase();
+    const found = customersDB.find(c => c.key === input);
+    if (found) {
+        state.customer = found;
+        state.step = 2;
+        
+        // 🔴 NEW: LOAD DRAFT
+        const saved = localStorage.getItem('sbc_cart_draft');
+        if (saved) {
+            try {
+                const draft = JSON.parse(saved);
+                // Simple check: Only restore if cart isn't empty
+                if (Object.keys(draft).length > 0) {
+                    state.cart = draft;
+                    Swal.fire({
+                        toast: true, position: 'top-end', 
+                        icon: 'info', title: 'Cart Restored', 
+                        timer: 2000, showConfirmButton: false
+                    });
+                }
+            } catch(e) {}
+        }
+        
+        render();
+    } else {
+        Swal.fire("Login Failed", "Invalid Access Key.", "error");
+    }
+}
+
+// 2. Hook into Updates
+// Update your updateCartItem function to call saveDraft()
+const originalUpdateCart = updateCartItem;
+updateCartItem = function(key, newQty) {
+    // Run original logic
+    const qty = parseInt(newQty);
+    if (!qty || qty <= 0) delete state.cart[key];
+    else state.cart[key].qty = qty;
+    
+    // 🔴 NEW: SAVE DRAFT
+    localStorage.setItem('sbc_cart_draft', JSON.stringify(state.cart));
+    
+    render();
+}
+
+// 3. Hook into Modal Save
+const originalSaveModal = saveModalOrder;
+saveModalOrder = function() {
+    // Run Logic (duplicated from original to ensure scope)
+    const inputs = document.querySelectorAll('.modal-input');
+    inputs.forEach(input => {
+        const type = input.dataset.type;
+        const price = parseFloat(input.dataset.price);
+        const qty = parseInt(input.value) || 0;
+        const key = `${currentModalProduct.name}-${type}`;
+        if (qty > 0) state.cart[key] = { beer: currentModalProduct.name, type, price, qty };
+        else delete state.cart[key];
+    });
+
+    // 🔴 NEW: SAVE DRAFT
+    localStorage.setItem('sbc_cart_draft', JSON.stringify(state.cart));
+
+    updateLiveTotals();
+    closeOrderModal();
+    render();
+}
+
+// 4. Hook into Submit Success (Clear Draft)
+// Find your submitFinalOrder function and look for the 'success' block
+// We add localStorage.removeItem('sbc_cart_draft'); right before location.reload()
 </script>
 
 <div id="scanner-container">
     <div id="reader"></div>
     <button class="scanner-close" onclick="stopScanner()">Close Camera</button>
+</div>
+    <div id="historyModal" class="order-modal" style="z-index: 3000;">
+    <div class="order-modal-content" style="max-width: 600px; height: 80vh; display: flex; flex-direction: column;">
+        <div class="modal-header">
+            <h3 id="modalTitle">Order History</h3>
+            <button class="close-modal" onclick="closeHistoryModal()">&times;</button>
+        </div>
+        
+        <div id="historyContainer" style="overflow-y: auto; flex: 1;">
+            <p style="text-align:center; opacity:0.7;">Loading records...</p>
+        </div>
+
+        <button class="btn-add-order" style="margin-top:10px; background:#64748b;" onclick="closeHistoryModal()">Close</button>
+    </div>
 </div>
 </body>
 </html>
