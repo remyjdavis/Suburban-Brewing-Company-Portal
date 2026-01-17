@@ -791,6 +791,26 @@ body,
 .checkbox-row { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #f8fafc; }
 .checkbox-row:last-child { border-bottom: none; }
 .checkbox-row label { margin-left: 10px; flex: 1; font-weight: 500; font-size: 0.9rem; }
+   /* --- QR SMALL TALKER (2.5x2.5 inch) --- */
+    .qr-talker-card {
+        width: 2.5in;
+        height: 2.5in;
+        border: 1px dashed #ccc;
+        padding: 10px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        text-align: center;
+        float: left; /* Pack them tight */
+        margin: 5px;
+    }
+    
+    .qr-code-img { width: 0.9in; height: 0.9in; }
+    .qr-header { font-size: 14px; font-weight: 900; line-height: 1.1; margin-bottom: 2px; }
+    .qr-sub { font-size: 10px; font-weight: bold; color: #444; }
+    .qr-cta { font-size: 8px; font-style: italic; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -1929,12 +1949,15 @@ function renderPOSDownloads() {
         </div>`;
 }
 
-// --- GENERATOR ENGINE (Logo Per Item on Menu) ---
+// --- GENERATOR ENGINE (With QR Tags) ---
 function generateDocs(type) {
     const printArea = document.getElementById('print-area');
     const inputs = document.querySelectorAll('.product-selector input[type="checkbox"]:checked');
     const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
     
+    // Get the base URL for the QR code link (current page URL without parameters)
+    const baseUrl = window.location.href.split('?')[0];
+
     if (inputs.length === 0) {
         return Swal.fire("Select Products", "Please check at least one product.", "warning");
     }
@@ -1942,13 +1965,13 @@ function generateDocs(type) {
     let html = "";
 
     if (type === 'shelf') {
-        // --- SHELF TALKERS (Unchanged: Split Layout) ---
+        // --- 3x5 SHELF TALKERS ---
         html = `<div class="print-grid-talkers">`;
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
             const priceVal = document.getElementById(`price-${input.value}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "$_______";
-
+            
             html += `
             <div class="talker-card" style="flex-direction: row; align-items: center; text-align: left; padding: 15px;">
                 <div style="flex: 0 0 35%; display:flex; align-items:center; justify-content:center; border-right:2px solid #eee; padding-right:15px; margin-right:15px; height:100%;">
@@ -1966,35 +1989,54 @@ function generateDocs(type) {
         });
         html += `</div>`;
     } 
-    else if (type === 'menu') {
-        // --- MENU INSERT (Logo Next to Product, No Header) ---
-        html = `<div class="print-menu-list" style="padding-top:20px;">`;
-            
+    else if (type === 'qr') {
+        // --- SMALL QR TAGS (2.5x2.5) ---
+        // We use a Flex container to pack them on the page
+        html = `<div style="display:flex; flex-wrap:wrap; align-content: flex-start; padding: 0.25in;">`;
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
             const priceVal = document.getElementById(`price-${input.value}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "";
+            
+            // GENERATE QR CODE URL
+            // API: qrserver.com (Free, reliable)
+            const targetUrl = `${baseUrl}?beer=${encodeURIComponent(p.name)}`;
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(targetUrl)}`;
 
             html += `
-            <div class="menu-item" style="display:flex; align-items:center; margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #e2e8f0;">
+            <div class="qr-talker-card">
+                <img src="${logoUrl}" style="height: 20px; margin-bottom: 5px;">
                 
+                <div class="qr-header">${p.name}</div>
+                <div class="qr-sub">${p.abv}% ABV</div>
+                
+                <img src="${qrSrc}" class="qr-code-img">
+                
+                <div class="qr-cta">Scan for Description</div>
+                ${displayPrice ? `<div style="font-weight:bold; font-size:14px; margin-top:2px;">${displayPrice}</div>` : ''}
+            </div>`;
+        });
+        html += `</div>`;
+    }
+    else if (type === 'menu') {
+        // --- MENU INSERT ---
+        html = `<div class="print-menu-list" style="padding-top:20px;">`;
+        inputs.forEach(input => {
+            const p = groupedProducts[input.value];
+            const priceVal = document.getElementById(`price-${input.value}`).value;
+            const displayPrice = priceVal ? `$${priceVal}` : "";
+            html += `
+            <div class="menu-item" style="display:flex; align-items:center; margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #e2e8f0;">
                 <div style="flex: 0 0 80px; margin-right:20px; display:flex; align-items:center;">
                      <img src="${logoUrl}" style="width:100%; object-fit:contain;">
                 </div>
-
                 <div style="flex:1;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                         <span style="font-size:1.4rem; font-weight:800; text-transform:uppercase;">${p.name}</span>
                         <span style="font-weight:bold; font-size:1.3rem;">${displayPrice}</span>
                     </div>
-                    
-                    <div style="font-weight:bold; color:#64748b; font-size:0.95rem; margin-bottom:6px;">
-                        ${p.abv}% ABV
-                    </div>
-
-                    <div style="font-size:0.9rem; color:#334155; line-height:1.4; font-style:italic;">
-                        ${p.desc}
-                    </div>
+                    <div style="font-weight:bold; color:#64748b; font-size:0.95rem; margin-bottom:6px;">${p.abv}% ABV</div>
+                    <div style="font-size:0.9rem; color:#334155; line-height:1.4; font-style:italic;">${p.desc}</div>
                 </div>
             </div>`;
         });
@@ -2013,6 +2055,67 @@ function createDocCard(title, subtitle, icon, link) {
         <h4 style="margin:0; font-size:0.9rem; color:#1e293b;">${title}</h4>
         <div style="margin-top:8px; font-size:0.7rem; color:var(--accent); font-weight:bold;">⬇️ Download</div>
     </div>`;
+}
+    // --- PUBLIC QR CODE VIEWER ---
+// Check URL immediately on load
+const urlParams = new URLSearchParams(window.location.search);
+const publicBeerKey = urlParams.get('beer');
+
+if (publicBeerKey) {
+    // 🛑 STOP the normal app from loading
+    document.addEventListener("DOMContentLoaded", () => {
+        showPublicBeerPage(publicBeerKey);
+    });
+}
+
+function showPublicBeerPage(beerKey) {
+    // 1. Hide the main app
+    document.getElementById("app").style.display = "none";
+    
+    // 2. Find the beer data
+    // Note: We need to decode the URI component in case of spaces
+    const cleanKey = decodeURIComponent(beerKey);
+    // Find product in groupedProducts (simple lookup)
+    let product = null;
+    for(let k in groupedProducts) {
+        if(groupedProducts[k].name === cleanKey) {
+            product = groupedProducts[k];
+            break;
+        }
+    }
+
+    if (!product) {
+        document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>Product Not Found</h2>";
+        return;
+    }
+
+    // 3. Render the Public Mobile Card
+    const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
+    const imgUrl = `${BASE_IMG_URL}${product.image}`;
+
+    // Create a new container for the public view
+    const publicView = document.createElement("div");
+    publicView.innerHTML = `
+        <div style="max-width: 400px; margin: 0 auto; padding: 20px; font-family: sans-serif; text-align: center;">
+            <img src="${logoUrl}" style="height: 60px; margin-bottom: 20px;">
+            
+            <div style="border: 1px solid #eee; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                <img src="${imgUrl}" onerror="this.src='${FALLBACK_LOGO}'" style="width: 100%; height: 300px; object-fit: cover;">
+                <div style="padding: 25px;">
+                    <h1 style="margin: 0 0 5px 0; font-size: 1.8rem; color: #1e293b;">${product.name}</h1>
+                    <div style="color: #64748b; font-weight: bold; margin-bottom: 15px;">${product.abv}% ABV</div>
+                    <p style="line-height: 1.6; color: #334155;">${product.desc}</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; font-size: 0.8rem; color: #999;">
+                <p>Brewed Fresh in Honey Brook, PA</p>
+                <a href="https://suburbanbrewingco.com" style="color: #2563eb; text-decoration: none;">Visit Our Website</a>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(publicView);
 }
 </script>
 
