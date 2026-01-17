@@ -1929,7 +1929,7 @@ function renderPOSDownloads() {
         </div>`;
 }
 
-// --- GENERATOR ENGINE (With Dynamic Prices) ---
+// --- GENERATOR ENGINE (With % Added) ---
 function generateDocs(type) {
     const printArea = document.getElementById('print-area');
     const inputs = document.querySelectorAll('.product-selector input[type="checkbox"]:checked');
@@ -1945,16 +1945,17 @@ function generateDocs(type) {
         html = `<div class="print-grid-talkers">`;
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
-            // Get the specific price entered for this beer
+            // Get price if entered
             const priceVal = document.getElementById(`price-${input.value}`).value;
-            // Use entered price or blank line if empty
             const displayPrice = priceVal ? `$${priceVal}` : "$_______";
 
             html += `
             <div class="talker-card">
                 <img src="${logoUrl}" class="talker-logo">
                 <div class="talker-header">${p.name}</div>
-                <div class="talker-sub">${p.abv} ABV • 4-PACK / 16oz</div>
+                
+                <div class="talker-sub">${p.abv}% ABV • 4-PACK / 16oz</div>
+                
                 <div class="talker-desc">${p.desc}</div>
                 
                 <div>
@@ -1975,7 +1976,6 @@ function generateDocs(type) {
             
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
-            // Optional: Include price on menu if entered
             const priceVal = document.getElementById(`price-${input.value}`).value;
             const priceSpan = priceVal ? `<span style="float:right; font-weight:bold;">$${priceVal}</span>` : '';
 
@@ -1983,7 +1983,8 @@ function generateDocs(type) {
             <div class="menu-item">
                 <div class="menu-header">
                     <span>${p.name} ${priceSpan}</span>
-                    <span>${p.abv}</span>
+                    
+                    <span>${p.abv}%</span>
                 </div>
                 <div style="font-size:14px; color:#444; margin-top:5px;">${p.desc}</div>
             </div>`;
