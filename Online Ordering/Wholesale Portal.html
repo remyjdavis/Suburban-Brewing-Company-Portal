@@ -853,7 +853,7 @@ body,
 
     let groupedProducts = {};
     let customersDB = [];
-    let state = { step: 0, customer: null, cart: {}, category: 'All' };
+    let state = { step: 0, customer: null, cart: {}, category: 'All', tab: 'order', historyCache: [] };
     let currentModalProduct = null;
     let html5QrCode;
 
@@ -1618,19 +1618,18 @@ function fetchOrderHistory() {
         secret: 'SBC_SECURE_2026'
     };
 
-    fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-    })
+    fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) })
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            renderHistoryTable(data.history);
+            state.historyCache = data.history; // <--- SAVE DATA HERE
             
-            // 🔴 NEW: Save the latest items to state for the POS tab
-            if (data.latestItems && data.latestItems.length > 0) {
-                state.latestOrderProducts = data.latestItems;
+            // Also update POS latest items for the generator
+            if (data.history.length > 0 && data.history[0].items) {
+                state.latestOrderProducts = data.history[0].items.map(i => i.beer);
             }
+            
+            renderHistoryTable(data.history);
         } else {
             container.innerHTML = '<p style="text-align:center;">No history found.</p>';
         }
@@ -1650,26 +1649,52 @@ function renderHistoryTable(history) {
     let html = `
     <table style="width:100%; border-collapse: collapse; font-size:0.85rem; margin-top:10px;">
         <thead>
-            <tr style="background:#eee; text-align:left;">
-                <th style="padding:10px;">Date</th>
-                <th style="padding:10px;">Total</th>
-                <th style="padding:10px;">Status</th>
-                <th style="padding:10px;">PDF</th>
+            <tr style="background:#f8fafc; text-align:left; border-bottom:2px solid #e2e8f0;">
+                <th style="padding:12px;">Date / ID</th>
+                <th style="padding:12px;">Order Summary</th>
+                <th style="padding:12px; text-align:right;">Actions</th>
             </tr>
         </thead>
         <tbody>`;
 
-    history.forEach(h => {
+    history.forEach((h, index) => {
+        // Create a summary string (e.g., "2x IPA, 1x Stout...")
+        const summary = h.items.map(i => `${i.qty}x ${i.beer}`).join(', ');
+        const truncatedSummary = summary.length > 50 ? summary.substring(0, 50) + "..." : summary;
+
         html += `
-        <tr style="border-bottom:1px solid #ddd;">
-            <td style="padding:10px;">
-                <div style="font-weight:bold;">${h.date}</div>
-                <div style="font-size:0.75rem; opacity:0.7;">${h.invoice}</div>
+        <tr style="border-bottom:1px solid #e2e8f0;">
+            <td style="padding:12px; vertical-align:top;">
+                <div style="font-weight:bold; color:#1e293b;">${h.date}</div>
+                <div style="font-size:0.75rem; color:#64748b;">${h.invoice}</div>
+                <div style="font-size:0.7rem; font-weight:bold; color:${h.status==='Pending'?'#f59e0b':'#10b981'}; margin-top:4px;">
+                    ${h.status.toUpperCase()}
+                </div>
             </td>
-            <td style="padding:10px;">$${h.total}</td>
-            <td style="padding:10px; font-size:0.8rem;">${h.status}</td>
-            <td style="padding:10px;">
-                ${h.pdf ? `<a href="${h.pdf}" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:none;">📄 View</a>` : '-'}
+            
+            <td style="padding:12px; vertical-align:top;">
+                <div style="font-weight:bold; color:#1e293b;">$${h.total}</div>
+                <div style="font-size:0.8rem; color:#64748b; margin-top:4px; line-height:1.4;">
+                    ${truncatedSummary || "No items details"}
+                </div>
+            </td>
+            
+            <td style="padding:12px; text-align:right; vertical-align:top;">
+                <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+                    
+                    <button onclick="triggerReorder(${index})" style="
+                        background: #1e293b; color: white; border: none; 
+                        padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; 
+                        cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        🔄 Reorder
+                    </button>
+
+                    ${h.pdf ? `<a href="${h.pdf}" target="_blank" style="
+                        font-size:0.75rem; color:#2563eb; text-decoration:none; 
+                        background:#eff6ff; padding:4px 8px; border-radius:4px;">
+                        📄 Invoice
+                    </a>` : ''}
+                </div>
             </td>
         </tr>`;
     });
@@ -1677,7 +1702,65 @@ function renderHistoryTable(history) {
     html += `</tbody></table>`;
     container.innerHTML = html;
 }
+function triggerReorder(index) {
+    const order = state.historyCache[index];
+    if (!order || !order.items) return;
 
+    let addedCount = 0;
+
+    order.items.forEach(oldItem => {
+        // 1. Check if product still exists in current database
+        // We look up the 'groupedProducts' to ensure the product is live and get CURRENT price
+        const currentProd = groupedProducts[oldItem.beer];
+        
+        if (currentProd) {
+            // 2. Find the matching variant (Case, Keg) to get current price
+            const variant = currentProd.variants.find(v => v.type === oldItem.type);
+            
+            if (variant) {
+                // 3. Add to Cart (using current price, not old price)
+                const key = `${oldItem.beer}-${oldItem.type}`;
+                
+                // If item exists, add to qty. If not, create it.
+                if (state.cart[key]) {
+                    state.cart[key].qty += oldItem.qty;
+                } else {
+                    state.cart[key] = {
+                        beer: oldItem.beer,
+                        type: oldItem.type,
+                        price: variant.price, // Uses current price
+                        qty: oldItem.qty
+                    };
+                }
+                addedCount++;
+            }
+        }
+    });
+
+    if (addedCount > 0) {
+        saveDraft(); // Save to local storage
+        
+        Swal.fire({
+            title: 'Cart Updated!',
+            text: `Added items from Invoice ${order.invoice} to your cart.`,
+            icon: 'success',
+            showCancelButton: true,
+            confirmButtonText: 'Go to Checkout',
+            cancelButtonText: 'Stay Here'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                switchTab('order'); // Switch view
+                render(); // Refresh grid to show new badges
+                goToReview(); // Jump to review screen
+            } else {
+                switchTab('order'); // Switch view so they see the grid
+                render();
+            }
+        });
+    } else {
+        Swal.fire("Unavailable", "These products are no longer available in the system.", "warning");
+    }
+}
 // ===========================================
 // 💾 AUTO-SAVE CONNECTIONS
 // ===========================================
