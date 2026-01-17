@@ -1221,7 +1221,13 @@ async function init() {
     async function attemptLogin() {
         const input = document.getElementById("loginInput").value.trim().toLowerCase();
         const found = customersDB.find(c => c.key === input);
-        if (found) { state.customer = found; state.step = 2; render(); }
+        if (found) { 
+    state.customer = found; 
+    state.step = 2; 
+    loadDrafts(); 
+    fetchOrderHistory(); // <--- Add this line so it pre-loads the latest order items in the background
+    render(); 
+}
         else { Swal.fire("Login Failed", "Invalid Access Key.", "error"); }
     }
 
