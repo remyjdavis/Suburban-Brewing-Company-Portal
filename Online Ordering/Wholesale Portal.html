@@ -941,8 +941,9 @@ async function init() {
 
         // STEP 0: LEGAL AGREEMENT
         if (state.step === 0) {
-            liveBar.style.display = "none";
-            app.innerHTML = `
+        liveBar.style.display = "none";
+        // Note: We render this INTO the order view so it's visible immediately
+        orderView.innerHTML = `
                    <h2 style="text-align:center;">PA WHOLESALE DISTRIBUTION AGREEMENT</h2>
                     <div class="legal-scroll">
                         <p>This agreement is compliant with the laws of the Commonwealth of Pennsylvania and the regulations of the Pennsylvania Liquor Control Board (PLCB). By proceeding, the Purchaser agrees to the following terms and conditions:
@@ -969,11 +970,10 @@ async function init() {
                     <button id="acceptBtn" class="btn btn-primary" style="width:100%;" disabled onclick="state.step=1;render()">I Accept & Agree</button>
                 </div>`;
         
-       /// STEP 1: BREWHOUSE LOGIN
+       // STEP 1: LOGIN
     } else if (state.step === 1) {
         liveBar.style.display = "none";
-            
-            app.innerHTML = `
+        orderView.innerHTML = `
                 <div class="login-hero-container">
                     <div class="login-hero-bg"></div> <div class="login-card-hero">
                         <div class="login-logo-area">
@@ -996,9 +996,6 @@ async function init() {
     } else if (state.step === 2) {
         liveBar.style.display = "flex";
         updateLiveTotals();
-
-        // 🔴 DELETED THE CONFLICTING HEADER CODE HERE. 
-        // It now relies on the logic at the top of the function which is correct.
 
         let html = `
             <div class="controls-area">
@@ -1038,12 +1035,13 @@ async function init() {
         app.innerHTML = html + `</div>`;
         
        // STEP 3: REVIEW ORDER
-} else if (state.step === 3) {
-    liveBar.style.display = "none";
-    const math = calculateOrderMath();
-    const showEmailPrompt = !state.customer.email;
+    } else if (state.step === 3 && state.tab === 'order') {
+        liveBar.style.display = "none";
+        const math = calculateOrderMath();
+        const showEmailPrompt = !state.customer.email;
 
-    app.innerHTML = `
+        // 🔴 IMPORTANT: We write to 'orderView', NOT 'app'
+        orderView.innerHTML = `
         <div class="card">
             <div style="display:flex; justify-content:space-between;">
                 <strong>Suburban Brewing Co.</strong>
@@ -1108,8 +1106,7 @@ async function init() {
                 <button class="btn btn-success" style="flex:1;" onclick="submitFinalOrder()">Confirm Order</button>
             </div>
         </div>`;
-    } // This closes the "else if (state.step === 3)" block
-
+    } 
 } // <--- 🔴 YOU WERE MISSING THIS CLOSING BRACKET FOR THE RENDER FUNCTION
 
     // --- MODAL LOGIC ---
