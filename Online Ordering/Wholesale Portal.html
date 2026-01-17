@@ -728,7 +728,56 @@ body,
 .pos-card { background:white; border-radius:12px; padding:15px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.05); border:1px solid #e2e8f0; }
 .pos-card img { width:100%; height:120px; object-fit:contain; margin-bottom:10px; }
 .btn-download { background:#1e293b; color:white; border:none; padding:8px; border-radius:6px; width:100%; cursor:pointer; }
-</style>
+/* --- PRINT GENERATOR STYLES --- */
+#print-area { display: none; } /* Hidden normally */
+
+/* THE PRINT MODE MAGIC */
+@media print {
+    /* Hide the App Interface */
+    body > * { display: none !important; }
+    
+    /* Show ONLY the print area */
+    body { background: white !important; padding: 0 !important; margin: 0 !important; }
+    #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    
+    /* Shelf Talker Grid (4 per page) */
+    .print-grid-talkers {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 20px;
+        height: 100vh;
+        page-break-after: always;
+        padding: 20px;
+    }
+
+    .talker-card {
+        border: 2px dashed #000;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .talker-header { font-size: 24px; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; }
+    .talker-sub { font-size: 14px; font-weight: bold; margin-bottom: 15px; }
+    .talker-desc { font-size: 12px; line-height: 1.4; font-style: italic; }
+    .talker-price-box { margin-top: 20px; border: 2px solid #000; padding: 10px; display: inline-block; font-weight: bold; }
+
+    /* Menu List Style */
+    .print-menu-list { padding: 40px; }
+    .menu-item { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+    .menu-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; }
+}
+
+/* UI FOR THE GENERATOR TAB */
+.generator-controls { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+.product-selector { max-height: 300px; overflow-y: auto; margin: 15px 0; border: 1px solid #eee; padding: 10px; }
+.checkbox-row { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #f8fafc; }
+.checkbox-row:last-child { border-bottom: none; }
+.checkbox-row label { margin-left: 10px; flex: 1; font-weight: 500; font-size: 0.9rem; }
+    </style>
 </head>
 <body>
 
@@ -1553,7 +1602,6 @@ function closeHistoryModal() {
 // 👤 USER MENU & HISTORY LOGIC
 // ===========================================
 
-// 2. Fetch History from Google Script
 function fetchOrderHistory() {
     const container = document.getElementById('history-content-area');
     container.innerHTML = '<p style="text-align:center; padding:20px;">⏳ Loading history...</p>';
@@ -1572,6 +1620,11 @@ function fetchOrderHistory() {
     .then(data => {
         if (data.status === 'success') {
             renderHistoryTable(data.history);
+            
+            // 🔴 NEW: Save the latest items to state for the POS tab
+            if (data.latestItems && data.latestItems.length > 0) {
+                state.latestOrderProducts = data.latestItems;
+            }
         } else {
             container.innerHTML = '<p style="text-align:center;">No history found.</p>';
         }
@@ -1720,24 +1773,137 @@ function switchTab(tabName) {
     if (tabName === 'pos') renderPOSDownloads();
 }
 
-// --- NEW: POS DOWNLOADS ---
+// --- POS GENERATOR (Auto-Selects Latest Order) ---
 function renderPOSDownloads() {
     const container = document.getElementById('pos-content-area');
-    container.innerHTML = "";
+    container.className = ""; 
+    
+    // 1. Determine which products to check
+    // Priority: Items in Cart -> Items from Last Order -> None
+    let preSelectedItems = [];
+    
+    // Check Cart First
+    const cartItems = Object.values(state.cart).map(i => i.beer);
+    
+    if (cartItems.length > 0) {
+        preSelectedItems = cartItems;
+    } else if (state.latestOrderProducts && state.latestOrderProducts.length > 0) {
+        preSelectedItems = state.latestOrderProducts;
+    }
+
+    // 2. Build the List
+    let listHtml = '';
     
     for (const key in groupedProducts) {
         const p = groupedProducts[key];
-        const imgUrl = `${BASE_IMG_URL}${p.image}`;
+        // Check if this product name exists in our pre-selected list
+        // We use 'includes' for loose matching
+        const isChecked = preSelectedItems.includes(p.name) ? 'checked' : '';
         
-        container.innerHTML += `
-            <div class="pos-card">
-                <img src="${imgUrl}" onerror="this.src='${FALLBACK_LOGO}'">
-                <h4 style="margin:5px 0; font-size:0.9rem;">${p.name}</h4>
-                <button class="btn-download" onclick="window.open('${imgUrl}', '_blank')">
-                    ⬇️ Download
-                </button>
-            </div>`;
+        listHtml += `
+        <div class="checkbox-row">
+            <input type="checkbox" id="chk-${key}" value="${key}" ${isChecked}>
+            <label for="chk-${key}">
+                ${p.name} <span style="color:#64748b; font-size:0.8em;">(${p.abv})</span>
+            </label>
+        </div>`;
     }
+
+    // 3. Render Interface
+    const selectionSourceText = (cartItems.length > 0) ? "Based on your current cart." : 
+                                (state.latestOrderProducts && state.latestOrderProducts.length > 0) ? "Based on your last order." : 
+                                "Select products below.";
+
+    container.innerHTML = `
+        <div class="generator-controls">
+            <h3 style="margin-top:0;">🖨️ Signage Generator</h3>
+            <p style="font-size:0.85rem; color:#666;">${selectionSourceText}</p>
+            
+            <div class="product-selector">
+                ${listHtml}
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="btn btn-primary" onclick="generateDocs('shelf')">
+                    🏷️ Shelf Talkers
+                </button>
+                <button class="btn btn-outline" onclick="generateDocs('menu')">
+                    📝 Menu Insert
+                </button>
+            </div>
+        </div>
+        
+        <h3 style="margin: 20px 0 10px; border-bottom:1px solid #eee;">📂 Brand Assets</h3>
+        <div class="pos-grid">
+             ${createDocCard("Brand Logo Pack", "All Formats", "🎨", "https://github.com/remyjdavis/Suburban-Brewing-Company-Portal/raw/main/Online%20Ordering/SBC-Logos.zip")}
+        </div>
+    `;
+}
+
+// --- GENERATOR ENGINE ---
+function generateDocs(type) {
+    const printArea = document.getElementById('print-area');
+    const inputs = document.querySelectorAll('.product-selector input:checked');
+    
+    if (inputs.length === 0) {
+        return Swal.fire("Select Products", "Please check at least one product.", "warning");
+    }
+
+    let html = "";
+
+    if (type === 'shelf') {
+        // SHELF TALKERS (Grid Layout)
+        html = `<div class="print-grid-talkers">`;
+        inputs.forEach(input => {
+            const p = groupedProducts[input.value];
+            html += `
+            <div class="talker-card">
+                <div style="font-size:10px; letter-spacing:2px; margin-bottom:5px;">SUBURBAN BREWING CO.</div>
+                <div class="talker-header">${p.name}</div>
+                <div class="talker-sub">${p.abv} ABV</div>
+                <div class="talker-desc">${p.desc}</div>
+                <div><span class="talker-price-box">$_______</span></div>
+                <div style="margin-top:10px; font-size:10px;">Fresh. Local. Independent.</div>
+            </div>`;
+        });
+        html += `</div>`;
+    } 
+    else if (type === 'menu') {
+        // MENU INSERT (List Layout)
+        html = `
+        <div class="print-menu-list">
+            <div style="text-align:center; margin-bottom:40px;">
+                <h1>FRESH TAP LIST</h1>
+                <p>Suburban Brewing Co. | Honey Brook, PA</p>
+            </div>`;
+            
+        inputs.forEach(input => {
+            const p = groupedProducts[input.value];
+            html += `
+            <div class="menu-item">
+                <div class="menu-header">
+                    <span>${p.name}</span>
+                    <span>${p.abv}</span>
+                </div>
+                <div style="font-size:14px; color:#444; margin-top:5px;">${p.desc}</div>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    // Write to print area and trigger print
+    printArea.innerHTML = html;
+    setTimeout(() => window.print(), 500); // Small delay to let styles render
+}
+
+// Helper for the static downloads
+function createDocCard(title, subtitle, icon, link) {
+    return `
+    <div class="pos-card" onclick="window.open('${link}', '_blank')" style="cursor:pointer; border-color:#cbd5e1;">
+        <div style="font-size: 35px; margin-bottom:5px;">${icon}</div>
+        <h4 style="margin:0; font-size:0.9rem; color:#1e293b;">${title}</h4>
+        <div style="margin-top:8px; font-size:0.7rem; color:var(--accent); font-weight:bold;">⬇️ Download</div>
+    </div>`;
 }
 </script>
 
@@ -1745,6 +1911,6 @@ function renderPOSDownloads() {
     <div id="reader"></div>
     <button class="scanner-close" onclick="stopScanner()">Close Camera</button>
 </div>
-    
+    <div id="print-area"></div>
 </body>
 </html>
