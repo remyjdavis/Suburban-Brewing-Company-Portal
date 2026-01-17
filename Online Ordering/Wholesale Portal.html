@@ -733,39 +733,53 @@ body,
 
 /* THE PRINT MODE MAGIC */
 @media print {
-    /* Hide the App Interface */
+    /* Hide App UI */
     body > * { display: none !important; }
-    
-    /* Show ONLY the print area */
     body { background: white !important; padding: 0 !important; margin: 0 !important; }
-    #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     
-    /* Shelf Talker Grid (4 per page) */
+    /* Show Print Area */
+    #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
+
+    /* --- SHELF TALKER GRID (Fixed 3x5 Size) --- */
     .print-grid-talkers {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-        gap: 20px;
-        height: 100vh;
-        page-break-after: always;
-        padding: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5in;         /* Space between cards */
+        padding: 0.5in;     /* Page margins */
+        justify-content: center;
     }
 
     .talker-card {
-        border: 2px dashed #000;
-        padding: 20px;
+        width: 5in;         /* Standard Shelf Talker Width */
+        height: 3in;        /* Standard Shelf Talker Height */
+        border: 2px dashed #999; /* Dashed cut line */
+        padding: 15px;
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        justify-content: center;
         text-align: center;
+        page-break-inside: avoid; /* Don't split across pages */
+        margin-bottom: 20px;
     }
     
-    .talker-header { font-size: 24px; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; }
-    .talker-sub { font-size: 14px; font-weight: bold; margin-bottom: 15px; }
-    .talker-desc { font-size: 12px; line-height: 1.4; font-style: italic; }
-    .talker-price-box { margin-top: 20px; border: 2px solid #000; padding: 10px; display: inline-block; font-weight: bold; }
+    .talker-logo { height: 35px; object-fit: contain; margin: 0 auto 5px; }
+    .talker-header { font-size: 18px; font-weight: 900; text-transform: uppercase; line-height: 1; margin-bottom: 4px; }
+    .talker-sub { font-size: 12px; font-weight: bold; color: #444; margin-bottom: 8px; }
+    .talker-desc { font-size: 10px; line-height: 1.3; font-style: italic; flex-grow: 1; overflow: hidden; }
+    
+    .talker-price-area { 
+        margin-top: 5px; 
+        font-weight: 900; 
+        font-size: 24px; 
+        color: #000;
+        border: 2px solid #000;
+        border-radius: 8px;
+        padding: 4px 10px;
+        align-self: center;
+        display: inline-block;
+    }
 
-    /* Menu List Style */
+    /* Keep Menu Styles Same */
     .print-menu-list { padding: 40px; }
     .menu-item { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
     .menu-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; }
@@ -1862,79 +1876,63 @@ function switchTab(tabName) {
     if (tabName === 'pos') renderPOSDownloads();
 }
 
-// --- POS GENERATOR (Auto-Selects Latest Order) ---
+// --- POS GENERATOR (With Price Inputs) ---
 function renderPOSDownloads() {
     const container = document.getElementById('pos-content-area');
     container.className = ""; 
     
-    // 1. Determine which products to check
-    // Priority: Items in Cart -> Items from Last Order -> None
+    // 1. Auto-select logic
     let preSelectedItems = [];
-    
-    // Check Cart First
     const cartItems = Object.values(state.cart).map(i => i.beer);
-    
-    if (cartItems.length > 0) {
-        preSelectedItems = cartItems;
-    } else if (state.latestOrderProducts && state.latestOrderProducts.length > 0) {
-        preSelectedItems = state.latestOrderProducts;
-    }
+    if (cartItems.length > 0) preSelectedItems = cartItems;
+    else if (state.latestOrderProducts && state.latestOrderProducts.length > 0) preSelectedItems = state.latestOrderProducts;
 
-    // 2. Build the List
+    // 2. Build List with Price Inputs
     let listHtml = '';
-    
     for (const key in groupedProducts) {
         const p = groupedProducts[key];
-        // Check if this product name exists in our pre-selected list
-        // We use 'includes' for loose matching
         const isChecked = preSelectedItems.includes(p.name) ? 'checked' : '';
         
         listHtml += `
-        <div class="checkbox-row">
-            <input type="checkbox" id="chk-${key}" value="${key}" ${isChecked}>
-            <label for="chk-${key}">
-                ${p.name} <span style="color:#64748b; font-size:0.8em;">(${p.abv})</span>
-            </label>
+        <div class="checkbox-row" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f1f5f9;">
+            <div style="flex:1; display:flex; align-items:center;">
+                <input type="checkbox" id="chk-${key}" value="${key}" ${isChecked} style="transform:scale(1.2); margin-right:10px;">
+                <label for="chk-${key}" style="font-weight:500;">
+                    ${p.name} <br><span style="color:#64748b; font-size:0.75em;">${p.abv}</span>
+                </label>
+            </div>
+            <div style="text-align:right;">
+                <input type="text" id="price-${key}" placeholder="$0.00" 
+                       style="width:70px; padding:6px; border:1px solid #cbd5e1; border-radius:6px; text-align:right; font-size:0.9rem;">
+            </div>
         </div>`;
     }
-
-    // 3. Render Interface
-    const selectionSourceText = (cartItems.length > 0) ? "Based on your current cart." : 
-                                (state.latestOrderProducts && state.latestOrderProducts.length > 0) ? "Based on your last order." : 
-                                "Select products below.";
 
     container.innerHTML = `
         <div class="generator-controls">
             <h3 style="margin-top:0;">🖨️ Signage Generator</h3>
-            <p style="font-size:0.85rem; color:#666;">${selectionSourceText}</p>
+            <p style="font-size:0.85rem; color:#666;">Enter your retail price (e.g. 16.00) to auto-fill the tags.</p>
             
-            <div class="product-selector">
+            <div class="product-selector" style="max-height:400px;">
                 ${listHtml}
             </div>
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <button class="btn btn-primary" onclick="generateDocs('shelf')">
-                    🏷️ Shelf Talkers
-                </button>
-                <button class="btn btn-outline" onclick="generateDocs('menu')">
-                    📝 Menu Insert
-                </button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
+                <button class="btn btn-primary" onclick="generateDocs('shelf')">🏷️ Shelf Talkers</button>
+                <button class="btn btn-outline" onclick="generateDocs('menu')">📝 Menu Insert</button>
             </div>
         </div>
         
         <h3 style="margin: 20px 0 10px; border-bottom:1px solid #eee;">📂 Brand Assets</h3>
         <div class="pos-grid">
              ${createDocCard("Brand Logo Pack", "All Formats", "🎨", "https://github.com/remyjdavis/Suburban-Brewing-Company-Portal/raw/main/Online%20Ordering/SBC-Logos.zip")}
-        </div>
-    `;
+        </div>`;
 }
 
-// --- GENERATOR ENGINE ---
-// --- GENERATOR ENGINE (Updated with Logo) ---
+// --- GENERATOR ENGINE (With Dynamic Prices) ---
 function generateDocs(type) {
     const printArea = document.getElementById('print-area');
-    const inputs = document.querySelectorAll('.product-selector input:checked');
-    // Using your hosted logo URL
+    const inputs = document.querySelectorAll('.product-selector input[type="checkbox"]:checked');
     const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
     
     if (inputs.length === 0) {
@@ -1944,25 +1942,29 @@ function generateDocs(type) {
     let html = "";
 
     if (type === 'shelf') {
-        // SHELF TALKERS (Grid Layout)
         html = `<div class="print-grid-talkers">`;
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
+            // Get the specific price entered for this beer
+            const priceVal = document.getElementById(`price-${input.value}`).value;
+            // Use entered price or blank line if empty
+            const displayPrice = priceVal ? `$${priceVal}` : "$_______";
+
             html += `
             <div class="talker-card">
-                <img src="${logoUrl}" style="height: 50px; margin: 0 auto 10px auto; display: block;">
-                
+                <img src="${logoUrl}" class="talker-logo">
                 <div class="talker-header">${p.name}</div>
-                <div class="talker-sub">${p.abv} ABV</div>
+                <div class="talker-sub">${p.abv} ABV • 4-PACK / 16oz</div>
                 <div class="talker-desc">${p.desc}</div>
-                <div><span class="talker-price-box">$_______</span></div>
-                <div style="margin-top:10px; font-size:10px;">Fresh. Local. Independent.</div>
+                
+                <div>
+                    <div class="talker-price-area">${displayPrice}</div>
+                </div>
             </div>`;
         });
         html += `</div>`;
     } 
     else if (type === 'menu') {
-        // MENU INSERT (List Layout)
         html = `
         <div class="print-menu-list">
             <div style="text-align:center; margin-bottom:40px;">
@@ -1973,10 +1975,14 @@ function generateDocs(type) {
             
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
+            // Optional: Include price on menu if entered
+            const priceVal = document.getElementById(`price-${input.value}`).value;
+            const priceSpan = priceVal ? `<span style="float:right; font-weight:bold;">$${priceVal}</span>` : '';
+
             html += `
             <div class="menu-item">
                 <div class="menu-header">
-                    <span>${p.name}</span>
+                    <span>${p.name} ${priceSpan}</span>
                     <span>${p.abv}</span>
                 </div>
                 <div style="font-size:14px; color:#444; margin-top:5px;">${p.desc}</div>
@@ -1985,7 +1991,6 @@ function generateDocs(type) {
         html += `</div>`;
     }
 
-    // Write to print area and trigger print
     printArea.innerHTML = html;
     setTimeout(() => window.print(), 500); 
 }
