@@ -795,22 +795,67 @@ body,
     .qr-talker-card {
         width: 2.5in;
         height: 2.5in;
-        border: 1px dashed #ccc;
+        border: 1px dashed #999; /* Cutting guide */
         padding: 10px;
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        text-align: center;
-        float: left; /* Pack them tight */
+        float: left;
         margin: 5px;
+        background: white;
     }
     
-    .qr-code-img { width: 0.9in; height: 0.9in; }
-    .qr-header { font-size: 14px; font-weight: 900; line-height: 1.1; margin-bottom: 2px; }
-    .qr-sub { font-size: 10px; font-weight: bold; color: #444; }
-    .qr-cta { font-size: 8px; font-style: italic; margin-top: 2px; }
+    /* Header Row: Logo Left, Name Right */
+    .qr-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: 5px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+    }
+
+    .qr-logo-small { 
+        height: 30px; 
+        width: auto; 
+        margin-right: 8px; 
+    }
+
+    .qr-title-stack {
+        text-align: left;
+        flex: 1;
+    }
+
+    .qr-header { 
+        font-size: 11px; 
+        font-weight: 900; 
+        line-height: 1.1; 
+        text-transform: uppercase;
+    }
+
+    .qr-sub { 
+        font-size: 9px; 
+        color: #666; 
+        font-weight: bold;
+    }
+    
+    /* Smaller QR Code */
+    .qr-code-img { 
+        width: 0.8in;  /* Reduced size */
+        height: 0.8in; 
+        margin: 5px 0;
+    }
+
+    .qr-cta { font-size: 8px; font-style: italic; color: #444; }
+    
+    .qr-price-box {
+        font-weight: 900;
+        font-size: 16px;
+        margin-top: auto; /* Pushes price to very bottom */
+        color: #000;
+    }
     </style>
 </head>
 <body>
@@ -1991,30 +2036,33 @@ function generateDocs(type) {
         html += `</div>`;
     } 
     else if (type === 'qr') {
-        // --- SMALL QR TAGS (2.5x2.5) ---
-        // We use a Flex container to pack them on the page
+        // --- NEW QR TAG LAYOUT ---
         html = `<div style="display:flex; flex-wrap:wrap; align-content: flex-start; padding: 0.25in;">`;
+        
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
             const priceVal = document.getElementById(`price-${input.value}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "";
             
-            // GENERATE QR CODE URL
-            // API: qrserver.com (Free, reliable)
+            // Generate QR
             const targetUrl = `${baseUrl}?beer=${encodeURIComponent(p.name)}`;
             const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(targetUrl)}`;
 
             html += `
             <div class="qr-talker-card">
-                <img src="${logoUrl}" style="height: 20px; margin-bottom: 5px;">
-                
-                <div class="qr-header">${p.name}</div>
-                <div class="qr-sub">${p.abv}% ABV</div>
+                <div class="qr-header-row">
+                    <img src="${logoUrl}" class="qr-logo-small">
+                    <div class="qr-title-stack">
+                        <div class="qr-header">${p.name}</div>
+                        <div class="qr-sub">${p.abv}% ABV</div>
+                    </div>
+                </div>
                 
                 <img src="${qrSrc}" class="qr-code-img">
                 
-                <div class="qr-cta">Scan for Description</div>
-                ${displayPrice ? `<div style="font-weight:bold; font-size:14px; margin-top:2px;">${displayPrice}</div>` : ''}
+                <div class="qr-cta">Scan for Beer Info</div>
+                
+                ${displayPrice ? `<div class="qr-price-box">${displayPrice}</div>` : ''}
             </div>`;
         });
         html += `</div>`;
