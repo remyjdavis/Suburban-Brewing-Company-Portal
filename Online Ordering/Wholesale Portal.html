@@ -2207,37 +2207,44 @@ function showPublicBeerPage(beerKey) {
         return;
     }
 
-    // --- APP MODE INJECTOR (Tricks to hide UI) ---
-    // 1. Set Status Bar Color to White (Blends with app)
+    // 🟢 UPDATE: Rename the Browser Window/Tab immediately
+    document.title = product.name.toUpperCase(); 
+
+    // --- APP MODE INJECTOR ---
+    // 1. Set Status Bar Color
     let metaTheme = document.createElement('meta');
     metaTheme.name = "theme-color";
     metaTheme.content = "#ffffff";
     document.head.appendChild(metaTheme);
 
-    // 2. iOS "Web App" Capable Tags
+    // 2. iOS "Web App" Tags
     let metaApple = document.createElement('meta');
     metaApple.name = "apple-mobile-web-app-capable";
     metaApple.content = "yes";
     document.head.appendChild(metaApple);
+    
+    // 3. Set the "App Name" if they save it to their home screen
+    let metaAppName = document.createElement('meta');
+    metaAppName.name = "apple-mobile-web-app-title";
+    metaAppName.content = product.name;
+    document.head.appendChild(metaAppName);
 
     let metaStatus = document.createElement('meta');
     metaStatus.name = "apple-mobile-web-app-status-bar-style";
-    metaStatus.content = "default"; // White status bar
+    metaStatus.content = "default";
     document.head.appendChild(metaStatus);
 
-    // 3. Prevent "Rubber Banding" scroll effect
+    // 4. Prevent Rubber Banding
     document.body.style.overscrollBehavior = "none";
     document.body.style.backgroundColor = "#ffffff";
-    // ---------------------------------------------
+    // -------------------------
 
     // Render the Public Card
     const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
     const imgUrl = `${BASE_IMG_URL}${product.image}`;
 
-    // Create the full-screen view
     const publicView = document.createElement("div");
     
-    // We use 'min-height: 100vh' to take up the whole screen
     publicView.innerHTML = `
         <div style="min-height: 100vh; background: white; font-family: 'Helvetica Neue', sans-serif; display: flex; flex-direction: column;">
             
@@ -2274,14 +2281,10 @@ function showPublicBeerPage(beerKey) {
         </div>
     `;
     
-    // Clear any existing body content and add this view
     document.body.innerHTML = "";
     document.body.appendChild(publicView);
 
-    // 4. THE SCROLL HACK: Try to nudge the address bar away
-    setTimeout(function() {
-        window.scrollTo(0, 1);
-    }, 100);
+    setTimeout(function() { window.scrollTo(0, 1); }, 100);
 }
 </script>
 
