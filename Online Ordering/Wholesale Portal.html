@@ -2067,7 +2067,7 @@ function generateDocs(type) {
         html += `</div>`;
     } 
     else if (type === 'qr') {
-        // --- 3" x 1.75" CLEAN TAG (No Barcode) ---
+        // --- 3" x 1.75" TEXT-ONLY TAG (No Web Page) ---
         html = `<div style="display:flex; flex-wrap:wrap; align-content: flex-start; padding: 0.25in;">`;
         
         inputs.forEach(input => {
@@ -2075,9 +2075,16 @@ function generateDocs(type) {
             const priceVal = document.getElementById(`price-${input.value}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "";
             
-            // QR Code Only
-            const targetUrl = `${baseUrl}?beer=${encodeURIComponent(p.name)}`;
-            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(targetUrl)}`;
+            // 1. PREPARE THE RAW TEXT
+            // We limit description to 150 chars so the QR code doesn't get too dense to scan
+            const shortDesc = p.desc.length > 150 ? p.desc.substring(0, 150) + "..." : p.desc;
+            
+            // Format: "NAME - ABV% \n\n Description..."
+            const rawText = `${p.name.toUpperCase()} - ${p.abv}% ABV\n\n${shortDesc}`;
+
+            // 2. GENERATE QR (Text Mode)
+            // Note: We encode the RAW TEXT, not a URL
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(rawText)}`;
 
             html += `
             <div class="qr-talker-card">
@@ -2092,7 +2099,7 @@ function generateDocs(type) {
                 <div class="tag-body">
                     <div class="tag-qr-col">
                         <img src="${qrSrc}" class="tag-qr-img">
-                        <div class="tag-qr-text">Scan Info</div>
+                        <div class="tag-qr-text">Scan for Info</div>
                     </div>
 
                     <div class="tag-price-col">
