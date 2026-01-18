@@ -733,12 +733,29 @@ body,
 
 /* THE PRINT MODE MAGIC */
 @media print {
-    /* Hide App UI */
+    /* 1. HIDE BROWSER URL/DATE HEADERS */
+    @page { 
+        margin: 0; 
+        size: auto; 
+    }
+    /* 2. HIDE APP UI */
     body > * { display: none !important; }
-    body { background: white !important; padding: 0 !important; margin: 0 !important; }
+    /* 3. SETUP PRINT AREA */
+    body { 
+        background: white !important; 
+        margin: 0 !important; 
+        padding: 0.5in !important; 
+        display: block !important;
+    }
     
     /* Show Print Area */
-    #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
+    #print-area { 
+        display: block !important; 
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+    }
 
     /* --- SHELF TALKER GRID (Fixed 3x5 Size) --- */
     .print-grid-talkers {
@@ -791,22 +808,7 @@ body,
 .checkbox-row { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #f8fafc; }
 .checkbox-row:last-child { border-bottom: none; }
 .checkbox-row label { margin-left: 10px; flex: 1; font-weight: 500; font-size: 0.9rem; }
-   /* --- QR SMALL TALKER (2.5x2.5 inch) --- */
-    .qr-talker-card {
-        width: 2.5in;
-        height: 2.5in;
-        border: 1px dashed #999; /* Cutting guide */
-        padding: 10px;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        float: left;
-        margin: 5px;
-        background: white;
-    }
-    
-    /* --- SHELF TAG (3 x 1.75 inch) --- */
+   /* --- SHELF TAG (3 x 1.75 inch) --- */
     .qr-talker-card {
         width: 3in;
         height: 1.75in;
@@ -816,9 +818,10 @@ body,
         display: flex;
         flex-direction: column;
         float: left;
-        margin: 5px;
+        margin: 5px; /* Spacing between tags */
         background: white;
         overflow: hidden;
+        page-break-inside: avoid;
     }
     
     /* Top Section: Header */
@@ -883,6 +886,7 @@ body,
         letter-spacing: -1px;
         color: #000;
     }
+}
     </style>
 </head>
 <body>
@@ -2137,20 +2141,19 @@ function createDocCard(title, subtitle, icon, link) {
         <div style="margin-top:8px; font-size:0.7rem; color:var(--accent); font-weight:bold;">⬇️ Download</div>
     </div>`;
 }
-  // --- PUBLIC QR CODE VIEWER (Fixed: Fetches Data First) ---
+ // --- PUBLIC QR CODE VIEWER (Fixed) ---
 const urlParams = new URLSearchParams(window.location.search);
 const publicBeerKey = urlParams.get('beer');
 
 if (publicBeerKey) {
-    // 1. Hide the main app immediately so they don't see the login screen
+    // 1. Hide the main app immediately
     const app = document.getElementById("app");
     if(app) app.style.display = "none";
     
     // Show a loading message
-    document.body.insertAdjacentHTML('beforeend', '<div id="public-loader" style="text-align:center; margin-top:50px; font-family:sans-serif;"><h3>🍺 Pouring...</h3></div>');
+    document.body.insertAdjacentHTML('beforeend', '<div id="public-loader" style="display:flex; height:100vh; justify-content:center; align-items:center; font-family:sans-serif;"><h3>🍺 Pouring...</h3></div>');
 
-    // 2. FETCH DATA (This was missing!)
-    // We need to load the products before we can look one up
+    // 2. FETCH DATA (Fixes "Product Not Found")
     fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: 'getProducts', secret: 'SBC_SECURE_2026' })
@@ -2162,10 +2165,17 @@ if (publicBeerKey) {
         if(loader) loader.remove();
 
         if (data.status === 'success') {
-            // Save data to our global variable
             groupedProducts = data.products;
-            // NOW we can show the page safely
+            
+            // 3. SHOW THE PAGE
             showPublicBeerPage(publicBeerKey);
+            
+            // 4. CLEAN THE URL (Privacy Trick)
+            // This removes the "?beer=..." part from the address bar so it looks cleaner
+            if (window.history.replaceState) {
+               const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+               window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+            }
         } else {
             document.body.innerHTML = "<h3 style='text-align:center; margin-top:50px;'>Menu Unavailable</h3>";
         }
@@ -2176,11 +2186,10 @@ if (publicBeerKey) {
 }
 
 function showPublicBeerPage(beerKey) {
-    // 3. Find the beer
     const cleanKey = decodeURIComponent(beerKey);
     let product = null;
     
-    // Search the now-populated list
+    // Search the list
     for(let k in groupedProducts) {
         if(groupedProducts[k].name === cleanKey) {
             product = groupedProducts[k];
@@ -2189,11 +2198,11 @@ function showPublicBeerPage(beerKey) {
     }
 
     if (!product) {
-        document.body.innerHTML = `<h2 style='text-align:center; margin-top:50px;'>Product Not Found: "${cleanKey}"</h2><p style='text-align:center;'>It may have been renamed or removed.</p>`;
+        document.body.innerHTML = `<h2 style='text-align:center; margin-top:50px;'>Product Not Found</h2>`;
         return;
     }
 
-    // 4. Render the Public Card
+    // Render the Public Card
     const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
     const imgUrl = `${BASE_IMG_URL}${product.image}`;
 
