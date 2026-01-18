@@ -806,55 +806,89 @@ body,
         background: white;
     }
     
-    /* Header Row: Logo Left, Name Right */
-    .qr-header-row {
+    /* --- SHELF TAG (3 x 1.75 inch) --- */
+    .qr-talker-card {
+        width: 3in;
+        height: 1.75in;
+        border: 1px dashed #ccc; /* Cut lines */
+        padding: 8px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        float: left;
+        margin: 5px;
+        background: white;
+        overflow: hidden; /* Prevent spillover */
+    }
+    
+    /* Top Row: Logo & Info */
+    .tag-header {
         display: flex;
         align-items: center;
-        justify-content: center;
-        width: 100%;
-        margin-bottom: 5px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 5px;
+        border-bottom: 2px solid #000;
+        padding-bottom: 4px;
+        margin-bottom: 4px;
+        height: 40%;
     }
-
-    .qr-logo-small { 
-        height: 30px; 
-        width: auto; 
-        margin-right: 8px; 
+    
+    .tag-logo {
+        height: 100%;
+        width: auto;
+        margin-right: 8px;
+        object-fit: contain;
     }
-
-    .qr-title-stack {
-        text-align: left;
+    
+    .tag-info {
         flex: 1;
-    }
-
-    .qr-header { 
-        font-size: 11px; 
-        font-weight: 900; 
-        line-height: 1.1; 
-        text-transform: uppercase;
-    }
-
-    .qr-sub { 
-        font-size: 9px; 
-        color: #666; 
-        font-weight: bold;
+        text-align: left;
+        line-height: 1;
     }
     
-    /* Smaller QR Code */
-    .qr-code-img { 
-        width: 0.8in;  /* Reduced size */
-        height: 0.8in; 
-        margin: 5px 0;
+    .tag-name { font-size: 10pt; font-weight: 900; text-transform: uppercase; margin-bottom: 2px; }
+    .tag-abv { font-size: 8pt; font-weight: bold; color: #555; }
+
+    /* Bottom Row: QR | UPC | Price */
+    .tag-body {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 55%;
     }
 
-    .qr-cta { font-size: 8px; font-style: italic; color: #444; }
-    
-    .qr-price-box {
+    /* Column 1: QR Code */
+    .tag-qr-col {
+        text-align: center;
+        width: 25%;
+    }
+    .tag-qr-img { height: 0.6in; width: 0.6in; }
+    .tag-qr-text { font-size: 6px; font-style: italic; margin-top: 2px; }
+
+    /* Column 2: UPC Barcode */
+    .tag-upc-col {
+        text-align: center;
+        flex: 1;
+        padding: 0 5px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+    .tag-upc-img { 
+        width: 100%; 
+        height: 30px; 
+        object-fit: fill; 
+    }
+    .tag-upc-text { font-size: 7px; letter-spacing: 1px; margin-top: 2px; }
+
+    /* Column 3: Price */
+    .tag-price-col {
+        text-align: right;
+        width: 25%;
+    }
+    .tag-price {
+        font-size: 16pt;
         font-weight: 900;
-        font-size: 16px;
-        margin-top: auto; /* Pushes price to very bottom */
-        color: #000;
+        letter-spacing: -1px;
     }
     </style>
 </head>
@@ -2036,33 +2070,47 @@ function generateDocs(type) {
         html += `</div>`;
     } 
     else if (type === 'qr') {
-        // --- NEW QR TAG LAYOUT ---
+        // --- 3" x 1.75" SHELF TAG ---
         html = `<div style="display:flex; flex-wrap:wrap; align-content: flex-start; padding: 0.25in;">`;
         
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
             const priceVal = document.getElementById(`price-${input.value}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "";
+            const upcCode = p.upc || "000000000000"; // Fallback if no UPC in DB
             
-            // Generate QR
+            // 1. QR Code (Link to Description)
             const targetUrl = `${baseUrl}?beer=${encodeURIComponent(p.name)}`;
             const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(targetUrl)}`;
 
+            // 2. UPC Barcode (Generates image from UPC number)
+            // Using bwip-js online API for clean barcode images
+            const barcodeSrc = `https://bwipjs-api.metafloor.org/?bcid=upca&text=${upcCode}&scale=2&height=10&includetext`;
+
             html += `
             <div class="qr-talker-card">
-                <div class="qr-header-row">
-                    <img src="${logoUrl}" class="qr-logo-small">
-                    <div class="qr-title-stack">
-                        <div class="qr-header">${p.name}</div>
-                        <div class="qr-sub">${p.abv}% ABV</div>
+                <div class="tag-header">
+                    <img src="${logoUrl}" class="tag-logo">
+                    <div class="tag-info">
+                        <div class="tag-name">${p.name}</div>
+                        <div class="tag-abv">${p.abv}% ABV • 4-PACK</div>
                     </div>
                 </div>
-                
-                <img src="${qrSrc}" class="qr-code-img">
-                
-                <div class="qr-cta">Scan for Beer Info</div>
-                
-                ${displayPrice ? `<div class="qr-price-box">${displayPrice}</div>` : ''}
+
+                <div class="tag-body">
+                    <div class="tag-qr-col">
+                        <img src="${qrSrc}" class="tag-qr-img">
+                        <div class="tag-qr-text">Scan Info</div>
+                    </div>
+
+                    <div class="tag-upc-col">
+                        <img src="${barcodeSrc}" class="tag-upc-img">
+                    </div>
+
+                    <div class="tag-price-col">
+                        <div class="tag-price">${displayPrice}</div>
+                    </div>
+                </div>
             </div>`;
         });
         html += `</div>`;
