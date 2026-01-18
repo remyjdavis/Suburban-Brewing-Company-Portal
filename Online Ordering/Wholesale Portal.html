@@ -2141,7 +2141,7 @@ function createDocCard(title, subtitle, icon, link) {
         <div style="margin-top:8px; font-size:0.7rem; color:var(--accent); font-weight:bold;">⬇️ Download</div>
     </div>`;
 }
- // --- PUBLIC QR CODE VIEWER (Fixed) ---
+ // --- PUBLIC QR CODE VIEWER (Fixed Logic) ---
 const urlParams = new URLSearchParams(window.location.search);
 const publicBeerKey = urlParams.get('beer');
 
@@ -2153,7 +2153,7 @@ if (publicBeerKey) {
     // Show a loading message
     document.body.insertAdjacentHTML('beforeend', '<div id="public-loader" style="display:flex; height:100vh; justify-content:center; align-items:center; font-family:sans-serif;"><h3>🍺 Pouring...</h3></div>');
 
-    // 2. FETCH DATA (Fixes "Product Not Found")
+    // 2. FETCH DATA
     fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: 'getProducts', secret: 'SBC_SECURE_2026' })
@@ -2171,17 +2171,22 @@ if (publicBeerKey) {
             showPublicBeerPage(publicBeerKey);
             
             // 4. CLEAN THE URL (Privacy Trick)
-            // This removes the "?beer=..." part from the address bar so it looks cleaner
             if (window.history.replaceState) {
                const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                window.history.replaceState({path: cleanUrl}, '', cleanUrl);
             }
         } else {
-            document.body.innerHTML = "<h3 style='text-align:center; margin-top:50px;'>Menu Unavailable</h3>";
+            // 🔴 DEBUG MODE: Show the actual error message from the server
+            document.body.innerHTML = `
+                <div style="text-align:center; margin-top:50px; font-family:sans-serif;">
+                    <h3>Menu Unavailable</h3>
+                    <p style="color:red; font-weight:bold;">Error: ${data.message || "Unknown Error"}</p>
+                    <p style="font-size:12px; color:#666;">(Show this to your developer)</p>
+                </div>`;
         }
     })
     .catch(err => {
-        document.body.innerHTML = "<h3 style='text-align:center; margin-top:50px;'>Connection Error</h3>";
+        document.body.innerHTML = `<h3 style='text-align:center; margin-top:50px;'>Connection Error: ${err.message}</h3>`;
     });
 }
 
