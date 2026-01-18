@@ -2198,9 +2198,86 @@ function showPublicBeerPage(beerKey) {
     }
 
     if (!product) {
-        document.body.innerHTML = `<h2 style='text-align:center; margin-top:50px;'>Product Not Found</h2>`;
+        document.body.innerHTML = `<h2 style='text-align:center; margin-top:50px; font-family:sans-serif;'>Product Not Found</h2>`;
         return;
     }
+
+    // --- APP MODE INJECTOR (Tricks to hide UI) ---
+    // 1. Set Status Bar Color to White (Blends with app)
+    let metaTheme = document.createElement('meta');
+    metaTheme.name = "theme-color";
+    metaTheme.content = "#ffffff";
+    document.head.appendChild(metaTheme);
+
+    // 2. iOS "Web App" Capable Tags
+    let metaApple = document.createElement('meta');
+    metaApple.name = "apple-mobile-web-app-capable";
+    metaApple.content = "yes";
+    document.head.appendChild(metaApple);
+
+    let metaStatus = document.createElement('meta');
+    metaStatus.name = "apple-mobile-web-app-status-bar-style";
+    metaStatus.content = "default"; // White status bar
+    document.head.appendChild(metaStatus);
+
+    // 3. Prevent "Rubber Banding" scroll effect
+    document.body.style.overscrollBehavior = "none";
+    document.body.style.backgroundColor = "#ffffff";
+    // ---------------------------------------------
+
+    // Render the Public Card
+    const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
+    const imgUrl = `${BASE_IMG_URL}${product.image}`;
+
+    // Create the full-screen view
+    const publicView = document.createElement("div");
+    
+    // We use 'min-height: 100vh' to take up the whole screen
+    publicView.innerHTML = `
+        <div style="min-height: 100vh; background: white; font-family: 'Helvetica Neue', sans-serif; display: flex; flex-direction: column;">
+            
+            <div style="padding: 20px 0; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                <img src="${logoUrl}" style="height: 50px;">
+            </div>
+
+            <div style="flex: 1; padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+                
+                <div style="border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 25px;">
+                    <img src="${imgUrl}" onerror="this.src='${FALLBACK_LOGO}'" style="width: 100%; height: auto; display: block;">
+                </div>
+
+                <div style="text-align: center;">
+                    <h1 style="margin: 0 0 5px 0; font-size: 2rem; color: #0f172a; text-transform: uppercase; letter-spacing: -0.5px;">${product.name}</h1>
+                    
+                    <div style="display: inline-block; background: #eff6ff; color: #2563eb; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; margin-bottom: 20px;">
+                        ${product.abv}% ABV
+                    </div>
+                    
+                    <p style="line-height: 1.6; color: #475569; font-size: 1.05rem; margin-bottom: 30px;">
+                        ${product.desc}
+                    </p>
+                </div>
+
+                <div style="text-align: center; margin-top: auto; padding-bottom: 30px;">
+                    <a href="https://suburbanbrewingco.com" 
+                       style="display: block; width: 100%; background: #0f172a; color: white; padding: 15px 0; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 1rem;">
+                        Visit Our Website
+                    </a>
+                    <p style="margin-top: 15px; font-size: 0.75rem; color: #94a3b8;">Brewed in Honey Brook, PA</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Clear any existing body content and add this view
+    document.body.innerHTML = "";
+    document.body.appendChild(publicView);
+
+    // 4. THE SCROLL HACK: Try to nudge the address bar away
+    setTimeout(function() {
+        window.scrollTo(0, 1);
+    }, 100);
+}
 
     // Render the Public Card
     const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
