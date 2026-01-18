@@ -2137,27 +2137,50 @@ function createDocCard(title, subtitle, icon, link) {
         <div style="margin-top:8px; font-size:0.7rem; color:var(--accent); font-weight:bold;">⬇️ Download</div>
     </div>`;
 }
-    // --- PUBLIC QR CODE VIEWER ---
-// Check URL immediately on load
+  // --- PUBLIC QR CODE VIEWER (Fixed: Fetches Data First) ---
 const urlParams = new URLSearchParams(window.location.search);
 const publicBeerKey = urlParams.get('beer');
 
 if (publicBeerKey) {
-    // 🛑 STOP the normal app from loading
-    document.addEventListener("DOMContentLoaded", () => {
-        showPublicBeerPage(publicBeerKey);
+    // 1. Hide the main app immediately so they don't see the login screen
+    const app = document.getElementById("app");
+    if(app) app.style.display = "none";
+    
+    // Show a loading message
+    document.body.insertAdjacentHTML('beforeend', '<div id="public-loader" style="text-align:center; margin-top:50px; font-family:sans-serif;"><h3>🍺 Pouring...</h3></div>');
+
+    // 2. FETCH DATA (This was missing!)
+    // We need to load the products before we can look one up
+    fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'getProducts', secret: 'SBC_SECURE_2026' })
+    })
+    .then(res => res.json())
+    .then(data => {
+        // Remove loader
+        const loader = document.getElementById('public-loader');
+        if(loader) loader.remove();
+
+        if (data.status === 'success') {
+            // Save data to our global variable
+            groupedProducts = data.products;
+            // NOW we can show the page safely
+            showPublicBeerPage(publicBeerKey);
+        } else {
+            document.body.innerHTML = "<h3 style='text-align:center; margin-top:50px;'>Menu Unavailable</h3>";
+        }
+    })
+    .catch(err => {
+        document.body.innerHTML = "<h3 style='text-align:center; margin-top:50px;'>Connection Error</h3>";
     });
 }
 
 function showPublicBeerPage(beerKey) {
-    // 1. Hide the main app
-    document.getElementById("app").style.display = "none";
-    
-    // 2. Find the beer data
-    // Note: We need to decode the URI component in case of spaces
+    // 3. Find the beer
     const cleanKey = decodeURIComponent(beerKey);
-    // Find product in groupedProducts (simple lookup)
     let product = null;
+    
+    // Search the now-populated list
     for(let k in groupedProducts) {
         if(groupedProducts[k].name === cleanKey) {
             product = groupedProducts[k];
@@ -2166,26 +2189,26 @@ function showPublicBeerPage(beerKey) {
     }
 
     if (!product) {
-        document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>Product Not Found</h2>";
+        document.body.innerHTML = `<h2 style='text-align:center; margin-top:50px;'>Product Not Found: "${cleanKey}"</h2><p style='text-align:center;'>It may have been renamed or removed.</p>`;
         return;
     }
 
-    // 3. Render the Public Mobile Card
+    // 4. Render the Public Card
     const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
     const imgUrl = `${BASE_IMG_URL}${product.image}`;
 
-    // Create a new container for the public view
     const publicView = document.createElement("div");
     publicView.innerHTML = `
-        <div style="max-width: 400px; margin: 0 auto; padding: 20px; font-family: sans-serif; text-align: center;">
+        <div style="max-width: 400px; margin: 0 auto; padding: 20px; font-family: 'Helvetica Neue', sans-serif; text-align: center;">
             <img src="${logoUrl}" style="height: 60px; margin-bottom: 20px;">
             
-            <div style="border: 1px solid #eee; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-                <img src="${imgUrl}" onerror="this.src='${FALLBACK_LOGO}'" style="width: 100%; height: 300px; object-fit: cover;">
+            <div style="border: 1px solid #eee; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); background:white;">
+                <img src="${imgUrl}" onerror="this.src='${FALLBACK_LOGO}'" style="width: 100%; height: 350px; object-fit: cover;">
                 <div style="padding: 25px;">
-                    <h1 style="margin: 0 0 5px 0; font-size: 1.8rem; color: #1e293b;">${product.name}</h1>
-                    <div style="color: #64748b; font-weight: bold; margin-bottom: 15px;">${product.abv}% ABV</div>
-                    <p style="line-height: 1.6; color: #334155;">${product.desc}</p>
+                    <h1 style="margin: 0 0 5px 0; font-size: 1.8rem; color: #1e293b; text-transform:uppercase;">${product.name}</h1>
+                    <div style="color: #64748b; font-weight: bold; margin-bottom: 15px; font-size: 1.1rem;">${product.abv}% ABV</div>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                    <p style="line-height: 1.6; color: #334155; font-size: 1.1rem;">${product.desc}</p>
                 </div>
             </div>
 
