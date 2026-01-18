@@ -111,18 +111,13 @@
     .deck-header h1 { color: white; font-family:'Oswald'; font-size:48px; margin:0; letter-spacing:1px; }
     .deck-header p { color: #94a3b8; margin:5px 0 0; letter-spacing: 2px; font-size:14px; }
     
-/* Screen Logo: "Cookie Cutter" crop */
-.header-logo { 
-    height: 80px; 
-    width: 80px; 
-    object-fit: cover;
-    
-    /* This draws a circle 36px radius from the center.
-       Since the image is 40px radius (80px wide), 
-       this cuts off the outer 4px of white space entirely.
-    */
-    clip-path: circle(36px at center); 
-}
+    /* Screen Logo */
+    .header-logo { 
+        height: 80px; 
+        width: 80px; 
+        object-fit: cover;
+        clip-path: circle(36px at center); 
+    }
     
     .deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; align-content: start; }
 
@@ -136,7 +131,26 @@
         display: flex; flex-direction: column;
     }
 
-    .deck-grid .beer-name { color: white; font-size: 20px; margin-bottom: 5px; }
+    /* --- STEALTH LINK STYLES (Screen) --- */
+    /* This makes the link look like normal white text, but clickable */
+    .beer-card-link {
+        text-decoration: none;
+        cursor: pointer; /* Shows the hand cursor */
+        display: block;
+    }
+    
+    .beer-card-link h3 {
+        color: white; /* Invisible link style */
+        font-size: 20px; 
+        margin-bottom: 5px;
+    }
+    
+    /* Slight hover effect so you know it's live */
+    .beer-card-link:hover h3 {
+        opacity: 0.9;
+    }
+    /* ------------------------------------- */
+
     .deck-grid .beer-meta { color: #38bdf8; font-size: 11px; letter-spacing: 1px; margin-bottom: 10px; }
     .deck-grid .beer-desc { color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 15px; flex-grow: 1; }
     
@@ -164,86 +178,36 @@
     }
 
    /* --- PRINT / SAVE AS PDF (ALWAYS WHITE) --- */
-@media print {
-    @page { size: portrait; margin: 0.5in; }
-    
-    body { background: white !important; -webkit-print-color-adjust: exact; }
-    
-    /* 1. Hide App UI */
-    .sidebar, #dashboard-view, .header, .tabs, #menu-toggle, .gen-controls { display: none !important; }
-    
-    /* 2. Reset Layout */
-    .main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-    .content { padding: 0 !important; max-width: none !important; }
-    #generator-view { display: block !important; }
-    .gen-layout { height: auto !important; display: block !important; }
-    
-    /* 3. Force White Backgrounds */
-    .gen-preview { background: white !important; padding: 0 !important; overflow: visible !important; border: none !important; }
-    
-    /* 4. Deck Header Styling */
-    .deck-header { border-color: #2563eb !important; }
-    .deck-header h1 { color: #0f172a !important; }
-    .deck-header p { color: #64748b !important; }
-    
-    /* 5. Logo Cleanup */
-    .header-logo { 
-        filter: none !important; 
-        border: none !important; 
-        border-radius: 0 !important; 
-    }
-    
-    /* 6. Card Grid Styling (The Menu Page) */
-    .deck-grid { display: block !important; } 
-    
-    .deck-grid .beer-card { 
-        background: white !important; 
-        border: 1px solid #ccc !important;
-        color: black !important;
-        break-inside: avoid !important;
-        margin-bottom: 20px; 
-        width: 100%;
-        box-shadow: none !important;
-    }
-    
-    .deck-grid .beer-name { color: black !important; }
-    .deck-grid .beer-name a { color: #2563eb !important; text-decoration: underline !important; } /* Make links visible */
-    .deck-grid .beer-meta { color: #2563eb !important; }
-    .deck-grid .beer-desc { color: #333 !important; }
-    
-    .deck-grid .price-box { 
-        background: #f9fafb !important; 
-        border: 1px solid #ddd !important; 
-        color: black !important; 
-    }
-    
-    .deck-footer { border-color: #eee !important; color: #666 !important; }
-
-    /* 7. APPENDIX / TECH SHEET STYLING (The New Pages) */
-    #pdf-appendix { display: block !important; }
-    
-    /* Force Page Breaks */
-    div[style*="page-break-before: always"] { page-break-before: always !important; }
-
-    /* Ensure Tech Sheet Text is Dark (Not White) */
-    #pdf-appendix h1, 
-    #pdf-appendix h2, 
-    #pdf-appendix h3, 
-    #pdf-appendix strong { color: #0f172a !important; }
-    
-    #pdf-appendix div, 
-    #pdf-appendix p { color: #334155 !important; }
-    
-    /* Links in the Appendix */
-    #pdf-appendix a { color: #2563eb !important; text-decoration: none !important; }
-}
-        /* Inside @media print */
-.header-logo { 
-    filter: none !important; 
-    border: none !important; /* Removes the dark ring on the white PDF */
-    border-radius: 0 !important; /* Optional: Resets to square if you prefer */
-}
+    @media print {
+        @page { size: portrait; margin: 0.5in; }
         
+        body { background: white !important; -webkit-print-color-adjust: exact; }
+        
+        /* 1. Hide App UI */
+        .sidebar, #dashboard-view, .header, .tabs, #menu-toggle, .gen-controls { display: none !important; }
+        
+        /* 2. Reset Layout */
+        .main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+        .content { padding: 0 !important; max-width: none !important; }
+        #generator-view { display: block !important; }
+        .gen-layout { height: auto !important; display: block !important; }
+        
+        /* 3. Force White Backgrounds */
+        .gen-preview { background: white !important; padding: 0 !important; overflow: visible !important; border: none !important; }
+        
+        /* 4. Deck Header Styling */
+        .deck-header { border-color: #2563eb !important; }
+        .deck-header h1 { color: #0f172a !important; }
+        .deck-header p { color: #64748b !important; }
+        
+        /* 5. Logo Cleanup */
+        .header-logo { 
+            filter: none !important; 
+            border: none !important; 
+            border-radius: 0 !important; 
+        }
+        
+        /* 6. Card Grid Styling (The Menu Page) */
         .deck-grid { display: block !important; } 
         
         .deck-grid .beer-card { 
@@ -255,8 +219,17 @@
             width: 100%;
             box-shadow: none !important;
         }
+
+        /* --- PRINT LINK OVERRIDES (Black Text, No Underline) --- */
+        .beer-card-link {
+            text-decoration: none !important;
+        }
+        .beer-card-link h3 {
+            color: #000000 !important; /* Black text on paper */
+            text-decoration: none !important; /* Clean look on PDF */
+        }
+        /* -------------------------------------------------------- */
         
-        .deck-grid .beer-name { color: black !important; }
         .deck-grid .beer-meta { color: #2563eb !important; }
         .deck-grid .beer-desc { color: #333 !important; }
         
@@ -267,7 +240,26 @@
         }
         
         .deck-footer { border-color: #eee !important; color: #666 !important; }
+
+        /* 7. APPENDIX / TECH SHEET STYLING (The New Pages) */
+        #pdf-appendix { display: block !important; }
+        
+        /* Force Page Breaks */
+        div[style*="page-break-before: always"] { page-break-before: always !important; }
+
+        /* Ensure Tech Sheet Text is Dark (Not White) */
+        #pdf-appendix h1, 
+        #pdf-appendix h2, 
+        #pdf-appendix h3, 
+        #pdf-appendix strong { color: #0f172a !important; }
+        
+        #pdf-appendix div, 
+        #pdf-appendix p { color: #334155 !important; }
+        
+        /* Links in the Appendix */
+        #pdf-appendix a { color: #2563eb !important; text-decoration: none !important; }
     }
+
     /* --- SOCIAL MEDIA MANAGER STYLES --- */
     .social-dashboard { display: flex; gap: 30px; height: 600px; }
     .social-compose { flex: 1; display: flex; flex-direction: column; gap: 15px; }
@@ -310,7 +302,8 @@
     .comment-body { font-size: 14px; margin-bottom: 10px; color: #1e293b; }
     .reply-area { display: flex; gap: 10px; }
     .reply-area input { margin-bottom: 0; font-size: 13px; }
-  /* --- MODAL STYLES (Fix for bottom buttons) --- */
+  
+  /* --- MODAL STYLES --- */
   .modal-overlay {
     position: fixed;
     top: 0;
@@ -370,7 +363,7 @@
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
-  </style>
+</style>
 </head>
 <body>
   <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
