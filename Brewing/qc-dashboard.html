@@ -157,7 +157,12 @@
         min-height: 100vh;
     }
 
-    .header-bar { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; }
+    .header-bar { 
+    margin-bottom: 32px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start; /* Aligns title to top-left */
+}
     .header-bar h1 { margin: 0; font-size: 28px; font-weight: 800; }
     
     .section-heading { font-size: 16px; font-weight: 800; margin: 30px 0 15px; color: var(--text-main); text-transform: uppercase; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
@@ -348,27 +353,33 @@
 
   <main class="main">
     <header class="header-bar">
-      <div>
+    <div>
         <h1>Quality Control</h1>
         <div id="current-date"></div>
-      </div>
-      <div class="user-profile" onclick="toggleUserMenu(event)">
-      <div class="user-info-text">
-        <span class="user-name" id="display-username">Loading...</span>
-        <span class="user-role" id="display-role">...</span>
-      </div>
-      <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
-
-      <div id="userDropdown" class="user-dropdown-menu">
-        <a href="#" onclick="updateUserInfo()">⚙️ Update Info</a>
-        <div style="border-top: 1px solid #eee;"></div>
-        <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
-      </div>
     </div>
-  </div>
 
-      <button class="btn-action btn-blue" style="width: auto; margin-top: 0; padding: 10px 20px;" onclick="refreshAll()">Refresh Data</button>
-    </header>
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+        
+        <div class="user-profile" onclick="toggleUserMenu(event)">
+            <div class="user-info-text">
+                <span class="user-name" id="display-username">Brewer</span>
+                <span class="user-role" id="display-role">Staff</span>
+            </div>
+            <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
+
+            <div id="userDropdown" class="user-dropdown-menu">
+                <a href="#" onclick="updateUserInfo()">⚙️ Update Info</a>
+                <div style="border-top: 1px solid #eee;"></div>
+                <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
+            </div>
+        </div>
+
+        <button class="btn-action btn-blue" style="width: auto; padding: 8px 16px; font-size: 0.85rem;" onclick="refreshAll()">
+            🔄 Refresh Data
+        </button>
+
+    </div>
+</header>
 
     <div class="section-heading" onclick="toggleGroup('sect-lab', this)">
       <span>Batch Consistency & Lab Metrics</span><span class="chevron">▼</span>
