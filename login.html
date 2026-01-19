@@ -314,14 +314,13 @@ sessionStorage.setItem("user_name", result.profile.name);
 // 1. Log the full result to the Console (Right Click > Inspect > Console) to see what the sheet sent
 console.log("FULL API RESPONSE:", result);
 
-// 2. Robust Role Check: Tries 'role', 'Role', or defaults to 'Staff'
-const incomingRole = result.profile.role || result.profile.Role || "Staff";
+// 🔴 THE FIX: Look at 'access' (Col G) first. If empty, fallback to 'role' (Col F).
+const incomingRole = result.profile.access || result.profile.role || "Staff";
 
-// 3. Force "Admin" capitalization just in case the sheet says "admin"
-// This ensures the sidebar link will recognize it.
+// Capitalize it to be safe (e.g. "admin" -> "Admin")
 const cleanRole = incomingRole.charAt(0).toUpperCase() + incomingRole.slice(1).toLowerCase();
 
-console.log("SAVING ROLE AS:", cleanRole);
+console.log("SAVING ROLE AS:", cleanRole); 
 sessionStorage.setItem("user_role", cleanRole);
 // 🔴 END OF FIX 🔴
 
