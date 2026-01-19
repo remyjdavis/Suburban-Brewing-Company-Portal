@@ -344,105 +344,210 @@
     </div>
   </aside>
 
-  <main class="main">
+  main class="main">
     <div class="header">
-      <div>
-        <h1>System Administration</h1>
-        <p>Manage users, permissions, and global app settings.</p>
-      </div>
-
-      <div class="user-profile" onclick="toggleUserMenu(event)">
-        <div class="user-info-text">
-          <span class="user-name" id="display-username">Owner</span>
-          <span class="user-role" id="display-role">Admin</span>
+        <div>
+            <h1>Admin Console</h1>
+            <p>System Configuration & Master Data</p>
         </div>
-        <img src="" class="user-avatar" id="display-avatar" onerror="this.src='logo.png'">
-        <div id="userDropdown" class="user-dropdown-menu">
-          <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
+        <div class="user-profile" onclick="toggleUserMenu(event)">
+             <div class="user-info-text">
+                 <span class="user-name" id="display-username">User</span>
+                 <span class="user-role" id="display-role">Admin</span>
+             </div>
+             <img src="" class="user-avatar" id="display-avatar" onerror="this.src='logo.png'">
         </div>
-      </div>
     </div>
 
     <div class="admin-grid">
-      <div class="card" style="grid-column: span 2;">
-        <div class="card-header">
-            <h3>👥 Authorized Users</h3>
-            <button class="btn-primary" onclick="addUserModal()">+ Add User</button>
-        </div>
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-    <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Role</th>         
-        <th>Access Level</th>  
-        <th>Status</th>
-        <th style="text-align:right;">Actions</th>
-    </tr>
-</thead>
-                <tbody id="userTableBody">
-                    <tr><td colspan="5" style="text-align:center; padding:20px;">Loading users...</td></tr>
-                </tbody>
-            </table>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><h3>⚙️ Global Settings</h3></div>
         
-        <label style="font-size:12px; font-weight:bold; color:#64748b;">Maintenance Mode</label>
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
-            <div style="width:40px; height:20px; background:#e2e8f0; border-radius:10px; position:relative; cursor:pointer;" onclick="toggleMaintenance(this)">
-                <div style="width:16px; height:16px; background:white; border-radius:50%; position:absolute; top:2px; left:2px; transition:0.2s;"></div>
+        <div class="card">
+            <div class="card-header"><h3>📢 System Banner</h3></div>
+            <p style="font-size:12px; color:#64748b; margin-bottom:10px;">Display a global alert on the dashboard.</p>
+            
+            <textarea id="conf-announce-text" rows="3" style="width:100%; border:1px solid #e2e8f0; border-radius:6px; padding:10px; font-size:14px;" placeholder="e.g. Inventory count this Sunday..."></textarea>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                <label style="display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; cursor:pointer;">
+                    <input type="checkbox" id="conf-announce-active"> Show Banner
+                </label>
+                <button class="btn-primary" onclick="saveAnnouncement()">Post Message</button>
             </div>
-            <span style="font-size:13px;">Disabled</span>
         </div>
 
-        <label style="font-size:12px; font-weight:bold; color:#64748b;">Default Tax Rate (%)</label>
-        <input type="number" value="6.0" style="margin-bottom:15px;">
+        <div class="card">
+            <div class="card-header"><h3>🍺 Beer Brands</h3></div>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input id="new-brand-input" placeholder="New Brand (e.g. Pale Ale)" style="margin-bottom:0;">
+                <button class="btn-primary" onclick="addBrand()">Add</button>
+            </div>
+            <div id="brand-list" style="max-height:150px; overflow-y:auto; border:1px solid #f1f5f9; border-radius:6px;">
+                </div>
+        </div>
 
-        <button class="btn-primary" style="width:100%;" onclick="saveSettings()">Save Configuration</button>
-        
-        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-        
-        <button class="btn-danger" style="width:100%;" onclick="clearSystemCache()">🗑️ Clear Global Cache</button>
-      </div>
+        <div class="card">
+            <div class="card-header"><h3>🎯 Targets & Thresholds</h3></div>
+            
+            <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Monthly Sales Goal ($)</label>
+            <input type="number" id="conf-sales-goal" placeholder="50000">
+
+            <div style="display:flex; gap:15px; margin-top:10px;">
+                <div style="flex:1;">
+                    <label style="font-size:11px; font-weight:700; color:#eab308; text-transform:uppercase;">Low Stock</label>
+                    <input type="number" id="conf-thresh-low" placeholder="5">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:11px; font-weight:700; color:#ef4444; text-transform:uppercase;">Critical</label>
+                    <input type="number" id="conf-thresh-crit" placeholder="1">
+                </div>
+            </div>
+            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="saveThresholds()">Update Configuration</button>
+        </div>
+
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-header">
+                <h3>👥 Authorized Users</h3>
+                <button class="btn-primary" onclick="addUserModal()">+ Add User</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr><th>Name</th><th>Email</th><th>Role</th><th>Access</th><th>Status</th><th style="text-align:right;">Actions</th></tr>
+                    </thead>
+                    <tbody id="userTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" style="grid-column: span 1;">
+            <div class="card-header"><h3>🕵️ Security Audit Log</h3></div>
+            <div style="max-height:300px; overflow-y:auto; font-size:12px;">
+                <table style="width:100%;">
+                    <tbody id="audit-log-body">
+                        <tr><td style="color:#64748b;">Loading logs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
-<div style="flex-grow:1;"></div>
-    <footer class="app-footer">
-        <div class="footer-left">
-            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
-            <span class="system-status">
-                <span class="status-dot"></span>
-                System Operational
-            </span>
-        </div>
-        <div class="footer-links">
-            <span>Portal v2.5</span>
-            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
-            <a href="#" onclick="Swal.fire({
-                title: 'App Support', 
-                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
-                icon: 'info',
-                confirmButtonColor: 'var(--accent)'
-            })">Support</a>
-            <a href="#" onclick="location.reload()">Refresh Data</a>
-        </div>
-    </footer>
-    
-  </main>
+</main>
 
 <script>
     // --- CONFIGURATION ---
     const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
-    let userDatabase = []; // Holds the real data
+    let userDatabase = [];
 
     // --- INIT ---
     window.addEventListener('DOMContentLoaded', () => {
-        setupUserProfile();
-        loadUsers(); // Fetch real data immediately
+        setupWelcomeUI(); // Ensure this function exists from previous steps
+        loadUsers();
+        loadSystemConfig();
+        loadMasterData();
+        loadAuditLogs();
     });
+
+    // --- 1. SYSTEM CONFIG (Banner, Goals, Thresholds) ---
+    async function loadSystemConfig() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getSystemConfig`);
+            const json = await res.json();
+            if(json.status === 'success') {
+                const cfg = json.config;
+                // Banner
+                document.getElementById('conf-announce-text').value = cfg.announcement_text || "";
+                document.getElementById('conf-announce-active').checked = (cfg.announcement_active === "TRUE");
+                // Targets
+                document.getElementById('conf-sales-goal').value = cfg.sales_goal_monthly || 50000;
+                document.getElementById('conf-thresh-low').value = cfg.inventory_threshold_low || 5;
+                document.getElementById('conf-thresh-crit').value = cfg.inventory_threshold_crit || 1;
+            }
+        } catch(e) { console.error("Config Load Error", e); }
+    }
+
+    async function saveAnnouncement() {
+        const text = document.getElementById('conf-announce-text').value;
+        const active = document.getElementById('conf-announce-active').checked ? "TRUE" : "FALSE";
+        await saveConfigBatch({ announcement_text: text, announcement_active: active });
+        Swal.fire('Posted', 'System banner updated.', 'success');
+    }
+
+    async function saveThresholds() {
+        const goal = document.getElementById('conf-sales-goal').value;
+        const low = document.getElementById('conf-thresh-low').value;
+        const crit = document.getElementById('conf-thresh-crit').value;
+        await saveConfigBatch({ sales_goal_monthly: goal, inventory_threshold_low: low, inventory_threshold_crit: crit });
+        Swal.fire('Saved', 'Operational targets updated.', 'success');
+    }
+
+    async function saveConfigBatch(dataObj) {
+        await fetch(MASTER_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'saveConfig', data: dataObj })
+        });
+    }
+
+    // --- 2. MASTER DATA (Brands) ---
+    async function loadMasterData() {
+        const container = document.getElementById('brand-list');
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getMasterData`);
+            const json = await res.json();
+            container.innerHTML = "";
+            json.brands.forEach(brand => {
+                container.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; align-items:center;">
+                        <span style="font-weight:600; font-size:13px;">${brand}</span>
+                        <span style="cursor:pointer; color:#ef4444; font-size:12px;" onclick="deleteBrand('${brand}')">🗑️</span>
+                    </div>
+                `;
+            });
+        } catch(e) {}
+    }
+
+    async function addBrand() {
+        const input = document.getElementById('new-brand-input');
+        const val = input.value.trim();
+        if(!val) return;
+        
+        // Optimistic UI update
+        input.value = ""; 
+        await fetch(MASTER_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'addMasterData', type: 'Brand', value: val })
+        });
+        loadMasterData(); // Refresh list
+    }
+
+    async function deleteBrand(val) {
+        if(!confirm("Delete brand: " + val + "?")) return;
+        await fetch(MASTER_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deleteMasterData', type: 'Brand', value: val })
+        });
+        loadMasterData();
+    }
+
+    // --- 3. AUDIT LOGS ---
+    async function loadAuditLogs() {
+        const tbody = document.getElementById('audit-log-body');
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getAuditLogs`);
+            const json = await res.json();
+            tbody.innerHTML = "";
+            
+            json.logs.forEach(log => {
+                // Log: [Timestamp, User, Action, Details]
+                const time = new Date(log[0]).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                tbody.innerHTML += `
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:8px 0;">
+                            <div style="font-weight:700; color:#1e293b;">${log[2]}</div> <div style="font-size:11px; color:#64748b;">${time} • ${log[1]}</div> <div style="font-size:11px; color:#3b82f6;">${log[3]}</div> </td>
+                    </tr>
+                `;
+            });
+        } catch(e) { tbody.innerHTML = "<tr><td>Error loading logs</td></tr>"; }
+    }
 
     // --- FUNCTIONS ---
 
