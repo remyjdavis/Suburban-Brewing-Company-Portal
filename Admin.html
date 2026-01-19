@@ -440,14 +440,16 @@
 
     // --- INIT ---
     window.addEventListener('DOMContentLoaded', () => {
-        setupWelcomeUI(); // Ensure this function exists from previous steps
+        setupUserProfile(); // 🔴 This now runs the FIXED function below
         loadUsers();
         loadSystemConfig();
         loadMasterData();
         loadAuditLogs();
     });
 
-    // --- 1. SYSTEM CONFIG (Banner, Goals, Thresholds) ---
+    // =========================================================
+    // 1. SYSTEM CONFIG (Banner, Goals, Thresholds)
+    // =========================================================
     async function loadSystemConfig() {
         try {
             const res = await fetch(`${MASTER_API_URL}?action=getSystemConfig`);
@@ -455,12 +457,16 @@
             if(json.status === 'success') {
                 const cfg = json.config;
                 // Banner
-                document.getElementById('conf-announce-text').value = cfg.announcement_text || "";
-                document.getElementById('conf-announce-active').checked = (cfg.announcement_active === "TRUE");
+                if(document.getElementById('conf-announce-text')) {
+                    document.getElementById('conf-announce-text').value = cfg.announcement_text || "";
+                    document.getElementById('conf-announce-active').checked = (cfg.announcement_active === "TRUE");
+                }
                 // Targets
-                document.getElementById('conf-sales-goal').value = cfg.sales_goal_monthly || 50000;
-                document.getElementById('conf-thresh-low').value = cfg.inventory_threshold_low || 5;
-                document.getElementById('conf-thresh-crit').value = cfg.inventory_threshold_crit || 1;
+                if(document.getElementById('conf-sales-goal')) {
+                    document.getElementById('conf-sales-goal').value = cfg.sales_goal_monthly || 50000;
+                    document.getElementById('conf-thresh-low').value = cfg.inventory_threshold_low || 5;
+                    document.getElementById('conf-thresh-crit').value = cfg.inventory_threshold_crit || 1;
+                }
             }
         } catch(e) { console.error("Config Load Error", e); }
     }
@@ -487,9 +493,13 @@
         });
     }
 
-    // --- 2. MASTER DATA (Brands) ---
+    // =========================================================
+    // 2. MASTER DATA (Brands)
+    // =========================================================
     async function loadMasterData() {
         const container = document.getElementById('brand-list');
+        if(!container) return;
+        
         try {
             const res = await fetch(`${MASTER_API_URL}?action=getMasterData`);
             const json = await res.json();
@@ -528,9 +538,13 @@
         loadMasterData();
     }
 
-    // --- 3. AUDIT LOGS ---
+    // =========================================================
+    // 3. AUDIT LOGS
+    // =========================================================
     async function loadAuditLogs() {
         const tbody = document.getElementById('audit-log-body');
+        if(!tbody) return;
+
         try {
             const res = await fetch(`${MASTER_API_URL}?action=getAuditLogs`);
             const json = await res.json();
@@ -542,18 +556,22 @@
                 tbody.innerHTML += `
                     <tr style="border-bottom:1px solid #f1f5f9;">
                         <td style="padding:8px 0;">
-                            <div style="font-weight:700; color:#1e293b;">${log[2]}</div> <div style="font-size:11px; color:#64748b;">${time} • ${log[1]}</div> <div style="font-size:11px; color:#3b82f6;">${log[3]}</div> </td>
+                            <div style="font-weight:700; color:#1e293b;">${log[2]}</div> 
+                            <div style="font-size:11px; color:#64748b;">${time} • ${log[1]}</div> 
+                            <div style="font-size:11px; color:#3b82f6;">${log[3]}</div> 
+                        </td>
                     </tr>
                 `;
             });
         } catch(e) { tbody.innerHTML = "<tr><td>Error loading logs</td></tr>"; }
     }
 
-    // --- FUNCTIONS ---
-
-    // 1. READ: Fetch users from Google Sheet
+    // =========================================================
+    // 4. USER MANAGEMENT (Read, Add, Delete)
+    // =========================================================
     async function loadUsers() {
         const tbody = document.getElementById('userTableBody');
+        if(!tbody) return;
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Fetching live data...</td></tr>';
 
         try {
@@ -561,11 +579,8 @@
             const result = await response.json();
 
             if (result.status === "success") {
-                userDatabase = result.users; // Store data
-                
-                // 🔴 FIX IS HERE: Pass the data into the function!
+                userDatabase = result.users; 
                 renderTable(userDatabase); 
-                
             } else {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Error: ${result.message}</td></tr>`;
             }
@@ -575,27 +590,26 @@
         }
     }
 
-    // --- RENDER: Draw the table ---
     function renderTable(users) {
         const tbody = document.getElementById('userTableBody');
         tbody.innerHTML = "";
 
-        // Safety check: if users is null/undefined, make it an empty array to prevent crashing
         if (!users || users.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>';
             return;
         }
 
         users.forEach((user) => {
-            const accessClass = (user.access === "Admin") ? 'role-admin' : 'role-staff';
+            // Determine badge color based on Access Level
+            const accessClass = (String(user.access).toLowerCase() === "admin") ? 'role-admin' : 'role-staff';
             
             const row = `
                 <tr>
-                    <td style="font-weight:600;">${user.name}</td>
-                    <td>${user.email}</td>
-                    <td style="color:#64748b;">${user.role}</td>
-                    <td><span class="role-badge ${accessClass}">${user.access}</span></td>
-                    <td><span style="color:var(--success);">●</span> ${user.status}</td>
+                    <td style="font-weight:600;">${user.name || 'Unknown'}</td>
+                    <td>${user.email || ''}</td>
+                    <td style="color:#64748b;">${user.role || ''}</td>
+                    <td><span class="role-badge ${accessClass}">${user.access || 'Staff'}</span></td>
+                    <td><span style="color:var(--success);">●</span> ${user.status || 'Active'}</td>
                     <td style="text-align:right;">
                         <button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${user.username}')">🗑️</button>
                     </td>
@@ -605,66 +619,64 @@
         });
     }
 
-   // --- CREATE: Add new user via Modal ---
-async function addUserModal() {
-    const { value: formValues } = await Swal.fire({
-        title: 'Add New User',
-        background: '#ffffff',
-        html: `
-            <input id="swal-name" class="swal2-input" placeholder="Full Name (e.g. John Doe)">
-            <input id="swal-email" class="swal2-input" placeholder="Email Address">
-            
-            <div style="text-align: left; margin-top: 15px;">
-                <label style="font-size: 12px; font-weight: bold; color: #333; margin-left: 4px;">Job Title / Role</label>
-                <input id="swal-role" class="swal2-input" placeholder="e.g. Sales Rep, Brewer, Owner" style="margin-top: 5px;">
-            </div>
+    async function addUserModal() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Add New User',
+            background: '#ffffff',
+            html: `
+                <input id="swal-name" class="swal2-input" placeholder="Full Name (e.g. John Doe)">
+                <input id="swal-email" class="swal2-input" placeholder="Email Address">
+                
+                <div style="text-align: left; margin-top: 15px;">
+                    <label style="font-size: 12px; font-weight: bold; color: #333; margin-left: 4px;">Job Title / Role</label>
+                    <input id="swal-role" class="swal2-input" placeholder="e.g. Sales Rep, Brewer, Owner" style="margin-top: 5px;">
+                </div>
 
-            <div style="text-align: left; margin-top: 15px;">
-                <label style="font-size: 12px; font-weight: bold; color: #333; margin-left: 4px;">Portal Access Level</label>
-                <select id="swal-access" class="swal2-input" style="margin-top: 5px;">
-                    <option value="Staff">Staff (Standard View)</option>
-                    <option value="Admin">Admin (Full Control)</option>
-                </select>
-            </div>
+                <div style="text-align: left; margin-top: 15px;">
+                    <label style="font-size: 12px; font-weight: bold; color: #333; margin-left: 4px;">Portal Access Level</label>
+                    <select id="swal-access" class="swal2-input" style="margin-top: 5px;">
+                        <option value="Staff">Staff (Standard View)</option>
+                        <option value="Admin">Admin (Full Control)</option>
+                    </select>
+                </div>
 
-            <div style="font-size:12px; color:#666; margin-top:20px;">Default Password: <b>SBC2026</b></div>
-        `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonColor: '#2563eb',
-        preConfirm: () => {
-            return {
-                name: document.getElementById('swal-name').value,
-                email: document.getElementById('swal-email').value,
-                role: document.getElementById('swal-role').value,     // Actual Job Title
-                access: document.getElementById('swal-access').value  // Permission Level
+                <div style="font-size:12px; color:#666; margin-top:20px;">Default Password: <b>SBC2026</b></div>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonColor: '#2563eb',
+            preConfirm: () => {
+                return {
+                    name: document.getElementById('swal-name').value,
+                    email: document.getElementById('swal-email').value,
+                    role: document.getElementById('swal-role').value,
+                    access: document.getElementById('swal-access').value
+                }
             }
-        }
-    });
+        });
 
-    if (formValues) {
-        Swal.fire({ title: 'Creating User...', didOpen: () => Swal.showLoading() });
-        
-        try {
-            const response = await fetch(MASTER_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'adminAddUser', data: formValues })
-            });
-            const result = await response.json();
+        if (formValues) {
+            Swal.fire({ title: 'Creating User...', didOpen: () => Swal.showLoading() });
             
-            if(result.status === 'success') {
-                await loadUsers(); // Refresh table
-                Swal.fire('Success', result.message, 'success');
-            } else {
-                Swal.fire('Error', result.message, 'error');
+            try {
+                const response = await fetch(MASTER_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'adminAddUser', data: formValues })
+                });
+                const result = await response.json();
+                
+                if(result.status === 'success') {
+                    await loadUsers(); // Refresh table
+                    Swal.fire('Success', result.message, 'success');
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch(e) {
+                Swal.fire('Error', 'Network request failed', 'error');
             }
-        } catch(e) {
-            Swal.fire('Error', 'Network request failed', 'error');
         }
     }
-}
 
-    // 4. DELETE: Remove user
     function deleteUser(username) {
         Swal.fire({
             title: 'Revoke Access?',
@@ -697,48 +709,41 @@ async function addUserModal() {
         });
     }
 
-    // --- SETTINGS (Local Only for now) ---
-    function toggleMaintenance(el) {
-        const knob = el.querySelector('div');
-        const text = el.nextElementSibling;
-        const isActive = el.style.background === 'rgb(37, 99, 235)'; 
-        
-        if (isActive) {
-            el.style.background = '#e2e8f0';
-            knob.style.transform = 'translateX(0)';
-            text.innerText = "Disabled";
-        } else {
-            el.style.background = '#2563eb';
-            knob.style.transform = 'translateX(20px)';
-            text.innerText = "Enabled";
-        }
-    }
-
-    function saveSettings() {
-        Swal.fire({ title: 'Settings Saved', icon: 'success', timer: 1500, showConfirmButton: false });
-    }
-
-    function clearSystemCache() {
-        localStorage.clear();
-        sessionStorage.clear();
-        Swal.fire('Cache Cleared', 'System reset.', 'info').then(() => window.location.href="login.html");
-    }
-
-    // --- UI HELPERS ---
-    function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
-    function toggleGroup(contentId, headerEl) {
-        document.getElementById(contentId).classList.toggle('collapsed');
-        headerEl.classList.toggle('collapsed');
-    }
+    // =========================================================
+    // 5. UI HELPERS & PROFILE SETUP (The Critical Fixes)
+    // =========================================================
     
+    // 🔴 CRITICAL FIX: Properly load User Title & Logo
     function setupUserProfile() {
         const name = sessionStorage.getItem("user_name") || "Admin";
-        const role = sessionStorage.getItem("user_role") || "Owner";
-        const pic = sessionStorage.getItem("user_pic");
+        const role = sessionStorage.getItem("user_role"); // This is the Security Level (Admin)
         
-        if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
-        if(document.getElementById("display-role")) document.getElementById("display-role").innerText = role;
-        if(document.getElementById("display-avatar") && pic) document.getElementById("display-avatar").src = pic;
+        // 1. Get the Job Title (Sales Rep). Fallback to Role if missing.
+        const displayTitle = sessionStorage.getItem("user_title") || role || "Staff";
+        
+        // 2. Robust Logo Path (Works on GitHub & Local)
+        const defaultLogo = "logo.png"; 
+        const userPic = sessionStorage.getItem("user_pic") || defaultLogo;
+        
+        // Update the HTML elements
+        if(document.getElementById("display-username")) {
+            document.getElementById("display-username").innerText = name;
+        }
+        
+        if(document.getElementById("display-role")) {
+            // 🔴 This now shows "Sales Rep" instead of "Admin"
+            document.getElementById("display-role").innerText = displayTitle;
+        }
+        
+        if(document.getElementById("display-avatar")) {
+            const img = document.getElementById("display-avatar");
+            img.src = userPic;
+            // Prevent broken image loop
+            img.onerror = function() { 
+                this.onerror = null; 
+                this.src = defaultLogo; 
+            };
+        }
     }
 
     function toggleUserMenu(event) {
@@ -763,6 +768,12 @@ async function addUserModal() {
                 }
             }
         }
+    }
+
+    function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
+    function toggleGroup(contentId, headerEl) {
+        document.getElementById(contentId).classList.toggle('collapsed');
+        headerEl.classList.toggle('collapsed');
     }
 </script>
 </body>
