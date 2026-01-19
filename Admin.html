@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    // --- 🔒 THE GATEKEEPER ---
+    (function() {
+        const auth = sessionStorage.getItem("sbc_auth");
+        const role = sessionStorage.getItem("user_role"); // Gets role (Admin/Staff)
+        
+        // If not logged in OR not an Admin/Owner, kick them out
+        if (auth !== "true" || (role !== "Admin" && role !== "Owner")) {
+            alert("⛔ ACCESS DENIED: Administrator privileges required.");
+            // Redirect to the dashboard (or login)
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            window.location.replace(repoPath + "index.html");
+        }
+    })();
+  </script>
+  
+  <meta charset="UTF-8" />
+  <title>Admin Console | Suburban Brewing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    /* --- SAME THEME VARIABLES --- */
+    :root {
+      --bg: #f8fafc;
+      --sidebar: #0f172a;
+      --accent: #2563eb;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --card-bg: #ffffff;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: var(--bg); color: var(--text-main); font-family: 'Inter', sans-serif; display: flex; min-height: 100vh; }
+
+    /* --- SIDEBAR (Copied from your other pages) --- */
+    .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; transition: all 0.3s ease; }
+    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
+    .nav-section-header { font-size: 11px; text-transform: uppercase; color: #94a3b8; margin: 18px 24px 8px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .nav-link { display: flex; align-items: center; padding: 10px 24px; color: #64748b; text-decoration: none; font-size: 14px; transition: 0.2s; border-left: 4px solid transparent; }
+    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; font-weight: 600; }
+    .collapsible-content { max-height: 2000px; overflow: hidden; transition: 0.3s; }
+    .collapsible-content.collapsed { max-height: 0; }
+
+    /* --- MAIN LAYOUT --- */
+    .main { flex: 1; margin-left: 260px; padding: 40px; transition: all 0.3s ease; width: 100%; display: flex; flex-direction: column; min-height: 100vh; }
+    
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+    .header h1 { margin: 0; font-size: 1.8rem; font-weight: 800; color: #1e293b; }
+    .header p { margin: 5px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+
+    /* --- ADMIN CARDS --- */
+    .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    
+    .card { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+    .card-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: #1e293b; }
+
+    /* USER TABLE */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 10px; color: var(--text-muted); font-size: 12px; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; }
+    td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .role-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .role-admin { background: #fee2e2; color: #991b1b; }
+    .role-staff { background: #dcfce7; color: #166534; }
+
+    /* FORMS & BUTTONS */
+    input, select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px; font-size: 14px; }
+    button { padding: 10px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 13px; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-icon { background: none; color: var(--text-muted); padding: 5px; font-size: 16px; }
+    .btn-icon:hover { color: var(--accent); }
+
+    /* USER PROFILE (TOP RIGHT) */
+    .user-profile { position: relative; display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 5px 10px; border-radius: 8px; transition: background 0.2s; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .user-profile:hover { background: #f3f4f6; }
+    .user-avatar { width: 38px; height: 38px; border-radius: 50%; background-color: #e5e7eb; object-fit: cover; border: 2px solid var(--accent); }
+    .user-info-text { display: flex; flex-direction: column; line-height: 1.1; text-align: right; }
+    .user-name { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+    .user-role { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+    .user-dropdown-menu { display: none; position: absolute; top: 55px; right: 0; background-color: white; min-width: 180px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px; z-index: 2000; overflow: hidden; border: 1px solid #e2e8f0; }
+    .user-dropdown-menu.show { display: block; }
+    .user-dropdown-menu a { color: #374151; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+    .user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
+
+    /* MOBILE */
+    @media (max-width: 1024px) {
+        .sidebar { left: -260px; }
+        .sidebar.open { left: 0; }
+        .main { margin-left: 0 !important; padding: 20px; }
+        #menu-toggle { display: flex; position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: var(--accent); color: white; border-radius: 50%; justify-content: center; align-items: center; font-size: 24px; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border:none; }
+        .header { flex-direction: column; align-items: flex-start; gap: 15px; }
+        .user-profile { width: 100%; justify-content: space-between; }
+        .user-info-text { text-align: left; order: -1; }
+    }
+  </style>
+</head>
+<body>
+
+  <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  
+  <aside class="sidebar">
+    <h2>SUBURBAN BREWING</h2>
+    <a href="index.html" class="nav-link"><span>Command Center</span></a>
+    <a href="admin.html" class="nav-link active"><span>Admin Console</span></a>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+      <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    </div>
+
+    <div class="nav-section-title" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
+      <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="../Reports/Route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h1>System Administration</h1>
+        <p>Manage users, permissions, and global app settings.</p>
+      </div>
+
+      <div class="user-profile" onclick="toggleUserMenu(event)">
+        <div class="user-info-text">
+          <span class="user-name" id="display-username">Owner</span>
+          <span class="user-role" id="display-role">Admin</span>
+        </div>
+        <img src="" class="user-avatar" id="display-avatar" onerror="this.src='logo.png'">
+        <div id="userDropdown" class="user-dropdown-menu">
+          <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-grid">
+      <div class="card" style="grid-column: span 2;">
+        <div class="card-header">
+            <h3>👥 Authorized Users</h3>
+            <button class="btn-primary" onclick="addUserModal()">+ Add User</button>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <tr><td colspan="5" style="text-align:center; padding:20px;">Loading users...</td></tr>
+                </tbody>
+            </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>⚙️ Global Settings</h3></div>
+        
+        <label style="font-size:12px; font-weight:bold; color:#64748b;">Maintenance Mode</label>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+            <div style="width:40px; height:20px; background:#e2e8f0; border-radius:10px; position:relative; cursor:pointer;" onclick="toggleMaintenance(this)">
+                <div style="width:16px; height:16px; background:white; border-radius:50%; position:absolute; top:2px; left:2px; transition:0.2s;"></div>
+            </div>
+            <span style="font-size:13px;">Disabled</span>
+        </div>
+
+        <label style="font-size:12px; font-weight:bold; color:#64748b;">Default Tax Rate (%)</label>
+        <input type="number" value="6.0" style="margin-bottom:15px;">
+
+        <button class="btn-primary" style="width:100%;" onclick="saveSettings()">Save Configuration</button>
+        
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        
+        <button class="btn-danger" style="width:100%;" onclick="clearSystemCache()">🗑️ Clear Global Cache</button>
+      </div>
+    </div>
+
+  </main>
+
+<script>
+    // --- MOCK DATABASE (Connect this to your Google Sheet later) ---
+    const MOCK_USERS = [
+        { name: "Remy Davis", email: "remy@suburban.com", role: "Admin", status: "Active" },
+        { name: "Head Brewer", email: "brewer@suburban.com", role: "Staff", status: "Active" },
+        { name: "Sales Rep 1", email: "sales1@suburban.com", role: "Staff", status: "Active" }
+    ];
+
+    // --- INIT ---
+    window.addEventListener('DOMContentLoaded', () => {
+        setupUserProfile();
+        loadUsers();
+    });
+
+    // --- FUNCTIONS ---
+    function loadUsers() {
+        const tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = "";
+        
+        MOCK_USERS.forEach((user, index) => {
+            const roleClass = user.role === 'Admin' ? 'role-admin' : 'role-staff';
+            const row = `
+                <tr>
+                    <td style="font-weight:600;">${user.name}</td>
+                    <td>${user.email}</td>
+                    <td><span class="role-badge ${roleClass}">${user.role}</span></td>
+                    <td><span style="color:var(--success);">●</span> ${user.status}</td>
+                    <td style="text-align:right;">
+                        <button class="btn-icon" onclick="editUser(${index})">✏️</button>
+                        <button class="btn-icon" style="color:#ef4444;" onclick="deleteUser(${index})">🗑️</button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    async function addUserModal() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Add New User',
+            html: `
+                <input id="swal-name" class="swal2-input" placeholder="Full Name">
+                <input id="swal-email" class="swal2-input" placeholder="Email Address">
+                <select id="swal-role" class="swal2-input">
+                    <option value="Staff">Staff</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            `,
+            focusConfirm: false,
+            preConfirm: () => {
+                return [
+                    document.getElementById('swal-name').value,
+                    document.getElementById('swal-email').value,
+                    document.getElementById('swal-role').value
+                ]
+            }
+        });
+
+        if (formValues) {
+            MOCK_USERS.push({ name: formValues[0], email: formValues[1], role: formValues[2], status: "Active" });
+            loadUsers();
+            Swal.fire('User Added', '', 'success');
+        }
+    }
+
+    function deleteUser(index) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This will revoke their access immediately.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Yes, delete user'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                MOCK_USERS.splice(index, 1);
+                loadUsers();
+                Swal.fire('Deleted!', 'User has been removed.', 'success');
+            }
+        });
+    }
+
+    function toggleMaintenance(el) {
+        const knob = el.querySelector('div');
+        const text = el.nextElementSibling;
+        const isActive = el.style.background === 'rgb(37, 99, 235)'; // check for blue color
+        
+        if (isActive) {
+            el.style.background = '#e2e8f0';
+            knob.style.transform = 'translateX(0)';
+            text.innerText = "Disabled";
+        } else {
+            el.style.background = '#2563eb';
+            knob.style.transform = 'translateX(20px)';
+            text.innerText = "Enabled";
+        }
+    }
+
+    function saveSettings() {
+        Swal.fire({
+            title: 'Settings Saved',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+
+    function clearSystemCache() {
+        localStorage.clear();
+        Swal.fire('Cache Cleared', 'Local storage has been reset.', 'info').then(() => location.reload());
+    }
+
+    // --- STANDARD SIDEBAR & USER LOGIC ---
+    function toggleMobileMenu() {
+        document.querySelector('.sidebar').classList.toggle('open');
+    }
+    
+    function toggleGroup(contentId, headerEl) {
+        const content = document.getElementById(contentId);
+        content.classList.toggle('collapsed');
+        headerEl.classList.toggle('collapsed');
+    }
+
+    function setupUserProfile() {
+        const name = sessionStorage.getItem("user_name") || "Admin";
+        const role = sessionStorage.getItem("user_role") || "Owner";
+        const pic = sessionStorage.getItem("user_pic");
+        if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
+        if(document.getElementById("display-role")) document.getElementById("display-role").innerText = role;
+        if(document.getElementById("display-avatar") && pic) document.getElementById("display-avatar").src = pic;
+    }
+
+    function toggleUserMenu(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById("userDropdown");
+        if(dropdown) dropdown.classList.toggle("show");
+    }
+
+async function updateUserInfo() {
+    const { value: formValues } = await Swal.fire({
+        title: 'Edit Profile Settings',
+        background: '#1e293b',
+        color: '#ffffff',
+        padding: '2em',
+        width: '450px', // Fixed width for better consistency
+        showConfirmButton: true,
+        confirmButtonText: 'Save Changes',
+        confirmButtonColor: '#2563eb',
+        showCancelButton: true,
+        cancelButtonColor: '#475569',
+        html: `
+            <div style="text-align: left; font-family: 'Inter', sans-serif;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="position: relative; display: inline-block;">
+                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../logo.png'}" 
+                             style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; background: #334155;">
+                        <button type="button" onclick="document.getElementById('file-input').click()" 
+                                style="position: absolute; bottom: 0; right: 0; background: #2563eb; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                            📷
+                        </button>
+                    </div>
+                    <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Email Address</label>
+                    <input id="p-email" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" value="${sessionStorage.getItem('user_email') || ''}">
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Phone Number</label>
+                    <input id="p-phone" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" value="${sessionStorage.getItem('user_phone') || ''}">
+                </div>
+
+                <div style="border-top: 1px solid #334155; padding-top: 20px;">
+                    <label style="display: block; font-size: 10px; color: #f87171; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Security / Update Password</label>
+                    <input id="p-pass" type="password" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" placeholder="Enter new password (optional)">
+                    <p style="color: #64748b; font-size: 11px; margin-top: 8px; font-style: italic;">Leave blank to keep your current password.</p>
+                </div>
+            </div>
+        `,
+        preConfirm: () => {
+            return {
+                email: document.getElementById('p-email').value,
+                phone: document.getElementById('p-phone').value,
+                pass: document.getElementById('p-pass').value,
+                pic: document.getElementById('preview-pic').src
+            }
+        }
+    });
+
+    if (formValues) saveProfile(formValues);
+}
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => { document.getElementById('preview-pic').src = e.target.result; };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function saveProfile(data) {
+    Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() });
+    const username = sessionStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
+    
+    try {
+        const response = await fetch(MASTER_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                action: 'updateProfile', 
+                user: username, 
+                ...data // 🔴 This now includes email, phone, pic, AND pass
+            })
+        });
+        const result = await response.json();
+        
+        if (result.status === "success") {
+            // Update session storage for non-sensitive info
+            sessionStorage.setItem("user_pic", data.pic);
+            sessionStorage.setItem("user_email", data.email);
+            sessionStorage.setItem("user_phone", data.phone);
+            
+            setupUserProfile();
+            Swal.fire('Saved!', 'Profile and Security settings updated.', 'success');
+        } else {
+            throw new Error(result.message || "Update failed");
+        }
+    } catch (e) {
+        Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
+    }
+}
+    function handleLogout() {
+        sessionStorage.clear();
+        window.location.replace("index.html");
+    }
+</script>
+</body>
+</html>
