@@ -532,21 +532,45 @@
 <div id="tab-competitor" class="card">
     <h3>🕵️ Competitor Watch</h3>
     <div style="display:flex; gap:20px; margin-bottom:30px;">
-        <div style="flex:1;">
+        <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
             <input type="text" id="compName" placeholder="Competitor Name (e.g. Victory)">
-            <input type="text" id="compProduct" placeholder="Product (e.g. Golden Monkey)">
+            <input type="text" id="compProduct" placeholder="Product Name (e.g. Golden Monkey)">
+            <select id="compType">
+                <option value="" disabled selected>Packaging Type</option>
+                <option value="Keg">Keg</option>
+                <option value="Can">Can</option>
+                <option value="Bottle">Bottle</option>
+            </select>
         </div>
-        <div style="flex:1;">
+
+        <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+            <select id="compSize">
+                <option value="" disabled selected>Product Size / Pack</option>
+                <option value="Pint">Pint (Draft)</option>
+                <option value="1/2 BBL">1/2 BBL Keg</option>
+                <option value="1/6 BBL">1/6 BBL Keg</option>
+                <option value="19.2oz">19.2oz Can</option>
+                <option value="24oz">24oz Can</option>
+                <option value="4-Pack 16oz">4-Pack 16oz Cans</option>
+                <option value="6-Pack Cans">6-Pack Cans</option>
+                <option value="6-Pack Bottles">6-Pack Bottles</option>
+                <option value="12-Pack Cans">12-Pack Cans</option>
+                <option value="12-Pack Bottles">12-Pack Bottles</option>
+                <option value="24-Pack Cans">24-Pack Cans</option>
+                <option value="24-Pack Bottles">24-Pack Bottles</option>
+            </select>
             <input type="number" id="compPrice" placeholder="Price ($)">
-            <input type="text" id="compNotes" placeholder="Notes (e.g. On sale at Giant)">
         </div>
-        <button onclick="submitCompetitor()" style="height:42px;">+ Log Intel</button>
     </div>
     
-    <table style="width:100%;">
-        <thead><tr style="background:#f1f5f9; text-align:left;"><th>Date</th><th>Competitor</th><th>Product</th><th>Price</th><th>Notes</th></tr></thead>
+    <input type="text" id="compNotes" placeholder="Additional Notes (e.g. Price drop at Giant)" style="margin-bottom:15px;">
+    
+    <button onclick="submitCompetitor()" style="width:100%;">+ Log Intel</button>
+    
+    <table style="width:100%; margin-top:20px;">
+        <thead><tr style="background:#f1f5f9; text-align:left;"><th>Date</th><th>Competitor</th><th>Details</th><th>Price</th></tr></thead>
         <tbody id="competitor-table-body">
-            <tr><td colspan="5" style="text-align:center; padding:10px; color:#ccc">No recent intel logged.</td></tr>
+            <tr><td colspan="4" style="text-align:center; padding:10px; color:#ccc">No recent intel logged.</td></tr>
         </tbody>
     </table>
 </div>
@@ -800,12 +824,15 @@
   </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+// 1. RENAME the old URL to OPS_API_URL
+const OPS_API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+
+// 2. ADD the new URL (PASTE YOUR NEW SCRIPT URL HERE)
+const MARKETING_API_URL = "https://script.google.com/macros/s/PASTE_YOUR_NEW_MARKETING_SCRIPT_URL_HERE/exec";
 
 // Global Data Stores
 let inventoryData = {};
 let marketingData = {};
-
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
     // 1. Set Date (Dashboard)
@@ -847,16 +874,16 @@ async function initGeneratorData() {
     }
     
     try {
+        // 🔴 UPDATE: We fetch Inventory/Prices from OPS, and Marketing Copy from MARKETING
         const [invRes, mktRes, priceRes] = await Promise.all([
-            fetch(`${API_URL}?action=getBreweryInventory`), 
-            fetch(`${API_URL}?action=getMarketingData`),
-            fetch(`${API_URL}?action=getProductPrices`)
+            fetch(`${OPS_API_URL}?action=getBreweryInventory`), 
+            fetch(`${MARKETING_API_URL}?action=getMarketingData`), // <--- Points to New Backend
+            fetch(`${OPS_API_URL}?action=getProductPrices`)
         ]);
 
         const inventory = await invRes.json();
         const market = await mktRes.json();
         const prices = await priceRes.json();
-
         console.log("Debug Prices:", prices); 
 
         // --- 1. BUILD SMART PRICE & LIFECYCLE MAP ---
@@ -1201,7 +1228,8 @@ async function loadFreshSheet() {
     container.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">Syncing Inventory...</div>';
 
     try {
-        const res = await fetch(`${API_URL}?action=getBreweryInventory`);
+        // 🔴 UPDATED: Uses OPS_API_URL
+    const res = await fetch(`${OPS_API_URL}?action=getBreweryInventory`);
         const data = await res.json();
         container.innerHTML = ""; 
 
@@ -1277,7 +1305,8 @@ async function loadChurnMonitor() {
     
     tbody.innerHTML = '<tr><td colspan="4">Analyzing sales...</td></tr>';
     try {
-        const res = await fetch(`${API_URL}?action=getFullAuditData`);
+        // 🔴 UPDATED: Uses OPS_API_URL
+    const res = await fetch(`${OPS_API_URL}?action=getFullAuditData`);
         const invoices = await res.json();
         
         const lastOrder = {};
@@ -1515,7 +1544,8 @@ async function publishToFacebook() {
             });
         }
 
-        const response = await fetch(API_URL, {
+        // 🔴 UPDATED: Uses MARKETING_API_URL
+        const response = await fetch(MARKETING_API_URL, {
             method: "POST",
             body: JSON.stringify(payload)
         });
@@ -1552,7 +1582,8 @@ async function loadInbox() {
     container.innerHTML = '<h3 style="margin-top:0;">Unified Inbox (Comments)</h3><div id="inbox-loading" style="padding:20px; color:#64748b;">Loading comments...</div>';
     
     try {
-        const res = await fetch(`${API_URL}?action=getInbox`);
+        // 🔴 UPDATED: Uses MARKETING_API_URL
+        const res = await fetch(`${MARKETING_API_URL}?action=getInbox`);
         const comments = await res.json();
         
         const loadingEl = document.getElementById('inbox-loading');
@@ -1629,7 +1660,8 @@ async function sendRealReply(commentId) {
             message: text
         };
 
-        const res = await fetch(API_URL, {
+        // 🔴 UPDATED: Uses MARKETING_API_URL
+        const res = await fetch(MARKETING_API_URL, {
             method: "POST",
             body: JSON.stringify(payload)
         });
@@ -1656,7 +1688,8 @@ async function sendRealReply(commentId) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Fetching latest numbers...</td></tr>';
 
     try {
-        const res = await fetch(`${API_URL}?action=getSocialAnalytics`);
+        // 🔴 UPDATED: Uses MARKETING_API_URL
+        const res = await fetch(`${MARKETING_API_URL}?action=getSocialAnalytics`);
         const data = await res.json();
         
         tbody.innerHTML = "";
@@ -1710,7 +1743,8 @@ async function sendEmailCampaign() {
     btn.disabled = true;
 
     try {
-        const res = await fetch(API_URL, {
+        // 🔴 UPDATED: Uses MARKETING_API_URL
+        const res = await fetch(MARKETING_API_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'sendEmailBlast', subject, body })
         });
@@ -1734,28 +1768,47 @@ async function sendEmailCampaign() {
 async function submitCompetitor() {
     const competitor = document.getElementById('compName').value;
     const product = document.getElementById('compProduct').value;
+    const type = document.getElementById('compType').value; // NEW
+    const size = document.getElementById('compSize').value; // NEW
     const price = document.getElementById('compPrice').value;
     const notes = document.getElementById('compNotes').value;
 
-    if(!competitor || !price) return Swal.fire('Missing Data', 'Competitor Name and Price are required.', 'warning');
+    if(!competitor || !price || !type || !size) {
+        return Swal.fire('Missing Data', 'Please fill in Name, Type, Size, and Price.', 'warning');
+    }
 
-    const res = await fetch(API_URL, {
+    // 🔴 UPDATED: Uses MARKETING_API_URL
+    const res = await fetch(MARKETING_API_URL, {
         method: 'POST',
-        body: JSON.stringify({ action: 'submitCompetitor', competitor, product, price, notes })
+        body: JSON.stringify({ 
+            action: 'submitCompetitor', 
+            competitor, product, type, size, price, notes 
+        })
     });
     
     Swal.fire('Logged', 'Competitor data saved.', 'success');
     
-    // Add to table visually (shortcut)
+    // Add to table visually
     const tbody = document.getElementById('competitor-table-body');
     if(tbody.innerText.includes("No recent")) tbody.innerHTML = "";
-    tbody.insertAdjacentHTML('afterbegin', `<tr><td>Just Now</td><td>${competitor}</td><td>${product}</td><td>$${price}</td><td>${notes}</td></tr>`);
+    
+    // We combine Name/Type/Size into the table row for a cleaner look
+    tbody.insertAdjacentHTML('afterbegin', `
+        <tr>
+            <td>Just Now</td>
+            <td><strong>${competitor}</strong><br><span style="font-size:11px; color:#666;">${product}</span></td>
+            <td>${size} (${type})</td>
+            <td>$${price}</td>
+        </tr>
+    `);
     
     // Clear inputs
     document.getElementById('compName').value = "";
     document.getElementById('compPrice').value = "";
     document.getElementById('compProduct').value = "";
     document.getElementById('compNotes').value = "";
+    document.getElementById('compType').selectedIndex = 0;
+    document.getElementById('compSize').selectedIndex = 0;
 }
 
 // 3. QC / RATING
@@ -1782,7 +1835,8 @@ async function submitQC() {
 
     if(rating === "0") return Swal.fire('Error', 'Please select a star rating', 'warning');
 
-    await fetch(API_URL, {
+    // 🔴 UPDATED: Uses MARKETING_API_URL
+    await fetch(MARKETING_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: 'submitQC', account, product, rating, issues, notes })
     });
@@ -1800,9 +1854,11 @@ async function renderCalendar() {
     const grid = document.getElementById('calendar-grid');
     grid.innerHTML = "Loading...";
     
-    // In production, fetch(API_URL + "?action=getMarketingCalendar") here
-    // For now, we use the Mock Data from your backend script logic
-    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getMarketingCalendar' }) });
+    // 🔴 UPDATED: Uses MARKETING_API_URL
+    const res = await fetch(MARKETING_API_URL, { 
+        method: 'POST', 
+        body: JSON.stringify({ action: 'getMarketingCalendar' }) 
+    });
     const events = await res.json();
     
     grid.innerHTML = "";
