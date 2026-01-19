@@ -121,16 +121,16 @@
     .logout-link span.icon { margin-right: 12px; font-size: 16px; }
     
     /* --- MAIN CONTENT AREA --- */
-    .main-content { 
-      margin-left: 260px; 
-      flex-grow: 1; 
-      height: 100vh; 
-      overflow-y: auto; 
-      transition: all 0.3s ease;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-    }
+.main {  /* <--- CHANGED FROM .main-content */
+    margin-left: 260px; 
+    flex-grow: 1; 
+    height: 100vh; 
+    overflow-y: auto; 
+    transition: all 0.3s ease;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
     
     .header { 
       background: white; 
@@ -271,7 +271,11 @@
     @media (max-width: 1024px) {
         .sidebar { left: -260px; }
         .sidebar.open { left: 0; }
-        .main { margin-left: 0 !important; padding: 20px; }
+        /* CHANGE THIS FROM .main-content TO .main */
+    .main { 
+        margin-left: 0 !important; 
+        padding: 20px;
+    }
         #menu-toggle { display: flex; position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: var(--accent); color: white; border-radius: 50%; justify-content: center; align-items: center; font-size: 24px; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border:none; }
         .header { flex-direction: column; align-items: flex-start; gap: 15px; }
         .user-profile { width: 100%; justify-content: space-between; }
