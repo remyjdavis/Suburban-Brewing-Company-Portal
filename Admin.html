@@ -302,54 +302,64 @@
         });
     }
 
-    // 3. CREATE: Add new user via Modal
-    async function addUserModal() {
-        const { value: formValues } = await Swal.fire({
-            title: 'Add New User',
-            background: '#ffffff',
-            html: `
-                <input id="swal-name" class="swal2-input" placeholder="Full Name (e.g. John Doe)">
-                <input id="swal-email" class="swal2-input" placeholder="Email Address">
-                <select id="swal-role" class="swal2-input">
-                    <option value="Staff">Brewer / Staff</option>
-                    <option value="Sales Rep">Sales Rep</option>
-                    <option value="Admin">Administrator</option>
-                </select>
-                <div style="font-size:12px; color:#666; margin-top:10px;">Default Password will be: <b>SBC2026</b></div>
-            `,
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonColor: '#2563eb',
-            preConfirm: () => {
-                return {
-                    name: document.getElementById('swal-name').value,
-                    email: document.getElementById('swal-email').value,
-                    role: document.getElementById('swal-role').value
-                }
-            }
-        });
-
-        if (formValues) {
-            Swal.fire({ title: 'Creating User...', didOpen: () => Swal.showLoading() });
+   // --- CREATE: Add new user via Modal ---
+async function addUserModal() {
+    const { value: formValues } = await Swal.fire({
+        title: 'Add New User',
+        background: '#ffffff',
+        html: `
+            <input id="swal-name" class="swal2-input" placeholder="Full Name (e.g. John Doe)">
+            <input id="swal-email" class="swal2-input" placeholder="Email Address">
             
-            try {
-                const response = await fetch(MASTER_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'adminAddUser', data: formValues })
-                });
-                const result = await response.json();
-                
-                if(result.status === 'success') {
-                    await loadUsers(); // Refresh table
-                    Swal.fire('Success', result.message, 'success');
-                } else {
-                    Swal.fire('Error', result.message, 'error');
-                }
-            } catch(e) {
-                Swal.fire('Error', 'Network request failed', 'error');
+            <div style="text-align: left; margin-top: 15px;">
+                <label style="font-size: 12px; font-weight: bold; color: #333; margin-left: 4px;">Job Title / Role</label>
+                <input id="swal-role" class="swal2-input" placeholder="e.g. Sales Rep, Brewer, Owner" style="margin-top: 5px;">
+            </div>
+
+            <div style="text-align: left; margin-top: 15px;">
+                <label style="font-size: 12px; font-weight: bold; color: #333; margin-left: 4px;">Portal Access Level</label>
+                <select id="swal-access" class="swal2-input" style="margin-top: 5px;">
+                    <option value="Staff">Staff (Standard View)</option>
+                    <option value="Admin">Admin (Full Control)</option>
+                </select>
+            </div>
+
+            <div style="font-size:12px; color:#666; margin-top:20px;">Default Password: <b>SBC2026</b></div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        preConfirm: () => {
+            return {
+                name: document.getElementById('swal-name').value,
+                email: document.getElementById('swal-email').value,
+                role: document.getElementById('swal-role').value,     // Actual Job Title
+                access: document.getElementById('swal-access').value  // Permission Level
             }
         }
+    });
+
+    if (formValues) {
+        Swal.fire({ title: 'Creating User...', didOpen: () => Swal.showLoading() });
+        
+        try {
+            const response = await fetch(MASTER_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'adminAddUser', data: formValues })
+            });
+            const result = await response.json();
+            
+            if(result.status === 'success') {
+                await loadUsers(); // Refresh table
+                Swal.fire('Success', result.message, 'success');
+            } else {
+                Swal.fire('Error', result.message, 'error');
+            }
+        } catch(e) {
+            Swal.fire('Error', 'Network request failed', 'error');
+        }
     }
+}
 
     // 4. DELETE: Remove user
     function deleteUser(username) {
