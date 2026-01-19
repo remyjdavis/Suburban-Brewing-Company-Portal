@@ -522,63 +522,87 @@
             </table>
           </div>
 
-          <div id="tab-social" class="card">
-            <div class="header-bar" style="border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:20px;">
-                <h3 style="margin:0;">Social Media Manager</h3>
+         <div id="tab-social" class="card">
+    <div class="header-bar" style="border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:20px;">
+        <h3 style="margin:0;">Social Media Manager</h3>
+    </div>
+
+    <div class="social-dashboard">
+        <div class="social-compose">
+            <label style="font-weight:600; font-size:14px;">Create New Post</label>
+            <textarea id="socialCaption" rows="4" placeholder="Write your caption here..." oninput="updateSocialPreview()"></textarea>
+            
+            <div style="background:#f8fafc; padding:15px; border:1px dashed #cbd5e1; border-radius:8px; text-align:center;">
+                <input type="file" id="socialImageInput" accept="image/*" onchange="handleSocialImage(this)" style="display:none;">
+                <button class="secondary" onclick="document.getElementById('socialImageInput').click()">📸 Upload Photo</button>
+                <div id="fileNameDisplay" style="font-size:12px; color:#64748b; margin-top:5px;"></div>
             </div>
 
-            <div class="social-dashboard">
-                <div class="social-compose">
-                    <label style="font-weight:600; font-size:14px;">Create New Post</label>
-                    <textarea id="socialCaption" rows="4" placeholder="Write your caption here..." oninput="updateSocialPreview()"></textarea>
-                    
-                    <div style="background:#f8fafc; padding:15px; border:1px dashed #cbd5e1; border-radius:8px; text-align:center;">
-                        <input type="file" id="socialImageInput" accept="image/*" onchange="handleSocialImage(this)" style="display:none;">
-                        <button class="secondary" onclick="document.getElementById('socialImageInput').click()">📸 Upload Photo</button>
-                        <div id="fileNameDisplay" style="font-size:12px; color:#64748b; margin-top:5px;"></div>
-                    </div>
+            <div style="margin-top:10px;">
+                <label style="font-weight:600; font-size:13px; display:block; margin-bottom:8px;">Post To:</label>
+                <div style="display:flex; gap:15px;">
+                    <label><input type="checkbox" checked> Facebook Page</label>
+                    <label><input type="checkbox" checked> Instagram Feed</label>
+                </div>
+            </div>
 
-                    <div style="margin-top:10px;">
-                        <label style="font-weight:600; font-size:13px; display:block; margin-bottom:8px;">Post To:</label>
-                        <div style="display:flex; gap:15px;">
-                            <label><input type="checkbox" checked> Facebook Page</label>
-                            <label><input type="checkbox" checked> Instagram Feed</label>
-                        </div>
-                    </div>
+            <button class="primary" style="margin-top:auto;" onclick="publishToFacebook()">🚀 Publish to Socials</button>
+        </div>
 
-                    <button class="primary" style="margin-top:auto;" onclick="publishToFacebook()">🚀 Publish to Socials</button>
+        <div class="social-preview-pane">
+            <div class="platform-tabs">
+                <div class="p-tab fb active" onclick="setPreviewMode('fb')">Facebook</div>
+                <div class="p-tab ig" onclick="setPreviewMode('ig')">Instagram</div>
+            </div>
+
+            <div id="mockPost" class="mock-post fb">
+                <div class="post-header">
+                    <img src="https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/logo.png" class="avatar">
+                    <div>
+                        <div class="user-info">Suburban Brewing Co.</div>
+                        <div class="timestamp" id="fbTimestamp">Just now · 🌎</div>
+                    </div>
                 </div>
 
-                <div class="social-preview-pane">
-                    <div class="platform-tabs">
-                        <div class="p-tab fb active" onclick="setPreviewMode('fb')">Facebook</div>
-                        <div class="p-tab ig" onclick="setPreviewMode('ig')">Instagram</div>
-                    </div>
+                <div class="post-caption fb-caption" id="previewCaptionFB"></div>
 
-                    <div id="mockPost" class="mock-post fb">
-                        <div class="post-header">
-                            <img src="https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/logo.png" class="avatar">
-                            <div>
-                                <div class="user-info">Suburban Brewing Co.</div>
-                                <div class="timestamp" id="fbTimestamp">Just now · 🌎</div>
-                            </div>
-                        </div>
+                <div class="preview-image-container">
+                    <span id="imgPlaceholder">No Image Selected</span>
+                    <img id="previewImgTag" src="">
+                </div>
 
-                        <div class="post-caption fb-caption" id="previewCaptionFB"></div>
-
-                        <div class="preview-image-container">
-                            <span id="imgPlaceholder">No Image Selected</span>
-                            <img id="previewImgTag" src="">
-                        </div>
-
-                        <div class="post-footer ig-footer" style="display:none;">
-                            <div class="post-caption">
-                                <strong>suburbanbrewing</strong> <span id="previewCaptionIG"></span>
-                            </div>
-                        </div>
+                <div class="post-footer ig-footer" style="display:none;">
+                    <div class="post-caption">
+                        <strong>suburbanbrewing</strong> <span id="previewCaptionIG"></span>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 40px; border-top: 2px solid #e2e8f0; padding-top: 30px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3>Recent Performance</h3>
+            <button class="secondary" onclick="loadSocialStats()" style="font-size:12px;">🔄 Refresh Stats</button>
+        </div>
+    
+        <table style="width:100%; font-size:13px;">
+            <thead>
+                <tr style="background:#f8fafc; color:#64748b;">
+                    <th style="padding:12px; border-radius:8px 0 0 8px;">Date</th>
+                    <th style="padding:12px;">Plat.</th>
+                    <th style="padding:12px;">Post</th>
+                    <th style="padding:12px; text-align:right;">Reach</th>
+                    <th style="padding:12px; text-align:right;">Engaged</th>
+                    <th style="padding:12px; border-radius:0 8px 8px 0; text-align:right;">Score</th>
+                </tr>
+            </thead>
+            <tbody id="social-stats-body">
+                <tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">Loading analytics...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
             <div class="inbox-container">
                 <h3 style="margin-top:0;">Unified Inbox (Comments)</h3>
@@ -731,6 +755,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 6. Init UI Helpers
     updateBanner();
     updateSocialPreview();
+  loadSocialStats();
 });
 // --- DATA LOADING ---
 async function initGeneratorData() {
@@ -1541,6 +1566,52 @@ async function sendRealReply(commentId) {
     } finally {
         btn.innerText = "Reply";
         btn.disabled = false;
+    }
+}
+  async function loadSocialStats() {
+    const tbody = document.getElementById('social-stats-body');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Fetching latest numbers...</td></tr>';
+
+    try {
+        const res = await fetch(`${API_URL}?action=getSocialAnalytics`);
+        const data = await res.json();
+        
+        tbody.innerHTML = "";
+        
+        if(!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No data found yet. (Wait for nightly sync or run manually)</td></tr>';
+            return;
+        }
+
+        data.forEach(row => {
+            // Calculate "Efficiency Score" (Engagement Rate)
+            let score = 0;
+            if(row.reach > 0) score = ((row.engagement / row.reach) * 100).toFixed(1);
+            
+            // Platform Icon
+            const icon = row.platform === 'Instagram' ? '📷' : 'f';
+            const color = row.platform === 'Instagram' ? '#E1306C' : '#1877F2';
+
+            // Date Format
+            const dateStr = new Date(row.date).toLocaleDateString([], {month:'short', day:'numeric'});
+
+            const html = `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:12px; font-weight:600; color:#475569;">${dateStr}</td>
+                    <td style="padding:12px; color:${color}; font-weight:bold; font-size:16px;">${icon}</td>
+                    <td style="padding:12px; color:#1e293b;">${row.caption}</td>
+                    <td style="padding:12px; text-align:right; font-weight:600;">${row.reach.toLocaleString()}</td>
+                    <td style="padding:12px; text-align:right;">${row.engagement.toLocaleString()}</td>
+                    <td style="padding:12px; text-align:right;">
+                        <span class="badge ${score > 5 ? 'badge-green' : 'badge-red'}">${score}%</span>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += html;
+        });
+
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error loading stats.</td></tr>';
     }
 }
 </script>
