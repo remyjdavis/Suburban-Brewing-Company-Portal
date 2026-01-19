@@ -388,6 +388,7 @@
              <div id="userDropdown" class="user-dropdown-menu">
                 <a href="#" onclick="openInbox(); toggleUserMenu(event);">
                     <span class="menu-icon">📩</span> Team Inbox
+                    <span id="dropdown-badge" style="display:none; background: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 12px; margin-left: auto;">0</span>
                 </a>
                 <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
                     <span class="menu-icon">⚙️</span> Update Info
@@ -954,16 +955,29 @@
     }
 
     function updateBadgeUI(count) {
-        const badge = document.getElementById('msg-badge');
-        if (!badge) return;
+        // 1. The Outer Badge (on the profile picture)
+        const outerBadge = document.getElementById('msg-badge');
+        // 2. The Inner Badge (inside the dropdown menu)
+        const innerBadge = document.getElementById('dropdown-badge');
 
         if (count > 0) {
-            badge.innerText = count > 9 ? '9+' : count; // Show "9+" if lots of messages
-            badge.style.display = 'flex'; // Show Red Circle
+            const text = count > 9 ? '9+' : count;
             
-            // Optional: Play a sound if the count INCREASED from last check (requires tracking old count)
+            // Update Outer Badge
+            if(outerBadge) {
+                outerBadge.innerText = text;
+                outerBadge.style.display = 'flex';
+            }
+
+            // Update Inner Badge
+            if(innerBadge) {
+                innerBadge.innerText = `${count} New`; // e.g. "3 New"
+                innerBadge.style.display = 'inline-block';
+            }
         } else {
-            badge.style.display = 'none'; // Hide Red Circle
+            // Hide both if 0
+            if(outerBadge) outerBadge.style.display = 'none';
+            if(innerBadge) innerBadge.style.display = 'none';
         }
     }
 </script>
