@@ -345,30 +345,33 @@
   </aside>
 
   <main class="main">
-    <div class="header">
+    
+    <div class="header" style="margin-bottom: 20px;">
         <div>
             <h1>Admin Console</h1>
             <p>System Configuration & Master Data</p>
         </div>
-       <div class="user-profile" onclick="toggleUserMenu(event)">
-     <div class="user-info-text">
-         <span class="user-name" id="display-username">User</span>
-         <span class="user-role" id="display-role">Admin</span>
-     </div>
-     <img src="" class="user-avatar" id="display-avatar" onerror="this.src='logo.png'">
-     
-     <div id="userDropdown" class="user-dropdown-menu">
-        <a href="#" onclick="openInbox(); toggleUserMenu(event);">
-            <span class="menu-icon">📩</span> Team Inbox
-        </a>
-        <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
-            <span class="menu-icon">⚙️</span> Update Info
-        </a>
-        <a href="#" onclick="handleLogout(); toggleUserMenu(event);" style="color: #ef4444;">
-            <span class="menu-icon">🚪</span> Logout
-        </a>
-     </div>
-     </div>
+        
+        <div class="user-profile" onclick="toggleUserMenu(event)">
+             <div class="user-info-text">
+                 <span class="user-name" id="display-username">User</span>
+                 <span class="user-role" id="display-role">Admin</span>
+             </div>
+             <img src="" class="user-avatar" id="display-avatar" onerror="this.src='logo.png'">
+             
+             <div id="userDropdown" class="user-dropdown-menu">
+                <a href="#" onclick="openInbox(); toggleUserMenu(event);">
+                    <span class="menu-icon">📩</span> Team Inbox
+                </a>
+                <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
+                    <span class="menu-icon">⚙️</span> Update Info
+                </a>
+                <a href="#" onclick="handleLogout(); toggleUserMenu(event);" style="color: #ef4444;">
+                    <span class="menu-icon">🚪</span> Logout
+                </a>
+             </div>
+        </div>
+    </div>
 
     <div class="admin-grid">
         
@@ -436,6 +439,28 @@
                 <table style="width:100%;">
                     <tbody id="audit-log-body">
                         <tr><td style="color:#64748b;">Loading logs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-header">
+                <h3>💬 Team Inbox</h3>
+                <button class="btn-primary" onclick="openComposeModal()">+ New Message</button>
+            </div>
+            <div style="max-height: 250px; overflow-y: auto;">
+                <table style="font-size:13px;">
+                    <thead>
+                        <tr style="color:#64748b; font-size:11px;">
+                            <th style="width:120px;">Date</th>
+                            <th style="width:150px;">From</th>
+                            <th>Subject</th>
+                            <th style="width:50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="msg-table-body">
+                        <tr><td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">No messages found.</td></tr>
                     </tbody>
                 </table>
             </div>
