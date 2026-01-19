@@ -1160,7 +1160,7 @@ async function saveProfile(data) {
       window.location.replace(repoPath + "login.html");
     }
   }
-   // --- 7. SYSTEM BANNER CHECK ---
+   // --- 7. SYSTEM BANNER CHECK (ROBUST VERSION) ---
     async function checkSystemBanner() {
         try {
             const res = await fetch(`${MASTER_API_URL}?action=getSystemConfig`);
@@ -1170,12 +1170,16 @@ async function saveProfile(data) {
                 const banner = document.getElementById('system-banner');
                 const textSpan = document.getElementById('system-banner-text');
                 
-                // Check if the admin toggled it to "TRUE"
-                if (json.config.announcement_active === "TRUE") {
+                // 🔴 THE FIX: Convert value to String first, then Uppercase it.
+                // This handles Boolean true, String "TRUE", and String "true"
+                const rawValue = json.config.announcement_active;
+                const isActive = String(rawValue).toUpperCase() === "TRUE";
+
+                if (isActive) {
                     textSpan.innerText = json.config.announcement_text;
-                    banner.style.display = 'block'; // Show it
+                    banner.style.display = 'block'; 
                 } else {
-                    banner.style.display = 'none'; // Hide it
+                    banner.style.display = 'none'; 
                 }
             }
         } catch(e) { console.error("Banner Sync Error", e); }
