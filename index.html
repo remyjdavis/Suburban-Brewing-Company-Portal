@@ -1025,11 +1025,12 @@ function setupWelcomeUI() {
         dateEl.innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     }
 
-    // 3. 🔒 ADMIN LINK LOGIC (Now inside the function)
-    if (userRole === "Admin" || userRole === "Owner") {
+    // 3. 🔒 ADMIN LINK LOGIC (Robust Version)
+    // Convert role to lowercase for comparison so capitalization doesn't matter
+    if (userRole && (userRole.toLowerCase() === "admin" || userRole.toLowerCase() === "owner")) {
         const adminLink = document.getElementById("admin-nav-link");
         if (adminLink) {
-            adminLink.style.display = "block";
+            adminLink.style.display = "block"; // This un-hides the link
         }
     }
 }
