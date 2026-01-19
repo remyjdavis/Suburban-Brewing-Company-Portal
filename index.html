@@ -553,6 +553,9 @@
   </aside>
 
   <main class="main">
+    <div id="system-banner" style="display:none; background:#fef3c7; color:#92400e; border-bottom:1px solid #fcd34d; padding:12px 20px; text-align:center; font-weight:700; font-size:14px; width:100%;">
+        📢 <span id="system-banner-text">Alert Message</span>
+    </div>
     <header class="header-bar">
       <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
         <div>
@@ -723,6 +726,7 @@
         syncLeadConversion();       // Zone 1 Leads
         refreshCellarTanks();       // Zone 3 Tanks
         refreshMLEngine();          // Zone 2 ML/Stats
+        checkSystemBanner(); // 🔴 Add this line!
     }
 
     // --- DRAWER & UI TOGGLES ---
@@ -1156,6 +1160,26 @@ async function saveProfile(data) {
       window.location.replace(repoPath + "login.html");
     }
   }
+   // --- 7. SYSTEM BANNER CHECK ---
+    async function checkSystemBanner() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getSystemConfig`);
+            const json = await res.json();
+            
+            if (json.status === 'success') {
+                const banner = document.getElementById('system-banner');
+                const textSpan = document.getElementById('system-banner-text');
+                
+                // Check if the admin toggled it to "TRUE"
+                if (json.config.announcement_active === "TRUE") {
+                    textSpan.innerText = json.config.announcement_text;
+                    banner.style.display = 'block'; // Show it
+                } else {
+                    banner.style.display = 'none'; // Hide it
+                }
+            }
+        } catch(e) { console.error("Banner Sync Error", e); }
+    }
 </script>
   
 </body>
