@@ -194,14 +194,15 @@
         <div style="overflow-x:auto;">
             <table>
                 <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th style="text-align:right;">Actions</th>
-                    </tr>
-                </thead>
+    <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>         
+        <th>Access Level</th>  
+        <th>Status</th>
+        <th style="text-align:right;">Actions</th>
+    </tr>
+</thead>
                 <tbody id="userTableBody">
                     <tr><td colspan="5" style="text-align:center; padding:20px;">Loading users...</td></tr>
                 </tbody>
@@ -267,21 +268,30 @@
         }
     }
 
-    // 2. RENDER: Draw the table
-    function renderTable() {
+    // --- RENDER: Draw the table ---
+    function renderTable(users) {
         const tbody = document.getElementById('userTableBody');
         tbody.innerHTML = "";
 
-        userDatabase.forEach((user) => {
-            // Determine badge color based on Access Level (Col G) or Role (Col F)
-            const isAdmin = (user.access === "Admin" || user.role === "Owner" || user.role === "Admin");
-            const roleClass = isAdmin ? 'role-admin' : 'role-staff';
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>';
+            return;
+        }
+
+        users.forEach((user) => {
+            // Determine badge color based on Access Level
+            // "Admin" gets red/danger color, "Staff" gets green/success color
+            const accessClass = (user.access === "Admin") ? 'role-admin' : 'role-staff';
             
             const row = `
                 <tr>
                     <td style="font-weight:600;">${user.name}</td>
                     <td>${user.email}</td>
-                    <td><span class="role-badge ${roleClass}">${user.role}</span></td>
+                    
+                    <td style="color:#64748b;">${user.role}</td>
+                    
+                    <td><span class="role-badge ${accessClass}">${user.access}</span></td>
+                    
                     <td><span style="color:var(--success);">●</span> ${user.status}</td>
                     <td style="text-align:right;">
                         <button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${user.username}')">🗑️</button>
