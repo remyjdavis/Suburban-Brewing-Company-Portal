@@ -993,15 +993,19 @@
         } catch (e) { console.error("Cellar Error", e); }
     }
 
-   // --- UPDATED USER UI SETUP ---
-function setupWelcomeUI() {
+   function setupWelcomeUI() {
     const userName = sessionStorage.getItem("user_name");
     const userRole = sessionStorage.getItem("user_role");
-const userPic = sessionStorage.getItem("user_pic") || "/Suburban-Brewing-Company-Portal/logo.png";
+    
+    // 🔴 FIX 1: Use a simple relative path. 
+    // Since this is the Command Center (index.html), the logo is right next to it.
+    const defaultLogo = "logo.png"; 
+    
+    // Use the saved picture, or fall back to the default logo immediately
+    const userPic = sessionStorage.getItem("user_pic") || defaultLogo;
     
     const welcomeTarget = document.getElementById('welcome-target');
     
-    // 1. Inject the User Profile HTML
     if (userName && welcomeTarget) {
         welcomeTarget.innerHTML = `
             <div class="user-profile-container">
@@ -1010,9 +1014,11 @@ const userPic = sessionStorage.getItem("user_pic") || "/Suburban-Brewing-Company
                         <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
                         <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userRole}</span>
                     </div>
-                    <img id="user-avatar" src="${userPic}" 
-     style="..." 
-     onerror="this.src='/Suburban-Brewing-Company-Portal/logo.png'">
+                    
+                    <img id="user-avatar" 
+                         src="${userPic}" 
+                         style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;" 
+                         onerror="this.onerror=null; this.src='${defaultLogo}'">
                 </div>
                 
                 <div id="user-dropdown" class="user-dropdown-menu">
@@ -1033,12 +1039,11 @@ const userPic = sessionStorage.getItem("user_pic") || "/Suburban-Brewing-Company
         dateEl.innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     }
 
-    // 3. 🔒 ADMIN LINK LOGIC (Robust Version)
-    // Convert role to lowercase for comparison so capitalization doesn't matter
+    // 3. 🔒 ADMIN LINK LOGIC
     if (userRole && (userRole.toLowerCase() === "admin" || userRole.toLowerCase() === "owner")) {
         const adminLink = document.getElementById("admin-nav-link");
         if (adminLink) {
-            adminLink.style.display = "block"; // This un-hides the link
+            adminLink.style.display = "block";
         }
     }
 }
