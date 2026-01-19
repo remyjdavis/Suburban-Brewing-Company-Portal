@@ -909,10 +909,10 @@
         });
     }
 
-    async function openCompose(replyTo = "", replySubject = "") {
-    // Build options and select the replyTo user if provided
+   async function openCompose(replyTo = "", replySubject = "") {
+    // Build options and pre-select recipient if replying
     let options = userDatabase.map(u => {
-        const selected = u.name === replyTo ? 'selected' : '';
+        const selected = (u.name === replyTo) ? 'selected' : '';
         return `<option value="${u.name}" ${selected}>${u.name}</option>`;
     }).join('');
     
@@ -939,23 +939,20 @@
         Swal.fire('Sent', '', 'success').then(() => openInbox());
     }
 }
-  // --- 6. NOTIFICATION CHECKER ---
-    async function checkUnreadCount() {
-        const user = sessionStorage.getItem("user_name");
-        if(!user) return;
+ // --- NOTIFICATION & MESSAGING ENGINE ---
 
-        try {
-            // Re-use the existing getMessages API
-            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}`);
-            const json = await res.json();
-            
-            if (json.status === 'success') {
-                // Count how many have status "Unread"
-                const unreadCount = json.messages.filter(m => m.status === "Unread").length;
-                updateBadgeUI(unreadCount);
-            }
-        } catch(e) { console.error("Badge Check Error", e); }
-    }
+async function checkUnreadCount() {
+    const user = sessionStorage.getItem("user_name");
+    if(!user) return;
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}`);
+        const json = await res.json();
+        if (json.status === 'success') {
+            const unreadCount = json.messages.filter(m => m.status === "Unread").length;
+            updateBadgeUI(unreadCount);
+        }
+    } catch(e) { console.error("Badge Check Error", e); }
+}
 
     function updateBadgeUI(count) {
     const outerBadge = document.getElementById('msg-badge');
@@ -963,14 +960,10 @@
 
     if (count > 0) {
         const text = count > 9 ? '9+' : count;
-        
-        // Profile picture badge (the red circle)
         if (outerBadge) {
             outerBadge.innerText = text;
             outerBadge.style.display = 'flex';
         }
-
-        // Inner dropdown badge (text next to Team Inbox)
         if (dropdownBadge) {
             dropdownBadge.innerText = count; 
             dropdownBadge.style.display = 'inline-block';
@@ -988,7 +981,7 @@
                 <div style="background:#f8fafc; padding:15px; border-radius:6px; border:1px solid #eee; font-size:14px; white-space: pre-wrap;">${body}</div>
                </div>`,
         showCancelButton: true,
-        showDenyButton: true, // Used for the Reply button
+        showDenyButton: true, // This becomes the Reply Button
         cancelButtonText: 'Close',
         denyButtonText: 'Reply',
         denyButtonColor: '#2563eb',
@@ -996,17 +989,17 @@
         confirmButtonColor: '#10b981'
     }).then((result) => {
         if (result.isConfirmed) {
-            // Mark as Read
+            // Mark Read Logic
             fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'markRead', id: id }) })
-                .then(() => {
-                    checkUnreadCount(); // Update badges immediately
-                    openInbox(); // Go back to inbox
-                });
+            .then(() => {
+                checkUnreadCount(); 
+                openInbox(); 
+            });
         } else if (result.isDenied) {
-            // Reply Logic
+            // 🔴 REPLY ACTION
             openCompose(from, `Re: ${subject.replace('Re: ', '')}`);
         } else {
-            openInbox(); // Go back to list on close
+            openInbox(); 
         }
     });
 }
