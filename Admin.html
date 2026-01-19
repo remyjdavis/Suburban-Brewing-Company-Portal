@@ -716,33 +716,34 @@
     // 🔴 CRITICAL FIX: Properly load User Title & Logo
     function setupUserProfile() {
         const name = sessionStorage.getItem("user_name") || "Admin";
-        const role = sessionStorage.getItem("user_role"); // This is the Security Level (Admin)
-        
-        // 1. Get the Job Title (Sales Rep). Fallback to Role if missing.
+        const role = sessionStorage.getItem("user_role");
         const displayTitle = sessionStorage.getItem("user_title") || role || "Staff";
-        
-        // 2. Robust Logo Path (Works on GitHub & Local)
         const defaultLogo = "logo.png"; 
         const userPic = sessionStorage.getItem("user_pic") || defaultLogo;
         
-        // Update the HTML elements
-        if(document.getElementById("display-username")) {
-            document.getElementById("display-username").innerText = name;
-        }
-        
-        if(document.getElementById("display-role")) {
-            // 🔴 This now shows "Sales Rep" instead of "Admin"
-            document.getElementById("display-role").innerText = displayTitle;
-        }
+        if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
+        if(document.getElementById("display-role")) document.getElementById("display-role").innerText = displayTitle;
         
         if(document.getElementById("display-avatar")) {
             const img = document.getElementById("display-avatar");
             img.src = userPic;
-            // Prevent broken image loop
-            img.onerror = function() { 
-                this.onerror = null; 
-                this.src = defaultLogo; 
-            };
+            img.onerror = function() { this.onerror = null; this.src = defaultLogo; };
+        }
+
+        // 🔴 UPDATE: Inject the Dropdown HTML dynamically to include Inbox
+        const dropdown = document.getElementById("userDropdown"); // Ensure your HTML id matches
+        if (dropdown) {
+            dropdown.innerHTML = `
+                <a href="#" onclick="openInbox(); toggleUserMenu(event);">
+                    <span class="menu-icon">📩</span> Team Inbox
+                </a>
+                <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
+                    <span class="menu-icon">⚙️</span> Update Info
+                </a>
+                <a href="#" onclick="handleLogout(); toggleUserMenu(event);" style="color: #ef4444;">
+                    <span class="menu-icon">🚪</span> Logout
+                </a>
+            `;
         }
     }
 
@@ -774,6 +775,98 @@
     function toggleGroup(contentId, headerEl) {
         document.getElementById(contentId).classList.toggle('collapsed');
         headerEl.classList.toggle('collapsed');
+    }
+  // --- MESSAGING UI ---
+
+    async function openInbox() {
+        const currentUser = sessionStorage.getItem("user_name");
+        Swal.fire({ title: 'Loading Inbox...', didOpen: () => Swal.showLoading() });
+
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(currentUser)}`);
+            const json = await res.json();
+            
+            // Build Message List HTML
+            let htmlContent = '<div style="text-align:center; color:#94a3b8; padding:20px;">No messages.</div>';
+            
+            if (json.status === 'success' && json.messages.length > 0) {
+                const rows = json.messages.map(msg => {
+                    const isUnread = (msg.status === "Unread");
+                    const bg = isUnread ? "#f0f9ff" : "#fff";
+                    const weight = isUnread ? "bold" : "normal";
+                    const dateStr = new Date(msg.date).toLocaleDateString();
+                    
+                    return `
+                    <div onclick="readMessage('${msg.id}', '${msg.from}', '${msg.subject}', '${msg.body}')" 
+                         style="background:${bg}; padding:10px; border-bottom:1px solid #eee; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-size:12px; color:#64748b;">${dateStr} • ${msg.from}</div>
+                            <div style="font-weight:${weight}; color:#1e293b; font-size:14px;">${msg.subject}</div>
+                        </div>
+                        <div style="font-size:18px;">👉</div>
+                    </div>`;
+                }).join('');
+                
+                htmlContent = `<div style="max-height:300px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px;">${rows}</div>`;
+            }
+
+            Swal.fire({
+                title: 'Team Inbox',
+                html: htmlContent + `<button onclick="openCompose()" class="swal2-confirm swal2-styled" style="background-color:#2563eb; margin-top:15px; width:100%;">+ Compose New</button>`,
+                showConfirmButton: false,
+                showCloseButton: true
+            });
+
+        } catch(e) { Swal.fire('Error', 'Could not load messages', 'error'); }
+    }
+
+    function readMessage(id, from, subject, body) {
+        Swal.fire({
+            title: subject,
+            html: `<div style="text-align:left;">
+                    <p style="color:#64748b; font-size:12px; margin-bottom:5px;">From: <b>${from}</b></p>
+                    <div style="background:#f8fafc; padding:15px; border-radius:6px; border:1px solid #eee; font-size:14px;">${body}</div>
+                   </div>`,
+            showCancelButton: true,
+            cancelButtonText: 'Back',
+            confirmButtonText: 'Mark Read',
+            confirmButtonColor: '#10b981'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'markRead', id: id }) });
+                openInbox(); // Reload inbox
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                openInbox(); // Go back to inbox
+            }
+        });
+    }
+
+    async function openCompose() {
+        // Create options from userDatabase (assuming loadUsers() has run)
+        let options = userDatabase.map(u => `<option value="${u.name}">${u.name}</option>`).join('');
+        
+        const { value: form } = await Swal.fire({
+            title: 'New Message',
+            html: `
+                <select id="msg-to" class="swal2-input">${options}</select>
+                <input id="msg-subject" class="swal2-input" placeholder="Subject">
+                <textarea id="msg-body" class="swal2-textarea" placeholder="Message..." style="height:100px;"></textarea>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Send',
+            preConfirm: () => ({
+                recipient: document.getElementById('msg-to').value,
+                subject: document.getElementById('msg-subject').value,
+                body: document.getElementById('msg-body').value,
+                sender: sessionStorage.getItem("user_name")
+            })
+        });
+
+        if (form) {
+            Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
+            await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sendMessage', data: form }) });
+            Swal.fire('Sent', '', 'success');
+        }
     }
 </script>
 </body>
