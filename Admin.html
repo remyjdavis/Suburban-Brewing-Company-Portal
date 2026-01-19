@@ -234,26 +234,49 @@
   </main>
 
 <script>
-    // --- MOCK DATABASE (Connect this to your Google Sheet later) ---
-    const MOCK_USERS = [
-        { name: "Remy Davis", email: "remy@suburban.com", role: "Admin", status: "Active" },
-        { name: "Head Brewer", email: "brewer@suburban.com", role: "Staff", status: "Active" },
-        { name: "Sales Rep 1", email: "sales1@suburban.com", role: "Staff", status: "Active" }
-    ];
+    // --- CONFIGURATION ---
+    const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
+    let userDatabase = []; // Holds the real data
 
     // --- INIT ---
     window.addEventListener('DOMContentLoaded', () => {
         setupUserProfile();
-        loadUsers();
+        loadUsers(); // Fetch real data immediately
     });
 
     // --- FUNCTIONS ---
-    function loadUsers() {
+
+    // 1. READ: Fetch users from Google Sheet
+    async function loadUsers() {
+        const tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Fetching live data...</td></tr>';
+
+        try {
+            const response = await fetch(`${MASTER_API_URL}?action=getUsers`);
+            const result = await response.json();
+
+            if (result.status === "success") {
+                userDatabase = result.users; // Store data
+                renderTable();
+            } else {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Error: ${result.message}</td></tr>`;
+            }
+        } catch (e) {
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Connection Failed</td></tr>';
+        }
+    }
+
+    // 2. RENDER: Draw the table
+    function renderTable() {
         const tbody = document.getElementById('userTableBody');
         tbody.innerHTML = "";
-        
-        MOCK_USERS.forEach((user, index) => {
-            const roleClass = user.role === 'Admin' ? 'role-admin' : 'role-staff';
+
+        userDatabase.forEach((user) => {
+            // Determine badge color based on Access Level (Col G) or Role (Col F)
+            const isAdmin = (user.access === "Admin" || user.role === "Owner" || user.role === "Admin");
+            const roleClass = isAdmin ? 'role-admin' : 'role-staff';
+            
             const row = `
                 <tr>
                     <td style="font-weight:600;">${user.name}</td>
@@ -261,8 +284,7 @@
                     <td><span class="role-badge ${roleClass}">${user.role}</span></td>
                     <td><span style="color:var(--success);">●</span> ${user.status}</td>
                     <td style="text-align:right;">
-                        <button class="btn-icon" onclick="editUser(${index})">✏️</button>
-                        <button class="btn-icon" style="color:#ef4444;" onclick="deleteUser(${index})">🗑️</button>
+                        <button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${user.username}')">🗑️</button>
                     </td>
                 </tr>
             `;
@@ -270,55 +292,93 @@
         });
     }
 
+    // 3. CREATE: Add new user via Modal
     async function addUserModal() {
         const { value: formValues } = await Swal.fire({
             title: 'Add New User',
+            background: '#ffffff',
             html: `
-                <input id="swal-name" class="swal2-input" placeholder="Full Name">
+                <input id="swal-name" class="swal2-input" placeholder="Full Name (e.g. John Doe)">
                 <input id="swal-email" class="swal2-input" placeholder="Email Address">
                 <select id="swal-role" class="swal2-input">
-                    <option value="Staff">Staff</option>
-                    <option value="Admin">Admin</option>
+                    <option value="Staff">Brewer / Staff</option>
+                    <option value="Sales Rep">Sales Rep</option>
+                    <option value="Admin">Administrator</option>
                 </select>
+                <div style="font-size:12px; color:#666; margin-top:10px;">Default Password will be: <b>SBC2026</b></div>
             `,
             focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonColor: '#2563eb',
             preConfirm: () => {
-                return [
-                    document.getElementById('swal-name').value,
-                    document.getElementById('swal-email').value,
-                    document.getElementById('swal-role').value
-                ]
+                return {
+                    name: document.getElementById('swal-name').value,
+                    email: document.getElementById('swal-email').value,
+                    role: document.getElementById('swal-role').value
+                }
             }
         });
 
         if (formValues) {
-            MOCK_USERS.push({ name: formValues[0], email: formValues[1], role: formValues[2], status: "Active" });
-            loadUsers();
-            Swal.fire('User Added', '', 'success');
+            Swal.fire({ title: 'Creating User...', didOpen: () => Swal.showLoading() });
+            
+            try {
+                const response = await fetch(MASTER_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'adminAddUser', data: formValues })
+                });
+                const result = await response.json();
+                
+                if(result.status === 'success') {
+                    await loadUsers(); // Refresh table
+                    Swal.fire('Success', result.message, 'success');
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch(e) {
+                Swal.fire('Error', 'Network request failed', 'error');
+            }
         }
     }
 
-    function deleteUser(index) {
+    // 4. DELETE: Remove user
+    function deleteUser(username) {
         Swal.fire({
-            title: 'Are you sure?',
-            text: "This will revoke their access immediately.",
+            title: 'Revoke Access?',
+            text: `Are you sure you want to delete ${username}? This cannot be undone.`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
-            confirmButtonText: 'Yes, delete user'
-        }).then((result) => {
+            confirmButtonText: 'Yes, Delete'
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                MOCK_USERS.splice(index, 1);
-                loadUsers();
-                Swal.fire('Deleted!', 'User has been removed.', 'success');
+                Swal.fire({ title: 'Deleting...', didOpen: () => Swal.showLoading() });
+                
+                try {
+                    const response = await fetch(MASTER_API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'adminDeleteUser', username: username })
+                    });
+                    const res = await response.json();
+                    
+                    if(res.status === 'success') {
+                        await loadUsers(); // Refresh
+                        Swal.fire('Deleted', 'User removed.', 'success');
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+                } catch(e) {
+                    Swal.fire('Error', 'Network failed', 'error');
+                }
             }
         });
     }
 
+    // --- SETTINGS (Local Only for now) ---
     function toggleMaintenance(el) {
         const knob = el.querySelector('div');
         const text = el.nextElementSibling;
-        const isActive = el.style.background === 'rgb(37, 99, 235)'; // check for blue color
+        const isActive = el.style.background === 'rgb(37, 99, 235)'; 
         
         if (isActive) {
             el.style.background = '#e2e8f0';
@@ -332,34 +392,27 @@
     }
 
     function saveSettings() {
-        Swal.fire({
-            title: 'Settings Saved',
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: false
-        });
+        Swal.fire({ title: 'Settings Saved', icon: 'success', timer: 1500, showConfirmButton: false });
     }
 
     function clearSystemCache() {
         localStorage.clear();
-        Swal.fire('Cache Cleared', 'Local storage has been reset.', 'info').then(() => location.reload());
+        sessionStorage.clear();
+        Swal.fire('Cache Cleared', 'System reset.', 'info').then(() => window.location.href="login.html");
     }
 
-    // --- STANDARD SIDEBAR & USER LOGIC ---
-    function toggleMobileMenu() {
-        document.querySelector('.sidebar').classList.toggle('open');
-    }
-    
+    // --- UI HELPERS ---
+    function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
     function toggleGroup(contentId, headerEl) {
-        const content = document.getElementById(contentId);
-        content.classList.toggle('collapsed');
+        document.getElementById(contentId).classList.toggle('collapsed');
         headerEl.classList.toggle('collapsed');
     }
-
+    
     function setupUserProfile() {
         const name = sessionStorage.getItem("user_name") || "Admin";
         const role = sessionStorage.getItem("user_role") || "Owner";
         const pic = sessionStorage.getItem("user_pic");
+        
         if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
         if(document.getElementById("display-role")) document.getElementById("display-role").innerText = role;
         if(document.getElementById("display-avatar") && pic) document.getElementById("display-avatar").src = pic;
@@ -371,102 +424,22 @@
         if(dropdown) dropdown.classList.toggle("show");
     }
 
-async function updateUserInfo() {
-    const { value: formValues } = await Swal.fire({
-        title: 'Edit Profile Settings',
-        background: '#1e293b',
-        color: '#ffffff',
-        padding: '2em',
-        width: '450px', // Fixed width for better consistency
-        showConfirmButton: true,
-        confirmButtonText: 'Save Changes',
-        confirmButtonColor: '#2563eb',
-        showCancelButton: true,
-        cancelButtonColor: '#475569',
-        html: `
-            <div style="text-align: left; font-family: 'Inter', sans-serif;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="position: relative; display: inline-block;">
-                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../logo.png'}" 
-                             style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; background: #334155;">
-                        <button type="button" onclick="document.getElementById('file-input').click()" 
-                                style="position: absolute; bottom: 0; right: 0; background: #2563eb; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                            📷
-                        </button>
-                    </div>
-                    <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Email Address</label>
-                    <input id="p-email" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" value="${sessionStorage.getItem('user_email') || ''}">
-                </div>
-
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Phone Number</label>
-                    <input id="p-phone" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" value="${sessionStorage.getItem('user_phone') || ''}">
-                </div>
-
-                <div style="border-top: 1px solid #334155; padding-top: 20px;">
-                    <label style="display: block; font-size: 10px; color: #f87171; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Security / Update Password</label>
-                    <input id="p-pass" type="password" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" placeholder="Enter new password (optional)">
-                    <p style="color: #64748b; font-size: 11px; margin-top: 8px; font-style: italic;">Leave blank to keep your current password.</p>
-                </div>
-            </div>
-        `,
-        preConfirm: () => {
-            return {
-                email: document.getElementById('p-email').value,
-                phone: document.getElementById('p-phone').value,
-                pass: document.getElementById('p-pass').value,
-                pic: document.getElementById('preview-pic').src
-            }
-        }
-    });
-
-    if (formValues) saveProfile(formValues);
-}
-function handleFileSelect(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => { document.getElementById('preview-pic').src = e.target.result; };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-async function saveProfile(data) {
-    Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() });
-    const username = sessionStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
-    
-    try {
-        const response = await fetch(MASTER_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ 
-                action: 'updateProfile', 
-                user: username, 
-                ...data // 🔴 This now includes email, phone, pic, AND pass
-            })
-        });
-        const result = await response.json();
-        
-        if (result.status === "success") {
-            // Update session storage for non-sensitive info
-            sessionStorage.setItem("user_pic", data.pic);
-            sessionStorage.setItem("user_email", data.email);
-            sessionStorage.setItem("user_phone", data.phone);
-            
-            setupUserProfile();
-            Swal.fire('Saved!', 'Profile and Security settings updated.', 'success');
-        } else {
-            throw new Error(result.message || "Update failed");
-        }
-    } catch (e) {
-        Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
-    }
-}
     function handleLogout() {
         sessionStorage.clear();
         window.location.replace("index.html");
+    }
+    
+    // Close dropdown on click outside
+    window.onclick = function(event) {
+        if (!event.target.matches('.user-profile') && !event.target.closest('.user-profile')) {
+            var dropdowns = document.getElementsByClassName("user-dropdown-menu");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
     }
 </script>
 </body>
