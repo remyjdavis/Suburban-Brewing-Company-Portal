@@ -995,13 +995,12 @@
 
    function setupWelcomeUI() {
     const userName = sessionStorage.getItem("user_name");
-    const userRole = sessionStorage.getItem("user_role");
+    const userRole = sessionStorage.getItem("user_role"); // This is "Admin" (Permissions)
     
-    // 🔴 FIX 1: Use a simple relative path. 
-    // Since this is the Command Center (index.html), the logo is right next to it.
+    // 🔴 NEW: Get the Job Title (Sales Rep). Fallback to Role if missing.
+    const userTitle = sessionStorage.getItem("user_title") || userRole; 
+
     const defaultLogo = "logo.png"; 
-    
-    // Use the saved picture, or fall back to the default logo immediately
     const userPic = sessionStorage.getItem("user_pic") || defaultLogo;
     
     const welcomeTarget = document.getElementById('welcome-target');
@@ -1012,9 +1011,10 @@
                 <div style="display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="toggleUserMenu(event)">
                     <div style="text-align: right;">
                         <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
-                        <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userRole}</span>
-                    </div>
+                        
+                        <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userTitle}</span>
                     
+                    </div>
                     <img id="user-avatar" 
                          src="${userPic}" 
                          style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;" 
