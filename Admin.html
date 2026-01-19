@@ -909,33 +909,36 @@
         });
     }
 
-    async function openCompose() {
-        // Create options from userDatabase (assuming loadUsers() has run)
-        let options = userDatabase.map(u => `<option value="${u.name}">${u.name}</option>`).join('');
-        
-        const { value: form } = await Swal.fire({
-            title: 'New Message',
-            html: `
-                <select id="msg-to" class="swal2-input">${options}</select>
-                <input id="msg-subject" class="swal2-input" placeholder="Subject">
-                <textarea id="msg-body" class="swal2-textarea" placeholder="Message..." style="height:100px;"></textarea>
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'Send',
-            preConfirm: () => ({
-                recipient: document.getElementById('msg-to').value,
-                subject: document.getElementById('msg-subject').value,
-                body: document.getElementById('msg-body').value,
-                sender: sessionStorage.getItem("user_name")
-            })
-        });
+    async function openCompose(replyTo = "", replySubject = "") {
+    // Build options and select the replyTo user if provided
+    let options = userDatabase.map(u => {
+        const selected = u.name === replyTo ? 'selected' : '';
+        return `<option value="${u.name}" ${selected}>${u.name}</option>`;
+    }).join('');
+    
+    const { value: form } = await Swal.fire({
+        title: 'New Message',
+        html: `
+            <select id="msg-to" class="swal2-input">${options}</select>
+            <input id="msg-subject" class="swal2-input" placeholder="Subject" value="${replySubject}">
+            <textarea id="msg-body" class="swal2-textarea" placeholder="Message..." style="height:100px;"></textarea>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Send',
+        preConfirm: () => ({
+            recipient: document.getElementById('msg-to').value,
+            subject: document.getElementById('msg-subject').value,
+            body: document.getElementById('msg-body').value,
+            sender: sessionStorage.getItem("user_name")
+        })
+    });
 
-        if (form) {
-            Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
-            await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sendMessage', data: form }) });
-            Swal.fire('Sent', '', 'success');
-        }
+    if (form) {
+        Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
+        await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sendMessage', data: form }) });
+        Swal.fire('Sent', '', 'success').then(() => openInbox());
     }
+}
   // --- 6. NOTIFICATION CHECKER ---
     async function checkUnreadCount() {
         const user = sessionStorage.getItem("user_name");
@@ -955,31 +958,58 @@
     }
 
     function updateBadgeUI(count) {
-        // 1. The Outer Badge (on the profile picture)
-        const outerBadge = document.getElementById('msg-badge');
-        // 2. The Inner Badge (inside the dropdown menu)
-        const innerBadge = document.getElementById('dropdown-badge');
+    const outerBadge = document.getElementById('msg-badge');
+    const dropdownBadge = document.getElementById('dropdown-badge');
 
-        if (count > 0) {
-            const text = count > 9 ? '9+' : count;
-            
-            // Update Outer Badge
-            if(outerBadge) {
-                outerBadge.innerText = text;
-                outerBadge.style.display = 'flex';
-            }
-
-            // Update Inner Badge
-            if(innerBadge) {
-                innerBadge.innerText = `${count} New`; // e.g. "3 New"
-                innerBadge.style.display = 'inline-block';
-            }
-        } else {
-            // Hide both if 0
-            if(outerBadge) outerBadge.style.display = 'none';
-            if(innerBadge) innerBadge.style.display = 'none';
+    if (count > 0) {
+        const text = count > 9 ? '9+' : count;
+        
+        // Profile picture badge (the red circle)
+        if (outerBadge) {
+            outerBadge.innerText = text;
+            outerBadge.style.display = 'flex';
         }
+
+        // Inner dropdown badge (text next to Team Inbox)
+        if (dropdownBadge) {
+            dropdownBadge.innerText = count; 
+            dropdownBadge.style.display = 'inline-block';
+        }
+    } else {
+        if (outerBadge) outerBadge.style.display = 'none';
+        if (dropdownBadge) dropdownBadge.style.display = 'none';
     }
+}
+  function readMessage(id, from, subject, body) {
+    Swal.fire({
+        title: subject,
+        html: `<div style="text-align:left;">
+                <p style="color:#64748b; font-size:12px; margin-bottom:5px;">From: <b>${from}</b></p>
+                <div style="background:#f8fafc; padding:15px; border-radius:6px; border:1px solid #eee; font-size:14px; white-space: pre-wrap;">${body}</div>
+               </div>`,
+        showCancelButton: true,
+        showDenyButton: true, // Used for the Reply button
+        cancelButtonText: 'Close',
+        denyButtonText: 'Reply',
+        denyButtonColor: '#2563eb',
+        confirmButtonText: 'Mark Read',
+        confirmButtonColor: '#10b981'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Mark as Read
+            fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'markRead', id: id }) })
+                .then(() => {
+                    checkUnreadCount(); // Update badges immediately
+                    openInbox(); // Go back to inbox
+                });
+        } else if (result.isDenied) {
+            // Reply Logic
+            openCompose(from, `Re: ${subject.replace('Re: ', '')}`);
+        } else {
+            openInbox(); // Go back to list on close
+        }
+    });
+}
 </script>
 </body>
 </html>
