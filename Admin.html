@@ -250,7 +250,7 @@
     // 1. READ: Fetch users from Google Sheet
     async function loadUsers() {
         const tbody = document.getElementById('userTableBody');
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Fetching live data...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Fetching live data...</td></tr>';
 
         try {
             const response = await fetch(`${MASTER_API_URL}?action=getUsers`);
@@ -258,13 +258,16 @@
 
             if (result.status === "success") {
                 userDatabase = result.users; // Store data
-                renderTable();
+                
+                // 🔴 FIX IS HERE: Pass the data into the function!
+                renderTable(userDatabase); 
+                
             } else {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Error: ${result.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Error: ${result.message}</td></tr>`;
             }
         } catch (e) {
             console.error(e);
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Connection Failed</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Connection Failed</td></tr>';
         }
     }
 
@@ -273,25 +276,21 @@
         const tbody = document.getElementById('userTableBody');
         tbody.innerHTML = "";
 
-        if (users.length === 0) {
+        // Safety check: if users is null/undefined, make it an empty array to prevent crashing
+        if (!users || users.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>';
             return;
         }
 
         users.forEach((user) => {
-            // Determine badge color based on Access Level
-            // "Admin" gets red/danger color, "Staff" gets green/success color
             const accessClass = (user.access === "Admin") ? 'role-admin' : 'role-staff';
             
             const row = `
                 <tr>
                     <td style="font-weight:600;">${user.name}</td>
                     <td>${user.email}</td>
-                    
                     <td style="color:#64748b;">${user.role}</td>
-                    
                     <td><span class="role-badge ${accessClass}">${user.access}</span></td>
-                    
                     <td><span style="color:var(--success);">●</span> ${user.status}</td>
                     <td style="text-align:right;">
                         <button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${user.username}')">🗑️</button>
