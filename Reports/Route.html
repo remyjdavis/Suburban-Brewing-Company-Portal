@@ -358,7 +358,7 @@
 <body>
 
   <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
-  <<div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
   
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
@@ -418,25 +418,29 @@
   </aside>
 
   <div class="main-content">
-    <div class="header-flex">
-      <h1>Daily Route</h1>
-      <input type="date" id="routeDate" class="date-picker" onchange="fetchRoute()">
-    </div>
-<div class="user-profile" onclick="toggleUserMenu(event)">
-      <div class="user-info-text">
-        <span class="user-name" id="display-username">Loading...</span>
-        <span class="user-role" id="display-role">...</span>
-      </div>
-      <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
-
-      <div id="userDropdown" class="user-dropdown-menu">
-        <a href="#" onclick="updateUserInfo()">⚙️ Update Info</a>
-        <div style="border-top: 1px solid #eee;"></div>
-        <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
-      </div>
-    </div>
-  </div>
     
+    <div class="header-flex">
+      
+      <div style="display: flex; align-items: center; gap: 20px;">
+        <h1 style="margin:0;">Daily Route</h1>
+        <input type="date" id="routeDate" class="date-picker" onchange="fetchRoute()">
+      </div>
+
+      <div class="user-profile" onclick="toggleUserMenu(event)">
+        <div class="user-info-text">
+          <span class="user-name" id="display-username">Loading...</span>
+          <span class="user-role" id="display-role">...</span>
+        </div>
+        <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
+
+        <div id="userDropdown" class="user-dropdown-menu">
+          <a href="#" onclick="updateUserInfo()">⚙️ Update Info</a>
+          <div style="border-top: 1px solid #eee;"></div>
+          <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
+        </div>
+      </div>
+
+    </div>
     <div id="loading" style="text-align: center; padding: 50px; color: var(--text-dim);">Optimizing stops...</div>
     <div id="routeList"></div>
 
