@@ -377,24 +377,26 @@
         </div>
         
         <div class="user-profile" onclick="toggleUserMenu(event)">
-             <div class="user-info-text">
-                 <span class="user-name" id="display-username">User</span>
-                 <span class="user-role" id="display-role">Admin</span>
-             </div>
-             <img src="" class="user-avatar" id="display-avatar" onerror="this.src='logo.png'">
-             
-             <div id="userDropdown" class="user-dropdown-menu">
-                <a href="#" onclick="openInbox(); toggleUserMenu(event);">
-                    <span class="menu-icon">📩</span> Team Inbox
-                </a>
-                <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
-                    <span class="menu-icon">⚙️</span> Update Info
-                </a>
-                <a href="#" onclick="handleLogout(); toggleUserMenu(event);" style="color: #ef4444;">
-                    <span class="menu-icon">🚪</span> Logout
-                </a>
-             </div>
-        </div>
+     <div id="msg-badge" class="notification-badge">0</div>
+
+     <div class="user-info-text">
+         <span class="user-name" id="display-username">User</span>
+         <span class="user-role" id="display-role">Admin</span>
+     </div>
+     <img src="" class="user-avatar" id="display-avatar" onerror="this.src='logo.png'">
+     
+     <div id="userDropdown" class="user-dropdown-menu">
+        <a href="#" onclick="openInbox(); toggleUserMenu(event);">
+            <span class="menu-icon">📩</span> Team Inbox
+        </a>
+        <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
+            <span class="menu-icon">⚙️</span> Update Info
+        </a>
+        <a href="#" onclick="handleLogout(); toggleUserMenu(event);" style="color: #ef4444;">
+            <span class="menu-icon">🚪</span> Logout
+        </a>
+     </div>
+</div>
     </div>
 
     <div class="admin-grid">
@@ -505,6 +507,11 @@
         loadSystemConfig();
         loadMasterData();
         loadAuditLogs();
+   // 🔴 NEW: Run Message Check
+        checkUnreadCount();
+        
+        // 🔴 NEW: Check for new messages every 60 seconds
+        setInterval(checkUnreadCount, 60000); 
     });
 
     // =========================================================
@@ -926,6 +933,37 @@
             Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
             await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sendMessage', data: form }) });
             Swal.fire('Sent', '', 'success');
+        }
+    }
+  // --- 6. NOTIFICATION CHECKER ---
+    async function checkUnreadCount() {
+        const user = sessionStorage.getItem("user_name");
+        if(!user) return;
+
+        try {
+            // Re-use the existing getMessages API
+            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}`);
+            const json = await res.json();
+            
+            if (json.status === 'success') {
+                // Count how many have status "Unread"
+                const unreadCount = json.messages.filter(m => m.status === "Unread").length;
+                updateBadgeUI(unreadCount);
+            }
+        } catch(e) { console.error("Badge Check Error", e); }
+    }
+
+    function updateBadgeUI(count) {
+        const badge = document.getElementById('msg-badge');
+        if (!badge) return;
+
+        if (count > 0) {
+            badge.innerText = count > 9 ? '9+' : count; // Show "9+" if lots of messages
+            badge.style.display = 'flex'; // Show Red Circle
+            
+            // Optional: Play a sound if the count INCREASED from last check (requires tracking old count)
+        } else {
+            badge.style.display = 'none'; // Hide Red Circle
         }
     }
 </script>
