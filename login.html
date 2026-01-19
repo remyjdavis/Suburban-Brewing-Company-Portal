@@ -267,7 +267,7 @@ async function checkLogin() {
         const result = await response.json();
 
         if (result.status === "success") {
-            // 1. CHECK AGREEMENT (If not signed, force them to sign now)
+            // 1. CHECK AGREEMENT
             if (!result.profile.agreementSigned) {
                 const { isConfirmed } = await Swal.fire({
                     title: 'User Access Agreement',
@@ -293,44 +293,38 @@ async function checkLogin() {
                 });
 
                 if (isConfirmed) {
-                    // Send signature to backend
                     await fetch(`${MASTER_API_URL}?action=signAgreement&user=${encodeURIComponent(user)}`);
                 }
             }
 
-            // 2. SAVE SESSION DATA (Runs for EVERYONE now)
+            // 2. SAVE SESSION DATA
             sessionStorage.setItem("sbc_auth", "true");
-            
-            // --- The Critical Fixes ---
-            sessionStorage.setItem("user_login_id", user); // This was missing!
+            sessionStorage.setItem("user_login_id", user);
             sessionStorage.setItem("user_email", result.profile.email || "");
             sessionStorage.setItem("user_phone", result.profile.phone || "");
-           sessionStorage.setItem("user_pic", result.profile.pic || "");
-// --------------------------
+            sessionStorage.setItem("user_pic", result.profile.pic || "");
+            sessionStorage.setItem("user_name", result.profile.name);
 
-sessionStorage.setItem("user_name", result.profile.name);
+            // 🔴 START OF FIX 🔴
+            
+            // 1. Save the Permission Level (for the Admin Link)
+            // Prioritize Access Level (Col G), fallback to Role (Col F)
+            const incomingRole = result.profile.access || result.profile.role || "Staff";
+            const cleanRole = incomingRole.charAt(0).toUpperCase() + incomingRole.slice(1).toLowerCase();
+            sessionStorage.setItem("user_role", cleanRole); 
 
-// 🔴 START OF FIX 🔴
-// 1. Log the full result to the Console (Right Click > Inspect > Console) to see what the sheet sent
-console.log("FULL API RESPONSE:", result);
+            // 2. Save the Display Title (for under your name)
+            // Use the Role (Col F) specifically for the display text
+            sessionStorage.setItem("user_title", result.profile.role); 
 
-// 🔴 THE FIX: Look at 'access' (Col G) first. If empty, fallback to 'role' (Col F).
-const incomingRole = result.profile.access || result.profile.role || "Staff";
+            // 🔴 END OF FIX 🔴
 
-// Capitalize it to be safe (e.g. "admin" -> "Admin")
-const cleanRole = incomingRole.charAt(0).toUpperCase() + incomingRole.slice(1).toLowerCase();
-
-console.log("SAVING ROLE AS:", cleanRole); 
-sessionStorage.setItem("user_role", cleanRole);
-// 🔴 END OF FIX 🔴
-
-sessionStorage.setItem("user_access", result.profile.access);
+            sessionStorage.setItem("user_access", result.profile.access);
 
             // 3. REDIRECT
             window.location.replace("index.html"); 
 
         } else {
-            // Login Failed
             errorMsg.innerText = result.message || "Invalid Credentials";
             errorMsg.style.display = 'block';
             passInput.value = ""; 
