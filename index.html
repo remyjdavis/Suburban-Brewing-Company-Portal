@@ -985,51 +985,54 @@
     }
 
    // --- UPDATED USER UI SETUP ---
-    function setupWelcomeUI() {
-        const userName = sessionStorage.getItem("user_name");
-        const userRole = sessionStorage.getItem("user_role");
-        const userPic = sessionStorage.getItem("user_pic") || "./Online Ordering/logo.png";
-        
-        const welcomeTarget = document.getElementById('welcome-target');
-        
-        if (userName && welcomeTarget) {
-            welcomeTarget.innerHTML = `
-                <div class="user-profile-container">
-                    <div style="display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="toggleUserMenu(event)">
-                        <div style="text-align: right;">
-                            <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
-                            <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userRole}</span>
-                        </div>
-                        <img id="user-avatar" src="${userPic}" 
-                             style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;" 
-                             onerror="this.src='./Online Ordering/logo.png'">
+function setupWelcomeUI() {
+    const userName = sessionStorage.getItem("user_name");
+    const userRole = sessionStorage.getItem("user_role");
+    // Ensure the path to the logo is correct for your folder structure
+    const userPic = sessionStorage.getItem("user_pic") || "../logo.png"; 
+    
+    const welcomeTarget = document.getElementById('welcome-target');
+    
+    // 1. Inject the User Profile HTML
+    if (userName && welcomeTarget) {
+        welcomeTarget.innerHTML = `
+            <div class="user-profile-container">
+                <div style="display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="toggleUserMenu(event)">
+                    <div style="text-align: right;">
+                        <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
+                        <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userRole}</span>
                     </div>
-                    
-                    <div id="user-dropdown" class="user-dropdown-menu">
-                        <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
-                            <span class="menu-icon">⚙️</span> Update Info
-                        </a>
-                        <a href="#" onclick="handleLogout(); toggleUserMenu(event);" style="color: #ef4444;">
-                            <span class="menu-icon">🚪</span> Logout
-                        </a>
-                    </div>
+                    <img id="user-avatar" src="${userPic}" 
+                         style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;" 
+                         onerror="this.src='../logo.png'">
                 </div>
-            `;
-        }
-        
-        const dateEl = document.getElementById('current-date');
-        if (dateEl) {
-            dateEl.innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                
+                <div id="user-dropdown" class="user-dropdown-menu">
+                    <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
+                        <span class="menu-icon">⚙️</span> Update Info
+                    </a>
+                    <a href="#" onclick="handleLogout(); toggleUserMenu(event);" style="color: #ef4444;">
+                        <span class="menu-icon">🚪</span> Logout
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 2. Set the Date
+    const dateEl = document.getElementById('current-date');
+    if (dateEl) {
+        dateEl.innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    // 3. 🔒 ADMIN LINK LOGIC (Now inside the function)
+    if (userRole === "Admin" || userRole === "Owner") {
+        const adminLink = document.getElementById("admin-nav-link");
+        if (adminLink) {
+            adminLink.style.display = "block";
         }
     }
-// C. 🔒 ADMIN LINK LOGIC (The Missing Piece)
-        if (userRole === "Admin" || userRole === "Owner") {
-            const adminLink = document.getElementById("admin-nav-link");
-            if (adminLink) {
-                adminLink.style.display = "block";
-            }
-        }
-    }
+}
    
     async function openProfileModal() {
         const { value: formValues } = await Swal.fire({
