@@ -41,16 +41,56 @@
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: var(--text-main); font-family: 'Inter', sans-serif; display: flex; min-height: 100vh; }
 
-    /* --- SIDEBAR (Copied from your other pages) --- */
-    .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; transition: all 0.3s ease; }
-    .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
-    .nav-section-header { font-size: 11px; text-transform: uppercase; color: #94a3b8; margin: 18px 24px 8px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-    .nav-link { display: flex; align-items: center; padding: 10px 24px; color: #64748b; text-decoration: none; font-size: 14px; transition: 0.2s; border-left: 4px solid transparent; }
-    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
-    .nav-link.active { border-left-color: var(--accent); color: #fff; font-weight: 600; }
-    .collapsible-content { max-height: 2000px; overflow: hidden; transition: 0.3s; }
-    .collapsible-content.collapsed { max-height: 0; }
+    /* =========================================
+       SIDEBAR STYLES (COPIED FROM INDEX.HTML)
+       ========================================= */
+    .sidebar { 
+      width: 260px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar h2 { 
+      margin: 0 24px 32px; 
+      font-size: 20px; 
+      font-weight: 800; 
+      color: #fff; 
+      white-space: nowrap; /* Forces one line */
+    }
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-title, .nav-section-header {
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #94a3b8; 
+      margin: 18px 24px 8px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      user-select: none;
+    }
+    .nav-section-title:hover { color: #fff; }
 
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
+
+    .collapsible-content {
+      max-height: 2000px; 
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+      opacity: 1;
+    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+    
     /* --- MAIN LAYOUT --- */
     .main { flex: 1; margin-left: 260px; padding: 40px; transition: all 0.3s ease; width: 100%; display: flex; flex-direction: column; min-height: 100vh; }
     
