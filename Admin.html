@@ -271,113 +271,435 @@
         });
     }, { once: true });
 
-    // =========================================================
-    // 2. DATA FUNCTIONS
+    / =========================================================
+    // 1. NOTIFICATION & BADGE ENGINE
     // =========================================================
     async function checkUnreadCount() {
         const user = sessionStorage.getItem("user_name");
-        if(!user || !navigator.onLine) return; 
+        if(!user) return;
+
         try {
-            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}&ts=${Date.now()}`, { redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" } });
+            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}`);
             const json = await res.json();
-            if (json.status === 'success') updateBadgeUI(json.messages.filter(m => m.status === "Unread").length);
-        } catch(e) {}
+            
+            if (json.status === 'success') {
+                const unreadCount = json.messages.filter(m => m.status === "Unread").length;
+                updateBadgeUI(unreadCount);
+            }
+        } catch(e) { console.error("Badge Check Error", e); }
     }
 
     function updateBadgeUI(count) {
-        const outer = document.getElementById('msg-badge');
-        const inner = document.getElementById('dropdown-badge');
+        const outerBadge = document.getElementById('msg-badge');
+        const dropdownBadge = document.getElementById('dropdown-badge');
+
         if (count > 0) {
-            if(outer) { outer.innerText = count > 9 ? '9+' : count; outer.style.display = 'flex'; }
-            if(inner) { inner.innerText = count; inner.style.display = 'inline-block'; }
+            const text = count > 9 ? '9+' : count;
+            
+            // Outer Red Circle on Profile Pic
+            if(outerBadge) {
+                outerBadge.innerText = text;
+                outerBadge.style.display = 'flex';
+            }
+
+            // Inner Number next to Team Inbox
+            if(dropdownBadge) {
+                dropdownBadge.innerText = count;
+                dropdownBadge.style.display = 'inline-block';
+            }
         } else {
-            if(outer) outer.style.display = 'none';
-            if(inner) inner.style.display = 'none';
+            if(outerBadge) outerBadge.style.display = 'none';
+            if(dropdownBadge) dropdownBadge.style.display = 'none';
         }
     }
 
     // =========================================================
-    // 3. MESSAGING
+    // 2. MESSAGING SYSTEM (INBOX, READ, REPLY, COMPOSE)
     // =========================================================
     async function openInbox() {
-        const user = sessionStorage.getItem("user_name");
-        Swal.fire({ title: 'Loading...', didOpen: () => Swal.showLoading() });
+        const currentUser = sessionStorage.getItem("user_name");
+        Swal.fire({ title: 'Loading Inbox...', didOpen: () => Swal.showLoading() });
+
         try {
-            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}&ts=${Date.now()}`, { redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" } });
+            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(currentUser)}`);
             const json = await res.json();
-            let html = '<div style="text-align:center; padding:20px; color:#94a3b8;">No messages.</div>';
+            
+            let htmlContent = '<div style="text-align:center; color:#94a3b8; padding:20px;">No messages found.</div>';
             
             if (json.status === 'success' && json.messages.length > 0) {
-                const rows = json.messages.map(m => {
-                    const isUnread = m.status === "Unread";
-                    return `<div onclick="readMessage('${m.id}', '${m.from}', '${m.subject}', '${m.body}')" style="background:${isUnread?'#f0f9ff':'#fff'}; padding:12px; border-bottom:1px solid #eee; cursor:pointer; text-align:left; display:flex; justify-content:space-between;">
-                        <div><div style="font-size:11px; color:#64748b;">${new Date(m.date).toLocaleDateString()} • ${m.from}</div>
-                        <div style="font-weight:${isUnread?'bold':'normal'}; font-size:14px;">${m.subject} ${isUnread?'<span style="background:#2563eb; color:white; font-size:8px; padding:2px 5px; border-radius:4px;">NEW</span>':''}</div></div>
-                        <div>👉</div></div>`;
+                const rows = json.messages.map(msg => {
+                    const isUnread = (msg.status === "Unread");
+                    const bg = isUnread ? "#f0f9ff" : "#fff";
+                    const weight = isUnread ? "bold" : "normal";
+                    const dateStr = new Date(msg.date).toLocaleDateString();
+                    
+                    // NEW tag for unread items
+                    const unreadLabel = isUnread ? `<span style="background: #2563eb; color: white; font-size: 8px; padding: 2px 5px; border-radius: 4px; margin-left: 8px; vertical-align: middle; font-weight: 800;">NEW</span>` : "";
+                    
+                    return `
+                    <div onclick="readMessage('${msg.id}', '${msg.from}', '${msg.subject}', '${msg.body}')" 
+                         style="background:${bg}; padding:12px; border-bottom:1px solid #eee; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+                        <div style="flex: 1;">
+                            <div style="font-size:11px; color:#64748b;">${dateStr} • From: ${msg.from}</div>
+                            <div style="font-weight:${weight}; color:#1e293b; font-size:14px; margin-top: 2px;">
+                                ${msg.subject} ${unreadLabel}
+                            </div>
+                        </div>
+                        <div style="color: #cbd5e1; font-size: 16px; padding-left: 10px;">👉</div>
+                    </div>`;
                 }).join('');
-                html = `<div style="max-height:400px; overflow-y:auto;">${rows}</div>`;
+                
+                htmlContent = `<div style="max-height:400px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">${rows}</div>`;
             }
-            Swal.fire({ title: 'Inbox', html: html + `<button onclick="openCompose()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:15px;">+ New Message</button>`, showConfirmButton: false, showCloseButton: true });
-        } catch(e) { Swal.fire('Error', 'Failed to load inbox.', 'error'); }
+
+            Swal.fire({
+                title: 'Team Inbox',
+                width: '500px',
+                html: htmlContent + `<button onclick="openCompose()" class="swal2-confirm swal2-styled" style="background-color:#2563eb; margin-top:15px; width:100%; border-radius: 6px; font-weight: 700;">+ Compose New Message</button>`,
+                showConfirmButton: false,
+                showCloseButton: true
+            });
+
+        } catch(e) { 
+            console.error("Inbox Load Error", e);
+            Swal.fire('Error', 'Could not load messages.', 'error'); 
+        }
     }
 
     function readMessage(id, from, subject, body) {
-        Swal.fire({ title: subject, html: `<div style="text-align:left; font-size:14px;"><p style="color:#64748b; font-size:12px;">From: ${from}</p><div style="background:#f8fafc; padding:15px; border:1px solid #eee; border-radius:6px;">${body}</div></div>`, showCancelButton: true, showDenyButton: true, confirmButtonText: 'Mark Read', denyButtonText: 'Reply', cancelButtonText: 'Close' })
-        .then((r) => {
-            if(r.isConfirmed) fetch(`${MASTER_API_URL}`, { method:'POST', body: JSON.stringify({ action:'markRead', id:id }) }).then(() => { checkUnreadCount(); openInbox(); });
-            else if(r.isDenied) openCompose(from, "Re: " + subject);
-            else openInbox();
+        Swal.fire({
+            title: subject,
+            html: `<div style="text-align:left;">
+                    <p style="color:#64748b; font-size:12px; margin-bottom:5px;">From: <b>${from}</b></p>
+                    <div style="background:#f8fafc; padding:15px; border-radius:6px; border:1px solid #eee; font-size:14px; white-space: pre-wrap;">${body}</div>
+                   </div>`,
+            showCancelButton: true,
+            showDenyButton: true, // This is the Reply Button
+            cancelButtonText: 'Close',
+            denyButtonText: 'Reply',
+            denyButtonColor: '#2563eb',
+            confirmButtonText: 'Mark Read',
+            confirmButtonColor: '#10b981'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Mark as Read Logic
+                fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'markRead', id: id }) })
+                .then(() => {
+                    checkUnreadCount(); 
+                    openInbox(); 
+                });
+            } else if (result.isDenied) {
+                // Reply Logic
+                openCompose(from, `Re: ${subject.replace('Re: ', '')}`);
+            } else {
+                openInbox(); // Go back to list
+            }
         });
     }
 
-    async function openCompose(to = "", subj = "") {
-        let opts = userDatabase.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('');
-        const { value: f } = await Swal.fire({ title: 'New Message', html: `<select id="msg-to" class="swal2-input">${opts}</select><input id="msg-subject" class="swal2-input" placeholder="Subject" value="${subj}"><textarea id="msg-body" class="swal2-textarea" placeholder="Message..." style="height:100px;"></textarea>`, showCancelButton: true, preConfirm: () => ({ recipient: document.getElementById('msg-to').value, subject: document.getElementById('msg-subject').value, body: document.getElementById('msg-body').value, sender: sessionStorage.getItem("user_name") }) });
+    async function openCompose(replyTo = "", replySubject = "") {
+        // Build options and pre-select recipient if replying
+        let options = userDatabase.map(u => {
+            const selected = (u.name === replyTo) ? 'selected' : '';
+            return `<option value="${u.name}" ${selected}>${u.name}</option>`;
+        }).join('');
         
-        if (f) {
+        const { value: form } = await Swal.fire({
+            title: 'New Message',
+            html: `
+                <select id="msg-to" class="swal2-input">${options}</select>
+                <input id="msg-subject" class="swal2-input" placeholder="Subject" value="${replySubject}">
+                <textarea id="msg-body" class="swal2-textarea" placeholder="Type message here..." style="height:120px;"></textarea>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Send Message',
+            preConfirm: () => {
+                return {
+                    recipient: document.getElementById('msg-to').value,
+                    subject: document.getElementById('msg-subject').value,
+                    body: document.getElementById('msg-body').value,
+                    sender: sessionStorage.getItem("user_name")
+                }
+            }
+        });
+
+        if (form) {
             Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
             try {
-                await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sendMessage', data: f }) });
-                Swal.fire('Sent!', '', 'success');
-            } catch(e) { Swal.fire('Error', 'Failed to send.', 'error'); }
+                await fetch(MASTER_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'sendMessage', data: form })
+                });
+              // 🔴 ADD THIS LINE:
+    sendLocalNotification("Message Sent", "Your message to " + form.recipient + " was delivered.");
+                Swal.fire('Sent!', 'Message delivered to ' + form.recipient, 'success').then(() => openInbox());
+            } catch(e) {
+                Swal.fire('Error', 'Failed to send message.', 'error');
+            }
         }
     }
 
     // =========================================================
-    // 4. HELPERS
+    // 3. USER MANAGEMENT (FETCH, RENDER, ADD, DELETE)
     // =========================================================
     async function loadUsers() {
-        try { const res = await fetch(`${MASTER_API_URL}?action=getUsers`); const json = await res.json(); if(json.status==='success') { userDatabase = json.users; renderTable(userDatabase); } } catch(e){}
+        const tbody = document.getElementById('userTableBody');
+        if(!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Fetching users...</td></tr>';
+
+        try {
+            const response = await fetch(`${MASTER_API_URL}?action=getUsers`);
+            const result = await response.json();
+            if (result.status === "success") {
+                userDatabase = result.users; 
+                renderTable(userDatabase); 
+            }
+        } catch (e) { console.error(e); }
     }
+
     function renderTable(users) {
-        const b = document.getElementById('userTableBody'); if(!b) return; b.innerHTML = "";
-        users.forEach(u => { b.innerHTML += `<tr><td style="font-weight:600;">${u.name}</td><td>${u.email}</td><td>${u.role}</td><td>${u.status}</td><td style="text-align:right;"><button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${u.username}')">🗑️</button></td></tr>`; });
+        const tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = "";
+
+        users.forEach((user) => {
+            const accessClass = (String(user.access).toLowerCase() === "admin") ? 'role-admin' : 'role-staff';
+            const row = `
+                <tr>
+                    <td style="font-weight:600;">${user.name || 'Unknown'}</td>
+                    <td>${user.email || ''}</td>
+                    <td style="color:#64748b;">${user.role || ''}</td>
+                    <td><span class="role-badge ${accessClass}">${user.access || 'Staff'}</span></td>
+                    <td><span style="color:var(--success);">●</span> ${user.status || 'Active'}</td>
+                    <td style="text-align:right;">
+                        <button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${user.username}')">🗑️</button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
     }
-    async function loadSystemConfig() { try{ const res=await fetch(`${MASTER_API_URL}?action=getSystemConfig`); const json=await res.json(); if(json.status==='success') { const c=json.config; if(document.getElementById('conf-announce-text')) document.getElementById('conf-announce-text').value=c.announcement_text||""; if(document.getElementById('conf-sales-goal')) document.getElementById('conf-sales-goal').value=c.sales_goal_monthly||50000; } }catch(e){} }
-    async function saveAnnouncement() { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', data:{ announcement_text: document.getElementById('conf-announce-text').value, announcement_active: document.getElementById('conf-announce-active').checked?"TRUE":"FALSE" } }) }); Swal.fire('Saved', '', 'success'); }
-    async function saveThresholds() { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', data:{ sales_goal_monthly: document.getElementById('conf-sales-goal').value, inventory_threshold_low: document.getElementById('conf-thresh-low').value, inventory_threshold_crit: document.getElementById('conf-thresh-crit').value } }) }); Swal.fire('Saved', '', 'success'); }
-    async function loadMasterData() { try{ const res=await fetch(`${MASTER_API_URL}?action=getMasterData`); const json=await res.json(); document.getElementById('brand-list').innerHTML = json.brands.map(b => `<div style="padding:8px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;"><b>${b}</b><span style="color:red; cursor:pointer;" onclick="deleteBrand('${b}')">🗑️</span></div>`).join(''); }catch(e){} }
-    async function addBrand() { const v=document.getElementById('new-brand-input').value; if(v) { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'addMasterData', type:'Brand', value:v }) }); loadMasterData(); } }
-    async function deleteBrand(v) { if(confirm('Delete?')) { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'deleteMasterData', type:'Brand', value:v }) }); loadMasterData(); } }
-    async function loadAuditLogs() { try{ const res=await fetch(`${MASTER_API_URL}?action=getAuditLogs`); const json=await res.json(); document.getElementById('audit-log-body').innerHTML = json.logs.map(l => `<tr><td style="padding:5px; border-bottom:1px solid #eee;"><div style="font-weight:700;">${l[2]}</div><div style="font-size:11px; color:#64748b;">${new Date(l[0]).toLocaleTimeString()} • ${l[1]}</div></td></tr>`).join(''); }catch(e){} }
-    
-    function setupUserProfile() { 
-        const n=sessionStorage.getItem("user_name"); 
-        const r=sessionStorage.getItem("user_role"); 
-        const t=sessionStorage.getItem("user_title"); 
-        const p=sessionStorage.getItem("user_pic"); 
-        if(document.getElementById("display-username")) document.getElementById("display-username").innerText=n||"Admin"; 
-        if(document.getElementById("display-role")) document.getElementById("display-role").innerText=t||r||"Staff"; 
-        if(document.getElementById("display-avatar")) document.getElementById("display-avatar").src=p||"SBC-Logo.png"; 
+
+    async function addUserModal() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Add New User',
+            html: `
+                <input id="swal-name" class="swal2-input" placeholder="Full Name">
+                <input id="swal-email" class="swal2-input" placeholder="Email Address">
+                <input id="swal-role" class="swal2-input" placeholder="Job Title (e.g. Sales Rep)">
+                <select id="swal-access" class="swal2-input">
+                    <option value="Staff">Staff Access</option>
+                    <option value="Admin">Admin Access</option>
+                </select>
+            `,
+            preConfirm: () => {
+                return {
+                    name: document.getElementById('swal-name').value,
+                    email: document.getElementById('swal-email').value,
+                    role: document.getElementById('swal-role').value,
+                    access: document.getElementById('swal-access').value
+                }
+            }
+        });
+
+        if (formValues) {
+            Swal.fire({ title: 'Creating...', didOpen: () => Swal.showLoading() });
+            await fetch(MASTER_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'adminAddUser', data: formValues })
+            });
+            loadUsers();
+            Swal.fire('Success', 'User added.', 'success');
+        }
     }
+
+    function deleteUser(username) {
+        Swal.fire({
+            title: 'Delete User?',
+            text: "This will revoke all portal access.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await fetch(MASTER_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'adminDeleteUser', username: username })
+                });
+                loadUsers();
+                Swal.fire('Deleted', 'Access revoked.', 'success');
+            }
+        });
+    }
+
+    // =========================================================
+    // 4. SYSTEM CONFIG (BANNER & TARGETS)
+    // =========================================================
+    async function loadSystemConfig() {
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getSystemConfig`);
+            const json = await res.json();
+            if(json.status === 'success') {
+                const cfg = json.config;
+                if(document.getElementById('conf-announce-text')) {
+                    document.getElementById('conf-announce-text').value = cfg.announcement_text || "";
+                    document.getElementById('conf-announce-active').checked = (String(cfg.announcement_active).toUpperCase() === "TRUE");
+                }
+                if(document.getElementById('conf-sales-goal')) {
+                    document.getElementById('conf-sales-goal').value = cfg.sales_goal_monthly || 50000;
+                    document.getElementById('conf-thresh-low').value = cfg.inventory_threshold_low || 5;
+                    document.getElementById('conf-thresh-crit').value = cfg.inventory_threshold_crit || 1;
+                }
+            }
+        } catch(e) { console.error("Config Load Error", e); }
+    }
+
+    async function saveAnnouncement() {
+        const text = document.getElementById('conf-announce-text').value;
+        const active = document.getElementById('conf-announce-active').checked ? "TRUE" : "FALSE";
+        await fetch(MASTER_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'saveConfig', data: { announcement_text: text, announcement_active: active } })
+        });
+        Swal.fire('Posted', 'System banner updated.', 'success');
+    }
+
+    async function saveThresholds() {
+        const goal = document.getElementById('conf-sales-goal').value;
+        const low = document.getElementById('conf-thresh-low').value;
+        const crit = document.getElementById('conf-thresh-crit').value;
+        await fetch(MASTER_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'saveConfig', data: { sales_goal_monthly: goal, inventory_threshold_low: low, inventory_threshold_crit: crit } })
+        });
+        Swal.fire('Saved', 'Targets updated.', 'success');
+    }
+
+    // =========================================================
+    // 5. MASTER DATA (BEER BRANDS)
+    // =========================================================
+    async function loadMasterData() {
+        const container = document.getElementById('brand-list');
+        if(!container) return;
+        
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getMasterData`);
+            const json = await res.json();
+            container.innerHTML = "";
+            json.brands.forEach(brand => {
+                container.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; align-items:center;">
+                        <span style="font-weight:600; font-size:13px;">${brand}</span>
+                        <span style="cursor:pointer; color:#ef4444; font-size:12px;" onclick="deleteBrand('${brand}')">🗑️</span>
+                    </div>
+                `;
+            });
+        } catch(e) {}
+    }
+
+    async function addBrand() {
+        const input = document.getElementById('new-brand-input');
+        const val = input.value.trim();
+        if(!val) return;
+        
+        input.value = ""; 
+        await fetch(MASTER_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'addMasterData', type: 'Brand', value: val })
+        });
+        loadMasterData(); 
+    }
+
+    async function deleteBrand(val) {
+        if(!confirm("Delete brand: " + val + "?")) return;
+        await fetch(MASTER_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deleteMasterData', type: 'Brand', value: val })
+        });
+        loadMasterData();
+    }
+
+    // =========================================================
+    // 6. AUDIT LOGS
+    // =========================================================
+    async function loadAuditLogs() {
+        const tbody = document.getElementById('audit-log-body');
+        if(!tbody) return;
+
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getAuditLogs`);
+            const json = await res.json();
+            tbody.innerHTML = "";
+            json.logs.forEach(log => {
+                const time = new Date(log[0]).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                tbody.innerHTML += `
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:8px 0;">
+                            <div style="font-weight:700;">${log[2]}</div> 
+                            <div style="font-size:11px; color:#64748b;">${time} • ${log[1]}</div> 
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch(e) { tbody.innerHTML = "<tr><td>Error loading logs</td></tr>"; }
+    }
+
+    // =========================================================
+    // 7. PROFILE & UI HELPERS
+    // =========================================================
+    function setupUserProfile() {
+        const name = sessionStorage.getItem("user_name") || "Admin";
+        const role = sessionStorage.getItem("user_role");
+        const displayTitle = sessionStorage.getItem("user_title") || role || "Staff";
+        const defaultLogo = "logo.png"; 
+        const userPic = sessionStorage.getItem("user_pic") || defaultLogo;
+        
+        if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
+        if(document.getElementById("display-role")) document.getElementById("display-role").innerText = displayTitle;
+        if(document.getElementById("display-avatar")) {
+            const img = document.getElementById("display-avatar");
+            img.src = userPic;
+            img.onerror = function() { this.onerror = null; this.src = defaultLogo; };
+        }
+        
+        const dropdown = document.getElementById("userDropdown");
+        if (dropdown) {
+            dropdown.innerHTML = `
+                <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span><span class="menu-icon">📩</span> Team Inbox</span>
+                    <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px; min-width: 20px; text-align: center; margin-left: 10px; line-height: 1.2;">0</span>
+                </a>
+                <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
+                    <span class="menu-icon">⚙️</span> Update Info
+                </a>
+                <a href="#" onclick="handleLogout(); toggleUserMenu(event);" style="color: #ef4444;">
+                    <span class="menu-icon">🚪</span> Logout
+                </a>
+            `;
+        }
+    }
+
     function toggleUserMenu(event) {
         event.stopPropagation();
         const dropdown = document.getElementById("userDropdown");
         if(dropdown) dropdown.classList.toggle("show");
     }
 
-     function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
+    window.onclick = function(event) {
+        if (!event.target.matches('.user-profile') && !event.target.closest('.user-profile')) {
+            const dropdown = document.getElementById("userDropdown");
+            if (dropdown && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        }
+    }
+
+    function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
     function toggleGroup(contentId, headerEl) {
         document.getElementById(contentId).classList.toggle('collapsed');
         headerEl.classList.toggle('collapsed');
+    }
+
+    function handleLogout() {
+        sessionStorage.clear();
+        window.location.replace("index.html");
     }
