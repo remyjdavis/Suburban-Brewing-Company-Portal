@@ -671,6 +671,8 @@
                     method: 'POST',
                     body: JSON.stringify({ action: 'sendMessage', data: form })
                 });
+              // 🔴 ADD THIS LINE:
+    sendLocalNotification("Message Sent", "Your message to " + form.recipient + " was delivered.");
                 Swal.fire('Sent!', 'Message delivered to ' + form.recipient, 'success').then(() => openInbox());
             } catch(e) {
                 Swal.fire('Error', 'Failed to send message.', 'error');
@@ -942,6 +944,45 @@
         sessionStorage.clear();
         window.location.replace("index.html");
     }
+  async function enableNotifications() {
+    // 1. Check if browser supports it
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.warn('Push messaging is not supported by this browser.');
+        return;
+    }
+
+    // 2. Register the background worker
+    const register = await navigator.serviceWorker.register('sw.js');
+
+    // 3. Request Permission from the OS
+    const permission = await Notification.requestPermission();
+    
+    if (permission === 'granted') {
+        Swal.fire('Notifications Enabled', 'You will now receive instant alerts on this device.', 'success');
+        
+        // In a full production setup, you would now save the 'subscription' 
+        // object to your Google Sheet to target this specific device.
+        const subscription = await register.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: 'YOUR_PUBLIC_VAPID_KEY' // Requires a Firebase/OneSignal setup
+        });
+        
+        console.log("Device Token:", JSON.stringify(subscription));
+    }
+}
+  function sendLocalNotification(title, message) {
+    if (Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(title, {
+                body: message,
+                icon: 'logo.png',
+                vibrate: [200, 100, 200]
+            });
+        });
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission();
+    }
+}
 </script>
 </body>
 </html>
