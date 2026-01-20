@@ -999,22 +999,29 @@
         console.log("Device Token:", JSON.stringify(subscription));
     }
 }
-// --- 9. ONESIGNAL REGISTRATION (DEBUG VERSION) ---
+// --- 9. ONESIGNAL REGISTRATION (FIXED INJECTOR) ---
 function initPushNotifications() {
-    console.log("🚀 STARTING OneSignal Setup..."); // Step 1
+    console.log("🚀 STARTING OneSignal Setup..."); 
 
-    // Check if the library is even loaded
-    if (typeof OneSignalDeferred === 'undefined') {
-        console.error("❌ CRITICAL: OneSignal Library is missing from the page.");
-        return;
+    // 1. INJECT THE MISSING LIBRARY (This fixes the "Critical Missing" error)
+    if (!document.getElementById('onesignal-sdk-script')) {
+        const script = document.createElement('script');
+        script.id = 'onesignal-sdk-script';
+        script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+        script.defer = true;
+        document.head.appendChild(script);
+        console.log("📦 OneSignal Library Injected into Page.");
     }
 
+    // 2. DEFINE THE QUEUE
     window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+    // 3. RUN INITIALIZATION
     OneSignalDeferred.push(async function(OneSignal) {
-        console.log("✅ OneSignal SDK is loaded and running."); // Step 2
+        console.log("✅ OneSignal SDK is now active.");
 
         if (OneSignal.initialized) {
-            console.warn("⚠️ SDK was already initialized. Skipping to prevent errors.");
+            console.log("⚠️ SDK already initialized. Skipping.");
             return;
         }
 
@@ -1025,26 +1032,21 @@ function initPushNotifications() {
                 serviceWorkerPath: "OneSignalSDKWorker.js",
                 serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
                 allowLocalhostAsSecureOrigin: true,
-                // Enable logs to see internal errors
-                logLevel: "trace" 
+                logLevel: "trace" // Keep logs on for now
             });
-            console.log("✅ OneSignal Init Completed Successfully."); // Step 3
+            console.log("✅ Init Success.");
         } catch (error) {
-            console.error("❌ OneSignal Init FAILED:", error);
-            return;
+            console.error("❌ Init FAILED:", error);
         }
         
-        // Check Session Data
+        // 4. LOGIN USER
         const userName = sessionStorage.getItem("user_name");
-        console.log("👤 Session 'user_name' is:", userName); // Step 4
-
         if(userName) {
             const formattedID = userName.toLowerCase();
-            console.log("🔗 Registering User ID:", formattedID); // Step 5
+            console.log("🔗 Registering User ID:", formattedID);
             OneSignal.login(formattedID);
-            console.log("🎉 Login Command Sent."); 
         } else {
-            console.error("❌ NO USERNAME FOUND. You must Log Out and Log In again.");
+            console.error("❌ NO USERNAME FOUND. Log out and log in again.");
         }
     });
 }
