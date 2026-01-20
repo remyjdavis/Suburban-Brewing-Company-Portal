@@ -30,7 +30,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+<script src="/Suburban-Brewing-Company-Portal/portal.js"></script>
+ 
   <style>
     /* --- SHARED THEME VARIABLES (EXACT MATCH TO INDEX) --- */
     :root {
@@ -832,16 +833,14 @@
         </div>
 
         <div class="user-profile" onclick="toggleUserMenu(event)">
-            <div class="user-info-text">
-                <span class="user-name" id="display-username">Brew Master</span>
-                <span class="user-role" id="display-role">Brewer</span>
-            </div>
-            <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'" alt="User">
-            
-           <div id="userDropdown" class="user-dropdown-menu"></div>
-        </div>
+    <div id="msg-badge" class="notification-badge">0</div>
+    <div class="user-info-text">
+        <span class="user-name" id="display-username">Brewer</span>
+        <span class="user-role" id="display-role">Staff</span>
     </div>
-
+    <img src="../logo.png" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
+    <div id="userDropdown" class="user-dropdown-menu"></div>
+</div>
     <div id="main-screen">
     
     <div class="brew-stage">
@@ -1339,9 +1338,16 @@ document.querySelectorAll('.nav-link').forEach(link => {
     // 2. INITIALIZATION (Load Recipes with Redirect Handling)
     // ---------------------------------------------------------
    window.onload = async function() {
-    // 1. Trigger the global portal setup (Avatar, Name, Role, Inbox Badge)
-    if (window.setupUserProfile) setupUserProfile();
-    if (window.checkUnreadCount) checkUnreadCount();
+    // 1. Kickstart Portal UI (Avatars, Inbox, Roles)
+    if (typeof setupUserProfile === 'function') setupUserProfile();
+    if (typeof checkUnreadCount === 'function') checkUnreadCount();
+
+    // 2. Sidebar Admin Logic
+    const role = sessionStorage.getItem("user_role");
+    if (role === "Admin" || role === "Owner") {
+        const adminLink = document.getElementById("admin-nav-link");
+        if (adminLink) adminLink.style.display = "block";
+    }
 
     // 2. Your existing Brew Log logic
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
