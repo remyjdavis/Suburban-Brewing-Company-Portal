@@ -215,35 +215,33 @@
     window.addEventListener('load', async () => {
         console.log("🟢 DOM Loaded. Starting System...");
         
-        // 1. SECURITY: KILL ZOMBIE WORKERS FIRST
+        // 1. ZOMBIE KILLER (Cleanup)
         if ('serviceWorker' in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
             for(let reg of regs) {
-                // If it is NOT in our folder, it is the root zombie. Kill it.
-                if (!reg.scope.includes("Suburban-Brewing-Company-Portal")) {
+                if (reg.scope === "https://remyjdavis.github.io/") {
                     console.log("💀 KILLED ROOT WORKER:", reg.scope);
                     await reg.unregister();
                 }
             }
         }
 
-        // 2. MANUALLY REGISTER THE WORKER (The "Hard Fix")
-        // We do this BEFORE loading OneSignal SDK to prevent it from looking at Root
+        // 2. MANUAL WORKER INJECTION (The Success Part)
         if ('serviceWorker' in navigator) {
             try {
                 const workerUrl = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/OneSignalSDKWorker.js";
                 const workerScope = "/Suburban-Brewing-Company-Portal/";
                 
-                const registration = await navigator.serviceWorker.register(workerUrl, { scope: workerScope });
-                console.log("✅ Worker Manually Registered at:", registration.scope);
+                // FORCE THE BROWSER TO INSTALL OUR FILE
+                const reg = await navigator.serviceWorker.register(workerUrl, { scope: workerScope });
+                console.log("✅ Worker Manually Registered at:", reg.scope);
                 
-                // 3. ONLY NOW DO WE LOAD THE SDK
+                // 3. START SDK (DELAYED)
                 loadOneSignalSDK();
                 
             } catch(e) {
                 console.error("❌ Manual Register Failed:", e);
-                // Try loading SDK anyway as fallback
-                loadOneSignalSDK();
+                loadOneSignalSDK(); // Try anyway
             }
         } else {
             loadOneSignalSDK();
@@ -255,11 +253,12 @@
         loadMasterData();
         loadAuditLogs();
         checkUnreadCount();
+        
         setInterval(checkUnreadCount, 60000);
     });
 
     // =========================================================
-    // 1. ONESIGNAL SETUP (DYNAMIC INJECTION)
+    // 1. ONESIGNAL SETUP (DYNAMIC + PATH FIX)
     // =========================================================
     function loadOneSignalSDK() {
         console.log("🚀 Injecting OneSignal SDK..."); 
@@ -275,8 +274,13 @@
                 try {
                     await OneSignal.init({
                         appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
-                        // 🔴 JUST THE PATH. NO WORKER PATH. NO SCOPE (It's already registered!)
-                        path: "/Suburban-Brewing-Company-Portal/", 
+                        
+                        // 🔴 KEY FIX: Use the full relative path for the worker file
+                        // This stops the SDK from defaulting to Root
+                        path: "/Suburban-Brewing-Company-Portal/",
+                        serviceWorkerPath: "OneSignalSDKWorker.js",
+                        serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+                        
                         allowLocalhostAsSecureOrigin: true,
                         logLevel: "warn"
                     });
