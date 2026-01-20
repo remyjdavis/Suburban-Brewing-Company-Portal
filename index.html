@@ -1055,26 +1055,7 @@
             }
         } catch(e) { console.error("Banner Sync Error", e); }
     }
-  window.toggleUserMenu = function(event) {
-        if (event) event.stopPropagation();
-        const dropdown = document.getElementById("userDropdown");
-        if (!dropdown) return;
-
-        dropdown.classList.toggle("show");
-        
-        // Only populate if it's currently empty to avoid overwriting portal.js data
-        if (dropdown.innerHTML.trim() === "") {
-            // This HTML specifically calls the functions inside your portal.js
-            dropdown.innerHTML = `
-                <a href="#" onclick="openInbox(); toggleUserMenu(event);">📩 Team Inbox</a>
-                <a href="#" onclick="updateUserInfo(); toggleUserMenu(event);">⚙️ Update Info</a>
-                <a href="#" onclick="location.reload()">🔄 Refresh Page</a>
-                <hr style="margin:5px 0; border:0; border-top:1px solid #eee;">
-                <a href="#" onclick="handleLogout();" style="color: #ef4444;">🚪 Logout</a>
-            `;
-        }
-    };
-
+ 
 // Close menu when clicking anywhere else
 window.addEventListener('click', function(event) {
     if (!event.target.closest('.user-profile')) {
