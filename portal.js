@@ -162,25 +162,85 @@ async function openComposeModal(to="", subj="") {
     }
 }
 
-// --- 6. UTILITIES ---
-async function openProfileModal() {
-    const { value: f } = await Swal.fire({ title: 'Update Profile', html: `<input id="swal-pname" class="swal2-input" placeholder="Name" value="${sessionStorage.getItem('user_name')||''}"><input id="swal-ptitle" class="swal2-input" placeholder="Title" value="${sessionStorage.getItem('user_title')||''}"><input id="swal-ppic" class="swal2-input" placeholder="Photo URL" value="${sessionStorage.getItem('user_pic')||''}">`, preConfirm: () => ({ name: document.getElementById('swal-pname').value, title: document.getElementById('swal-ptitle').value, pic: document.getElementById('swal-ppic').value }) });
-    if (f) {
-        sessionStorage.setItem('user_name', f.name);
-        sessionStorage.setItem('user_title', f.title);
-        sessionStorage.setItem('user_pic', f.pic);
-        setupUserProfile();
-        // Sync OneSignal Login
-        if(window.OneSignal) OneSignal.login(f.name.toLowerCase());
-        Swal.fire('Saved', '', 'success');
-    }
-}
+// --- PROFILE EDIT MODAL ---
+  async function updateUserInfo() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Edit Profile Settings',
+            background: '#1e293b',
+            color: '#ffffff',
+            html: `
+                <div style="text-align: left; padding: 10px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../SBC-Logo.png'}" 
+                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
+                        <br>
+                        <button type="button" onclick="document.getElementById('file-input').click()" 
+                                style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px;">
+                            Change Photo
+                        </button>
+                        <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
+                    </div>
+                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
+                    <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
+                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
+                    <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
+                    <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Security</label>
+                    <input id="p-pass" type="password" class="swal2-input" placeholder="New password (optional)">
+                </div>
+            `,
+            preConfirm: () => {
+                return {
+                    email: document.getElementById('p-email').value,
+                    phone: document.getElementById('p-phone').value,
+                    pass: document.getElementById('p-pass').value,
+                    pic: document.getElementById('preview-pic').src
+                }
+            }
+        });
 
-// 4. LOGOUT
-    function handleLogout() {
-        if(confirm("Log out of portal?")) {
-            sessionStorage.removeItem("sbc_auth");
-            const repoPath = "/Suburban-Brewing-Company-Portal/";
-            window.location.replace(repoPath + "login.html");
+        if (formValues) saveProfile(formValues);
+    }
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('preview-pic').src = e.target.result; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+ function handleLogout() {
+        sessionStorage.removeItem("sbc_auth");
+        const repoPath = "/Suburban-Brewing-Company-Portal/";
+        window.location.replace(repoPath + "login.html");
+      }
+    async function saveProfile(data) {
+        Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
+        
+        const username = sessionStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
+        
+        if (!username) {
+            Swal.fire('Session Error', 'Could not identify user. Please log out and log back in.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${MASTER_API_URL}`, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'updateProfile', user: username, ...data })
+            });
+            const result = await response.json();
+            
+            if (result.status === "success") {
+                sessionStorage.setItem("user_pic", data.pic);
+                sessionStorage.setItem("user_email", data.email);
+                sessionStorage.setItem("user_phone", data.phone);
+                
+                setupUserProfile(); 
+                Swal.fire('Saved!', 'Profile updated.', 'success');
+            } else {
+                throw new Error(result.message || "Update failed");
+            }
+        } catch (e) {
+            Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
         }
     }
