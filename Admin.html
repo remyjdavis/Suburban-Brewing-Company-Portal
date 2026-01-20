@@ -388,8 +388,7 @@
          <div id="userDropdown" class="user-dropdown-menu">
             <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
     <span><span class="menu-icon">📩</span> Team Inbox</span>
-    
-    <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px; min-width: 18px; text-align: center; margin-left: 10px; line-height: 1;">0</span>
+    <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px; min-width: 20px; text-align: center; margin-left: 10px; line-height: 1.2;">0</span>
 </a>
             <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
                 <span class="menu-icon">⚙️</span> Update Info
@@ -848,37 +847,54 @@
   // --- MESSAGING UI ---
 
     async function openInbox() {
-        const currentUser = sessionStorage.getItem("user_name");
-        Swal.fire({ title: 'Loading Inbox...', didOpen: () => Swal.showLoading() });
+    const currentUser = sessionStorage.getItem("user_name");
+    Swal.fire({ title: 'Loading Inbox...', didOpen: () => Swal.showLoading() });
 
-        try {
-            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(currentUser)}`);
-            const json = await res.json();
-            
-            // Build Message List HTML
-            let htmlContent = '<div style="text-align:center; color:#94a3b8; padding:20px;">No messages.</div>';
-            
-            if (json.status === 'success' && json.messages.length > 0) {
-                const rows = json.messages.map(msg => {
-                    const isUnread = (msg.status === "Unread");
-                    const bg = isUnread ? "#f0f9ff" : "#fff";
-                    const weight = isUnread ? "bold" : "normal";
-                    const dateStr = new Date(msg.date).toLocaleDateString();
-                    
-                    return `
-                    <div onclick="readMessage('${msg.id}', '${msg.from}', '${msg.subject}', '${msg.body}')" 
-                         style="background:${bg}; padding:10px; border-bottom:1px solid #eee; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div style="font-size:12px; color:#64748b;">${dateStr} • ${msg.from}</div>
-                            <div style="font-weight:${weight}; color:#1e293b; font-size:14px;">${msg.subject}</div>
-                        </div>
-                        <div style="font-size:18px;">👉</div>
-                    </div>`;
-                }).join('');
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(currentUser)}`);
+        const json = await res.json();
+        
+        let htmlContent = '<div style="text-align:center; color:#94a3b8; padding:20px;">No messages.</div>';
+        
+        if (json.status === 'success' && json.messages.length > 0) {
+            const rows = json.messages.map(msg => {
+                const isUnread = (msg.status === "Unread");
+                const bg = isUnread ? "#f0f9ff" : "#fff";
+                const weight = isUnread ? "bold" : "normal";
+                const dateStr = new Date(msg.date).toLocaleDateString();
                 
-                htmlContent = `<div style="max-height:300px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px;">${rows}</div>`;
-            }
+                // 🔴 Adds the "NEW" tag inside the list for unread messages
+                const unreadLabel = isUnread ? `<span style="background: #2563eb; color: white; font-size: 8px; padding: 2px 5px; border-radius: 4px; margin-left: 8px; vertical-align: middle; font-weight: 800;">NEW</span>` : "";
+                
+                return `
+                <div onclick="readMessage('${msg.id}', '${msg.from}', '${msg.subject}', '${msg.body}')" 
+                     style="background:${bg}; padding:12px; border-bottom:1px solid #eee; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex: 1;">
+                        <div style="font-size:11px; color:#64748b;">${dateStr} • From: ${msg.from}</div>
+                        <div style="font-weight:${weight}; color:#1e293b; font-size:14px; margin-top: 2px;">
+                            ${msg.subject} ${unreadLabel}
+                        </div>
+                    </div>
+                    <div style="color: #cbd5e1; font-size: 16px; padding-left: 10px;">👉</div>
+                </div>`;
+            }).join('');
+            
+            htmlContent = `<div style="max-height:400px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">${rows}</div>`;
+        }
 
+        Swal.fire({
+            title: 'Team Inbox',
+            width: '500px',
+            html: htmlContent + `<button onclick="openCompose()" class="swal2-confirm swal2-styled" style="background-color:#2563eb; margin-top:15px; width:100%; border-radius: 6px; font-weight: 700;">+ Compose New Message</button>`,
+            showConfirmButton: false,
+            showCloseButton: true
+        });
+
+    } catch(e) { 
+        console.error("Inbox Load Error", e);
+        Swal.fire('Error', 'Could not load messages.', 'error'); 
+    }
+}
             Swal.fire({
                 title: 'Team Inbox',
                 html: htmlContent + `<button onclick="openCompose()" class="swal2-confirm swal2-styled" style="background-color:#2563eb; margin-top:15px; width:100%;">+ Compose New</button>`,
