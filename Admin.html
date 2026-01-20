@@ -213,19 +213,22 @@
     let userDatabase = [];
 
     // --- INITIALIZATION ---
-    window.addEventListener('DOMContentLoaded', async () => {
-        console.log("🟢 DOM Loaded. Starting System...");
-        
-        // 1. ZOMBIE KILLER: Unregister ALL workers first to clear the root error
+    window.addEventListener('load', async () => {
+        console.log("🟢 DOM Loaded. System Starting...");
+
+        // 1. CLEANUP: Remove any worker stuck at the ROOT (The source of your 404)
         if ('serviceWorker' in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
             for(let reg of regs) {
-                console.log("🧹 Unregistering worker:", reg.scope);
-                await reg.unregister();
+                // If the worker scope is the root domain, it is wrong. Kill it.
+                if (reg.scope === "https://remyjdavis.github.io/") {
+                    console.log("💀 Unregistering Root Worker:", reg.scope);
+                    await reg.unregister();
+                }
             }
         }
 
-        // 2. Load Data
+        // 2. LOAD DATA
         setupUserProfile();
         loadUsers();
         loadSystemConfig();
@@ -233,18 +236,19 @@
         loadAuditLogs();
         checkUnreadCount();
         
-        // 3. Start OneSignal (Delayed to ensure cleanup)
-        setTimeout(initPushNotifications, 1000);
+        // 3. START ONESIGNAL
+        initPushNotifications();
+        
         setInterval(checkUnreadCount, 60000);
     });
 
     // =========================================================
-    // 1. ONESIGNAL SETUP (CORRECT PATH CONFIGURATION)
+    // 1. ONESIGNAL SETUP (FIXED PATHS & TIMING)
     // =========================================================
     function initPushNotifications() {
         console.log("🚀 STARTING OneSignal..."); 
 
-        // Inject Script Dynamically
+        // Inject Script
         if (!document.getElementById('onesignal-sdk-script')) {
             const script = document.createElement('script');
             script.id = 'onesignal-sdk-script';
@@ -259,35 +263,32 @@
                 await OneSignal.init({
                     appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
                     
-                    // 🔴 CORRECTED: RELATIVE PATH TO FOLDER (Not Full URL)
+                    // 🔴 CRITICAL: Tells SDK the file is in the folder, not root
                     path: "/Suburban-Brewing-Company-Portal/", 
                     
-                    // 🔴 CORRECTED: Filename Only (Browser appends this to path)
+                    // 🔴 CRITICAL: Matches the file name in GitHub
                     serviceWorkerPath: "OneSignalSDKWorker.js",
                     
-                    // 🔴 CORRECTED: Scope Matches Path
+                    // 🔴 CRITICAL: Locks scope to the folder
                     serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
                     
                     allowLocalhostAsSecureOrigin: true,
                     logLevel: "warn"
                 });
+                
                 console.log("✅ OneSignal Init Success.");
                 
-                // LOGIN USER (Only after success)
+                // 🔴 SAFE LOGIN: Only runs if init succeeds
                 const userName = sessionStorage.getItem("user_name");
-                if(userName) OneSignal.login(userName.toLowerCase());
-
-            } catch (error) { console.error("❌ Init FAILED:", error); }
-        });
-        
-        // Click Listener for Permission
-        document.body.addEventListener('click', () => {
-            window.OneSignalDeferred.push(function(OneSignal) {
-                if (OneSignal.Notifications.permission !== 'granted') {
-                    OneSignal.Notifications.requestPermission();
+                if(userName) {
+                    console.log("📝 Logging in:", userName);
+                    OneSignal.login(userName.toLowerCase());
                 }
-            });
-        }, { once: true });
+
+            } catch (error) { 
+                console.error("❌ Init FAILED:", error); 
+            }
+        });
     }
 
     // =========================================================
@@ -372,6 +373,7 @@
         const b = document.getElementById('userTableBody'); if(!b) return; b.innerHTML = "";
         users.forEach(u => { b.innerHTML += `<tr><td style="font-weight:600;">${u.name}</td><td>${u.email}</td><td>${u.role}</td><td>${u.status}</td><td style="text-align:right;"><button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${u.username}')">🗑️</button></td></tr>`; });
     }
+    // (Other config functions)
     async function loadSystemConfig() { try{ const res=await fetch(`${MASTER_API_URL}?action=getSystemConfig`); const json=await res.json(); if(json.status==='success') { const c=json.config; if(document.getElementById('conf-announce-text')) document.getElementById('conf-announce-text').value=c.announcement_text||""; if(document.getElementById('conf-sales-goal')) document.getElementById('conf-sales-goal').value=c.sales_goal_monthly||50000; } }catch(e){} }
     async function saveAnnouncement() { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', data:{ announcement_text: document.getElementById('conf-announce-text').value, announcement_active: document.getElementById('conf-announce-active').checked?"TRUE":"FALSE" } }) }); Swal.fire('Saved', '', 'success'); }
     async function saveThresholds() { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', data:{ sales_goal_monthly: document.getElementById('conf-sales-goal').value, inventory_threshold_low: document.getElementById('conf-thresh-low').value, inventory_threshold_crit: document.getElementById('conf-thresh-crit').value } }) }); Swal.fire('Saved', '', 'success'); }
