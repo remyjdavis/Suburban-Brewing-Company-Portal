@@ -999,27 +999,52 @@
         console.log("Device Token:", JSON.stringify(subscription));
     }
 }
-// --- 9. ONESIGNAL REGISTRATION ---
+// --- 9. ONESIGNAL REGISTRATION (DEBUG VERSION) ---
 function initPushNotifications() {
+    console.log("🚀 STARTING OneSignal Setup..."); // Step 1
+
+    // Check if the library is even loaded
+    if (typeof OneSignalDeferred === 'undefined') {
+        console.error("❌ CRITICAL: OneSignal Library is missing from the page.");
+        return;
+    }
+
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
-        // Prevent double-init
-        if (OneSignal.initialized) return;
+        console.log("✅ OneSignal SDK is loaded and running."); // Step 2
 
-        await OneSignal.init({
-            appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d", 
-            path: "/Suburban-Brewing-Company-Portal/", 
-            serviceWorkerPath: "OneSignalSDKWorker.js",
-            serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
-            allowLocalhostAsSecureOrigin: true,
-        });
+        if (OneSignal.initialized) {
+            console.warn("⚠️ SDK was already initialized. Skipping to prevent errors.");
+            return;
+        }
+
+        try {
+            await OneSignal.init({
+                appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+                path: "/Suburban-Brewing-Company-Portal/", 
+                serviceWorkerPath: "OneSignalSDKWorker.js",
+                serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+                allowLocalhostAsSecureOrigin: true,
+                // Enable logs to see internal errors
+                logLevel: "trace" 
+            });
+            console.log("✅ OneSignal Init Completed Successfully."); // Step 3
+        } catch (error) {
+            console.error("❌ OneSignal Init FAILED:", error);
+            return;
+        }
         
+        // Check Session Data
         const userName = sessionStorage.getItem("user_name");
-        
-        // 🔴 THIS IS THE FIX: Force lowercase registration
+        console.log("👤 Session 'user_name' is:", userName); // Step 4
+
         if(userName) {
-            console.log("Registering OneSignal User:", userName.toLowerCase());
-            OneSignal.login(userName.toLowerCase()); 
+            const formattedID = userName.toLowerCase();
+            console.log("🔗 Registering User ID:", formattedID); // Step 5
+            OneSignal.login(formattedID);
+            console.log("🎉 Login Command Sent."); 
+        } else {
+            console.error("❌ NO USERNAME FOUND. You must Log Out and Log In again.");
         }
     });
 }
