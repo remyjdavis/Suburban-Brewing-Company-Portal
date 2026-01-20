@@ -509,13 +509,15 @@
         loadAuditLogs();
         checkUnreadCount(); 
 
-        // 🔴 Start OneSignal SDK
+        // 🔴 CRITICAL: Call the function to start OneSignal
         initPushNotifications();
 
-        // 🟢 Trigger OneSignal prompt on first user interaction
+        // 🟢 REQUIRED FOR BROWSER SECURITY:
+        // This triggers the OneSignal prompt when the user first interacts with the page
         document.body.addEventListener('click', () => {
             window.OneSignalDeferred = window.OneSignalDeferred || [];
             OneSignalDeferred.push(function(OneSignal) {
+                // Only prompt if they haven't already agreed
                 if (OneSignal.Notifications.permission !== 'granted') {
                     OneSignal.Notifications.requestPermission();
                 }
@@ -675,9 +677,12 @@
         if (form) {
             Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
             try {
-                await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sendMessage', data: form }) });
+                await fetch(MASTER_API_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'sendMessage', data: form }) 
+                });
                 
-                // 🔴 Trigger local confirmation notification
+                // 🔴 ADD THIS LINE TO TRIGGER SYSTEM NOTIFICATION:
                 sendLocalNotification("Message Sent", "Your message to " + form.recipient + " was delivered.");
 
                 Swal.fire('Sent!', 'Message delivered.', 'success').then(() => openInbox());
