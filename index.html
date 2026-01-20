@@ -714,46 +714,28 @@
     const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec';
     let dashboardCharts = {};
 
-    // --- 🟢 USER MENU LOGIC (Attached to Window to Fix Click) ---
-    window.toggleUserMenu = function(event) {
-        if (event) event.stopPropagation(); // Stop click from bubbling
-        
-        const dropdown = document.getElementById("userDropdown");
-        if (dropdown) {
-            dropdown.classList.toggle("show");
-            
-            // Failsafe: Populate if empty (in case portal.js didn't load)
-            if (dropdown.innerHTML.trim() === "") {
-                dropdown.innerHTML = `
-                    <a href="Admin.html" style="color: #ef4444;">🔒 Admin Console</a>
-                    <a href="#" onclick="location.reload()">🔄 Refresh</a>
-                    <a href="#" onclick="sessionStorage.clear(); window.location.reload();">🚪 Logout</a>
-                `;
-            }
-        }
-    };
-
-    // Close menu when clicking outside
-    window.addEventListener('click', function(event) {
-        if (!event.target.closest('.user-profile')) {
-            const dropdowns = document.getElementsByClassName("user-dropdown-menu");
-            for (let i = 0; i < dropdowns.length; i++) {
-                if (dropdowns[i].classList.contains('show')) {
-                    dropdowns[i].classList.remove('show');
-                }
-            }
-        }
-    });
-
     // --- INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', () => {
-       const role = sessionStorage.getItem("user_role");
-if (role === "Admin" || role === "Owner") {
-    document.getElementById("admin-nav-link").style.display = "block";
-}
-      document.getElementById('copyright-year').innerText = new Date().getFullYear();
+        // Set the Date
+        const dateEl = document.getElementById('current-date');
+        if (dateEl) {
+            dateEl.innerText = new Date().toLocaleDateString(undefined, { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+        }
+
+        // Show Admin Sidebar link
+        const role = sessionStorage.getItem("user_role");
+        if (role === "Admin" || role === "Owner") {
+            const adminLink = document.getElementById("admin-nav-link");
+            if (adminLink) adminLink.style.display = "block";
+        }
+
+        document.getElementById('copyright-year').innerText = new Date().getFullYear();
+        
+        // Run syncs
         runAllSyncs();
-        setInterval(runAllSyncs, 300000); // 5 min auto-refresh
+        setInterval(runAllSyncs, 300000); 
     });
 
     function runAllSyncs() {
@@ -910,32 +892,35 @@ if (role === "Admin" || role === "Owner") {
     // --- DATA FETCHERS ---
 
     // 1. Zone 1: Outreach, Inventory & Sensory
-    async function syncOutreachAndInventory() {
-        try {
-            // Outreach
-            const outRes = await fetch(`${MASTER_API_URL}?action=getOutreachData`);
-            const outJson = await outRes.json();
-            if (outJson.status === 'success') {
-                document.getElementById('followUpCount').innerText = outJson.count;
-                document.getElementById('daily-route-summary').innerText = outJson.route.join(' → ') || "No stops today";
-            }
+   async function syncOutreachAndInventory() {
+    // Safety check: Wait for portal.js to provide the API URL
+    if (typeof MASTER_API_URL === 'undefined') return; 
 
-            // Inventory Alerts
-            const invRes = await fetch(`${MASTER_API_URL}?action=getInventoryAlerts`);
-            const invJson = await invRes.json();
-            if (invJson.status === 'success') document.getElementById('alertCount').innerText = invJson.count;
+    try {
+        // 🔴 RESTORED FETCH LINE BELOW
+        const outRes = await fetch(`${MASTER_API_URL}?action=getOutreachData`);
+        const outJson = await outRes.json();
+        
+        if (outJson.status === 'success') {
+            document.getElementById('followUpCount').innerText = outJson.count;
+            document.getElementById('daily-route-summary').innerText = outJson.route.join(' → ') || "No stops today";
+        }
 
-            // Sensory
-            const senRes = await fetch(`${MASTER_API_URL}?action=getSensoryDue`);
-            const senJson = await senRes.json();
-            if (senJson.status === 'success' || senJson.status === 'idle') {
-                document.getElementById('sensoryCount').innerText = senJson.count || 0;
-                document.getElementById('sensoryStatus').innerText = (senJson.count > 0) ? "QC Samples Due" : "Logs Current";
-                document.getElementById('sensory-due-list').innerText = senJson.list || "No tasks";
-            }
-        } catch (e) { console.error("Zone 1 Gen Sync Error", e); }
-    }
+        // Inventory Alerts
+        const invRes = await fetch(`${MASTER_API_URL}?action=getInventoryAlerts`);
+        const invJson = await invRes.json();
+        if (invJson.status === 'success') document.getElementById('alertCount').innerText = invJson.count;
 
+        // Sensory
+        const senRes = await fetch(`${MASTER_API_URL}?action=getSensoryDue`);
+        const senJson = await senRes.json();
+        if (senJson.status === 'success' || senJson.status === 'idle') {
+            document.getElementById('sensoryCount').innerText = senJson.count || 0;
+            document.getElementById('sensoryStatus').innerText = (senJson.count > 0) ? "QC Samples Due" : "Logs Current";
+            document.getElementById('sensory-due-list').innerText = senJson.list || "No tasks";
+        }
+    } catch (e) { console.error("Zone 1 Gen Sync Error", e); }
+}
     // 2. Zone 1: Sampling
     async function syncSamplingCard() {
         try {
@@ -1058,35 +1043,32 @@ if (role === "Admin" || role === "Owner") {
             }
         } catch(e) { console.error("Banner Sync Error", e); }
     }
-   // --- 🟢 UI FAILSAFE: Ensures Profile Menu Clicks Work ---
-    function toggleUserMenu(event) {
-        event.stopPropagation(); // Stop the click from closing the menu immediately
+  window.toggleUserMenu = function(event) {
+        if (event) event.stopPropagation();
         const dropdown = document.getElementById("userDropdown");
-        if (dropdown) {
-            dropdown.classList.toggle("show");
-            
-            // Safety: If portal.js failed to load, populate the menu manually so it's not empty
-            if (dropdown.innerHTML.trim() === "") {
-                dropdown.innerHTML = `
-                    <a href="#" onclick="openInbox(); toggleUserMenu(event);">📩 Team Inbox</a>
-                    <a href="#" onclick="location.reload()">🔄 Refresh</a>
-                    <a href="#" onclick="handleLogout(); window.location.reload();">🚪 Logout</a>
-                `;
-            }
-        }
-    }
+        if (!dropdown) return;
 
-    // Close menu when clicking anywhere else
-    window.addEventListener('click', function(event) {
-        if (!event.target.closest('.user-profile')) {
-            const dropdowns = document.getElementsByClassName("user-dropdown-menu");
-            for (let i = 0; i < dropdowns.length; i++) {
-                if (dropdowns[i].classList.contains('show')) {
-                    dropdowns[i].classList.remove('show');
-                }
-            }
+        dropdown.classList.toggle("show");
+        
+        // Only populate if it's currently empty to avoid overwriting portal.js data
+        if (dropdown.innerHTML.trim() === "") {
+            dropdown.innerHTML = `
+                <a href="#" onclick="if(window.openInbox) openInbox(); else alert('System Loading...');">📩 Team Inbox</a>
+                <a href="#" onclick="if(window.openProfileModal) openProfileModal();">⚙️ Update Info</a>
+                <a href="#" onclick="location.reload()">🔄 Refresh Page</a>
+                <hr style="margin:5px 0; border:0; border-top:1px solid #eee;">
+                <a href="#" onclick="handleLogout();" style="color: #ef4444;">🚪 Logout</a>
+            `;
         }
-    });
+    };
+
+// Close menu when clicking anywhere else
+window.addEventListener('click', function(event) {
+    if (!event.target.closest('.user-profile')) {
+        const d = document.getElementById("userDropdown");
+        if (d && d.classList.contains('show')) d.classList.remove('show');
+    }
+});
 </script>
   
 </body>
