@@ -60,7 +60,7 @@ function setupUserProfile() {
                 <span>📩 Team Inbox</span>
                 <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px;">0</span>
             </a>
-            <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">⚙️ Update Info</a>
+            <a href="#" onclick="updateUserInfo(); toggleUserMenu(event);">⚙️ Update Info</a>
             <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
         `;
     }
