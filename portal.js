@@ -1,0 +1,182 @@
+// --- 1. THE GATEKEEPER (Security) ---
+(function() {
+    const auth = sessionStorage.getItem("sbc_auth");
+    const role = sessionStorage.getItem("user_role");
+    // Get current path to avoid infinite loop on index.html
+    const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/");
+    
+    if ((auth !== "true" || !role) && !isLoginPage) {
+        console.warn("⛔ Unauthorized. Redirecting...");
+        window.location.href = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/index.html";
+    }
+})();
+
+// --- CONFIGURATION ---
+const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
+const PORTAL_ROOT = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/";
+
+// --- 2. ONESIGNAL INIT (Notifications) ---
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+        appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+        serviceWorkerPath: "Suburban-Brewing-Company-Portal/OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+        allowLocalhostAsSecureOrigin: true,
+    });
+    
+    // Auto-Login Sync
+    const user = sessionStorage.getItem("user_name");
+    if(user) OneSignal.login(user.toLowerCase());
+});
+
+// --- 3. GLOBAL INITIALIZATION ---
+window.addEventListener('load', () => {
+    setupUserProfile();
+    checkUnreadCount();
+    setInterval(checkUnreadCount, 60000); // Check for messages every minute
+});
+
+// --- 4. USER PROFILE & UI ---
+function setupUserProfile() {
+    const name = sessionStorage.getItem("user_name") || "User";
+    const role = sessionStorage.getItem("user_title") || "Staff";
+    const pic = sessionStorage.getItem("user_pic") || PORTAL_ROOT + "SBC-Logo.png";
+
+    // Update Header Elements if they exist on the page
+    if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
+    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = role;
+    if(document.getElementById("display-avatar")) {
+        const img = document.getElementById("display-avatar");
+        img.src = pic;
+        img.onerror = function() { this.src = PORTAL_ROOT + "SBC-Logo.png"; };
+    }
+
+    // Inject Dropdown Menu Logic
+    const dropdown = document.getElementById("userDropdown");
+    if (dropdown) {
+        dropdown.innerHTML = `
+            <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span>📩 Team Inbox</span>
+                <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px;">0</span>
+            </a>
+            <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">⚙️ Update Info</a>
+            <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
+        `;
+    }
+}
+
+function toggleUserMenu(e) {
+    if(e) e.stopPropagation();
+    const d = document.getElementById("userDropdown");
+    if(d) d.classList.toggle("show");
+}
+
+// Close dropdown when clicking outside
+window.onclick = function(event) {
+    if (!event.target.closest('.user-profile')) {
+        const d = document.getElementById("userDropdown");
+        if (d && d.classList.contains('show')) d.classList.remove('show');
+    }
+}
+
+// --- 5. MESSAGING SYSTEM (The Inbox) ---
+async function checkUnreadCount() {
+    const user = sessionStorage.getItem("user_name");
+    if(!user) return;
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}`);
+        const json = await res.json();
+        if (json.status === 'success') {
+            const count = json.messages.filter(m => m.status === "Unread").length;
+            updateBadgeUI(count);
+        }
+    } catch(e) { console.error("Badge Error", e); }
+}
+
+function updateBadgeUI(count) {
+    const outer = document.getElementById('msg-badge');
+    const inner = document.getElementById('dropdown-badge');
+    if (count > 0) {
+        if(outer) { outer.innerText = count > 9 ? '9+' : count; outer.style.display = 'flex'; }
+        if(inner) { inner.innerText = count; inner.style.display = 'inline-block'; }
+    } else {
+        if(outer) outer.style.display = 'none';
+        if(inner) inner.style.display = 'none';
+    }
+}
+
+async function openInbox() {
+    const user = sessionStorage.getItem("user_name");
+    Swal.fire({ title: 'Loading...', didOpen: () => Swal.showLoading() });
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}`);
+        const json = await res.json();
+        let html = '<div style="text-align:center;color:#888;padding:20px;">No messages.</div>';
+        
+        if (json.status === 'success' && json.messages.length > 0) {
+            html = '<div style="max-height:400px;overflow-y:auto;border:1px solid #eee;border-radius:8px;">' + 
+            json.messages.map(m => {
+                const bg = m.status === "Unread" ? "#f0f9ff" : "#fff";
+                const bold = m.status === "Unread" ? "font-weight:bold;" : "";
+                return `<div onclick="readMessage('${m.id}','${m.from}','${m.subject}','${m.body}')" 
+                style="background:${bg};padding:12px;border-bottom:1px solid #eee;cursor:pointer;text-align:left;">
+                <div style="font-size:11px;color:#666;">${new Date(m.date).toLocaleDateString()} • ${m.from}</div>
+                <div style="${bold}color:#333;">${m.subject}</div></div>`;
+            }).join('') + '</div>';
+        }
+        Swal.fire({ title: 'Team Inbox', width: '500px', html: html + '<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%;margin-top:10px;">+ New Message</button>', showConfirmButton: false, showCloseButton: true });
+    } catch(e) { Swal.fire('Error', 'Inbox failed.', 'error'); }
+}
+
+function readMessage(id, from, subj, body) {
+    Swal.fire({ title: subj, html: `<div style="text-align:left;color:#555;"><small>From: ${from}</small><hr>${body}</div>`, showCancelButton:true, confirmButtonText:"Reply", cancelButtonText:"Close" }).then(r => {
+        // Mark read in background
+        fetch(MASTER_API_URL, { method:'POST', body:JSON.stringify({action:'markRead', id:id}) }).then(checkUnreadCount);
+        if(r.isConfirmed) openComposeModal(from, "Re: "+subj);
+        else openInbox();
+    });
+}
+
+async function openComposeModal(to="", subj="") {
+    // We need users list first
+    let users = [];
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getUsers`);
+        const json = await res.json();
+        users = json.users || [];
+    } catch(e){}
+
+    const options = users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('');
+    const {value:f} = await Swal.fire({ title:'Compose', html:`<select id="swal-to" class="swal2-input">${options}</select><input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}"><textarea id="swal-body" class="swal2-textarea" placeholder="Message"></textarea>`, preConfirm: () => ({ to:document.getElementById('swal-to').value, sub:document.getElementById('swal-sub').value, body:document.getElementById('swal-body').value }) });
+    
+    if(f) {
+        Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
+        await fetch(MASTER_API_URL, { method:'POST', body:JSON.stringify({action:'sendMessage', data:{sender:sessionStorage.getItem("user_name"), recipient:f.to, subject:f.sub, body:f.body}}) });
+        
+        // Local Notification Trigger
+        if(Notification.permission === 'granted' && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(reg => reg.showNotification("Message Sent", {body:`To: ${f.to}`, icon: PORTAL_ROOT+'SBC-Logo.png'}));
+        }
+        Swal.fire('Sent!', '', 'success');
+    }
+}
+
+// --- 6. UTILITIES ---
+async function openProfileModal() {
+    const { value: f } = await Swal.fire({ title: 'Update Profile', html: `<input id="swal-pname" class="swal2-input" placeholder="Name" value="${sessionStorage.getItem('user_name')||''}"><input id="swal-ptitle" class="swal2-input" placeholder="Title" value="${sessionStorage.getItem('user_title')||''}"><input id="swal-ppic" class="swal2-input" placeholder="Photo URL" value="${sessionStorage.getItem('user_pic')||''}">`, preConfirm: () => ({ name: document.getElementById('swal-pname').value, title: document.getElementById('swal-ptitle').value, pic: document.getElementById('swal-ppic').value }) });
+    if (f) {
+        sessionStorage.setItem('user_name', f.name);
+        sessionStorage.setItem('user_title', f.title);
+        sessionStorage.setItem('user_pic', f.pic);
+        setupUserProfile();
+        // Sync OneSignal Login
+        if(window.OneSignal) OneSignal.login(f.name.toLowerCase());
+        Swal.fire('Saved', '', 'success');
+    }
+}
+
+function handleLogout() {
+    sessionStorage.clear();
+    window.location.href = PORTAL_ROOT + "index.html";
+}
