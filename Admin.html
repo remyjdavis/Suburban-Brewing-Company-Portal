@@ -230,21 +230,27 @@
     window.addEventListener('load', async () => {
         console.log("🟢 DOM Loaded. Starting System...");
         
-        // 1. MANUAL REGISTRATION (Override)
+        // 1. MANUAL REGISTRATION (Force the correct file)
         if ('serviceWorker' in navigator) {
             try {
-                // Register explicitly to the correct path
+                // Kill root workers first
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for(let reg of regs) {
+                    if(reg.scope === "https://remyjdavis.github.io/") await reg.unregister();
+                }
+
+                // Register explicitly
                 const reg = await navigator.serviceWorker.register('OneSignalSDKWorker.js', { 
                     scope: '/Suburban-Brewing-Company-Portal/' 
                 });
                 console.log("✅ Worker Registered! Scope:", reg.scope);
                 
-                // 2. Start OneSignal AFTER registration is confirmed
+                // Start OneSignal Only After Registration
                 initOneSignal();
                 
             } catch(e) {
                 console.error("❌ Worker Manual Register Failed:", e);
-                // Try initializing anyway, just in case
+                // Fallback init
                 initOneSignal();
             }
         }
@@ -260,7 +266,7 @@
     });
 
     // =========================================================
-    // 1. ONESIGNAL SETUP (MATCHING MANUAL SCOPE)
+    // 1. ONESIGNAL SETUP (SIMPLIFIED INIT)
     // =========================================================
     function initOneSignal() {
         console.log("🚀 STARTING OneSignal SDK..."); 
@@ -271,10 +277,9 @@
                 await OneSignal.init({
                     appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
                     
-                    // 🔴 MATCHING PATHS TO MANUAL REGISTER
+                    // 🔴 ONLY SET PATH. 
+                    // Do NOT set serviceWorkerPath/Param (Causes conflict with manual register)
                     path: "/Suburban-Brewing-Company-Portal/", 
-                    serviceWorkerPath: "OneSignalSDKWorker.js",
-                    serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
                     
                     allowLocalhostAsSecureOrigin: true,
                     logLevel: "warn"
