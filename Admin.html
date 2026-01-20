@@ -5,7 +5,7 @@
     // --- 🔒 THE GATEKEEPER ---
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
-        const role = sessionStorage.getItem("user_role"); 
+        const role = sessionStorage.getItem("user_role");
         if (auth !== "true" || (role !== "Admin" && role !== "Owner")) {
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "index.html");
@@ -20,13 +20,14 @@
   <link rel="icon" type="image/png" href="logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <style>
     :root { --bg: #f8fafc; --sidebar: #0f172a; --accent: #2563eb; --text-main: #1e293b; --text-muted: #64748b; --card-bg: #ffffff; --danger: #ef4444; --success: #10b981; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: var(--text-main); font-family: 'Inter', sans-serif; display: flex; min-height: 100vh; }
     
-    /* SIDEBAR & NAV */
+    /* SIDEBAR */
     .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; transition: all 0.3s ease; }
     .sidebar h2 { margin: 0 24px 32px; font-size: 20px; font-weight: 800; color: #fff; }
     .nav-section-title { font-size: 11px; text-transform: uppercase; color: #94a3b8; margin: 18px 24px 8px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
@@ -36,7 +37,7 @@
     .collapsible-content { max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease; }
     .collapsible-content.collapsed { max-height: 0; }
     
-    /* MAIN CONTENT */
+    /* MAIN */
     .main { margin-left: 260px; flex-grow: 1; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
     .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
     .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 30px; }
@@ -53,7 +54,7 @@
     }
     #menu-toggle { display: none; }
 
-    /* UTILS & UI */
+    /* UTILS */
     .btn-primary { background: var(--accent); color: white; padding: 10px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
     .notification-badge { position: absolute; top: 0px; right: 0px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: none; justify-content: center; align-items: center; font-weight: 800; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
     .user-profile { position: relative; display: flex; align-items: center; gap: 12px; cursor: pointer; }
@@ -225,7 +226,7 @@
     let userDatabase = [];
 
     // --- INITIALIZATION ---
-    window.addEventListener('load', async () => {
+    window.addEventListener('DOMContentLoaded', async () => {
         console.log("🟢 DOM Loaded. Starting System...");
         setupUserProfile();
         loadUsers();
@@ -234,59 +235,31 @@
         loadAuditLogs();
         checkUnreadCount();
         
-        // OneSignal Init
-        initPushNotifications();
+        // --- ONESIGNAL INIT (SIMPLE VERSION) ---
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(function(OneSignal) {
+            OneSignal.init({
+                appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+                
+                // 🛑 STANDARD CONFIG: Points to the folder
+                path: "/Suburban-Brewing-Company-Portal/", 
+                
+                // 🛑 STANDARD CONFIG: Points to the file you just renamed
+                serviceWorkerPath: "OneSignalSDKWorker.js",
+                
+                allowLocalhostAsSecureOrigin: true
+            });
+            
+            // Login User
+            const userName = sessionStorage.getItem("user_name");
+            if(userName) {
+                console.log("Registering User:", userName);
+                OneSignal.login(userName.toLowerCase());
+            }
+        });
         
         setInterval(checkUnreadCount, 60000);
     });
-
-    // =========================================================
-    // 1. ONESIGNAL SETUP (Standard V16 Implementation)
-    // =========================================================
-    function initPushNotifications() {
-        console.log("🚀 STARTING OneSignal..."); 
-
-        // Inject Script Dynamically
-        if (!document.getElementById('onesignal-sdk-script')) {
-            const script = document.createElement('script');
-            script.id = 'onesignal-sdk-script';
-            script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
-            script.defer = true;
-            document.head.appendChild(script);
-        }
-
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal) {
-            try {
-                await OneSignal.init({
-                    appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
-                    
-                    // 🔴 EXPLICIT PATHS
-                    path: "/Suburban-Brewing-Company-Portal/", 
-                    serviceWorkerPath: "SBCWorker.js",
-                    serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
-                    
-                    allowLocalhostAsSecureOrigin: true,
-                    logLevel: "warn"
-                });
-                console.log("✅ OneSignal Init Success.");
-                
-                // LOGIN USER
-                const userName = sessionStorage.getItem("user_name");
-                if(userName) OneSignal.login(userName.toLowerCase());
-
-            } catch (error) { console.error("❌ Init FAILED:", error); }
-        });
-        
-        // Click Listener for Permission
-        document.body.addEventListener('click', () => {
-            window.OneSignalDeferred.push(function(OneSignal) {
-                if (OneSignal.Notifications.permission !== 'granted') {
-                    OneSignal.Notifications.requestPermission();
-                }
-            });
-        }, { once: true });
-    }
 
     // =========================================================
     // 2. DATA FUNCTIONS
@@ -355,8 +328,6 @@
             Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
             try {
                 await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sendMessage', data: f }) });
-                // Safe Local Push
-                if(Notification.permission==='granted' && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(reg => reg.showNotification("Sent", { body: "To: " + f.recipient, icon: "logo.png" }));
                 Swal.fire('Sent!', '', 'success');
             } catch(e) { Swal.fire('Error', 'Failed to send.', 'error'); }
         }
@@ -372,7 +343,6 @@
         const b = document.getElementById('userTableBody'); if(!b) return; b.innerHTML = "";
         users.forEach(u => { b.innerHTML += `<tr><td style="font-weight:600;">${u.name}</td><td>${u.email}</td><td>${u.role}</td><td>${u.status}</td><td style="text-align:right;"><button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${u.username}')">🗑️</button></td></tr>`; });
     }
-    // (Other config functions condensed for space but fully functional)
     async function loadSystemConfig() { try{ const res=await fetch(`${MASTER_API_URL}?action=getSystemConfig`); const json=await res.json(); if(json.status==='success') { const c=json.config; if(document.getElementById('conf-announce-text')) document.getElementById('conf-announce-text').value=c.announcement_text||""; if(document.getElementById('conf-sales-goal')) document.getElementById('conf-sales-goal').value=c.sales_goal_monthly||50000; } }catch(e){} }
     async function saveAnnouncement() { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', data:{ announcement_text: document.getElementById('conf-announce-text').value, announcement_active: document.getElementById('conf-announce-active').checked?"TRUE":"FALSE" } }) }); Swal.fire('Saved', '', 'success'); }
     async function saveThresholds() { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', data:{ sales_goal_monthly: document.getElementById('conf-sales-goal').value, inventory_threshold_low: document.getElementById('conf-thresh-low').value, inventory_threshold_crit: document.getElementById('conf-thresh-crit').value } }) }); Swal.fire('Saved', '', 'success'); }
