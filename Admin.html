@@ -1033,9 +1033,11 @@ function initPushNotifications() {
     OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
             appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d", // 🔴 ENSURE THIS MATCHES ONESIGNAL DASHBOARD
-            allowLocalhostAsSecureOrigin: true, // Helpful for debugging
-            serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+           // 🔴 ADD THESE TWO LINES TO HANDLE THE SUBDIRECTORY:
             serviceWorkerPath: "OneSignalSDKWorker.js",
+            serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+            
+            allowLocalhostAsSecureOrigin: true,
         });
         
         const userName = sessionStorage.getItem("user_name");
