@@ -915,16 +915,30 @@
     // =========================================================
     function setupUserProfile() {
         const name = sessionStorage.getItem("user_name") || "Admin";
-        const role = sessionStorage.getItem("user_role") || "Staff";
+        const role = sessionStorage.getItem("user_role"); // This is "Admin" (Access Level)
+        
+        // 🔴 FIX: Explicitly get the Job Title we saved in Login
+        // If "user_title" is empty, ONLY THEN use "user_role"
+        const displayTitle = sessionStorage.getItem("user_title") || role || "Staff";
+        
         const userPic = sessionStorage.getItem("user_pic") || "logo.png";
         
         if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
-        if(document.getElementById("display-role")) document.getElementById("display-role").innerText = role;
-        if(document.getElementById("display-avatar")) document.getElementById("display-avatar").src = userPic;
+        
+        // This will now print "Sales Rep"
+        if(document.getElementById("display-role")) document.getElementById("display-role").innerText = displayTitle;
+        
+        if(document.getElementById("display-avatar")) {
+            const img = document.getElementById("display-avatar");
+            img.src = userPic;
+            img.onerror = function() { this.onerror = null; this.src = "logo.png"; };
+        }
 
+        // ... existing dropdown code ...
         const dropdown = document.getElementById("userDropdown");
         if (dropdown) {
-            dropdown.innerHTML = `
+            // (Keep your existing dropdown HTML generation here)
+             dropdown.innerHTML = `
                 <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                     <span><span class="menu-icon">📩</span> Team Inbox</span>
                     <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px; min-width: 20px; text-align: center;">0</span>
