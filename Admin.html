@@ -546,38 +546,7 @@
             document.head.appendChild(script);
         }
 
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal) {
-            
-            // 2. Initialize with the FILE WE KNOW EXISTS (SBCWorker.js)
-            try {
-                await OneSignal.init({
-                    appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
-                    
-                    // 🔴 Path to the FOLDER
-                    path: "/Suburban-Brewing-Company-Portal/", 
-                    
-                    // 🔴 Path to the FILE
-                    serviceWorkerPath: "SBCWorker.js",
-                    
-                    // 🔴 Scope (Forces browser to look in folder, not root)
-                    serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
-                    
-                    allowLocalhostAsSecureOrigin: true,
-                    logLevel: "warn"
-                });
-                console.log("✅ Init Success.");
-            } catch (error) {
-                console.error("❌ Init FAILED:", error);
-            }
-            
-            // 3. Login User
-            const userName = sessionStorage.getItem("user_name");
-            if(userName) {
-                console.log("🔗 Registering:", userName.toLowerCase());
-                OneSignal.login(userName.toLowerCase());
-            }
-        });
+        window.OneSignal = window.OneSignal || []; OneSignal.push(function() { OneSignal.init({ appId: "...", path: "/Suburban-Brewing-Company-Portal/", serviceWorkerPath: "/Suburban-Brewing-Company-Portal/SBCWorker.js", serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" }, allowLocalhostAsSecureOrigin: true, logLevel: "warn" }); const userName = sessionStorage.getItem("user_name"); if (userName) OneSignal.login(userName.toLowerCase()); });
     }
 
     // =========================================================
