@@ -6,84 +6,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script>
 
   <style>
     body { font-family: sans-serif; background: #f8fafc; padding: 20px; text-align: center; }
-    h1 { color: #1e293b; }
-    .status { margin-top: 20px; padding: 15px; background: white; border: 1px solid #ccc; display: inline-block; border-radius: 8px; }
+    .log-box { text-align: left; background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace; max-width: 600px; margin: 20px auto; overflow-x: auto; }
   </style>
 </head>
 <body>
 
-  <h1>Admin Console (Reset Mode)</h1>
-  <div class="status" id="log-output">System initializing...</div>
+  <h1>Admin Console (Manual Override)</h1>
+  <div class="log-box" id="debug-log">System Initializing...<br></div>
 
 <script>
-    // --- 2. CONFIGURATION ---
-    const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
-
-    // --- 3. DYNAMIC PATH CALCULATOR ---
-    // This finds "/Suburban-Brewing-Company-Portal/" automatically
-    const CURRENT_PATH = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-
+    // --- HELPERS ---
     function log(msg) {
         console.log(msg);
-        document.getElementById('log-output').innerHTML += "<br>" + msg;
+        document.getElementById('debug-log').innerHTML += ">> " + msg + "<br>";
     }
 
-    window.addEventListener('load', async () => {
-        log("🚀 Starting System Reset...");
+    const WORKER_URL = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/OneSignalSDKWorker.js";
+    const SCOPE_URL = "/Suburban-Brewing-Company-Portal/";
 
-        // --- 4. KILL THE ZOMBIE WORKER (ROOT) ---
+    // --- MAIN LOGIC ---
+    window.addEventListener('load', async () => {
+        log("🚀 Starting Manual Override...");
+
         if ('serviceWorker' in navigator) {
+            
+            // 1. KILL BAD WORKERS (Cleanup)
             const regs = await navigator.serviceWorker.getRegistrations();
             for(let reg of regs) {
-                // If scope is NOT our current folder, it's the bad root worker. Kill it.
-                if (!reg.scope.includes(CURRENT_PATH)) {
-                    log("💀 Killing Bad Worker: " + reg.scope);
+                // If it's registered at the ROOT, it is wrong. Kill it.
+                if (reg.scope === "https://remyjdavis.github.io/") {
+                    log("💀 Killing Root Worker: " + reg.scope);
                     await reg.unregister();
                 }
             }
-        }
 
-        // --- 5. INITIALIZE ONESIGNAL (CORRECTLY) ---
+            // 2. MANUAL REGISTRATION (The Fix)
+            // We force the browser to go to the specific URL we know exists.
+            try {
+                log("🛠️ Attempting Manual Register: " + WORKER_URL);
+                
+                const registration = await navigator.serviceWorker.register(WORKER_URL, { 
+                    scope: SCOPE_URL 
+                });
+                
+                log("✅ Worker Registered! Scope: " + registration.scope);
+                
+                // 3. START ONESIGNAL (Only after worker exists)
+                initOneSignal();
+
+            } catch (err) {
+                log("❌ Manual Register Failed: " + err.message);
+                log("⚠️ Verify file name in GitHub is explicitly: OneSignalSDKWorker.js");
+            }
+        } else {
+            log("❌ Service Workers not supported in this browser.");
+        }
+    });
+
+    function initOneSignal() {
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function(OneSignal) {
             try {
-                log("⚙️ Configuring OneSignal with path: " + CURRENT_PATH);
+                log("📡 Initializing OneSignal SDK...");
                 
                 await OneSignal.init({
                     appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
-                    
-                    // 🔴 USE THE DYNAMIC PATH (Impossible to be wrong)
-                    path: CURRENT_PATH, 
-                    
-                    // 🔴 WORKER FILE NAME
-                    serviceWorkerPath: "OneSignalSDKWorker.js",
-                    
-                    // 🔴 LOCK SCOPE TO FOLDER
-                    serviceWorkerParam: { scope: CURRENT_PATH },
-                    
                     allowLocalhostAsSecureOrigin: true,
-                    logLevel: "warn"
+                    // We don't need 'path' parameters because we manually registered it above
                 });
                 
-                log("✅ OneSignal SUCCESS!");
+                log("🎉 OneSignal Connected!");
                 
-                // --- 6. LOGIN (ONLY AFTER SUCCESS) ---
+                // Login
                 const userName = sessionStorage.getItem("user_name");
                 if(userName) {
-                    log("👤 Logging in as: " + userName);
+                    log("👤 Logging in: " + userName);
                     OneSignal.login(userName.toLowerCase());
                 }
 
             } catch (error) {
-                log("❌ ERROR: " + error.message);
-                console.error(error);
+                log("❌ SDK Init Error: " + error);
             }
         });
-    });
+    }
 </script>
 </body>
 </html>
