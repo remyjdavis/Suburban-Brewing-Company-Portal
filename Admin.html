@@ -509,6 +509,8 @@
         loadMasterData();
         loadAuditLogs();
         checkUnreadCount(); // Run Message Check immediately
+      // 🔴 NEW: Ask for OS Permission
+        requestNotificationPermission();
         setInterval(checkUnreadCount, 60000); // Check for new messages every 60 seconds
     });
 
@@ -665,19 +667,21 @@
         });
 
         if (form) {
-            Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
-            try {
-                await fetch(MASTER_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'sendMessage', data: form })
-                });
-              // 🔴 ADD THIS LINE:
-    sendLocalNotification("Message Sent", "Your message to " + form.recipient + " was delivered.");
-                Swal.fire('Sent!', 'Message delivered to ' + form.recipient, 'success').then(() => openInbox());
-            } catch(e) {
-                Swal.fire('Error', 'Failed to send message.', 'error');
-            }
+        Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
+        try {
+            await fetch(MASTER_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'sendMessage', data: form })
+            });
+            
+            // 🔴 TRIGGER SYSTEM NOTIFICATION
+            sendLocalNotification("Message Sent", "Your message to " + form.recipient + " was delivered.");
+
+            Swal.fire('Sent!', 'Message delivered to ' + form.recipient, 'success').then(() => openInbox());
+        } catch(e) {
+            Swal.fire('Error', 'Failed to send message.', 'error');
         }
+    }
     }
 
     // =========================================================
@@ -983,6 +987,30 @@
         Notification.requestPermission();
     }
 }
+  // =========================================================
+    // 8. SYSTEM-LEVEL NOTIFICATIONS
+    // =========================================================
+    async function requestNotificationPermission() {
+        if (!('serviceWorker' in navigator)) return;
+
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            await navigator.serviceWorker.register('sw.js');
+            console.log("System Notifications Enabled");
+        }
+    }
+
+    function sendLocalNotification(title, message) {
+        if (Notification.permission === 'granted') {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification(title, {
+                    body: message,
+                    icon: 'logo.png',
+                    vibrate: [200, 100, 200]
+                });
+            });
+        }
+    }
 </script>
 </body>
 </html>
