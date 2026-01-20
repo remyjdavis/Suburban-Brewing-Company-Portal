@@ -1001,23 +1001,28 @@
 }
 // --- 9. ONESIGNAL REGISTRATION ---
 function initPushNotifications() {
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal) {
-            // 🔴 Safety check to prevent double-initialization
-            if (OneSignal.initialized) return;
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+        // Prevent double-init
+        if (OneSignal.initialized) return;
 
-            await OneSignal.init({
-            appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d", // 🔴 ENSURE THIS MATCHES ONESIGNAL DASHBOARD
-           path: "/Suburban-Brewing-Company-Portal/", 
-                serviceWorkerPath: "OneSignalSDKWorker.js",
-                serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
-                allowLocalhostAsSecureOrigin: true,
-            });
-            
-            const userName = sessionStorage.getItem("user_name");
-            if(userName) OneSignal.login(userName); 
+        await OneSignal.init({
+            appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d", 
+            path: "/Suburban-Brewing-Company-Portal/", 
+            serviceWorkerPath: "OneSignalSDKWorker.js",
+            serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+            allowLocalhostAsSecureOrigin: true,
         });
-    }
+        
+        const userName = sessionStorage.getItem("user_name");
+        
+        // 🔴 THIS IS THE FIX: Force lowercase registration
+        if(userName) {
+            console.log("Registering OneSignal User:", userName.toLowerCase());
+            OneSignal.login(userName.toLowerCase()); 
+        }
+    });
+}
   async function requestNotificationPermission() {
         if (!('serviceWorker' in navigator)) return;
         const permission = await Notification.requestPermission();
