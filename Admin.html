@@ -531,19 +531,31 @@
     // 1. NOTIFICATION & BADGE ENGINE
     // =========================================================
     async function checkUnreadCount() {
-        const user = sessionStorage.getItem("user_name");
-        if(!user) return;
+    const user = sessionStorage.getItem("user_name");
+    if(!user || !navigator.onLine) return; 
 
-        try {
-            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}`);
-            const json = await res.json();
-            
-            if (json.status === 'success') {
-                const unreadCount = json.messages.filter(m => m.status === "Unread").length;
-                updateBadgeUI(unreadCount);
+    // Add timestamp to prevent caching
+    const url = `${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}&ts=${Date.now()}`;
+
+    try {
+        const res = await fetch(url, {
+            method: "GET",
+            redirect: "follow", // 🔴 CRITICAL: Follow Google's 302 redirect
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8" // 🔴 CRITICAL: Simple content type avoids CORS preflight
             }
-        } catch(e) { console.error("Badge Check Error", e); }
+        });
+
+        const json = await res.json();
+        
+        if (json.status === 'success') {
+            const unreadCount = json.messages.filter(m => m.status === "Unread").length;
+            updateBadgeUI(unreadCount);
+        }
+    } catch(e) { 
+        console.warn("Badge Fetch Warning:", e); 
     }
+}
 
     function updateBadgeUI(count) {
         const outerBadge = document.getElementById('msg-badge');
@@ -577,7 +589,11 @@
         Swal.fire({ title: 'Loading Inbox...', didOpen: () => Swal.showLoading() });
 
         try {
-            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(currentUser)}`);
+           const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(currentUser)}&ts=${Date.now()}`, {
+    method: "GET",
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+});
             const json = await res.json();
             
             let htmlContent = '<div style="text-align:center; color:#94a3b8; padding:20px;">No messages found.</div>';
