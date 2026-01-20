@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+  // 🛡️ INSTANT GATEKEEPER: Runs before the page even renders
+  (function() {
+    const sessionUser = sessionStorage.getItem("user_email");
+    const sessionRole = sessionStorage.getItem("user_role");
+
+    // If no email or role exists in session, stop everything and redirect
+    if (!sessionUser || !sessionRole) {
+      window.location.replace("login.html"); // .replace prevents using the 'back' button
+    }
+  })();
+</script>
   <base target="_top">
   <meta charset="UTF-8" />
   <title>Suburban Brewing Co. | Command Center</title>
