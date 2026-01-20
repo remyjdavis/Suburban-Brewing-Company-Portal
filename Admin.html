@@ -1,27 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>
-    // --- 🔒 THE GATEKEEPER ---
-    (function() {
-        const auth = sessionStorage.getItem("sbc_auth");
-        const role = sessionStorage.getItem("user_role");
-        if (auth !== "true" || (role !== "Admin" && role !== "Owner")) {
-            const repoPath = "/Suburban-Brewing-Company-Portal/";
-            window.location.replace(repoPath + "index.html");
-        }
-    })();
-  </script>
-  
   <meta charset="UTF-8" />
   <title>Admin Console | Suburban Brewing</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#0f172a">
   <link rel="icon" type="image/png" href="logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <style>
     :root { --bg: #f8fafc; --sidebar: #0f172a; --accent: #2563eb; --text-main: #1e293b; --text-muted: #64748b; --card-bg: #ffffff; --danger: #ef4444; --success: #10b981; }
@@ -227,37 +212,41 @@
     let userDatabase = [];
 
     // --- INITIALIZATION ---
-    window.addEventListener('DOMContentLoaded', async () => {
+    window.addEventListener('load', async () => {
         console.log("🟢 DOM Loaded. Starting System...");
         
-        // 1. ZOMBIE KILLER: Unregister ROOT workers
+        // 1. SECURITY: KILL ZOMBIE WORKERS FIRST
         if ('serviceWorker' in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
             for(let reg of regs) {
-                if (reg.scope === "https://remyjdavis.github.io/") {
+                // If it is NOT in our folder, it is the root zombie. Kill it.
+                if (!reg.scope.includes("Suburban-Brewing-Company-Portal")) {
                     console.log("💀 KILLED ROOT WORKER:", reg.scope);
                     await reg.unregister();
                 }
             }
         }
 
-        // 2. MANUAL WORKER INJECTION (The "Hard" Fix)
-        // We bypass OneSignal's loader and register the file directly from the correct URL
+        // 2. MANUALLY REGISTER THE WORKER (The "Hard Fix")
+        // We do this BEFORE loading OneSignal SDK to prevent it from looking at Root
         if ('serviceWorker' in navigator) {
             try {
-                const FULL_WORKER_URL = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/OneSignalSDKWorker.js";
-                const WORKER_SCOPE = "/Suburban-Brewing-Company-Portal/";
+                const workerUrl = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/OneSignalSDKWorker.js";
+                const workerScope = "/Suburban-Brewing-Company-Portal/";
                 
-                const reg = await navigator.serviceWorker.register(FULL_WORKER_URL, { scope: WORKER_SCOPE });
-                console.log("✅ Worker Manually Registered at:", reg.scope);
+                const registration = await navigator.serviceWorker.register(workerUrl, { scope: workerScope });
+                console.log("✅ Worker Manually Registered at:", registration.scope);
                 
-                // 3. Start OneSignal AFTER manual registration
-                initOneSignal();
+                // 3. ONLY NOW DO WE LOAD THE SDK
+                loadOneSignalSDK();
                 
             } catch(e) {
                 console.error("❌ Manual Register Failed:", e);
-                initOneSignal(); // Try anyway
+                // Try loading SDK anyway as fallback
+                loadOneSignalSDK();
             }
+        } else {
+            loadOneSignalSDK();
         }
 
         setupUserProfile();
@@ -266,45 +255,40 @@
         loadMasterData();
         loadAuditLogs();
         checkUnreadCount();
-        
         setInterval(checkUnreadCount, 60000);
     });
 
     // =========================================================
-    // 1. ONESIGNAL SETUP (MINIMAL CONFIG)
+    // 1. ONESIGNAL SETUP (DYNAMIC INJECTION)
     // =========================================================
-    function initOneSignal() {
-        console.log("🚀 STARTING OneSignal SDK..."); 
+    function loadOneSignalSDK() {
+        console.log("🚀 Injecting OneSignal SDK..."); 
+        const script = document.createElement('script');
+        script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+        script.async = true;
+        document.head.appendChild(script);
 
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal) {
-            try {
-                await OneSignal.init({
-                    appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+        script.onload = () => {
+            console.log("📦 SDK Loaded. Initializing...");
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            OneSignalDeferred.push(async function(OneSignal) {
+                try {
+                    await OneSignal.init({
+                        appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+                        // 🔴 JUST THE PATH. NO WORKER PATH. NO SCOPE (It's already registered!)
+                        path: "/Suburban-Brewing-Company-Portal/", 
+                        allowLocalhostAsSecureOrigin: true,
+                        logLevel: "warn"
+                    });
+                    console.log("✅ OneSignal Init Success.");
                     
-                    // 🔴 PATH ONLY. No worker path (it's already registered above)
-                    path: "/Suburban-Brewing-Company-Portal/", 
-                    
-                    allowLocalhostAsSecureOrigin: true,
-                    logLevel: "warn"
-                });
-                console.log("✅ OneSignal SDK Initialized.");
-                
-                // LOGIN USER
-                const userName = sessionStorage.getItem("user_name");
-                if(userName) OneSignal.login(userName.toLowerCase());
+                    // LOGIN USER
+                    const userName = sessionStorage.getItem("user_name");
+                    if(userName) OneSignal.login(userName.toLowerCase());
 
-            } catch (error) { console.error("❌ SDK Init Error:", error); }
-        });
-        
-        // Click Listener for Permission
-        document.body.addEventListener('click', () => {
-            window.OneSignalDeferred.push(function(OneSignal) {
-                if (OneSignal.Notifications.permission !== 'granted') {
-                    OneSignal.Notifications.requestPermission();
-                }
+                } catch (error) { console.error("❌ SDK Init Error:", error); }
             });
-        }, { once: true });
+        };
     }
 
     // =========================================================
