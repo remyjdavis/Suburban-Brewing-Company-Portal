@@ -502,16 +502,19 @@
     let userDatabase = [];
 
     // --- INITIALIZATION ---
-    window.addEventListener('DOMContentLoaded', async () => {
+    window.addEventListener('load', async () => {
         console.log("🟢 DOM Loaded. Starting System...");
 
-        // 🛑 STEP 1: FORCE UNREGISTER ALL WORKERS
-        // This runs BEFORE anything else to delete the 404 Zombie
+        // 🛑 STEP 1: KILL ZOMBIES (Fixes the 404 Errors)
+        // This unregisters the broken "OneSignalSDKWorker.js" from browser memory
         if ('serviceWorker' in navigator) {
             const registrations = await navigator.serviceWorker.getRegistrations();
             for(let registration of registrations) {
-                await registration.unregister();
-                console.log("💀 Deleted Zombie Worker:", registration.scope);
+                // If it's NOT the correct worker, kill it
+                if (!registration.active || !registration.active.scriptURL.includes("SBCWorker.js")) {
+                    console.log("💀 Killing Zombie Worker:", registration.scope);
+                    await registration.unregister();
+                }
             }
         }
 
@@ -522,8 +525,7 @@
         loadAuditLogs();
         checkUnreadCount(); 
 
-        // 🛑 STEP 2: START ONESIGNAL AFTER CLEANUP
-        // We wait 500ms to ensure the browser has cleared the cache
+        // 🛑 STEP 2: START ONESIGNAL (With a small delay to ensure cleanup)
         setTimeout(() => {
             initPushNotifications();
         }, 500);
@@ -532,7 +534,7 @@
     });
 
     // =========================================================
-    // 1. ONESIGNAL REGISTRATION (CORRECTED)
+    // 1. ONESIGNAL REGISTRATION (FIXED & VERIFIED)
     // =========================================================
     function initPushNotifications() {
         console.log("🚀 STARTING OneSignal Setup..."); 
@@ -546,7 +548,44 @@
             document.head.appendChild(script);
         }
 
-        window.OneSignal = window.OneSignal || []; OneSignal.push(function() { OneSignal.init({ appId: "...", path: "/Suburban-Brewing-Company-Portal/", serviceWorkerPath: "/Suburban-Brewing-Company-Portal/SBCWorker.js", serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" }, allowLocalhostAsSecureOrigin: true, logLevel: "warn" }); const userName = sessionStorage.getItem("user_name"); if (userName) OneSignal.login(userName.toLowerCase()); });
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            
+            try {
+                await OneSignal.init({
+                    // 🟢 FIXED: The Real App ID
+                    appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+                    
+                    // 🟢 FIXED: Path is the folder, Worker is just the filename
+                    path: "/Suburban-Brewing-Company-Portal/", 
+                    serviceWorkerPath: "SBCWorker.js",
+                    
+                    // 🟢 Scope matches the folder
+                    serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+                    
+                    allowLocalhostAsSecureOrigin: true,
+                    logLevel: "warn"
+                });
+                console.log("✅ OneSignal Init Success.");
+            } catch (error) {
+                console.error("❌ Init FAILED:", error);
+            }
+            
+            // Login User
+            const userName = sessionStorage.getItem("user_name");
+            if(userName) {
+                OneSignal.login(userName.toLowerCase());
+            }
+        });
+        
+        // Permission Trigger (On Click)
+        document.body.addEventListener('click', () => {
+            window.OneSignalDeferred.push(function(OneSignal) {
+                if (OneSignal.Notifications.permission !== 'granted') {
+                    OneSignal.Notifications.requestPermission();
+                }
+            });
+        }, { once: true });
     }
 
     // =========================================================
