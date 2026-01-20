@@ -500,19 +500,29 @@
     // --- CONFIGURATION ---
     const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
     let userDatabase = [];
-
-    // --- INITIALIZATION ---
+// --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', () => {
         setupUserProfile(); 
         loadUsers();
         loadSystemConfig();
         loadMasterData();
         loadAuditLogs();
-        checkUnreadCount(); // Run Message Check immediately
-      // 🔴 NEW: Ask for OS Permission
-        requestNotificationPermission();
-      initPushNotifications();
-        setInterval(checkUnreadCount, 60000); // Check for new messages every 60 seconds
+        checkUnreadCount(); 
+
+        // Initialize OneSignal but don't prompt yet
+        initPushNotifications();
+
+        // 🟢 FIXED USER GESTURE:
+        // This triggers the OneSignal prompt when the user first interacts with the page
+        document.body.addEventListener('click', () => {
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            OneSignalDeferred.push(function(OneSignal) {
+                // This is the "right way" for OneSignal to ask for permission
+                OneSignal.Notifications.requestPermission();
+            });
+        }, { once: true });
+
+        setInterval(checkUnreadCount, 60000); 
     });
 
     // =========================================================
@@ -1012,7 +1022,7 @@
             });
         }
     }
-  // --- 9. ONESIGNAL REGISTRATION ---
+// --- 9. ONESIGNAL REGISTRATION ---
 function initPushNotifications() {
     const script = document.createElement('script');
     script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
@@ -1022,18 +1032,16 @@ function initPushNotifications() {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
-            appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d", // 🔴 Replace with your actual App ID
-            safari_web_id: "web.onesignal.auto.sbc_portal",
-            notifyButton: { enable: true },
+            appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d", // 🔴 ENSURE THIS MATCHES ONESIGNAL DASHBOARD
+            allowLocalhostAsSecureOrigin: true, // Helpful for debugging
+            serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+            serviceWorkerPath: "OneSignalSDKWorker.js",
         });
         
-        // This links the device to the username in your Google Sheet
         const userName = sessionStorage.getItem("user_name");
         if(userName) OneSignal.login(userName); 
     });
 }
-
-
 </script>
 </body>
 </html>
