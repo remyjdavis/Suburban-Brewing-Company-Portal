@@ -171,44 +171,43 @@ async function openComposeModal(to="", subj="") {
 }
 
 // --- PROFILE EDIT MODAL ---
-  async function updateUserInfo() {
-        const { value: formValues } = await Swal.fire({
-            title: 'Edit Profile Settings',
-            background: '#1e293b',
-            color: '#ffffff',
-            html: `
-                <div style="text-align: left; padding: 10px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../SBC-Logo.png'}" 
-                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
-                        <br>
-                        <button type="button" onclick="document.getElementById('file-input').click()" 
-                                style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px;">
-                            Change Photo
-                        </button>
-                        <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
-                    </div>
-                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
-                    <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
-                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
-                    <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
-                    <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Security</label>
-                    <input id="p-pass" type="password" class="swal2-input" placeholder="New password (optional)">
-                </div>
-            `,
-            preConfirm: () => {
-                return {
-                    email: document.getElementById('p-email').value,
-                    phone: document.getElementById('p-phone').value,
-                    pass: document.getElementById('p-pass').value,
-                    pic: document.getElementById('preview-pic').src
-                }
+ async function updateUserInfo() {
+    const { value: formValues } = await Swal.fire({
+        title: 'Profile Settings',
+        background: '#1e293b',
+        color: '#ffffff',
+        html: `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || PORTAL_ROOT + 'logo.png'}" 
+                     style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
+                <br>
+                <button type="button" onclick="document.getElementById('file-input').click()" 
+                        style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px; cursor:pointer;">
+                    Change Photo
+                </button>
+                <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
+            </div>
+            <div style="text-align: left;">
+                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email Address</label>
+                <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
+                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone Number</label>
+                <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
+                <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Change Password</label>
+                <input id="p-pass" type="password" class="swal2-input" placeholder="Enter new password">
+            </div>
+        `,
+        preConfirm: () => {
+            return {
+                email: document.getElementById('p-email').value,
+                phone: document.getElementById('p-phone').value,
+                pass: document.getElementById('p-pass').value,
+                pic: document.getElementById('preview-pic').src
             }
-        });
+        }
+    });
 
-        if (formValues) saveProfile(formValues);
-    }
-
+    if (formValues) saveProfile(formValues);
+}
     function handleFileSelect(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
