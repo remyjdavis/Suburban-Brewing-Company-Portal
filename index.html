@@ -1,17 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <script>
-    (function() {
-        const auth = sessionStorage.getItem("sbc_auth");
-        const isLoginPage = window.location.pathname.includes("login.html");
-        if (auth !== "true" && !isLoginPage) {
-            const repoPath = "/Suburban-Brewing-Company-Portal/";
-            window.location.replace(repoPath + "login.html");
-        }
-    })();
-  </script>
- 
+<<head>
   <base target="_top">
   <meta charset="UTF-8" />
   <title>Suburban Brewing Co. | Command Center</title>
@@ -20,16 +9,18 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Suburban Brewing">
-  
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0f172a">
   
-  <link rel="icon" type="image/png" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
-<link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="Logo.png">
+  <link rel="apple-touch-icon" href="Logo.png">
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+  <script src="/Suburban-Brewing-Company-Portal/portal.js" defer></script>
 
   <style>
     /* --- SHARED THEME VARIABLES --- */
@@ -997,169 +988,6 @@
         } catch (e) { console.error("Cellar Error", e); }
     }
 
-   function setupWelcomeUI() {
-    const userName = sessionStorage.getItem("user_name");
-    const userRole = sessionStorage.getItem("user_role"); // This is "Admin" (Permissions)
-    
-    // 🔴 NEW: Get the Job Title (Sales Rep). Fallback to Role if missing.
-    const userTitle = sessionStorage.getItem("user_title") || userRole; 
-
-    const defaultLogo = "logo.png"; 
-    const userPic = sessionStorage.getItem("user_pic") || defaultLogo;
-    
-    const welcomeTarget = document.getElementById('welcome-target');
-    
-    if (userName && welcomeTarget) {
-        welcomeTarget.innerHTML = `
-            <div class="user-profile-container">
-                <div style="display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="toggleUserMenu(event)">
-                    <div style="text-align: right;">
-                        <span style="color: #1f2937; font-weight: 800; font-size: 1rem; display: block;">${userName}</span>
-                        
-                        <span style="font-size: 0.7rem; color: #2563eb; font-weight: bold; text-transform: uppercase;">${userTitle}</span>
-                    
-                    </div>
-                    <img id="user-avatar" 
-                         src="${userPic}" 
-                         style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #2563eb; object-fit: cover; background: white;" 
-                         onerror="this.onerror=null; this.src='${defaultLogo}'">
-                </div>
-                
-                <div id="user-dropdown" class="user-dropdown-menu">
-                    <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">
-                        <span class="menu-icon">⚙️</span> Update Info
-                    </a>
-                    <a href="#" onclick="handleLogout(); toggleUserMenu(event);" style="color: #ef4444;">
-                        <span class="menu-icon">🚪</span> Logout
-                    </a>
-                </div>
-            </div>
-        `;
-    }
-    
-    // 2. Set the Date
-    const dateEl = document.getElementById('current-date');
-    if (dateEl) {
-        dateEl.innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    }
-
-    // 3. 🔒 ADMIN LINK LOGIC
-    if (userRole && (userRole.toLowerCase() === "admin" || userRole.toLowerCase() === "owner")) {
-        const adminLink = document.getElementById("admin-nav-link");
-        if (adminLink) {
-            adminLink.style.display = "block";
-        }
-    }
-}
-   
-    async function openProfileModal() {
-        const { value: formValues } = await Swal.fire({
-            title: 'Edit Profile Settings',
-            background: '#1e293b',
-            color: '#ffffff',
-            html: `
-                <div style="text-align: left; padding: 10px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../SBC-Logo.png'}" 
-                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
-                        <br>
-                        <button type="button" onclick="document.getElementById('file-input').click()" 
-                                style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px;">
-                            Change Photo
-                        </button>
-                        <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
-                    </div>
-                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
-                    <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
-                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
-                    <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
-                    <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Security</label>
-                    <input id="p-pass" type="password" class="swal2-input" placeholder="New password (optional)">
-                </div>
-            `,
-            preConfirm: () => {
-                return {
-                    email: document.getElementById('p-email').value,
-                    phone: document.getElementById('p-phone').value,
-                    pass: document.getElementById('p-pass').value,
-                    pic: document.getElementById('preview-pic').src
-                }
-            }
-        });
-
-        if (formValues) saveProfile(formValues);
-    }
-
-    function handleFileSelect(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) { document.getElementById('preview-pic').src = e.target.result; };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    // REPLACE YOUR EXISTING saveProfile FUNCTION WITH THIS
-async function saveProfile(data) {
-    Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
-    
-    // 1. ROBUST ID CHECK: Try ID first, fallback to Email
-    const username = sessionStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
-    
-    // 2. SAFETY CHECK: If we still don't have a user, stop the request
-    if (!username) {
-        Swal.fire('Session Error', 'Could not identify user. Please log out and log back in.', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${MASTER_API_URL}`, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'updateProfile', user: username, ...data })
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === "success") {
-            // Update Session Storage
-            sessionStorage.setItem("user_pic", data.pic);
-            sessionStorage.setItem("user_email", data.email);
-            sessionStorage.setItem("user_phone", data.phone);
-            
-            // Reload to show changes
-            Swal.fire('Saved!', 'Profile updated.', 'success').then(() => location.reload());
-        } else {
-            throw new Error(result.message || "Unknown error");
-        }
-    } catch (e) {
-        Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
-    }
-}
-   // --- TOGGLE LOGIC ---
-    function toggleUserMenu(event) {
-        if(event) event.stopPropagation();
-        const menu = document.getElementById("user-dropdown");
-        if(menu) menu.classList.toggle("show");
-    }
-
-    // Close dropdown if clicked outside
-    window.addEventListener('click', function(e) {
-        const menu = document.getElementById("user-dropdown");
-        if (menu && menu.classList.contains('show')) {
-            // If the click is NOT inside the dropdown or the profile container, close it
-            if (!e.target.closest('.user-profile-container')) {
-                menu.classList.remove('show');
-            }
-        }
-    });
-   // --- LOGOUT LOGIC ---
-  function handleLogout() {
-    if(confirm("Are you sure you want to log out?")) {
-      sessionStorage.removeItem("sbc_auth"); 
-      // Ensure this path matches your GitHub repository name
-      const repoPath = "/Suburban-Brewing-Company-Portal/";
-      window.location.replace(repoPath + "login.html");
-    }
-  }
    // --- 7. SYSTEM BANNER CHECK (ROBUST VERSION) ---
     async function checkSystemBanner() {
         try {
