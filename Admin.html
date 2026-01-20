@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // --- 🔒 THE GATEKEEPER ---
+    (function() {
+        const auth = sessionStorage.getItem("sbc_auth");
+        const role = sessionStorage.getItem("user_role");
+        if (auth !== "true" || (role !== "Admin" && role !== "Owner")) {
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            window.location.replace(repoPath + "index.html");
+        }
+    })();
+  </script>
+  
   <meta charset="UTF-8" />
   <title>Admin Console | Suburban Brewing</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -19,161 +31,338 @@
     .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
     .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 30px; }
     .card { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; }
+    .card-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: #1e293b; }
+    @media (max-width: 1024px) { .sidebar { display:none; } .main { margin-left: 0; } }
+    
+    /* UTILS */
     .btn-primary { background: var(--accent); color: white; padding: 10px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
     .notification-badge { position: absolute; top: 0px; right: 0px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: none; justify-content: center; align-items: center; font-weight: 800; border: 2px solid white; }
     .user-profile { position: relative; display: flex; align-items: center; gap: 12px; cursor: pointer; }
     .user-dropdown-menu { display: none; position: absolute; top: 55px; right: 0; background-color: white; min-width: 180px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px; z-index: 2000; overflow: hidden; border: 1px solid #e2e8f0; }
     .user-dropdown-menu.show { display: block; }
-    @media (max-width: 1024px) { .sidebar { display:none; } .main { margin-left: 0; } }
+    .user-dropdown-menu a { color: #374151; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+    .user-dropdown-menu a:hover { background-color: #f3f4f6; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px; font-family: inherit; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 10px; border-bottom: 2px solid #f1f5f9; color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
+    td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
+    .role-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .role-admin { background: #fee2e2; color: #991b1b; }
+    .role-staff { background: #dcfce7; color: #166534; }
   </style>
 </head>
 <body>
 
+  <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  
   <aside class="sidebar">
-    <h2 style="margin:0 0 20px 0;">SUBURBAN</h2>
-    <a href="index.html" style="color:white; text-decoration:none;">Dashboard</a>
+    <h2>SUBURBAN BREWING</h2>
+    <a href="index.html" class="nav-link"><span>Command Center</span></a>
+    <a href="admin.html" class="nav-link active"><span>Admin Console</span></a>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)"><span>Samplings</span><span class="chevron">▼</span></div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sales', this)"><span>Sales</span><span class="chevron">▼</span></div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+      <a href="sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    </div>
+
+    <div class="nav-section-title" onclick="toggleGroup('grp-inv', this)"><span>Inventory</span><span class="chevron">▼</span></div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-brew', this)"><span>Brewing</span><span class="chevron">▼</span></div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
+      <a href="Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)"><span>Reporting & Analytics</span><span class="chevron">▼</span></div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="Reports/Route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    </div>
   </aside>
 
   <main class="main">
     <div class="header">
-        <h1>Admin Console</h1>
+        <div>
+            <span style="font-weight: 600; color: #6b7280;">System Configuration</span>
+            <h1 style="margin:0; font-size:1.5rem; color:#111827;">Admin Console</h1>
+        </div>
+        
         <div class="user-profile" onclick="toggleUserMenu(event)">
              <div id="msg-badge" class="notification-badge">0</div>
-             <div style="text-align:right;">
-                 <span id="display-username" style="display:block; font-weight:700;">User</span>
+             <div class="user-info-text" style="text-align:right;">
+                 <span class="user-name" id="display-username" style="display:block; font-weight:700;">User</span>
+                 <span class="user-role" id="display-role" style="font-size:12px; color:#64748b;">Admin</span>
              </div>
-             <img src="logo.png" id="display-avatar" style="width:38px; height:38px; border-radius:50%;">
+             <img src="logo.png" id="display-avatar" class="user-avatar" style="width:38px; height:38px; border-radius:50%; border:2px solid #e5e7eb;">
+             
              <div id="userDropdown" class="user-dropdown-menu">
-                <a href="#" onclick="openInbox()" style="display:block; padding:10px; color:black;">Inbox</a>
-                <a href="#" onclick="handleLogout()" style="display:block; padding:10px; color:red;">Logout</a>
+                <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="justify-content:space-between;">
+                    <span>📩 Team Inbox</span>
+                    <span id="dropdown-badge" style="display:none; background:#ef4444; color:white; font-size:10px; padding:2px 8px; border-radius:10px;">0</span>
+                </a>
+                <a href="#" onclick="openProfileModal(); toggleUserMenu(event);">⚙️ Update Info</a>
+                <a href="#" onclick="handleLogout()" style="color:#ef4444;">🚪 Logout</a>
              </div>
         </div>
     </div>
 
     <div class="admin-grid">
         <div class="card">
-            <h3>💬 Inbox</h3>
-            <div id="msg-table-body" style="height:200px; overflow-y:auto; padding-top:10px;">Loading...</div>
-            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="openCompose()">+ Compose</button>
+            <div class="card-header"><h3>📢 System Banner</h3></div>
+            <p style="font-size:12px; color:#64748b;">Global dashboard alert.</p>
+            <textarea id="conf-announce-text" rows="3" placeholder="e.g. Inventory count Sunday..."></textarea>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                <label style="font-size:13px; font-weight:600;"><input type="checkbox" id="conf-announce-active"> Show Banner</label>
+                <button class="btn-primary" onclick="saveAnnouncement()">Post Message</button>
+            </div>
         </div>
+
         <div class="card">
-            <h3>📢 Banner</h3>
-            <textarea id="conf-announce-text" style="width:100%; margin:10px 0;" rows="3"></textarea>
-            <button class="btn-primary" onclick="saveAnnouncement()">Update</button>
+            <div class="card-header"><h3>🍺 Beer Brands</h3></div>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input id="new-brand-input" placeholder="New Brand" style="margin-bottom:0;">
+                <button class="btn-primary" onclick="addBrand()">Add</button>
+            </div>
+            <div id="brand-list" style="max-height:150px; overflow-y:auto; border:1px solid #f1f5f9; border-radius:6px;"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>🎯 Targets</h3></div>
+            <label style="font-size:11px; font-weight:700; color:#64748b;">Monthly Sales ($)</label>
+            <input type="number" id="conf-sales-goal" placeholder="50000">
+            <div style="display:flex; gap:15px; margin-top:10px;">
+                <div style="flex:1;">
+                    <label style="font-size:11px; font-weight:700; color:#eab308;">Low Stock</label>
+                    <input type="number" id="conf-thresh-low" placeholder="5">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:11px; font-weight:700; color:#ef4444;">Critical</label>
+                    <input type="number" id="conf-thresh-crit" placeholder="1">
+                </div>
+            </div>
+            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="saveThresholds()">Update</button>
+        </div>
+
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-header">
+                <h3>👥 Authorized Users</h3>
+                <button class="btn-primary" onclick="addUserModal()">+ Add User</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Access</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+                    <tbody id="userTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card" style="grid-column: span 1;">
+            <div class="card-header"><h3>🕵️ Audit Log</h3></div>
+            <div style="max-height:300px; overflow-y:auto;">
+                <table style="width:100%;"><tbody id="audit-log-body"><tr><td style="color:#64748b;">Loading...</td></tr></tbody></table>
+            </div>
+        </div>
+        
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-header">
+                <h3>💬 Team Inbox</h3>
+                <button class="btn-primary" onclick="openComposeModal()">+ New Message</button>
+            </div>
+            <div style="max-height:250px; overflow-y:auto;">
+                <table>
+                    <thead><tr style="color:#64748b; font-size:11px;"><th style="width:120px;">Date</th><th style="width:150px;">From</th><th>Subject</th><th style="width:50px;"></th></tr></thead>
+                    <tbody id="msg-table-body"><tr><td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">No messages.</td></tr></tbody>
+                </table>
+            </div>
         </div>
     </div>
   </main>
 
 <script>
+    // --- CONFIGURATION ---
     const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
+    let userDatabase = [];
 
+    // --- INITIALIZATION ---
     window.addEventListener('load', async () => {
-        console.log("🟢 System Starting...");
-
-        // 1. MANUAL REGISTRATION (Relative Path './')
+        console.log("🟢 DOM Loaded. Starting System...");
+        
+        // 1. ZOMBIE KILLER: Unregister ROOT workers just in case
         if ('serviceWorker' in navigator) {
-            try {
-                // Kill Root Workers
-                const regs = await navigator.serviceWorker.getRegistrations();
-                for(let reg of regs) {
-                    if (reg.scope === "https://remyjdavis.github.io/") await reg.unregister();
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for(let reg of regs) {
+                if (reg.scope === "https://remyjdavis.github.io/") {
+                    console.log("💀 KILLED ROOT WORKER:", reg.scope);
+                    await reg.unregister();
                 }
-
-                // Register with DOT SLASH (Current Folder)
-                const reg = await navigator.serviceWorker.register('./OneSignalSDKWorker.js', { 
-                    scope: './' 
-                });
-                console.log("✅ Worker Registered (Relative):", reg.scope);
-                
-                initOneSignal(); // Start SDK
-            } catch(e) {
-                console.error("❌ Manual Register Failed:", e);
-                initOneSignal(); // Try anyway
             }
-        } else { initOneSignal(); }
+        }
 
+        // 2. LOAD DATA
         setupUserProfile();
+        loadUsers();
+        loadSystemConfig();
+        loadMasterData();
+        loadAuditLogs();
         checkUnreadCount();
+        
         setInterval(checkUnreadCount, 60000);
     });
 
-    function initOneSignal() {
-        console.log("🚀 Starting SDK..."); 
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal) {
-            try {
-                await OneSignal.init({
-                    appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
-                    
-                    // 🔴 RELATIVE PATH CONFIGURATION
-                    // This tells OneSignal "Look in the current folder"
-                    path: "./", 
-                    
-                    // We do NOT set serviceWorkerPath (Defaults to file name)
-                    // We do NOT set scope (Defaults to current path)
-                    
-                    allowLocalhostAsSecureOrigin: true,
-                    logLevel: "warn"
-                });
-                console.log("✅ SDK Initialized.");
-                
-                const u = sessionStorage.getItem("user_name");
-                if(u) OneSignal.login(u.toLowerCase());
-
-            } catch (e) { console.error("❌ SDK Error:", e); }
-        });
-    }
-
-    // --- DATA FUNCTIONS ---
-    async function checkUnreadCount() {
-        const u = sessionStorage.getItem("user_name");
-        if(!u) return;
+    // =========================================================
+    // 1. ONESIGNAL SETUP (EXPLICIT CONFIGURATION)
+    // =========================================================
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
         try {
-            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(u)}&ts=${Date.now()}`, {redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}});
-            const json = await res.json();
-            if(json.status==='success') {
-                const count = json.messages.filter(m => m.status === "Unread").length;
-                const badge = document.getElementById('msg-badge');
-                if(count > 0) { badge.innerText = count; badge.style.display = 'flex'; }
-                else { badge.style.display = 'none'; }
+            console.log("🚀 STARTING OneSignal SDK...");
+            await OneSignal.init({
+                appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+                
+                // 🔴 THE FIX: Explicitly point to the folder + file
+                serviceWorkerPath: "Suburban-Brewing-Company-Portal/OneSignalSDKWorker.js",
+                
+                // 🔴 THE FIX: Lock scope to the folder
+                serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+                
+                allowLocalhostAsSecureOrigin: true,
+                logLevel: "warn"
+            });
+            console.log("✅ OneSignal Init Success.");
+            
+            // LOGIN USER
+            const userName = sessionStorage.getItem("user_name");
+            if(userName) OneSignal.login(userName.toLowerCase());
+
+        } catch (error) { console.error("❌ SDK Init Error:", error); }
+    });
+    
+    // Click Listener for Permission
+    document.body.addEventListener('click', () => {
+        window.OneSignalDeferred.push(function(OneSignal) {
+            if (OneSignal.Notifications.permission !== 'granted') {
+                OneSignal.Notifications.requestPermission();
             }
+        });
+    }, { once: true });
+
+    // =========================================================
+    // 2. DATA FUNCTIONS
+    // =========================================================
+    async function checkUnreadCount() {
+        const user = sessionStorage.getItem("user_name");
+        if(!user || !navigator.onLine) return; 
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}&ts=${Date.now()}`, { redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" } });
+            const json = await res.json();
+            if (json.status === 'success') updateBadgeUI(json.messages.filter(m => m.status === "Unread").length);
         } catch(e) {}
     }
 
-    async function openInbox() {
-        const u = sessionStorage.getItem("user_name");
-        Swal.fire({title:'Loading...', didOpen:()=>Swal.showLoading()});
-        try {
-            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(u)}&ts=${Date.now()}`, {redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}});
-            const json = await res.json();
-            let html = '<div style="padding:20px; color:#aaa;">No messages.</div>';
-            if(json.status==='success' && json.messages.length > 0) {
-                html = json.messages.map(m => `<div onclick="readMsg('${m.id}','${m.from}','${m.subject}','${m.body}')" style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; text-align:left;"><b>${m.from}</b><br>${m.subject}</div>`).join('');
-            }
-            Swal.fire({title:'Inbox', html:`<div style="max-height:300px; overflow-y:auto;">${html}</div>`, showCloseButton:true});
-        } catch(e) { Swal.fire('Error', '', 'error'); }
-    }
-
-    function readMsg(id, from, subj, body) {
-        Swal.fire({title:subj, html:`<p style="color:#666; font-size:12px;">From: ${from}</p><p>${body}</p>`, showCancelButton:true, confirmButtonText:"Mark Read", cancelButtonText:"Close"}).then(r => {
-            if(r.isConfirmed) fetch(MASTER_API_URL, {method:'POST', body:JSON.stringify({action:'markRead', id:id})});
-        });
-    }
-
-    async function openCompose() {
-        const {value:f} = await Swal.fire({title:'New Message', html:`<input id="to" class="swal2-input" placeholder="To"><input id="sub" class="swal2-input" placeholder="Subject"><textarea id="body" class="swal2-textarea" placeholder="Message"></textarea>`, preConfirm:()=>{ return {to:document.getElementById('to').value, sub:document.getElementById('sub').value, body:document.getElementById('body').value} }});
-        if(f) {
-            Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
-            await fetch(MASTER_API_URL, {method:'POST', body:JSON.stringify({action:'sendMessage', data:{sender:sessionStorage.getItem("user_name"), recipient:f.to, subject:f.sub, body:f.body}})});
-            Swal.fire('Sent!', '', 'success');
+    function updateBadgeUI(count) {
+        const outer = document.getElementById('msg-badge');
+        const inner = document.getElementById('dropdown-badge');
+        if (count > 0) {
+            if(outer) { outer.innerText = count > 9 ? '9+' : count; outer.style.display = 'flex'; }
+            if(inner) { inner.innerText = count; inner.style.display = 'inline-block'; }
+        } else {
+            if(outer) outer.style.display = 'none';
+            if(inner) inner.style.display = 'none';
         }
     }
 
-    function setupUserProfile() {
-        const u = sessionStorage.getItem("user_name");
-        if(u) document.getElementById('display-username').innerText = u;
+    // =========================================================
+    // 3. MESSAGING
+    // =========================================================
+    async function openInbox() {
+        const user = sessionStorage.getItem("user_name");
+        Swal.fire({ title: 'Loading...', didOpen: () => Swal.showLoading() });
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}&ts=${Date.now()}`, { redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" } });
+            const json = await res.json();
+            let html = '<div style="text-align:center; padding:20px; color:#94a3b8;">No messages.</div>';
+            
+            if (json.status === 'success' && json.messages.length > 0) {
+                const rows = json.messages.map(m => {
+                    const isUnread = m.status === "Unread";
+                    return `<div onclick="readMessage('${m.id}', '${m.from}', '${m.subject}', '${m.body}')" style="background:${isUnread?'#f0f9ff':'#fff'}; padding:12px; border-bottom:1px solid #eee; cursor:pointer; text-align:left; display:flex; justify-content:space-between;">
+                        <div><div style="font-size:11px; color:#64748b;">${new Date(m.date).toLocaleDateString()} • ${m.from}</div>
+                        <div style="font-weight:${isUnread?'bold':'normal'}; font-size:14px;">${m.subject} ${isUnread?'<span style="background:#2563eb; color:white; font-size:8px; padding:2px 5px; border-radius:4px;">NEW</span>':''}</div></div>
+                        <div>👉</div></div>`;
+                }).join('');
+                html = `<div style="max-height:400px; overflow-y:auto;">${rows}</div>`;
+            }
+            Swal.fire({ title: 'Inbox', html: html + `<button onclick="openCompose()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:15px;">+ New Message</button>`, showConfirmButton: false, showCloseButton: true });
+        } catch(e) { Swal.fire('Error', 'Failed to load inbox.', 'error'); }
     }
-    function toggleUserMenu(e) { e.stopPropagation(); document.getElementById("userDropdown").classList.toggle("show"); }
+
+    function readMessage(id, from, subject, body) {
+        Swal.fire({ title: subject, html: `<div style="text-align:left; font-size:14px;"><p style="color:#64748b; font-size:12px;">From: ${from}</p><div style="background:#f8fafc; padding:15px; border:1px solid #eee; border-radius:6px;">${body}</div></div>`, showCancelButton: true, showDenyButton: true, confirmButtonText: 'Mark Read', denyButtonText: 'Reply', cancelButtonText: 'Close' })
+        .then((r) => {
+            if(r.isConfirmed) fetch(`${MASTER_API_URL}`, { method:'POST', body: JSON.stringify({ action:'markRead', id:id }) }).then(() => { checkUnreadCount(); openInbox(); });
+            else if(r.isDenied) openCompose(from, "Re: " + subject);
+            else openInbox();
+        });
+    }
+
+    async function openCompose(to = "", subj = "") {
+        let opts = userDatabase.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('');
+        const { value: f } = await Swal.fire({ title: 'New Message', html: `<select id="msg-to" class="swal2-input">${opts}</select><input id="msg-subject" class="swal2-input" placeholder="Subject" value="${subj}"><textarea id="msg-body" class="swal2-textarea" placeholder="Message..." style="height:100px;"></textarea>`, showCancelButton: true, preConfirm: () => ({ recipient: document.getElementById('msg-to').value, subject: document.getElementById('msg-subject').value, body: document.getElementById('msg-body').value, sender: sessionStorage.getItem("user_name") }) });
+        
+        if (f) {
+            Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
+            try {
+                await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sendMessage', data: f }) });
+                Swal.fire('Sent!', '', 'success');
+            } catch(e) { Swal.fire('Error', 'Failed to send.', 'error'); }
+        }
+    }
+
+    // =========================================================
+    // 4. HELPERS
+    // =========================================================
+    async function loadUsers() {
+        try { const res = await fetch(`${MASTER_API_URL}?action=getUsers`); const json = await res.json(); if(json.status==='success') { userDatabase = json.users; renderTable(userDatabase); } } catch(e){}
+    }
+    function renderTable(users) {
+        const b = document.getElementById('userTableBody'); if(!b) return; b.innerHTML = "";
+        users.forEach(u => { b.innerHTML += `<tr><td style="font-weight:600;">${u.name}</td><td>${u.email}</td><td>${u.role}</td><td>${u.status}</td><td style="text-align:right;"><button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${u.username}')">🗑️</button></td></tr>`; });
+    }
+    async function loadSystemConfig() { try{ const res=await fetch(`${MASTER_API_URL}?action=getSystemConfig`); const json=await res.json(); if(json.status==='success') { const c=json.config; if(document.getElementById('conf-announce-text')) document.getElementById('conf-announce-text').value=c.announcement_text||""; if(document.getElementById('conf-sales-goal')) document.getElementById('conf-sales-goal').value=c.sales_goal_monthly||50000; } }catch(e){} }
+    async function saveAnnouncement() { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', data:{ announcement_text: document.getElementById('conf-announce-text').value, announcement_active: document.getElementById('conf-announce-active').checked?"TRUE":"FALSE" } }) }); Swal.fire('Saved', '', 'success'); }
+    async function saveThresholds() { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', data:{ sales_goal_monthly: document.getElementById('conf-sales-goal').value, inventory_threshold_low: document.getElementById('conf-thresh-low').value, inventory_threshold_crit: document.getElementById('conf-thresh-crit').value } }) }); Swal.fire('Saved', '', 'success'); }
+    async function loadMasterData() { try{ const res=await fetch(`${MASTER_API_URL}?action=getMasterData`); const json=await res.json(); document.getElementById('brand-list').innerHTML = json.brands.map(b => `<div style="padding:8px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;"><b>${b}</b><span style="color:red; cursor:pointer;" onclick="deleteBrand('${b}')">🗑️</span></div>`).join(''); }catch(e){} }
+    async function addBrand() { const v=document.getElementById('new-brand-input').value; if(v) { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'addMasterData', type:'Brand', value:v }) }); loadMasterData(); } }
+    async function deleteBrand(v) { if(confirm('Delete?')) { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'deleteMasterData', type:'Brand', value:v }) }); loadMasterData(); } }
+    async function loadAuditLogs() { try{ const res=await fetch(`${MASTER_API_URL}?action=getAuditLogs`); const json=await res.json(); document.getElementById('audit-log-body').innerHTML = json.logs.map(l => `<tr><td style="padding:5px; border-bottom:1px solid #eee;"><div style="font-weight:700;">${l[2]}</div><div style="font-size:11px; color:#64748b;">${new Date(l[0]).toLocaleTimeString()} • ${l[1]}</div></td></tr>`).join(''); }catch(e){} }
+    
+    function setupUserProfile() { const n=sessionStorage.getItem("user_name"); const r=sessionStorage.getItem("user_role"); const t=sessionStorage.getItem("user_title"); const p=sessionStorage.getItem("user_pic"); if(document.getElementById("display-username")) document.getElementById("display-username").innerText=n||"Admin"; if(document.getElementById("display-role")) document.getElementById("display-role").innerText=t||r||"Staff"; if(document.getElementById("display-avatar")) document.getElementById("display-avatar").src=p||"logo.png"; }
+    function toggleUserMenu(e) { if(e)e.stopPropagation(); document.getElementById("userDropdown").classList.toggle("show"); }
+    function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
+    function toggleGroup(id, el) { document.getElementById(id.replace('grp-', 'grp-')).classList.toggle('collapsed'); if(el)el.classList.toggle('collapsed'); }
     function handleLogout() { sessionStorage.clear(); window.location.replace("index.html"); }
 </script>
 </body>
