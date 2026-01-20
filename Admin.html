@@ -974,32 +974,7 @@
         sessionStorage.clear();
         window.location.replace("index.html");
     }
-  async function enableNotifications() {
-    // 1. Check if browser supports it
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.warn('Push messaging is not supported by this browser.');
-        return;
-    }
-
-    // 2. Register the background worker
-    const register = await navigator.serviceWorker.register('sw.js');
-
-    // 3. Request Permission from the OS
-    const permission = await Notification.requestPermission();
-    
-    if (permission === 'granted') {
-        Swal.fire('Notifications Enabled', 'You will now receive instant alerts on this device.', 'success');
-        
-        // In a full production setup, you would now save the 'subscription' 
-        // object to your Google Sheet to target this specific device.
-        const subscription = await register.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: 'YOUR_PUBLIC_VAPID_KEY' // Requires a Firebase/OneSignal setup
-        });
-        
-        console.log("Device Token:", JSON.stringify(subscription));
-    }
-}
+  
 // --- 9. ONESIGNAL REGISTRATION (RE-ROUTE FIX) ---
 function initPushNotifications() {
     console.log("🚀 STARTING OneSignal Setup..."); 
@@ -1047,19 +1022,16 @@ function initPushNotifications() {
         }
     });
 }
-  async function requestNotificationPermission() {
-        if (!('serviceWorker' in navigator)) return;
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-            await navigator.serviceWorker.register('sw.js');
-        }
-    }
 
     function sendLocalNotification(title, message) {
-        if (Notification.permission === 'granted') {
+        // Safe check: Only send if permitted and OneSignal is active
+        if (Notification.permission === 'granted' && navigator.serviceWorker.controller) {
             navigator.serviceWorker.ready.then(reg => {
-                reg.showNotification(title, { body: message, icon: 'logo.png', vibrate: [200, 100, 200] });
+                reg.showNotification(title, { body: message, icon: 'logo.png' });
             });
+        } else {
+            // Fallback for laptop testing
+            new Notification(title, { body: message, icon: 'logo.png' });
         }
     }
 </script>
