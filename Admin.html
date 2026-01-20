@@ -500,11 +500,12 @@
     // --- CONFIGURATION ---
     const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
     let userDatabase = [];
-// --- INITIALIZATION ---
+
+    // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', async () => {
         console.log("🟢 DOM Loaded. Starting System...");
 
-        // 🚨 STEP 1: KILL ZOMBIES (This fixes the 404 errors)
+        // 🚨 CRITICAL FIX: THIS KILLS THE 404 ERRORS
         await killZombies();
 
         setupUserProfile(); 
@@ -514,24 +515,14 @@
         loadAuditLogs();
         checkUnreadCount(); 
 
-        // 🚨 STEP 2: START NEW SYSTEM
+        // Start the REAL Notification System
         initPushNotifications();
-
-        // OneSignal Permission Trigger (On Click)
-        document.body.addEventListener('click', () => {
-            window.OneSignalDeferred = window.OneSignalDeferred || [];
-            OneSignalDeferred.push(function(OneSignal) {
-                if (OneSignal.Notifications.permission !== 'granted') {
-                    console.log("👆 User clicked. Requesting Permission...");
-                    OneSignal.Notifications.requestPermission();
-                }
-            });
-        }, { once: true });
 
         setInterval(checkUnreadCount, 60000); 
     });
-// =========================================================
-    // 💀 ZOMBIE KILLER (The Fix for 404 Errors)
+
+    // =========================================================
+    // 💀 ZOMBIE KILLER (The Fix for "Failed to load resource")
     // =========================================================
     async function killZombies() {
         if ('serviceWorker' in navigator) {
@@ -540,46 +531,79 @@
                 for(let registration of registrations) {
                     const scriptURL = registration.active ? registration.active.scriptURL : "";
                     
-                    // If the worker is the old "sw.js" or the old "OneSignalSDKWorker.js"
+                    // If the browser is stuck on the old "sw.js" or "OneSignalSDKWorker.js"
                     if (scriptURL.includes("sw.js") || scriptURL.includes("OneSignalSDKWorker.js")) {
+                        console.log("💀 FOUND ZOMBIE:", scriptURL);
                         await registration.unregister();
-                        console.log("💀 ZOMBIE KILLED:", scriptURL);
+                        console.log("✅ ZOMBIE KILLED. Reloading page to apply fix...");
+                        // 🚨 FORCE RELOAD TO CLEAR ERROR
+                        window.location.reload();
                     }
                 }
             } catch(e) {
-                console.log("Zombie hunt failed (browser restriction):", e);
+                console.log("Zombie hunt skipped:", e);
             }
         }
     }
+
     // =========================================================
-    // 1. NOTIFICATION & BADGE ENGINE
+    // 1. ONESIGNAL REGISTRATION (CORRECTED)
+    // =========================================================
+    function initPushNotifications() {
+        console.log("🚀 STARTING OneSignal Setup..."); 
+
+        // 1. Inject Library
+        if (!document.getElementById('onesignal-sdk-script')) {
+            const script = document.createElement('script');
+            script.id = 'onesignal-sdk-script';
+            script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            
+            // 2. Initialize with the FILE WE KNOW EXISTS (SBCWorker.js)
+            try {
+                await OneSignal.init({
+                    appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+                    path: "/Suburban-Brewing-Company-Portal/", 
+                    serviceWorkerPath: "SBCWorker.js",
+                    serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+                    allowLocalhostAsSecureOrigin: true,
+                    logLevel: "warn"
+                });
+                console.log("✅ Init Success.");
+            } catch (error) {
+                console.error("❌ Init FAILED:", error);
+            }
+            
+            // 3. Login User
+            const userName = sessionStorage.getItem("user_name");
+            if(userName) OneSignal.login(userName.toLowerCase());
+        });
+    }
+
+    // =========================================================
+    // 2. NOTIFICATION & BADGE ENGINE
     // =========================================================
     async function checkUnreadCount() {
-    const user = sessionStorage.getItem("user_name");
-    if(!user || !navigator.onLine) return; 
+        const user = sessionStorage.getItem("user_name");
+        if(!user || !navigator.onLine) return; 
 
-    // Add timestamp to prevent caching
-    const url = `${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}&ts=${Date.now()}`;
+        const url = `${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}&ts=${Date.now()}`;
 
-    try {
-        const res = await fetch(url, {
-            method: "GET",
-            redirect: "follow", // 🔴 CRITICAL: Follow Google's 302 redirect
-            headers: {
-                "Content-Type": "text/plain;charset=utf-8" // 🔴 CRITICAL: Simple content type avoids CORS preflight
+        try {
+            const res = await fetch(url, { method: "GET", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" } });
+            const json = await res.json();
+            
+            if (json.status === 'success') {
+                const unreadCount = json.messages.filter(m => m.status === "Unread").length;
+                updateBadgeUI(unreadCount);
             }
-        });
-
-        const json = await res.json();
-        
-        if (json.status === 'success') {
-            const unreadCount = json.messages.filter(m => m.status === "Unread").length;
-            updateBadgeUI(unreadCount);
-        }
-    } catch(e) { 
-        console.warn("Badge Fetch Warning:", e); 
+        } catch(e) { console.warn("Badge Fetch Warning:", e); }
     }
-}
 
     function updateBadgeUI(count) {
         const outerBadge = document.getElementById('msg-badge');
@@ -587,18 +611,8 @@
 
         if (count > 0) {
             const text = count > 9 ? '9+' : count;
-            
-            // Outer Red Circle on Profile Pic
-            if(outerBadge) {
-                outerBadge.innerText = text;
-                outerBadge.style.display = 'flex';
-            }
-
-            // Inner Number next to Team Inbox
-            if(dropdownBadge) {
-                dropdownBadge.innerText = count;
-                dropdownBadge.style.display = 'inline-block';
-            }
+            if(outerBadge) { outerBadge.innerText = text; outerBadge.style.display = 'flex'; }
+            if(dropdownBadge) { dropdownBadge.innerText = count; dropdownBadge.style.display = 'inline-block'; }
         } else {
             if(outerBadge) outerBadge.style.display = 'none';
             if(dropdownBadge) dropdownBadge.style.display = 'none';
@@ -606,18 +620,16 @@
     }
 
     // =========================================================
-    // 2. MESSAGING SYSTEM (INBOX, READ, REPLY, COMPOSE)
+    // 3. MESSAGING SYSTEM
     // =========================================================
     async function openInbox() {
         const currentUser = sessionStorage.getItem("user_name");
         Swal.fire({ title: 'Loading Inbox...', didOpen: () => Swal.showLoading() });
 
         try {
-           const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(currentUser)}&ts=${Date.now()}`, {
-    method: "GET",
-    redirect: "follow",
-    headers: { "Content-Type": "text/plain;charset=utf-8" }
-});
+            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(currentUser)}&ts=${Date.now()}`, {
+                method: "GET", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }
+            });
             const json = await res.json();
             
             let htmlContent = '<div style="text-align:center; color:#94a3b8; padding:20px;">No messages found.</div>';
@@ -627,16 +639,13 @@
                     const isUnread = (msg.status === "Unread");
                     const bg = isUnread ? "#f0f9ff" : "#fff";
                     const weight = isUnread ? "bold" : "normal";
-                    const dateStr = new Date(msg.date).toLocaleDateString();
-                    
-                    // NEW tag for unread items
                     const unreadLabel = isUnread ? `<span style="background: #2563eb; color: white; font-size: 8px; padding: 2px 5px; border-radius: 4px; margin-left: 8px; vertical-align: middle; font-weight: 800;">NEW</span>` : "";
                     
                     return `
                     <div onclick="readMessage('${msg.id}', '${msg.from}', '${msg.subject}', '${msg.body}')" 
                          style="background:${bg}; padding:12px; border-bottom:1px solid #eee; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
                         <div style="flex: 1;">
-                            <div style="font-size:11px; color:#64748b;">${dateStr} • From: ${msg.from}</div>
+                            <div style="font-size:11px; color:#64748b;">${new Date(msg.date).toLocaleDateString()} • From: ${msg.from}</div>
                             <div style="font-weight:${weight}; color:#1e293b; font-size:14px; margin-top: 2px;">
                                 ${msg.subject} ${unreadLabel}
                             </div>
@@ -644,7 +653,6 @@
                         <div style="color: #cbd5e1; font-size: 16px; padding-left: 10px;">👉</div>
                     </div>`;
                 }).join('');
-                
                 htmlContent = `<div style="max-height:400px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">${rows}</div>`;
             }
 
@@ -652,8 +660,7 @@
                 title: 'Team Inbox',
                 width: '500px',
                 html: htmlContent + `<button onclick="openCompose()" class="swal2-confirm swal2-styled" style="background-color:#2563eb; margin-top:15px; width:100%; border-radius: 6px; font-weight: 700;">+ Compose New Message</button>`,
-                showConfirmButton: false,
-                showCloseButton: true
+                showConfirmButton: false, showCloseButton: true
             });
 
         } catch(e) { 
@@ -669,43 +676,28 @@
                     <p style="color:#64748b; font-size:12px; margin-bottom:5px;">From: <b>${from}</b></p>
                     <div style="background:#f8fafc; padding:15px; border-radius:6px; border:1px solid #eee; font-size:14px; white-space: pre-wrap;">${body}</div>
                    </div>`,
-            showCancelButton: true,
-            showDenyButton: true, // This is the Reply Button
-            cancelButtonText: 'Close',
-            denyButtonText: 'Reply',
-            denyButtonColor: '#2563eb',
-            confirmButtonText: 'Mark Read',
-            confirmButtonColor: '#10b981'
+            showCancelButton: true, showDenyButton: true,
+            cancelButtonText: 'Close', denyButtonText: 'Reply', denyButtonColor: '#2563eb',
+            confirmButtonText: 'Mark Read', confirmButtonColor: '#10b981'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Mark as Read Logic
                 fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'markRead', id: id }) })
-                .then(() => {
-                    checkUnreadCount(); 
-                    openInbox(); 
-                });
+                .then(() => { checkUnreadCount(); openInbox(); });
             } else if (result.isDenied) {
-                // Reply Logic
                 openCompose(from, `Re: ${subject.replace('Re: ', '')}`);
-            } else {
-                openInbox(); // Go back to list
-            }
+            } else { openInbox(); }
         });
     }
 
     async function openCompose(replyTo = "", replySubject = "") {
-        let options = userDatabase.map(u => {
-            const selected = (u.name === replyTo) ? 'selected' : '';
-            return `<option value="${u.name}" ${selected}>${u.name}</option>`;
-        }).join('');
+        let options = userDatabase.map(u => `<option value="${u.name}" ${u.name === replyTo ? 'selected' : ''}>${u.name}</option>`).join('');
         
         const { value: form } = await Swal.fire({
             title: 'New Message',
             html: `<select id="msg-to" class="swal2-input">${options}</select>
                    <input id="msg-subject" class="swal2-input" placeholder="Subject" value="${replySubject}">
                    <textarea id="msg-body" class="swal2-textarea" placeholder="Type here..." style="height:120px;"></textarea>`,
-            showCancelButton: true,
-            confirmButtonText: 'Send',
+            showCancelButton: true, confirmButtonText: 'Send',
             preConfirm: () => ({
                 recipient: document.getElementById('msg-to').value,
                 subject: document.getElementById('msg-subject').value,
@@ -717,13 +709,14 @@
         if (form) {
             Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
             try {
-                await fetch(MASTER_API_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'sendMessage', data: form }) 
-                });
+                await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sendMessage', data: form }) });
                 
-                // 🔴 ADD THIS LINE TO TRIGGER SYSTEM NOTIFICATION:
-                sendLocalNotification("Message Sent", "Your message to " + form.recipient + " was delivered.");
+                // 🔴 FIXED: Safe Local Notification
+                if (Notification.permission === 'granted' && navigator.serviceWorker.controller) {
+                     navigator.serviceWorker.ready.then(reg => {
+                        reg.showNotification("Message Sent", { body: "Delivered to " + form.recipient, icon: 'logo.png' });
+                    });
+                }
 
                 Swal.fire('Sent!', 'Message delivered.', 'success').then(() => openInbox());
             } catch(e) { Swal.fire('Error', 'Failed to send.', 'error'); }
@@ -731,100 +724,61 @@
     }
 
     // =========================================================
-    // 3. USER MANAGEMENT (FETCH, RENDER, ADD, DELETE)
+    // 4. USER & CONFIG MANAGEMENT
     // =========================================================
     async function loadUsers() {
-        const tbody = document.getElementById('userTableBody');
-        if(!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Fetching users...</td></tr>';
-
         try {
             const response = await fetch(`${MASTER_API_URL}?action=getUsers`);
             const result = await response.json();
-            if (result.status === "success") {
-                userDatabase = result.users; 
-                renderTable(userDatabase); 
-            }
+            if (result.status === "success") { userDatabase = result.users; renderTable(userDatabase); }
         } catch (e) { console.error(e); }
     }
 
     function renderTable(users) {
         const tbody = document.getElementById('userTableBody');
+        if(!tbody) return;
         tbody.innerHTML = "";
-
         users.forEach((user) => {
             const accessClass = (String(user.access).toLowerCase() === "admin") ? 'role-admin' : 'role-staff';
-            const row = `
-                <tr>
+            tbody.innerHTML += `<tr>
                     <td style="font-weight:600;">${user.name || 'Unknown'}</td>
                     <td>${user.email || ''}</td>
                     <td style="color:#64748b;">${user.role || ''}</td>
                     <td><span class="role-badge ${accessClass}">${user.access || 'Staff'}</span></td>
                     <td><span style="color:var(--success);">●</span> ${user.status || 'Active'}</td>
-                    <td style="text-align:right;">
-                        <button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${user.username}')">🗑️</button>
-                    </td>
-                </tr>
-            `;
-            tbody.innerHTML += row;
+                    <td style="text-align:right;"><button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${user.username}')">🗑️</button></td>
+                </tr>`;
         });
     }
 
     async function addUserModal() {
-        const { value: formValues } = await Swal.fire({
+        const { value: f } = await Swal.fire({
             title: 'Add New User',
-            html: `
-                <input id="swal-name" class="swal2-input" placeholder="Full Name">
-                <input id="swal-email" class="swal2-input" placeholder="Email Address">
-                <input id="swal-role" class="swal2-input" placeholder="Job Title (e.g. Sales Rep)">
-                <select id="swal-access" class="swal2-input">
-                    <option value="Staff">Staff Access</option>
-                    <option value="Admin">Admin Access</option>
-                </select>
-            `,
-            preConfirm: () => {
-                return {
-                    name: document.getElementById('swal-name').value,
-                    email: document.getElementById('swal-email').value,
-                    role: document.getElementById('swal-role').value,
-                    access: document.getElementById('swal-access').value
-                }
-            }
+            html: `<input id="swal-name" class="swal2-input" placeholder="Full Name">
+                   <input id="swal-email" class="swal2-input" placeholder="Email Address">
+                   <input id="swal-role" class="swal2-input" placeholder="Job Title">
+                   <select id="swal-access" class="swal2-input"><option value="Staff">Staff</option><option value="Admin">Admin</option></select>`,
+            preConfirm: () => ({ name: document.getElementById('swal-name').value, email: document.getElementById('swal-email').value, role: document.getElementById('swal-role').value, access: document.getElementById('swal-access').value })
         });
 
-        if (formValues) {
+        if (f) {
             Swal.fire({ title: 'Creating...', didOpen: () => Swal.showLoading() });
-            await fetch(MASTER_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'adminAddUser', data: formValues })
-            });
+            await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'adminAddUser', data: f }) });
             loadUsers();
             Swal.fire('Success', 'User added.', 'success');
         }
     }
 
-    function deleteUser(username) {
-        Swal.fire({
-            title: 'Delete User?',
-            text: "This will revoke all portal access.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444'
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                await fetch(MASTER_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'adminDeleteUser', username: username })
-                });
+    function deleteUser(u) {
+        Swal.fire({ title: 'Delete?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444' }).then(async (r) => {
+            if (r.isConfirmed) {
+                await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'adminDeleteUser', username: u }) });
                 loadUsers();
-                Swal.fire('Deleted', 'Access revoked.', 'success');
+                Swal.fire('Deleted', 'Revoked.', 'success');
             }
         });
     }
 
-    // =========================================================
-    // 4. SYSTEM CONFIG (BANNER & TARGETS)
-    // =========================================================
     async function loadSystemConfig() {
         try {
             const res = await fetch(`${MASTER_API_URL}?action=getSystemConfig`);
@@ -841,16 +795,13 @@
                     document.getElementById('conf-thresh-crit').value = cfg.inventory_threshold_crit || 1;
                 }
             }
-        } catch(e) { console.error("Config Load Error", e); }
+        } catch(e) {}
     }
 
     async function saveAnnouncement() {
         const text = document.getElementById('conf-announce-text').value;
         const active = document.getElementById('conf-announce-active').checked ? "TRUE" : "FALSE";
-        await fetch(MASTER_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'saveConfig', data: { announcement_text: text, announcement_active: active } })
-        });
+        await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveConfig', data: { announcement_text: text, announcement_active: active } }) });
         Swal.fire('Posted', 'System banner updated.', 'success');
     }
 
@@ -858,205 +809,73 @@
         const goal = document.getElementById('conf-sales-goal').value;
         const low = document.getElementById('conf-thresh-low').value;
         const crit = document.getElementById('conf-thresh-crit').value;
-        await fetch(MASTER_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'saveConfig', data: { sales_goal_monthly: goal, inventory_threshold_low: low, inventory_threshold_crit: crit } })
-        });
+        await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveConfig', data: { sales_goal_monthly: goal, inventory_threshold_low: low, inventory_threshold_crit: crit } }) });
         Swal.fire('Saved', 'Targets updated.', 'success');
     }
 
-    // =========================================================
-    // 5. MASTER DATA (BEER BRANDS)
-    // =========================================================
     async function loadMasterData() {
         const container = document.getElementById('brand-list');
         if(!container) return;
-        
         try {
             const res = await fetch(`${MASTER_API_URL}?action=getMasterData`);
             const json = await res.json();
             container.innerHTML = "";
             json.brands.forEach(brand => {
-                container.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; align-items:center;">
-                        <span style="font-weight:600; font-size:13px;">${brand}</span>
-                        <span style="cursor:pointer; color:#ef4444; font-size:12px;" onclick="deleteBrand('${brand}')">🗑️</span>
-                    </div>
-                `;
+                container.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
+                    <span style="font-weight:600; font-size:13px;">${brand}</span>
+                    <span style="cursor:pointer; color:#ef4444;" onclick="deleteBrand('${brand}')">🗑️</span></div>`;
             });
         } catch(e) {}
     }
 
     async function addBrand() {
-        const input = document.getElementById('new-brand-input');
-        const val = input.value.trim();
+        const val = document.getElementById('new-brand-input').value.trim();
         if(!val) return;
-        
-        input.value = ""; 
-        await fetch(MASTER_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'addMasterData', type: 'Brand', value: val })
-        });
-        loadMasterData(); 
-    }
-
-    async function deleteBrand(val) {
-        if(!confirm("Delete brand: " + val + "?")) return;
-        await fetch(MASTER_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'deleteMasterData', type: 'Brand', value: val })
-        });
+        await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'addMasterData', type: 'Brand', value: val }) });
+        document.getElementById('new-brand-input').value = "";
         loadMasterData();
     }
 
-    // =========================================================
-    // 6. AUDIT LOGS
-    // =========================================================
+    async function deleteBrand(val) {
+        if(!confirm("Delete " + val + "?")) return;
+        await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMasterData', type: 'Brand', value: val }) });
+        loadMasterData();
+    }
+
     async function loadAuditLogs() {
         const tbody = document.getElementById('audit-log-body');
         if(!tbody) return;
-
         try {
             const res = await fetch(`${MASTER_API_URL}?action=getAuditLogs`);
             const json = await res.json();
             tbody.innerHTML = "";
             json.logs.forEach(log => {
                 const time = new Date(log[0]).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                tbody.innerHTML += `
-                    <tr style="border-bottom:1px solid #f1f5f9;">
-                        <td style="padding:8px 0;">
-                            <div style="font-weight:700;">${log[2]}</div> 
-                            <div style="font-size:11px; color:#64748b;">${time} • ${log[1]}</div> 
-                        </td>
-                    </tr>
-                `;
+                tbody.innerHTML += `<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;">
+                    <div style="font-weight:700;">${log[2]}</div>
+                    <div style="font-size:11px; color:#64748b;">${time} • ${log[1]}</div></td></tr>`;
             });
         } catch(e) { tbody.innerHTML = "<tr><td>Error loading logs</td></tr>"; }
     }
 
     // =========================================================
-    // 7. PROFILE & UI HELPERS
+    // 5. HELPERS
     // =========================================================
     function setupUserProfile() {
         const name = sessionStorage.getItem("user_name") || "Admin";
-        const role = sessionStorage.getItem("user_role"); // This is "Admin" (Access Level)
-        
-        // 🔴 FIX: Explicitly get the Job Title we saved in Login
-        // If "user_title" is empty, ONLY THEN use "user_role"
-        const displayTitle = sessionStorage.getItem("user_title") || role || "Staff";
-        
+        const role = sessionStorage.getItem("user_role"); 
+        const title = sessionStorage.getItem("user_title") || role || "Staff"; 
         const userPic = sessionStorage.getItem("user_pic") || "logo.png";
         
         if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
-        
-        // This will now print "Sales Rep"
-        if(document.getElementById("display-role")) document.getElementById("display-role").innerText = displayTitle;
-        
-        if(document.getElementById("display-avatar")) {
-            const img = document.getElementById("display-avatar");
-            img.src = userPic;
-            img.onerror = function() { this.onerror = null; this.src = "logo.png"; };
-        }
-
-        // ... existing dropdown code ...
-        const dropdown = document.getElementById("userDropdown");
-        if (dropdown) {
-            // (Keep your existing dropdown HTML generation here)
-             dropdown.innerHTML = `
-                <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                    <span><span class="menu-icon">📩</span> Team Inbox</span>
-                    <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px; min-width: 20px; text-align: center;">0</span>
-                </a>
-                <a href="#" onclick="openProfileModal(); toggleUserMenu(event);"><span class="menu-icon">⚙️</span> Update Info</a>
-                <a href="#" onclick="handleLogout();" style="color: #ef4444;"><span class="menu-icon">🚪</span> Logout</a>`;
-        }
+        if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title;
+        if(document.getElementById("display-avatar")) document.getElementById("display-avatar").src = userPic;
     }
 
-    function toggleUserMenu(event) {
-        event.stopPropagation();
-        const dropdown = document.getElementById("userDropdown");
-        if(dropdown) dropdown.classList.toggle("show");
-    }
-
-    window.onclick = function(event) {
-        if (!event.target.matches('.user-profile') && !event.target.closest('.user-profile')) {
-            const dropdown = document.getElementById("userDropdown");
-            if (dropdown && dropdown.classList.contains('show')) {
-                dropdown.classList.remove('show');
-            }
-        }
-    }
-
+    function toggleUserMenu(event) { event.stopPropagation(); document.getElementById("userDropdown").classList.toggle("show"); }
     function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
-    function toggleGroup(contentId, headerEl) {
-        document.getElementById(contentId).classList.toggle('collapsed');
-        headerEl.classList.toggle('collapsed');
-    }
-
-    function handleLogout() {
-        sessionStorage.clear();
-        window.location.replace("index.html");
-    }
-  
-// --- 9. ONESIGNAL REGISTRATION (RE-ROUTE FIX) ---
-function initPushNotifications() {
-    console.log("🚀 STARTING OneSignal Setup..."); 
-
-    // 1. Inject Library
-    if (!document.getElementById('onesignal-sdk-script')) {
-        const script = document.createElement('script');
-        script.id = 'onesignal-sdk-script';
-        script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
-        script.defer = true;
-        document.head.appendChild(script);
-        console.log("📦 OneSignal Library Injected.");
-    }
-
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-        console.log("✅ OneSignal SDK Active.");
-
-        try {
-            await OneSignal.init({
-                appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
-                
-                // 🔴 CRITICAL: Point to the folder, NOT the root
-                path: "/Suburban-Brewing-Company-Portal/", 
-                
-                // 🔴 THE TRICK: Use the NEW filename to bypass the cache
-                serviceWorkerPath: "SBCWorker.js",
-                
-                // Define the scope explicitly
-                serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
-                
-                allowLocalhostAsSecureOrigin: true,
-                logLevel: "trace"
-            });
-            console.log("✅ Init Success - New Worker Registered.");
-        } catch (error) {
-            console.error("❌ Init FAILED:", error);
-        }
-        
-        // Login User
-        const userName = sessionStorage.getItem("user_name");
-        if(userName) {
-            console.log("🔗 Registering:", userName.toLowerCase());
-            OneSignal.login(userName.toLowerCase());
-        }
-    });
-}
-
-    function sendLocalNotification(title, message) {
-        // Safe check: Only send if permitted and OneSignal is active
-        if (Notification.permission === 'granted' && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.ready.then(reg => {
-                reg.showNotification(title, { body: message, icon: 'logo.png' });
-            });
-        } else {
-            // Fallback for laptop testing
-            new Notification(title, { body: message, icon: 'logo.png' });
-        }
-    }
+    function toggleGroup(contentId, headerEl) { document.getElementById(contentId).classList.toggle('collapsed'); headerEl.classList.toggle('collapsed'); }
+    function handleLogout() { sessionStorage.clear(); window.location.replace("index.html"); }
 </script>
 </body>
 </html>
