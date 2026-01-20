@@ -38,29 +38,37 @@ window.addEventListener('load', () => {
 });
 
 // --- 4. USER PROFILE & UI ---
+// --- 4. USER PROFILE & UI ---
 function setupUserProfile() {
     const name = sessionStorage.getItem("user_name") || "User";
-    const role = sessionStorage.getItem("user_title") || "Staff";
-    const pic = sessionStorage.getItem("user_pic") || PORTAL_ROOT + "logo.png";
+    const title = sessionStorage.getItem("user_title") || "Staff";
+    const pic = sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
+    const role = sessionStorage.getItem("user_role");
 
-    // Update Header Elements if they exist on the page
+    // Update Header Elements
     if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
-    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = role;
+    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title;
     if(document.getElementById("display-avatar")) {
         const img = document.getElementById("display-avatar");
         img.src = pic;
-        img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
+        img.onerror = function() { this.src = PORTAL_ROOT + "Logo.png"; };
     }
 
     // Inject Dropdown Menu Logic
     const dropdown = document.getElementById("userDropdown");
     if (dropdown) {
+        let adminLink = (role === "Admin" || role === "Owner") 
+            ? `<a href="${PORTAL_ROOT}Admin.html" style="color: #2563eb; font-weight:bold;">🔒 Admin Console</a>` 
+            : '';
+
         dropdown.innerHTML = `
             <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <span>📩 Team Inbox</span>
                 <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px;">0</span>
             </a>
             <a href="#" onclick="updateUserInfo(); toggleUserMenu(event);">⚙️ Update Info</a>
+            ${adminLink}
+            <hr style="margin:5px 0; border:0; border-top:1px solid #eee;">
             <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
         `;
     }
