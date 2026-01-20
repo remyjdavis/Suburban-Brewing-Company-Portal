@@ -11,152 +11,160 @@
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <style>
-    /* BASIC STYLING */
-    :root { --bg: #f8fafc; --sidebar: #0f172a; --accent: #2563eb; --text-main: #1e293b; }
+    :root { --bg: #f8fafc; --sidebar: #0f172a; --accent: #2563eb; --text-main: #1e293b; --text-muted: #64748b; --card-bg: #ffffff; --danger: #ef4444; --success: #10b981; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; background: var(--bg); color: var(--text-main); font-family: 'Inter', sans-serif; display: flex; min-height: 100vh; }
-    .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 20px; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; }
-    .main { margin-left: 260px; flex-grow: 1; padding: 20px; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .sidebar { width: 260px; background: var(--sidebar); color: #fff; padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 1000; }
+    .main { margin-left: 260px; flex-grow: 1; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+    .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
+    .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 30px; }
+    .card { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    .btn-primary { background: var(--accent); color: white; padding: 10px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
+    .notification-badge { position: absolute; top: 0px; right: 0px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: none; justify-content: center; align-items: center; font-weight: 800; border: 2px solid white; }
+    .user-profile { position: relative; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .user-dropdown-menu { display: none; position: absolute; top: 55px; right: 0; background-color: white; min-width: 180px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px; z-index: 2000; overflow: hidden; border: 1px solid #e2e8f0; }
+    .user-dropdown-menu.show { display: block; }
     @media (max-width: 1024px) { .sidebar { display:none; } .main { margin-left: 0; } }
-    
-    /* STATUS BAR */
-    .status-bar { padding: 10px; background: #e0f2fe; color: #0369a1; border-radius: 6px; font-family: monospace; font-size: 12px; margin-bottom: 20px; border: 1px solid #bae6fd; }
   </style>
 </head>
 <body>
 
   <aside class="sidebar">
-    <h2>SUBURBAN</h2>
-    <p style="color:#94a3b8; font-size:12px;">Admin Console</p>
-    <div style="margin-top:20px;">
-        <a href="index.html" style="color:white; text-decoration:none; display:block; padding:10px 0;">Dashboard</a>
-    </div>
+    <h2 style="margin:0 0 20px 0;">SUBURBAN</h2>
+    <a href="index.html" style="color:white; text-decoration:none;">Dashboard</a>
   </aside>
 
   <main class="main">
-    <div class="status-bar" id="system-status">System Initializing...</div>
-
-    <div class="card">
-        <h1 style="margin:0 0 20px 0; font-size:24px;">Admin Console</h1>
-        <p>Welcome back, <b id="display-username">User</b>.</p>
-        <button onclick="handleLogout()" style="background:#ef4444; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">Logout</button>
+    <div class="header">
+        <h1>Admin Console</h1>
+        <div class="user-profile" onclick="toggleUserMenu(event)">
+             <div id="msg-badge" class="notification-badge">0</div>
+             <div style="text-align:right;">
+                 <span id="display-username" style="display:block; font-weight:700;">User</span>
+             </div>
+             <img src="logo.png" id="display-avatar" style="width:38px; height:38px; border-radius:50%;">
+             <div id="userDropdown" class="user-dropdown-menu">
+                <a href="#" onclick="openInbox()" style="display:block; padding:10px; color:black;">Inbox</a>
+                <a href="#" onclick="handleLogout()" style="display:block; padding:10px; color:red;">Logout</a>
+             </div>
+        </div>
     </div>
 
-    <div class="card">
-        <h3>💬 Team Inbox</h3>
-        <button onclick="openCompose()" style="background:#2563eb; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; margin-bottom:10px;">+ New Message</button>
-        <div id="msg-table-body" style="max-height:300px; overflow-y:auto; border-top:1px solid #eee;">
-            <div style="padding:20px; text-align:center; color:#94a3b8;">Loading messages...</div>
+    <div class="admin-grid">
+        <div class="card">
+            <h3>💬 Inbox</h3>
+            <div id="msg-table-body" style="height:200px; overflow-y:auto; padding-top:10px;">Loading...</div>
+            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="openCompose()">+ Compose</button>
+        </div>
+        <div class="card">
+            <h3>📢 Banner</h3>
+            <textarea id="conf-announce-text" style="width:100%; margin:10px 0;" rows="3"></textarea>
+            <button class="btn-primary" onclick="saveAnnouncement()">Update</button>
         </div>
     </div>
   </main>
 
 <script>
-    // --- CONFIGURATION ---
     const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
-    
-    // 🔴 EXACT PATH CONFIGURATION
-    const FOLDER_NAME = "Suburban-Brewing-Company-Portal";
-    const WORKER_FILE = "OneSignalSDKWorker.js";
-    const FULL_WORKER_PATH = `${FOLDER_NAME}/${WORKER_FILE}`; // "Suburban.../OneSignal..."
-    const SCOPE = `/${FOLDER_NAME}/`;
 
-    // --- INITIALIZATION ---
     window.addEventListener('load', async () => {
-        log("🟢 System Starting...");
-        
-        // 1. MANUAL REGISTRATION (Already Proven to Work)
+        console.log("🟢 System Starting...");
+
+        // 1. MANUAL REGISTRATION (Relative Path './')
         if ('serviceWorker' in navigator) {
             try {
-                // Kill bad workers first
+                // Kill Root Workers
                 const regs = await navigator.serviceWorker.getRegistrations();
                 for(let reg of regs) {
                     if (reg.scope === "https://remyjdavis.github.io/") await reg.unregister();
                 }
 
-                // Register Correctly
-                const reg = await navigator.serviceWorker.register(WORKER_FILE, { scope: SCOPE });
-                log("✅ Worker Installed manually at: " + reg.scope);
+                // Register with DOT SLASH (Current Folder)
+                const reg = await navigator.serviceWorker.register('./OneSignalSDKWorker.js', { 
+                    scope: './' 
+                });
+                console.log("✅ Worker Registered (Relative):", reg.scope);
                 
-                // 2. START ONESIGNAL (With Path Override)
-                initOneSignal();
-
-            } catch (e) {
-                log("❌ Manual Install Error: " + e.message);
+                initOneSignal(); // Start SDK
+            } catch(e) {
+                console.error("❌ Manual Register Failed:", e);
                 initOneSignal(); // Try anyway
             }
-        }
+        } else { initOneSignal(); }
 
-        // 3. LOAD DATA
         setupUserProfile();
-        loadInbox();
+        checkUnreadCount();
+        setInterval(checkUnreadCount, 60000);
     });
 
     function initOneSignal() {
+        console.log("🚀 Starting SDK..."); 
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function(OneSignal) {
             try {
-                log("🚀 Initializing SDK...");
                 await OneSignal.init({
                     appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
                     
-                    // 🔴 THE FIX: We put the folder name IN the filename path.
-                    // This forces the SDK to build "https://domain.com/FOLDER/Worker.js"
-                    serviceWorkerPath: FULL_WORKER_PATH,
+                    // 🔴 RELATIVE PATH CONFIGURATION
+                    // This tells OneSignal "Look in the current folder"
+                    path: "./", 
                     
-                    // 🔴 Match the scope we used manually
-                    serviceWorkerParam: { scope: SCOPE },
-                    
-                    // 🔴 Set path for other assets
-                    path: SCOPE,
+                    // We do NOT set serviceWorkerPath (Defaults to file name)
+                    // We do NOT set scope (Defaults to current path)
                     
                     allowLocalhostAsSecureOrigin: true,
                     logLevel: "warn"
                 });
+                console.log("✅ SDK Initialized.");
                 
-                log("✅ OneSignal Connected!");
-                
-                const user = sessionStorage.getItem("user_name");
-                if(user) OneSignal.login(user.toLowerCase());
+                const u = sessionStorage.getItem("user_name");
+                if(u) OneSignal.login(u.toLowerCase());
 
-            } catch (e) { log("❌ SDK Error: " + e); }
+            } catch (e) { console.error("❌ SDK Error:", e); }
         });
-    }
-
-    function log(msg) {
-        console.log(msg);
-        document.getElementById('system-status').innerText = msg;
     }
 
     // --- DATA FUNCTIONS ---
-    async function loadInbox() {
-        const user = sessionStorage.getItem("user_name");
-        if(!user) return;
+    async function checkUnreadCount() {
+        const u = sessionStorage.getItem("user_name");
+        if(!u) return;
         try {
-            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}&ts=${Date.now()}`, {redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}});
+            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(u)}&ts=${Date.now()}`, {redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}});
             const json = await res.json();
-            if(json.status === 'success') {
-                const rows = json.messages.map(m => `
-                    <div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; cursor:pointer;" onclick="readMsg('${m.id}','${m.from}','${m.subject}','${m.body}')">
-                        <div><b>${m.from}</b>: ${m.subject}</div>
-                        <div style="font-size:12px; color:#888;">${new Date(m.date).toLocaleDateString()}</div>
-                    </div>`).join('');
-                document.getElementById('msg-table-body').innerHTML = rows || '<div style="padding:20px; text-align:center;">No messages.</div>';
+            if(json.status==='success') {
+                const count = json.messages.filter(m => m.status === "Unread").length;
+                const badge = document.getElementById('msg-badge');
+                if(count > 0) { badge.innerText = count; badge.style.display = 'flex'; }
+                else { badge.style.display = 'none'; }
             }
-        } catch(e) { console.error(e); }
+        } catch(e) {}
+    }
+
+    async function openInbox() {
+        const u = sessionStorage.getItem("user_name");
+        Swal.fire({title:'Loading...', didOpen:()=>Swal.showLoading()});
+        try {
+            const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(u)}&ts=${Date.now()}`, {redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}});
+            const json = await res.json();
+            let html = '<div style="padding:20px; color:#aaa;">No messages.</div>';
+            if(json.status==='success' && json.messages.length > 0) {
+                html = json.messages.map(m => `<div onclick="readMsg('${m.id}','${m.from}','${m.subject}','${m.body}')" style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; text-align:left;"><b>${m.from}</b><br>${m.subject}</div>`).join('');
+            }
+            Swal.fire({title:'Inbox', html:`<div style="max-height:300px; overflow-y:auto;">${html}</div>`, showCloseButton:true});
+        } catch(e) { Swal.fire('Error', '', 'error'); }
     }
 
     function readMsg(id, from, subj, body) {
-        Swal.fire({ title: subj, html: `<p style="color:#666; font-size:12px;">From: ${from}</p><div style="background:#f9f9f9; padding:10px; border-radius:5px;">${body}</div>`, showCancelButton: true, confirmButtonText: "Reply", cancelButtonText: "Close" }).then(r => {
-            if(r.isConfirmed) openCompose(from, "Re: " + subj);
+        Swal.fire({title:subj, html:`<p style="color:#666; font-size:12px;">From: ${from}</p><p>${body}</p>`, showCancelButton:true, confirmButtonText:"Mark Read", cancelButtonText:"Close"}).then(r => {
+            if(r.isConfirmed) fetch(MASTER_API_URL, {method:'POST', body:JSON.stringify({action:'markRead', id:id})});
         });
     }
 
-    async function openCompose(to="", subj="") {
-        const { value: f } = await Swal.fire({ title: 'New Message', html: `<input id="swal-to" class="swal2-input" placeholder="To" value="${to}"><input id="swal-subj" class="swal2-input" placeholder="Subject" value="${subj}"><textarea id="swal-body" class="swal2-textarea" placeholder="Message"></textarea>`, preConfirm: () => ({ to: document.getElementById('swal-to').value, subj: document.getElementById('swal-subj').value, body: document.getElementById('swal-body').value }) });
+    async function openCompose() {
+        const {value:f} = await Swal.fire({title:'New Message', html:`<input id="to" class="swal2-input" placeholder="To"><input id="sub" class="swal2-input" placeholder="Subject"><textarea id="body" class="swal2-textarea" placeholder="Message"></textarea>`, preConfirm:()=>{ return {to:document.getElementById('to').value, sub:document.getElementById('sub').value, body:document.getElementById('body').value} }});
         if(f) {
             Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
-            await fetch(MASTER_API_URL, {method:'POST', body:JSON.stringify({action:'sendMessage', data:{sender:sessionStorage.getItem("user_name"), recipient:f.to, subject:f.subj, body:f.body}})});
+            await fetch(MASTER_API_URL, {method:'POST', body:JSON.stringify({action:'sendMessage', data:{sender:sessionStorage.getItem("user_name"), recipient:f.to, subject:f.sub, body:f.body}})});
             Swal.fire('Sent!', '', 'success');
         }
     }
@@ -165,6 +173,7 @@
         const u = sessionStorage.getItem("user_name");
         if(u) document.getElementById('display-username').innerText = u;
     }
+    function toggleUserMenu(e) { e.stopPropagation(); document.getElementById("userDropdown").classList.toggle("show"); }
     function handleLogout() { sessionStorage.clear(); window.location.replace("index.html"); }
 </script>
 </body>
