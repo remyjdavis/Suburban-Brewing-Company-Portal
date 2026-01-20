@@ -16,7 +16,7 @@
   <meta charset="UTF-8" />
   <title>Admin Console | Suburban Brewing</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="icon" type="image/png" href="SBC-Logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
@@ -116,7 +116,7 @@
                  <span class="user-name" id="display-username" style="display:block; font-weight:700;">User</span>
                  <span class="user-role" id="display-role" style="font-size:12px; color:#64748b;">Admin</span>
              </div>
-             <img src="logo.png" id="display-avatar" class="user-avatar" style="width:38px; height:38px; border-radius:50%; border:2px solid #e5e7eb;">
+             <img src="SBC-Logo.png" id="display-avatar" class="user-avatar" style="width:38px; height:38px; border-radius:50%; border:2px solid #e5e7eb;">
              
              <div id="userDropdown" class="user-dropdown-menu">
                 <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="justify-content:space-between;">
@@ -242,10 +242,10 @@
             await OneSignal.init({
                 appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
                 
-                // 🔴 THE FIX: Explicitly point to the folder + file
-                serviceWorkerPath: "Suburban-Brewing-Company-Portal/OneSignalSDKWorker.js",
+                // 🔴 FIXED: Correct path to worker file in subfolder
+                serviceWorkerPath: "/Suburban-Brewing-Company-Portal/OneSignalSDKWorker.js",
                 
-                // 🔴 THE FIX: Lock scope to the folder
+                // 🔴 FIXED: Correct scope for the subfolder
                 serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
                 
                 allowLocalhostAsSecureOrigin: true,
@@ -257,7 +257,9 @@
             const userName = sessionStorage.getItem("user_name");
             if(userName) OneSignal.login(userName.toLowerCase());
 
-        } catch (error) { console.error("❌ SDK Init Error:", error); }
+        } catch (error) { 
+            console.error("❌ SDK Init Error:", error); 
+        }
     });
     
     // Click Listener for Permission
@@ -359,11 +361,15 @@
     async function deleteBrand(v) { if(confirm('Delete?')) { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'deleteMasterData', type:'Brand', value:v }) }); loadMasterData(); } }
     async function loadAuditLogs() { try{ const res=await fetch(`${MASTER_API_URL}?action=getAuditLogs`); const json=await res.json(); document.getElementById('audit-log-body').innerHTML = json.logs.map(l => `<tr><td style="padding:5px; border-bottom:1px solid #eee;"><div style="font-weight:700;">${l[2]}</div><div style="font-size:11px; color:#64748b;">${new Date(l[0]).toLocaleTimeString()} • ${l[1]}</div></td></tr>`).join(''); }catch(e){} }
     
-    function setupUserProfile() { const n=sessionStorage.getItem("user_name"); const r=sessionStorage.getItem("user_role"); const t=sessionStorage.getItem("user_title"); const p=sessionStorage.getItem("user_pic"); if(document.getElementById("display-username")) document.getElementById("display-username").innerText=n||"Admin"; if(document.getElementById("display-role")) document.getElementById("display-role").innerText=t||r||"Staff"; if(document.getElementById("display-avatar")) document.getElementById("display-avatar").src=p||"logo.png"; }
+    function setupUserProfile() { 
+        const n=sessionStorage.getItem("user_name"); 
+        const r=sessionStorage.getItem("user_role"); 
+        const t=sessionStorage.getItem("user_title"); 
+        const p=sessionStorage.getItem("user_pic"); 
+        if(document.getElementById("display-username")) document.getElementById("display-username").innerText=n||"Admin"; 
+        if(document.getElementById("display-role")) document.getElementById("display-role").innerText=t||r||"Staff"; 
+        if(document.getElementById("display-avatar")) document.getElementById("display-avatar").src=p||"SBC-Logo.png"; 
+    }
     function toggleUserMenu(e) { if(e)e.stopPropagation(); document.getElementById("userDropdown").classList.toggle("show"); }
     function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
-    function toggleGroup(id, el) { document.getElementById(id.replace('grp-', 'grp-')).classList.toggle('collapsed'); if(el)el.classList.toggle('collapsed'); }
-    function handleLogout() { sessionStorage.clear(); window.location.replace("index.html"); }
-</script>
-</body>
-</html>
+    function toggleGroup(id, el) { document.getElementById(id.replace('grp-', 'grp-')).classList.toggle('collapsed'); if(el)el.classList.
