@@ -63,7 +63,7 @@ function setupUserProfile() {
                 <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px;">0</span>
             </a>
             <a href="#" onclick="updateUserInfo(); toggleUserMenu(event);">⚙️ Update Info</a>
-            ${adminLink}
+            
             <hr style="margin:5px 0; border:0; border-top:1px solid #eee;">
             <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
         `;
