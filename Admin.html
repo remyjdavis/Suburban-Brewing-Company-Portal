@@ -21,7 +21,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <style>
     :root { --bg: #f8fafc; --sidebar: #0f172a; --accent: #2563eb; --text-main: #1e293b; --text-muted: #64748b; --card-bg: #ffffff; --danger: #ef4444; --success: #10b981; }
@@ -227,31 +227,36 @@
     let userDatabase = [];
 
     // --- INITIALIZATION ---
-    window.addEventListener('load', async () => {
+    window.addEventListener('DOMContentLoaded', async () => {
         console.log("🟢 DOM Loaded. Starting System...");
         
-        // 1. MANUAL REGISTRATION (Force the correct file)
+        // 1. ZOMBIE KILLER: Unregister ROOT workers
+        if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for(let reg of regs) {
+                if (reg.scope === "https://remyjdavis.github.io/") {
+                    console.log("💀 KILLED ROOT WORKER:", reg.scope);
+                    await reg.unregister();
+                }
+            }
+        }
+
+        // 2. MANUAL WORKER INJECTION (The "Hard" Fix)
+        // We bypass OneSignal's loader and register the file directly from the correct URL
         if ('serviceWorker' in navigator) {
             try {
-                // Kill root workers first
-                const regs = await navigator.serviceWorker.getRegistrations();
-                for(let reg of regs) {
-                    if(reg.scope === "https://remyjdavis.github.io/") await reg.unregister();
-                }
-
-                // Register explicitly
-                const reg = await navigator.serviceWorker.register('OneSignalSDKWorker.js', { 
-                    scope: '/Suburban-Brewing-Company-Portal/' 
-                });
-                console.log("✅ Worker Registered! Scope:", reg.scope);
+                const FULL_WORKER_URL = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/OneSignalSDKWorker.js";
+                const WORKER_SCOPE = "/Suburban-Brewing-Company-Portal/";
                 
-                // Start OneSignal Only After Registration
+                const reg = await navigator.serviceWorker.register(FULL_WORKER_URL, { scope: WORKER_SCOPE });
+                console.log("✅ Worker Manually Registered at:", reg.scope);
+                
+                // 3. Start OneSignal AFTER manual registration
                 initOneSignal();
                 
             } catch(e) {
-                console.error("❌ Worker Manual Register Failed:", e);
-                // Fallback init
-                initOneSignal();
+                console.error("❌ Manual Register Failed:", e);
+                initOneSignal(); // Try anyway
             }
         }
 
@@ -266,7 +271,7 @@
     });
 
     // =========================================================
-    // 1. ONESIGNAL SETUP (SIMPLIFIED INIT)
+    // 1. ONESIGNAL SETUP (MINIMAL CONFIG)
     // =========================================================
     function initOneSignal() {
         console.log("🚀 STARTING OneSignal SDK..."); 
@@ -277,8 +282,7 @@
                 await OneSignal.init({
                     appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
                     
-                    // 🔴 ONLY SET PATH. 
-                    // Do NOT set serviceWorkerPath/Param (Causes conflict with manual register)
+                    // 🔴 PATH ONLY. No worker path (it's already registered above)
                     path: "/Suburban-Brewing-Company-Portal/", 
                     
                     allowLocalhostAsSecureOrigin: true,
