@@ -51,16 +51,12 @@ function setupUserProfile() {
     if(document.getElementById("display-avatar")) {
         const img = document.getElementById("display-avatar");
         img.src = pic;
-        img.onerror = function() { this.src = PORTAL_ROOT + "Logo.png"; };
+        img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
 
     // Inject Dropdown Menu Logic
     const dropdown = document.getElementById("userDropdown");
     if (dropdown) {
-        let adminLink = (role === "Admin" || role === "Owner") 
-            ? `<a href="${PORTAL_ROOT}Admin.html" style="color: #2563eb; font-weight:bold;">🔒 Admin Console</a>` 
-            : '';
-
         dropdown.innerHTML = `
             <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <span>📩 Team Inbox</span>
