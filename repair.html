@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Repair Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; padding: 40px; text-align: center; background: #f0f0f0; }
+        .box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
+        h1 { color: #d32f2f; }
+        button { background: #2563eb; color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-top: 20px; font-weight: bold; }
+        button:hover { background: #1d4ed8; }
+        #status { margin-top: 20px; color: #555; font-family: monospace; text-align: left; background: #eee; padding: 10px; display:none; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>⚠️ System Repair</h1>
+        <p>This tool will forcibly remove the corrupted Service Worker files causing the 404 errors.</p>
+        <button onclick="nukeZombies()">RUN REPAIR</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        async function nukeZombies() {
+            const log = document.getElementById('status');
+            log.style.display = 'block';
+            log.innerHTML = "🔍 Scanning for corrupted workers...<br>";
+
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    
+                    if (registrations.length === 0) {
+                        log.innerHTML += "✅ No corrupted workers found.<br>";
+                    } else {
+                        for(let registration of registrations) {
+                            log.innerHTML += "💀 Found Zombie: " + registration.scope + "<br>";
+                            await registration.unregister();
+                            log.innerHTML += "🗑️ DELETED.<br>";
+                        }
+                    }
+                    
+                    log.innerHTML += "<br><b>✅ REPAIR COMPLETE.</b><br>You can now go back to Admin.";
+                    
+                } catch(e) {
+                    log.innerHTML += "❌ Error: " + e.message;
+                }
+            } else {
+                log.innerHTML += "❌ Service Workers not supported.";
+            }
+        }
+    </script>
+</body>
+</html>
