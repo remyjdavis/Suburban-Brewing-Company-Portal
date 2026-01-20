@@ -370,6 +370,14 @@
         if(document.getElementById("display-role")) document.getElementById("display-role").innerText=t||r||"Staff"; 
         if(document.getElementById("display-avatar")) document.getElementById("display-avatar").src=p||"SBC-Logo.png"; 
     }
-    function toggleUserMenu(e) { if(e)e.stopPropagation(); document.getElementById("userDropdown").classList.toggle("show"); }
-    function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
-    function toggleGroup(id, el) { document.getElementById(id.replace('grp-', 'grp-')).classList.toggle('collapsed'); if(el)el.classList.
+    function toggleUserMenu(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById("userDropdown");
+        if(dropdown) dropdown.classList.toggle("show");
+    }
+
+     function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
+    function toggleGroup(contentId, headerEl) {
+        document.getElementById(contentId).classList.toggle('collapsed');
+        headerEl.classList.toggle('collapsed');
+    }
