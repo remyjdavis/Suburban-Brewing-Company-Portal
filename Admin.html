@@ -238,11 +238,26 @@
 <script>
     // --- CONFIGURATION ---
     const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
+    const PORTAL_PATH = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/"; // 🔴 ABSOLUTE URL
     let userDatabase = [];
 
     // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', async () => {
-        console.log("🟢 DOM Loaded. Starting System...");
+        console.log("🟢 DOM Loaded. System Starting...");
+
+        // 1. ZOMBIE KILLER (Keeps the browser clean)
+        if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for(let reg of regs) {
+                // If it's not looking at our specific folder, kill it
+                if (!reg.scope.includes("Suburban-Brewing-Company-Portal")) {
+                    console.log("💀 Killing Root Worker:", reg.scope);
+                    await reg.unregister();
+                }
+            }
+        }
+
+        // 2. Standard Load
         setupUserProfile();
         loadUsers();
         loadSystemConfig();
@@ -250,17 +265,26 @@
         loadAuditLogs();
         checkUnreadCount();
         
-        // OneSignal Init (Protected)
-        initPushNotifications();
+        // 3. OneSignal Init (Delayed slightly)
+        setTimeout(initPushNotifications, 500);
         
         setInterval(checkUnreadCount, 60000);
     });
 
     // =========================================================
-    // 1. ONESIGNAL SETUP (Standard V16 Implementation)
+    // 1. ONESIGNAL SETUP (ABSOLUTE PATH FIX)
     // =========================================================
     function initPushNotifications() {
         console.log("🚀 STARTING OneSignal..."); 
+
+        // Inject Script
+        if (!document.getElementById('onesignal-sdk-script')) {
+            const script = document.createElement('script');
+            script.id = 'onesignal-sdk-script';
+            script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+            script.defer = true;
+            document.head.appendChild(script);
+        }
 
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function(OneSignal) {
@@ -268,30 +292,32 @@
                 await OneSignal.init({
                     appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
                     
-                    // 🔴 THIS IS THE FIX:
-                    // Tells the browser explicitly where to look for the worker
-                    path: "/Suburban-Brewing-Company-Portal/", 
+                    // 🔴 FORCE ABSOLUTE URLS - NO GUESSING
+                    path: PORTAL_PATH, 
+                    
+                    // The SDK appends this to the 'path' above
                     serviceWorkerPath: "OneSignalSDKWorker.js",
+                    
+                    // Force the scope to the folder
+                    serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
                     
                     allowLocalhostAsSecureOrigin: true,
                     logLevel: "warn"
                 });
                 console.log("✅ OneSignal Init Success.");
                 
-                // 🔴 LOGIN MOVED HERE: Only runs AFTER success
+                // Login User (Safe Check)
                 const userName = sessionStorage.getItem("user_name");
                 if(userName) {
-                    console.log("📝 Registering User:", userName);
                     OneSignal.login(userName.toLowerCase());
                 }
 
             } catch (error) { 
                 console.error("❌ Init FAILED:", error); 
-                // Do NOT try to login if init failed
             }
         });
         
-        // Click Listener for Permission
+        // Permission Click Trigger
         document.body.addEventListener('click', () => {
             window.OneSignalDeferred.push(function(OneSignal) {
                 if (OneSignal.Notifications.permission !== 'granted') {
@@ -383,6 +409,7 @@
         const b = document.getElementById('userTableBody'); if(!b) return; b.innerHTML = "";
         users.forEach(u => { b.innerHTML += `<tr><td style="font-weight:600;">${u.name}</td><td>${u.email}</td><td>${u.role}</td><td>${u.status}</td><td style="text-align:right;"><button class="btn-icon" style="color:#ef4444;" onclick="deleteUser('${u.username}')">🗑️</button></td></tr>`; });
     }
+    // (Other config functions)
     async function loadSystemConfig() { try{ const res=await fetch(`${MASTER_API_URL}?action=getSystemConfig`); const json=await res.json(); if(json.status==='success') { const c=json.config; if(document.getElementById('conf-announce-text')) document.getElementById('conf-announce-text').value=c.announcement_text||""; if(document.getElementById('conf-sales-goal')) document.getElementById('conf-sales-goal').value=c.sales_goal_monthly||50000; } }catch(e){} }
     async function saveAnnouncement() { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', data:{ announcement_text: document.getElementById('conf-announce-text').value, announcement_active: document.getElementById('conf-announce-active').checked?"TRUE":"FALSE" } }) }); Swal.fire('Saved', '', 'success'); }
     async function saveThresholds() { await fetch(MASTER_API_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', data:{ sales_goal_monthly: document.getElementById('conf-sales-goal').value, inventory_threshold_low: document.getElementById('conf-thresh-low').value, inventory_threshold_crit: document.getElementById('conf-thresh-crit').value } }) }); Swal.fire('Saved', '', 'success'); }
