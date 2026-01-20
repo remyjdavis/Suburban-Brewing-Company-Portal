@@ -216,14 +216,15 @@ async function openComposeModal(to="", subj="") {
 }
 
 // --- PROFILE EDIT MODAL ---
- async function updateUserInfo() {
+ // --- PROFILE EDIT MODAL (CORRECTED INLINE PASSWORD) ---
+async function updateUserInfo() {
     const { value: formValues } = await Swal.fire({
         title: 'Profile Settings',
         background: '#1e293b',
         color: '#ffffff',
         html: `
             <div style="text-align: center; margin-bottom: 20px;">
-                <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || PORTAL_ROOT + 'logo.png'}" 
+                <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || PORTAL_ROOT + 'Logo.png'}" 
                      style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
                 <br>
                 <button type="button" onclick="document.getElementById('file-input').click()" 
@@ -232,13 +233,22 @@ async function openComposeModal(to="", subj="") {
                 </button>
                 <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
             </div>
-            <div style="text-align: left;">
-                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email Address</label>
-                <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
-                <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone Number</label>
-                <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
-                <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Change Password</label>
-                <input id="p-pass" type="password" class="swal2-input" placeholder="Enter new password">
+            
+            <div style="text-align: left; display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; align-items: center;">
+                    <label style="flex: 0 0 120px; font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email Address</label>
+                    <input id="p-email" class="swal2-input" style="margin: 0; flex: 1;" value="${sessionStorage.getItem('user_email') || ''}">
+                </div>
+                
+                <div style="display: flex; align-items: center;">
+                    <label style="flex: 0 0 120px; font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone Number</label>
+                    <input id="p-phone" class="swal2-input" style="margin: 0; flex: 1;" value="${sessionStorage.getItem('user_phone') || ''}">
+                </div>
+
+                <div style="display: flex; align-items: center;">
+                    <label style="flex: 0 0 120px; font-size: 11px; color: #f87171; text-transform: uppercase;">New Password</label>
+                    <input id="p-pass" type="password" class="swal2-input" style="margin: 0; flex: 1;" placeholder="Leave blank to keep current">
+                </div>
             </div>
         `,
         preConfirm: () => {
