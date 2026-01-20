@@ -378,9 +378,13 @@
         .content { padding-top: 20px; }
     }
     /* --- USER DROPDOWN MENU STYLES --- */
-    .user-profile-container {
-        position: relative;
-        display: inline-block;
+    .user-profile { 
+        position: relative; 
+        display: flex; 
+        align-items: center; 
+        gap: 12px; 
+        cursor: pointer; /* Makes it look clickable */
+        z-index: 2000;   /* Brings it to the front */
     }
 
     .user-dropdown-menu {
@@ -708,28 +712,58 @@
   </main>
 
  <script>
+    // --- GLOBAL CONFIG ---
     const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
     const CELLAR_API_URL = 'https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec'; 
     const PRODUCTION_API_URL = 'https://script.google.com/macros/s/AKfycbzhM9bt6E7afijwvW9rPSB9oP8PJyW6DCPHNkfMHNNGP_z2yGo28AbDpGcO3NtcMqYNrA/exec';
-
     let dashboardCharts = {};
+
+    // --- 🟢 USER MENU LOGIC (Attached to Window to Fix Click) ---
+    window.toggleUserMenu = function(event) {
+        if (event) event.stopPropagation(); // Stop click from bubbling
+        
+        const dropdown = document.getElementById("userDropdown");
+        if (dropdown) {
+            dropdown.classList.toggle("show");
+            
+            // Failsafe: Populate if empty (in case portal.js didn't load)
+            if (dropdown.innerHTML.trim() === "") {
+                dropdown.innerHTML = `
+                    <a href="Admin.html" style="color: #ef4444;">🔒 Admin Console</a>
+                    <a href="#" onclick="location.reload()">🔄 Refresh</a>
+                    <a href="#" onclick="sessionStorage.clear(); window.location.reload();">🚪 Logout</a>
+                `;
+            }
+        }
+    };
+
+    // Close menu when clicking outside
+    window.addEventListener('click', function(event) {
+        if (!event.target.closest('.user-profile')) {
+            const dropdowns = document.getElementsByClassName("user-dropdown-menu");
+            for (let i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show')) {
+                    dropdowns[i].classList.remove('show');
+                }
+            }
+        }
+    });
 
     // --- INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('copyright-year').innerText = new Date().getFullYear();
+        document.getElementById('copyright-year').innerText = new Date().getFullYear();
         runAllSyncs();
-        // Auto-refresh every 5 minutes
-        setInterval(runAllSyncs, 300000);
+        setInterval(runAllSyncs, 300000); // 5 min auto-refresh
     });
 
     function runAllSyncs() {
-        syncOutreachAndInventory(); // Zone 1 General
-        syncSamplingCard();         // Zone 1 Sampling
-        syncDeliveryCard();         // Zone 1 Delivery
-        syncLeadConversion();       // Zone 1 Leads
-        refreshCellarTanks();       // Zone 3 Tanks
-        refreshMLEngine();          // Zone 2 ML/Stats
-        checkSystemBanner(); // 🔴 Add this line!
+        syncOutreachAndInventory(); 
+        syncSamplingCard();         
+        syncDeliveryCard();         
+        syncLeadConversion();       
+        refreshCellarTanks();       
+        refreshMLEngine();          
+        checkSystemBanner(); 
     }
 
     // --- DRAWER & UI TOGGLES ---
