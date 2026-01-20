@@ -505,8 +505,15 @@
     window.addEventListener('DOMContentLoaded', async () => {
         console.log("🟢 DOM Loaded. Starting System...");
 
-        // 🚨 CRITICAL FIX: THIS KILLS THE 404 ERRORS
-        await killZombies();
+        // 🛑 STEP 1: FORCE UNREGISTER ALL WORKERS
+        // This runs BEFORE anything else to delete the 404 Zombie
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for(let registration of registrations) {
+                await registration.unregister();
+                console.log("💀 Deleted Zombie Worker:", registration.scope);
+            }
+        }
 
         setupUserProfile(); 
         loadUsers();
@@ -515,36 +522,14 @@
         loadAuditLogs();
         checkUnreadCount(); 
 
-        // Start the REAL Notification System
-        initPushNotifications();
+        // 🛑 STEP 2: START ONESIGNAL AFTER CLEANUP
+        // We wait 500ms to ensure the browser has cleared the cache
+        setTimeout(() => {
+            initPushNotifications();
+        }, 500);
 
         setInterval(checkUnreadCount, 60000); 
     });
-
-    // =========================================================
-    // 💀 ZOMBIE KILLER (The Fix for "Failed to load resource")
-    // =========================================================
-    async function killZombies() {
-        if ('serviceWorker' in navigator) {
-            try {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for(let registration of registrations) {
-                    const scriptURL = registration.active ? registration.active.scriptURL : "";
-                    
-                    // If the browser is stuck on the old "sw.js" or "OneSignalSDKWorker.js"
-                    if (scriptURL.includes("sw.js") || scriptURL.includes("OneSignalSDKWorker.js")) {
-                        console.log("💀 FOUND ZOMBIE:", scriptURL);
-                        await registration.unregister();
-                        console.log("✅ ZOMBIE KILLED. Reloading page to apply fix...");
-                        // 🚨 FORCE RELOAD TO CLEAR ERROR
-                        window.location.reload();
-                    }
-                }
-            } catch(e) {
-                console.log("Zombie hunt skipped:", e);
-            }
-        }
-    }
 
     // =========================================================
     // 1. ONESIGNAL REGISTRATION (CORRECTED)
@@ -568,9 +553,16 @@
             try {
                 await OneSignal.init({
                     appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+                    
+                    // 🔴 Path to the FOLDER
                     path: "/Suburban-Brewing-Company-Portal/", 
+                    
+                    // 🔴 Path to the FILE
                     serviceWorkerPath: "SBCWorker.js",
+                    
+                    // 🔴 Scope (Forces browser to look in folder, not root)
                     serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+                    
                     allowLocalhostAsSecureOrigin: true,
                     logLevel: "warn"
                 });
@@ -581,7 +573,10 @@
             
             // 3. Login User
             const userName = sessionStorage.getItem("user_name");
-            if(userName) OneSignal.login(userName.toLowerCase());
+            if(userName) {
+                console.log("🔗 Registering:", userName.toLowerCase());
+                OneSignal.login(userName.toLowerCase());
+            }
         });
     }
 
@@ -711,12 +706,8 @@
             try {
                 await fetch(MASTER_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sendMessage', data: form }) });
                 
-                // 🔴 FIXED: Safe Local Notification
-                if (Notification.permission === 'granted' && navigator.serviceWorker.controller) {
-                     navigator.serviceWorker.ready.then(reg => {
-                        reg.showNotification("Message Sent", { body: "Delivered to " + form.recipient, icon: 'logo.png' });
-                    });
-                }
+                // Safe Local Notification Trigger
+                sendLocalNotification("Message Sent", "Delivered to " + form.recipient);
 
                 Swal.fire('Sent!', 'Message delivered.', 'success').then(() => openInbox());
             } catch(e) { Swal.fire('Error', 'Failed to send.', 'error'); }
@@ -876,6 +867,15 @@
     function toggleMobileMenu() { document.querySelector('.sidebar').classList.toggle('open'); }
     function toggleGroup(contentId, headerEl) { document.getElementById(contentId).classList.toggle('collapsed'); headerEl.classList.toggle('collapsed'); }
     function handleLogout() { sessionStorage.clear(); window.location.replace("index.html"); }
+    
+    // Clean Local Notification
+    function sendLocalNotification(title, message) {
+        if (Notification.permission === 'granted' && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification(title, { body: message, icon: 'logo.png' });
+            });
+        }
+    }
 </script>
 </body>
 </html>
