@@ -176,7 +176,11 @@ async function openProfileModal() {
     }
 }
 
-function handleLogout() {
-    sessionStorage.clear();
-    window.location.href = PORTAL_ROOT + "login.html";
-}
+// 4. LOGOUT
+    function handleLogout() {
+        if(confirm("Log out of portal?")) {
+            sessionStorage.removeItem("sbc_auth");
+            const repoPath = "/Suburban-Brewing-Company-Portal/";
+            window.location.replace(repoPath + "login.html");
+        }
+    }
