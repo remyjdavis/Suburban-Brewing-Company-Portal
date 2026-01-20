@@ -123,25 +123,74 @@ async function openInbox() {
             json.messages.map(m => {
                 const bg = m.status === "Unread" ? "#f0f9ff" : "#fff";
                 const bold = m.status === "Unread" ? "font-weight:bold;" : "";
-                return `<div onclick="readMessage('${m.id}','${m.from}','${m.subject}','${m.body}')" 
-                style="background:${bg};padding:12px;border-bottom:1px solid #eee;cursor:pointer;text-align:left;">
-                <div style="font-size:11px;color:#666;">${new Date(m.date).toLocaleDateString()} • ${m.from}</div>
-                <div style="${bold}color:#333;">${m.subject}</div></div>`;
+                return `
+                <div style="background:${bg};padding:12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+                    <div onclick="readMessage('${m.id}','${m.from}','${m.subject}','${m.body}')" style="cursor:pointer;text-align:left;flex:1;">
+                        <div style="font-size:11px;color:#666;">${new Date(m.date).toLocaleDateString()} • ${m.from}</div>
+                        <div style="${bold}color:#333;">${m.subject}</div>
+                    </div>
+                    <button onclick="deleteMessage('${m.id}')" style="background:transparent;border:none;color:#f87171;cursor:pointer;padding:5px;">🗑️</button>
+                </div>`;
             }).join('') + '</div>';
         }
         Swal.fire({ title: 'Team Inbox', width: '500px', html: html + '<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%;margin-top:10px;">+ New Message</button>', showConfirmButton: false, showCloseButton: true });
     } catch(e) { Swal.fire('Error', 'Inbox failed.', 'error'); }
 }
+async function deleteMessage(id) {
+    const result = await Swal.fire({
+        title: 'Delete Message?',
+        text: "This cannot be undone.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Yes, delete it'
+    });
 
+    if (result.isConfirmed) {
+        try {
+            await fetch(MASTER_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'deleteMessage', id: id })
+            });
+            // Refresh the inbox view immediately
+            openInbox(); 
+            // Update the notification badge
+            checkUnreadCount(); 
+        } catch (e) {
+            Swal.fire('Error', 'Could not delete message.', 'error');
+        }
+    }
+}
 function readMessage(id, from, subj, body) {
-    Swal.fire({ title: subj, html: `<div style="text-align:left;color:#555;"><small>From: ${from}</small><hr>${body}</div>`, showCancelButton:true, confirmButtonText:"Reply", cancelButtonText:"Close" }).then(r => {
-        // Mark read in background
-        fetch(MASTER_API_URL, { method:'POST', body:JSON.stringify({action:'markRead', id:id}) }).then(checkUnreadCount);
-        if(r.isConfirmed) openComposeModal(from, "Re: "+subj);
-        else openInbox();
+    Swal.fire({
+        title: subj,
+        html: `<div style="text-align:left;color:#555;"><small>From: ${from}</small><hr>${body}</div>`,
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: "Reply",
+        denyButtonText: "Delete",
+        denyButtonColor: "#ef4444",
+        cancelButtonText: "Close"
+    }).then(r => {
+        // 1. Mark read in background regardless of button clicked
+        fetch(MASTER_API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'markRead', id: id }) 
+        }).then(checkUnreadCount);
+
+        // 2. Handle Actions
+        if (r.isConfirmed) {
+            // Reply Logic
+            openComposeModal(from, "Re: " + subj);
+        } else if (r.isDenied) {
+            // Delete Logic
+            deleteMessage(id); 
+        } else {
+            // Just closed the message
+            openInbox();
+        }
     });
 }
-
 async function openComposeModal(to="", subj="") {
     // We need users list first
     let users = [];
