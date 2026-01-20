@@ -501,8 +501,11 @@
     const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
     let userDatabase = [];
 // --- INITIALIZATION ---
-    window.addEventListener('DOMContentLoaded', () => {
-        console.log("🟢 DOM Loaded. Starting System..."); // <--- This proves the script is alive
+    window.addEventListener('DOMContentLoaded', async () => {
+        console.log("🟢 DOM Loaded. Starting System...");
+
+        // 🚨 STEP 1: KILL ZOMBIES (This fixes the 404 errors)
+        await killZombies();
 
         setupUserProfile(); 
         loadUsers();
@@ -511,7 +514,7 @@
         loadAuditLogs();
         checkUnreadCount(); 
 
-        // 🔴 THIS WAS MISSING: Actually run the function!
+        // 🚨 STEP 2: START NEW SYSTEM
         initPushNotifications();
 
         // OneSignal Permission Trigger (On Click)
@@ -527,7 +530,27 @@
 
         setInterval(checkUnreadCount, 60000); 
     });
-
+// =========================================================
+    // 💀 ZOMBIE KILLER (The Fix for 404 Errors)
+    // =========================================================
+    async function killZombies() {
+        if ('serviceWorker' in navigator) {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for(let registration of registrations) {
+                    const scriptURL = registration.active ? registration.active.scriptURL : "";
+                    
+                    // If the worker is the old "sw.js" or the old "OneSignalSDKWorker.js"
+                    if (scriptURL.includes("sw.js") || scriptURL.includes("OneSignalSDKWorker.js")) {
+                        await registration.unregister();
+                        console.log("💀 ZOMBIE KILLED:", scriptURL);
+                    }
+                }
+            } catch(e) {
+                console.log("Zombie hunt failed (browser restriction):", e);
+            }
+        }
+    }
     // =========================================================
     // 1. NOTIFICATION & BADGE ENGINE
     // =========================================================
