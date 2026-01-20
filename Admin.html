@@ -1000,54 +1000,50 @@
         console.log("Device Token:", JSON.stringify(subscription));
     }
 }
-// --- 9. ONESIGNAL REGISTRATION (FIXED INJECTOR) ---
+// --- 9. ONESIGNAL REGISTRATION (RE-ROUTE FIX) ---
 function initPushNotifications() {
     console.log("🚀 STARTING OneSignal Setup..."); 
 
-    // 1. INJECT THE MISSING LIBRARY (This fixes the "Critical Missing" error)
+    // 1. Inject Library
     if (!document.getElementById('onesignal-sdk-script')) {
         const script = document.createElement('script');
         script.id = 'onesignal-sdk-script';
         script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
         script.defer = true;
         document.head.appendChild(script);
-        console.log("📦 OneSignal Library Injected into Page.");
+        console.log("📦 OneSignal Library Injected.");
     }
 
-    // 2. DEFINE THE QUEUE
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-
-    // 3. RUN INITIALIZATION
     OneSignalDeferred.push(async function(OneSignal) {
-        console.log("✅ OneSignal SDK is now active.");
-
-        if (OneSignal.initialized) {
-            console.log("⚠️ SDK already initialized. Skipping.");
-            return;
-        }
+        console.log("✅ OneSignal SDK Active.");
 
         try {
             await OneSignal.init({
                 appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+                
+                // 🔴 CRITICAL: Point to the folder, NOT the root
                 path: "/Suburban-Brewing-Company-Portal/", 
-                serviceWorkerPath: "OneSignalSDKWorker.js",
+                
+                // 🔴 THE TRICK: Use the NEW filename to bypass the cache
+                serviceWorkerPath: "SBCWorker.js",
+                
+                // Define the scope explicitly
                 serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
+                
                 allowLocalhostAsSecureOrigin: true,
-                logLevel: "trace" // Keep logs on for now
+                logLevel: "trace"
             });
-            console.log("✅ Init Success.");
+            console.log("✅ Init Success - New Worker Registered.");
         } catch (error) {
             console.error("❌ Init FAILED:", error);
         }
         
-        // 4. LOGIN USER
+        // Login User
         const userName = sessionStorage.getItem("user_name");
         if(userName) {
-            const formattedID = userName.toLowerCase();
-            console.log("🔗 Registering User ID:", formattedID);
-            OneSignal.login(formattedID);
-        } else {
-            console.error("❌ NO USERNAME FOUND. Log out and log in again.");
+            console.log("🔗 Registering:", userName.toLowerCase());
+            OneSignal.login(userName.toLowerCase());
         }
     });
 }
