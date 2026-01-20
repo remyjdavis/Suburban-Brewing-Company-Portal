@@ -502,6 +502,8 @@
     let userDatabase = [];
 // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', () => {
+        console.log("🟢 DOM Loaded. Starting System..."); // <--- This proves the script is alive
+
         setupUserProfile(); 
         loadUsers();
         loadSystemConfig();
@@ -509,16 +511,15 @@
         loadAuditLogs();
         checkUnreadCount(); 
 
-        // 🔴 CRITICAL: Call the function to start OneSignal
+        // 🔴 THIS WAS MISSING: Actually run the function!
         initPushNotifications();
 
-        // 🟢 REQUIRED FOR BROWSER SECURITY:
-        // This triggers the OneSignal prompt when the user first interacts with the page
+        // OneSignal Permission Trigger (On Click)
         document.body.addEventListener('click', () => {
             window.OneSignalDeferred = window.OneSignalDeferred || [];
             OneSignalDeferred.push(function(OneSignal) {
-                // Only prompt if they haven't already agreed
                 if (OneSignal.Notifications.permission !== 'granted') {
+                    console.log("👆 User clicked. Requesting Permission...");
                     OneSignal.Notifications.requestPermission();
                 }
             });
