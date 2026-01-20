@@ -178,5 +178,5 @@ async function openProfileModal() {
 
 function handleLogout() {
     sessionStorage.clear();
-    window.location.href = PORTAL_ROOT + "index.html";
+    window.location.href = PORTAL_ROOT + "login.html";
 }
