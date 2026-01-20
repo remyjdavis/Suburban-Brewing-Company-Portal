@@ -2,7 +2,21 @@
 <html lang="en">
 <head>
   <script>
-    // --- 🔒 THE GATEKEEPER ---
+    (async function() {
+        // If we find the OLD worker stuck at the root, kill it.
+        if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for(let reg of regs) {
+                if (!reg.scope.includes("Suburban-Brewing-Company-Portal")) {
+                    console.log("💀 Killing Root Worker:", reg.scope);
+                    await reg.unregister();
+                }
+            }
+        }
+    })();
+  </script>
+
+  <script>
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
         const role = sessionStorage.getItem("user_role");
@@ -20,6 +34,7 @@
   <link rel="icon" type="image/png" href="logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <style>
@@ -235,31 +250,56 @@
         loadAuditLogs();
         checkUnreadCount();
         
-        // --- ONESIGNAL INIT (SIMPLE VERSION) ---
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(function(OneSignal) {
-            OneSignal.init({
-                appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
-                
-                // 🛑 STANDARD CONFIG: Points to the folder
-                path: "/Suburban-Brewing-Company-Portal/", 
-                
-                // 🛑 STANDARD CONFIG: Points to the file you just renamed
-                serviceWorkerPath: "OneSignalSDKWorker.js",
-                
-                allowLocalhostAsSecureOrigin: true
-            });
-            
-            // Login User
-            const userName = sessionStorage.getItem("user_name");
-            if(userName) {
-                console.log("Registering User:", userName);
-                OneSignal.login(userName.toLowerCase());
-            }
-        });
+        // OneSignal Init (Protected)
+        initPushNotifications();
         
         setInterval(checkUnreadCount, 60000);
     });
+
+    // =========================================================
+    // 1. ONESIGNAL SETUP (Standard V16 Implementation)
+    // =========================================================
+    function initPushNotifications() {
+        console.log("🚀 STARTING OneSignal..."); 
+
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            try {
+                await OneSignal.init({
+                    appId: "3a6852ed-53d7-4cf0-a14b-c0102564d81d",
+                    
+                    // 🔴 THIS IS THE FIX:
+                    // Tells the browser explicitly where to look for the worker
+                    path: "/Suburban-Brewing-Company-Portal/", 
+                    serviceWorkerPath: "OneSignalSDKWorker.js",
+                    
+                    allowLocalhostAsSecureOrigin: true,
+                    logLevel: "warn"
+                });
+                console.log("✅ OneSignal Init Success.");
+                
+                // 🔴 LOGIN MOVED HERE: Only runs AFTER success
+                const userName = sessionStorage.getItem("user_name");
+                if(userName) {
+                    console.log("📝 Registering User:", userName);
+                    OneSignal.login(userName.toLowerCase());
+                }
+
+            } catch (error) { 
+                console.error("❌ Init FAILED:", error); 
+                // Do NOT try to login if init failed
+            }
+        });
+        
+        // Click Listener for Permission
+        document.body.addEventListener('click', () => {
+            window.OneSignalDeferred.push(function(OneSignal) {
+                if (OneSignal.Notifications.permission !== 'granted') {
+                    OneSignal.Notifications.requestPermission();
+                }
+            });
+        }, { once: true });
+    }
 
     // =========================================================
     // 2. DATA FUNCTIONS
