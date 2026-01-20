@@ -563,7 +563,7 @@
              <span class="user-role" id="display-role" style="font-size:12px; color:#64748b;">Staff</span>
          </div>
          
-         <img src="SBC-Logo.png" id="display-avatar" style="width:40px; height:40px; border-radius:50%; border:2px solid #e5e7eb; object-fit:cover;">
+         <img src="Logo.png" id="display-avatar" style="width:40px; height:40px; border-radius:50%; border:2px solid #e5e7eb; object-fit:cover;">
          
          <div id="userDropdown" class="user-dropdown-menu"></div>
     </div>
@@ -1024,6 +1024,35 @@
             }
         } catch(e) { console.error("Banner Sync Error", e); }
     }
+   // --- 🟢 UI FAILSAFE: Ensures Profile Menu Clicks Work ---
+    function toggleUserMenu(event) {
+        event.stopPropagation(); // Stop the click from closing the menu immediately
+        const dropdown = document.getElementById("userDropdown");
+        if (dropdown) {
+            dropdown.classList.toggle("show");
+            
+            // Safety: If portal.js failed to load, populate the menu manually so it's not empty
+            if (dropdown.innerHTML.trim() === "") {
+                dropdown.innerHTML = `
+                    <a href="admin.html" style="color: #ef4444;">🔒 Admin Console</a>
+                    <a href="#" onclick="location.reload()">🔄 Refresh</a>
+                    <a href="#" onclick="sessionStorage.clear(); window.location.reload();">🚪 Logout</a>
+                `;
+            }
+        }
+    }
+
+    // Close menu when clicking anywhere else
+    window.addEventListener('click', function(event) {
+        if (!event.target.closest('.user-profile')) {
+            const dropdowns = document.getElementsByClassName("user-dropdown-menu");
+            for (let i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show')) {
+                    dropdowns[i].classList.remove('show');
+                }
+            }
+        }
+    });
 </script>
   
 </body>
