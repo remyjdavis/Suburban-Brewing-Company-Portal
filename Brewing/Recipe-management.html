@@ -31,7 +31,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+<script src="/Suburban-Brewing-Company-Portal/portal.js"></script>
+  
   <style>
     /* --- SHARED THEME VARIABLES (EXACT MATCH TO INDEX) --- */
     :root {
@@ -427,19 +428,18 @@
           <button onclick="openEditor('NEW')" style="background: var(--primary-dark); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight:bold;">+ New Recipe</button>
       </div>
 
-      <div class="user-profile" onclick="toggleUserMenu(event)">
-          <div class="user-info-text">
-              <span class="user-name" id="display-username">Loading...</span>
-              <span class="user-role" id="display-role">...</span>
-          </div>
-          <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
-          
-          <div id="userDropdown" class="user-dropdown-menu">
-              <a href="#" onclick="updateUserInfo()">⚙️ Update Info</a>
-              <div style="border-top: 1px solid #eee;"></div>
-              <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
-          </div>
-      </div>
+      <<div class="user-profile" onclick="toggleUserMenu(event)">
+    <div id="msg-badge" class="notification-badge">0</div>
+    
+    <div class="user-info-text">
+        <span class="user-name" id="display-username">Brewer</span>
+        <span class="user-role" id="display-role">Staff</span>
+    </div>
+    
+    <img src="../logo.png" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
+    
+    <div id="userDropdown" class="user-dropdown-menu"></div>
+</div>
     </div>
     
     <div class="container">
@@ -591,124 +591,11 @@
 
 <script>
   // --- API CONFIGURATION ---
-  const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
   const RECIPE_API_URL = "https://script.google.com/macros/s/AKfycbwbGKnAyg_CBSAOvyl64VQsGgX4GV9T1dPflLKuJmC-JU2_Y5lFB_7FcBH2Vj_sYIhTuA/exec";
 
   let refYeast = [], refGrains = [], refWaterAdditions = [], refHops = [], refBoilMisc = [];
 
-  // --- USER PROFILE LOGIC ---
-  function setupUserProfile() {
-        const name = sessionStorage.getItem("user_name") || "Brewer";
-        const role = sessionStorage.getItem("user_role") || "Staff";
-        const pic = sessionStorage.getItem("user_pic");
-
-        document.getElementById("display-username").innerText = name;
-        document.getElementById("display-role").innerText = role;
-        if(pic) document.getElementById("display-avatar").src = pic;
-  }
-
-  function toggleUserMenu(event) {
-        event.stopPropagation();
-        document.getElementById("userDropdown").classList.toggle("show");
-  }
-
-  window.addEventListener('click', function(e) {
-        if (!e.target.closest('.user-profile')) {
-            const menu = document.getElementById("userDropdown");
-            if (menu) menu.classList.remove('show');
-        }
-  });
-
-  function handleLogout() {
-        if(confirm("Log out of portal?")) {
-            sessionStorage.removeItem("sbc_auth");
-            const repoPath = "/Suburban-Brewing-Company-Portal/";
-            window.location.replace(repoPath + "login.html");
-        }
-  }
-
-  // --- PROFILE EDIT MODAL ---
-  async function updateUserInfo() {
-        const { value: formValues } = await Swal.fire({
-            title: 'Edit Profile Settings',
-            background: '#1e293b',
-            color: '#ffffff',
-            html: `
-                <div style="text-align: left; padding: 10px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../SBC-Logo.png'}" 
-                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
-                        <br>
-                        <button type="button" onclick="document.getElementById('file-input').click()" 
-                                style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px;">
-                            Change Photo
-                        </button>
-                        <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
-                    </div>
-                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email</label>
-                    <input id="p-email" class="swal2-input" value="${sessionStorage.getItem('user_email') || ''}">
-                    <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone</label>
-                    <input id="p-phone" class="swal2-input" value="${sessionStorage.getItem('user_phone') || ''}">
-                    <label style="font-size: 11px; color: #f87171; text-transform: uppercase;">Security</label>
-                    <input id="p-pass" type="password" class="swal2-input" placeholder="New password (optional)">
-                </div>
-            `,
-            preConfirm: () => {
-                return {
-                    email: document.getElementById('p-email').value,
-                    phone: document.getElementById('p-phone').value,
-                    pass: document.getElementById('p-pass').value,
-                    pic: document.getElementById('preview-pic').src
-                }
-            }
-        });
-
-        if (formValues) saveProfile(formValues);
-    }
-
-    function handleFileSelect(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) { document.getElementById('preview-pic').src = e.target.result; };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
- function handleLogout() {
-        sessionStorage.removeItem("sbc_auth");
-        const repoPath = "/Suburban-Brewing-Company-Portal/";
-        window.location.replace(repoPath + "login.html");
-      }
-    async function saveProfile(data) {
-        Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
-        
-        const username = sessionStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
-        
-        if (!username) {
-            Swal.fire('Session Error', 'Could not identify user. Please log out and log back in.', 'error');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${MASTER_API_URL}`, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'updateProfile', user: username, ...data })
-            });
-            const result = await response.json();
-            
-            if (result.status === "success") {
-                sessionStorage.setItem("user_pic", data.pic);
-                sessionStorage.setItem("user_email", data.email);
-                sessionStorage.setItem("user_phone", data.phone);
-                
-                setupUserProfile(); 
-                Swal.fire('Saved!', 'Profile updated.', 'success');
-            } else {
-                throw new Error(result.message || "Update failed");
-            }
-        } catch (e) {
-            Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
-        }
-    }
+ 
   // --- SIDEBAR TOGGLE ---
   function toggleGroup(contentId, headerEl) {
     const content = document.getElementById(contentId);
@@ -730,9 +617,23 @@ function toggleMobileMenu() {
 
 // --- UPDATE YOUR DOMContentLoaded ---
 window.addEventListener('DOMContentLoaded', () => {
-   setupUserProfile(); 
-  // Set Year
+    // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
+    if (typeof setupUserProfile === 'function') setupUserProfile();
+    if (typeof checkUnreadCount === 'function') checkUnreadCount();
+
+    // 2. Set Footer Year
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
+
+    // 3. Admin Sidebar Security Logic
+    const role = sessionStorage.getItem("user_role");
+    if (role === "Admin" || role === "Owner") {
+        const adminDiv = document.getElementById("admin-nav-link");
+        if (adminDiv) {
+            adminDiv.style.display = "block";
+            // Fix path since we are in /Brewing/ subfolder
+            adminDiv.querySelector('a').href = "../Admin.html";
+        }
+    }
 
     // Auto-expand sidebar section based on active link
     const activeLink = document.querySelector('.nav-link.active');
