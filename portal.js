@@ -41,7 +41,7 @@ window.addEventListener('load', () => {
 function setupUserProfile() {
     const name = sessionStorage.getItem("user_name") || "User";
     const role = sessionStorage.getItem("user_title") || "Staff";
-    const pic = sessionStorage.getItem("user_pic") || PORTAL_ROOT + "SBC-Logo.png";
+    const pic = sessionStorage.getItem("user_pic") || PORTAL_ROOT + "logo.png";
 
     // Update Header Elements if they exist on the page
     if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
@@ -49,7 +49,7 @@ function setupUserProfile() {
     if(document.getElementById("display-avatar")) {
         const img = document.getElementById("display-avatar");
         img.src = pic;
-        img.onerror = function() { this.src = PORTAL_ROOT + "SBC-Logo.png"; };
+        img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
 
     // Inject Dropdown Menu Logic
@@ -156,7 +156,7 @@ async function openComposeModal(to="", subj="") {
         
         // Local Notification Trigger
         if(Notification.permission === 'granted' && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.ready.then(reg => reg.showNotification("Message Sent", {body:`To: ${f.to}`, icon: PORTAL_ROOT+'SBC-Logo.png'}));
+            navigator.serviceWorker.ready.then(reg => reg.showNotification("Message Sent", {body:`To: ${f.to}`, icon: PORTAL_ROOT+'logo.png'}));
         }
         Swal.fire('Sent!', '', 'success');
     }
