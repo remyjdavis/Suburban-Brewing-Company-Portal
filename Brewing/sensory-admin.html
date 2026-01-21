@@ -27,6 +27,8 @@
    <link rel="icon" type="image/png" href="../logo.png">
 <link rel="apple-touch-icon" href="../logo.png">
   <link rel="manifest" href="../manifest.json">
+
+ <script src="/Suburban-Brewing-Company-Portal/portal.js"></script>
   <style>
     :root { 
       --bg: #f1f5f9; 
@@ -40,19 +42,29 @@
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; color: var(--text); min-height: 100vh; }
     
-    /* --- SIDEBAR STYLES --- */
+    /* =========================================
+       SIDEBAR STYLES (COPIED FROM INDEX.HTML)
+       ========================================= */
     .sidebar { 
-      width: 240px; 
+      width: 260px; 
       background: var(--sidebar); 
-      color: white; 
-      height: 100vh; 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
       position: fixed; 
-      padding: 20px; 
+      height: 100vh; 
+      overflow-y: auto; 
       z-index: 1000;
-      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s ease;
     }
-    .sidebar h2 { margin: 0 0 32px; font-size: 20px; font-weight: 800; color: #fff; }
-
+    
+    .sidebar h2 { 
+      margin: 0 24px 32px; 
+      font-size: 20px; 
+      font-weight: 800; 
+      color: #fff; 
+      white-space: nowrap; /* Forces one line */
+    }
     /* --- MAIN CONTENT --- */
     .main { 
       margin-left: 240px; 
@@ -117,6 +129,110 @@
       }
       .grid { grid-template-columns: 1fr; }
     }
+   
+   /* --- USER PROFILE STYLES --- */
+    .user-profile {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+    .user-profile:hover { background: #f3f4f6; }
+    
+    .user-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        background-color: #e5e7eb; object-fit: cover; border: 2px solid var(--accent);
+    }
+    
+    .user-info-text { 
+        display: flex; flex-direction: column; line-height: 1.1; text-align: right; 
+    }
+    .user-name { font-weight: 700; font-size: 0.9rem; color: var(--primary-dark); }
+    .user-role { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    @media (max-width: 600px) { .user-info-text { display: none; } }
+
+    .user-dropdown-menu {
+        display: none; position: absolute; top: 55px; right: 0;
+        background-color: white; min-width: 180px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px;
+        z-index: 2000; overflow: hidden; border: 1px solid #e5e7eb;
+    }
+    .user-dropdown-menu.show { display: block; }
+    
+    .user-dropdown-menu a {
+        color: #374151; padding: 12px 16px; text-decoration: none;
+        display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    .user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
+    .container { 
+        padding: 20px; 
+        flex-grow: 1; 
+        overflow-y: auto; 
+        /* 🔴 CRITICAL: Prevents children from stretching the container */
+        max-width: 100%;
+        overflow-x: hidden; 
+    }
+   /* --- FOOTER STYLES (MATCHES INDEX) --- */
+    .app-footer {
+       height: 50px;        /* 🟢 Forces slim height */
+    flex-shrink: 0;      /* 🟢 Prevents footer from squishing */
+      margin-top: auto;
+        padding: 10px 0; 
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #94a3b8; 
+        font-size: 11px;
+        font-weight: 500;
+        width: 100%;
+        margin-bottom: 10px;
+        background: #f8fafc; /* Matches page bg */
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .footer-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        margin-left: 20px;
+        transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .system-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid #cbd5e1;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--ready); /* Green */
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
   </style>
 </head>
 <body>
@@ -124,22 +240,85 @@
   <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
   <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
 
-  <aside class="sidebar">
-    <h2>SENSORY ADMIN</h2>
-    <div class="nav-section-header"><span>System</span></div>
-    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-      <span class="icon">🚪</span> <span>Logout</span>
-    </a>
+   <aside class="sidebar">
+    <h2>SUBURBAN BREWING</h2>
 
-    <div style="margin-top: 40px;">
-      <a href="qc-dashboard.html" class="nav-link" style="color: #94a3b8; text-decoration: none; display: block; margin-bottom: 15px; font-size: 14px;">← Back to QC</a>
-      <a href="#" class="nav-link" style="color: white; font-weight: 700; text-decoration: none; font-size: 14px;">Panelist Intelligence</a>
+      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    <div id="admin-nav-link" style="display:none; margin-top: 10px; border-top: 1px solid #1e293b; padding-top:10px;">
+    <a href="../Admin.html" class="nav-link" style="color: #ef4444;">
+        <span>🔒 Admin Console</span>
+    </a>
+</div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+      <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    </div>
+
+    <div class="nav-section-title" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
+      <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
+     <a href="sensory-admin.html" class="nav-link active"><span>Sensory Admin</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="../Reports/Route.html" class="nav-link"><span>Sales Route Opt.</span></a>
     </div>
   </aside>
 
-  <main class="main">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-      <h1>Panelist Intelligence</h1>
+  <main class="main-content">
+  <div class="header">
+    <div style="flex-grow: 1;">
+      <span style="font-weight: 600; color: #6b7280;">Brewing Operations</span>
+       <h1 style="margin:0; font-size:1.5rem; color:#111827;">"Panelist Intelligence</h1>
+       </div>
+
+    <div class="user-profile" onclick="toggleUserMenu(event)" style="margin-left: auto;">
+        <div id="msg-badge" class="notification-badge">0</div>
+        <div class="user-info-text" style="text-align:right; margin-right:10px;">
+            <span class="user-name" id="display-username">Brewer</span>
+            <span class="user-role" id="display-role">Staff</span>
+        </div>
+        <img src="../logo.png" class="user-avatar" id="display-avatar">
+        <div id="userDropdown" class="user-dropdown-menu"></div>
+    </div>
       <button onclick="loadAdminData()" style="padding: 10px 16px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px;">Refresh</button>
     </div>
     <p style="color: var(--text-muted); margin: 0 0 20px 0; font-size: 14px;">Real-time validation of panelist accuracy and training status.</p>
@@ -172,12 +351,46 @@
         </div>
       </div>
     </div>
+   <footer class="app-footer">
+        <div class="footer-left">
+            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
+            <span class="system-status">
+                <span class="status-dot"></span>
+                System Operational
+            </span>
+        </div>
+        <div class="footer-links">
+            <span>Portal v2.5</span>
+            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
+            <a href="#" onclick="Swal.fire({
+                title: 'App Support', 
+                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
+                icon: 'info',
+                confirmButtonColor: 'var(--accent)'
+            })">Support</a>
+            <a href="#" onclick="location.reload()">Refresh Data</a>
+        </div>
+    </footer>
   </main>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyxhEEZIVpBQmESc3DD_12jS2Fnjgp2uQJK0o5Dy5o0n31aouq-Pr4Tzj_oQBUWE9Juhg/exec";
 
-    window.onload = loadAdminData;
+   // USE THIS INSTEAD
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Kickstart Global Portal UI
+    if (typeof setupUserProfile === 'function') setupUserProfile();
+    if (typeof checkUnreadCount === 'function') checkUnreadCount();
+
+    // 2. Set Footer Year
+    const yearEl = document.getElementById('copyright-year');
+    if (yearEl) yearEl.innerText = new Date().getFullYear();
+
+    // 3. Load Page Data
+    if (typeof loadAdminData === 'function') {
+        loadAdminData(); // 🔴 Added parentheses here so it actually runs
+    }
+});
 
     // --- MOBILE DRAWER TOGGLE ---
     function toggleMobileMenu() {
