@@ -151,11 +151,11 @@
     .main-content { 
     margin-left: 260px; 
     height: 100vh; 
-    display: flex;          /* Allows children to use flex rules */
+    display: flex; 
     flex-direction: column; 
-    overflow: hidden;       /* Prevents the outer body from scrolling */
+    overflow: hidden; 
     transition: all 0.3s ease;
-    width: 100%;
+    width: calc(100% - 260px); /* 🟢 FIXES THE LAYOUT */
 }
     
     .header { 
@@ -172,8 +172,8 @@
     
    .container { 
     padding: 30px; 
-    flex: 1;                /* 🟢 Tells this area to take up all remaining space */
-    overflow-y: auto;       /* 🟢 Tells only this area to scroll */
+    flex: 1;                /* Pushes footer to bottom */
+    overflow-y: auto;       /* Only the grid area scrolls */
     max-width: 100%;
 }
 
@@ -357,16 +357,14 @@
 
     /* --- FOOTER STYLES (MATCHES INDEX) --- */
    .app-footer {
-    height: 50px;           /* 🟢 Hard-coded height to prevent stretching */
-    flex-shrink: 0;         /* 🟢 Prevents footer from being squished */
+    height: 50px;           /* Hard-coded height */
+    flex-shrink: 0;         /* Prevents footer from being squished */
     background: #f8fafc; 
     border-top: 1px solid #e2e8f0;
     padding: 0 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: #94a3b8;
-    font-size: 11px;
 }
     .footer-links a {
         color: #94a3b8;
@@ -2430,27 +2428,6 @@ const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-
       const opt = select.options[select.selectedIndex];
       document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
     }
-  function setupUserProfile() {
-    // 1. Get standard user info
-    const name = sessionStorage.getItem("user_name") || "Brewer";
-    const role = sessionStorage.getItem("user_role") || "Staff";
-    const pic = sessionStorage.getItem("user_pic") || "../logo.png";
-    
-    // 🟢 2. CHECK ADMIN ACCESS (Separate from Role)
-    // This looks for the true/false permission flag set during login
-    const hasAdminAccess = sessionStorage.getItem("sbc_admin_access") === "true";
-
-    // 3. Update the UI text/images
-    document.getElementById("display-username").innerText = name;
-    document.getElementById("display-role").innerText = role;
-    document.getElementById("display-avatar").src = pic;
-
-    // 🟢 4. TOGGLE ADMIN LINK
-    const adminLink = document.getElementById('admin-nav-link');
-    if (adminLink) {
-        adminLink.style.display = hasAdminAccess ? 'block' : 'none';
-    }
-}
   </script>
 </body>
 </html>
