@@ -65,6 +65,33 @@
       color: #fff; 
       white-space: nowrap; /* Forces one line */
     }
+   /* COLLAPSIBLE HEADERS */
+    .nav-section-title {
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #94a3b8; 
+      margin: 18px 24px 8px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      user-select: none; 
+    }
+    .nav-section-title:hover { color: #fff; }
+
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
+
+    .nav-group, .collapsible-content {
+      max-height: 2000px; 
+      overflow: hidden; 
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease; 
+      opacity: 1; 
+    }
+    /* 🟢 This makes sure they are hidden by default */
+    .nav-group.collapsed, .collapsible-content.collapsed { max-height: 0; opacity: 0; }
     /* --- MAIN CONTENT --- */
     .main { 
       margin-left: 240px; 
