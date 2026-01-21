@@ -2429,27 +2429,6 @@ const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-
       const opt = select.options[select.selectedIndex];
       document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
     }
-  function setupUserProfile() {
-    // 1. Get standard user info
-    const name = sessionStorage.getItem("user_name") || "Brewer";
-    const role = sessionStorage.getItem("user_role") || "Staff";
-    const pic = sessionStorage.getItem("user_pic") || "../logo.png";
-    
-    // 🟢 2. CHECK ADMIN ACCESS (Separate from Role)
-    // This looks for the true/false permission flag set during login
-    const hasAdminAccess = sessionStorage.getItem("sbc_admin_access") === "true";
-
-    // 3. Update the UI text/images
-    document.getElementById("display-username").innerText = name;
-    document.getElementById("display-role").innerText = role;
-    document.getElementById("display-avatar").src = pic;
-
-    // 🟢 4. TOGGLE ADMIN LINK
-    const adminLink = document.getElementById('admin-nav-link');
-    if (adminLink) {
-        adminLink.style.display = hasAdminAccess ? 'block' : 'none';
-    }
-}
   </script>
 </body>
 </html>
