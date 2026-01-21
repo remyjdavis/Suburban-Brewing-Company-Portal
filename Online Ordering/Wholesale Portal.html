@@ -1972,12 +1972,16 @@ function switchTab(tabName) {
     if (tabName === 'pos') renderPOSDownloads();
 }
 
-// --- POS GENERATOR (With Price Inputs) ---
+// --- POS GENERATOR (With Price Inputs) ---//
 function renderPOSDownloads() {
     const container = document.getElementById('pos-content-area');
     container.className = ""; 
     
-    // 1. Auto-select logic
+    // 🟢 BACKEND LOGIC: Detect mode based on customer type, but keep it hidden from the UI
+    const clientType = state.customer ? state.customer.type.toLowerCase() : 'retailer';
+    const hiddenMode = (clientType === 'restaurant') ? 'restaurant' : 'retail';
+
+    // 1. Auto-select logic (Cart items first, then latest order history)
     let preSelectedItems = [];
     const cartItems = Object.values(state.cart).map(i => i.beer);
     if (cartItems.length > 0) preSelectedItems = cartItems;
@@ -2007,6 +2011,9 @@ function renderPOSDownloads() {
     container.innerHTML = `
         <div class="generator-controls">
             <h3 style="margin-top:0;">🖨️ Signage Generator</h3>
+            
+            <input type="hidden" id="pos-print-mode" value="${hiddenMode}">
+
             <p style="font-size:0.85rem; color:#666;">Enter your retail price (e.g. 16.00) to auto-fill the tags.</p>
             
             <div class="product-selector" style="max-height:400px;">
