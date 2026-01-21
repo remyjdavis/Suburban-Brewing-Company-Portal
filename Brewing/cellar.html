@@ -831,7 +831,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 2. Set Footer Year
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
-
+  // 3. Admin Sidebar Security Logic
+    const role = sessionStorage.getItem("user_role");
+    if (role === "Admin" || role === "Owner") {
+        const adminDiv = document.getElementById("admin-nav-link");
+        if (adminDiv) {
+            adminDiv.style.display = "block";
+            // Fix path since we are in /Brewing/ subfolder
+            adminDiv.querySelector('a').href = "../Admin.html";
+        }
+    }
     // 2. LOAD DATA
     refreshGrid();
 
