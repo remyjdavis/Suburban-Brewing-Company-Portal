@@ -267,9 +267,10 @@
     }
 
     .status-dot {
+        display: inline-block; /* 🟢 THIS LINE MAKES IT VISIBLE */
         width: 8px;
         height: 8px;
-        background-color: var(--ready); /* Green */
+        background-color: #10b981; /* Hardcoded green to be safe */
         border-radius: 50%;
         box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
         animation: pulse 2s infinite;
@@ -473,19 +474,29 @@ window.addEventListener('DOMContentLoaded', () => {
 
     async function loadAdminData() {
       try {
+        console.log("Attempting to fetch data...");
         const res = await fetch(API_URL, { 
           method: 'POST', 
           body: JSON.stringify({ action: 'getAdminData' }),
           redirect: 'follow'
         });
+        
         const json = await res.json();
+        
         if (json.status === 'success') {
           renderRoster(json.panelists);
           renderLogs(json.recentLogs);
+        } else {
+            // 🟢 Handle API error
+            document.getElementById('roster-body').innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error: ${json.message || "Unknown error"}</td></tr>`;
         }
-      } catch (e) { console.error(e); }
+      } catch (e) { 
+          // 🟢 Handle Network/Connection error
+          console.error(e); 
+          document.getElementById('roster-body').innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Connection Failed. Retrying...</td></tr>`;
+          document.getElementById('log-feed').innerHTML = `<div style="text-align: center; color: red;">Connection Failed.</div>`;
+      }
     }
-
     function renderRoster(list) {
       const tbody = document.getElementById('roster-body');
       tbody.innerHTML = "";
