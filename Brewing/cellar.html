@@ -827,8 +827,11 @@
 
     // --- MASTER INITIALIZATION ENGINE ---
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. SET VISUALS IMMEDIATELY (Fixes "Loading..." issue)
-    setupUserProfile(); 
+    // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
+    if (typeof setupUserProfile === 'function') setupUserProfile();
+    if (typeof checkUnreadCount === 'function') checkUnreadCount();
+
+    // 2. Set Footer Year
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
     // 2. LOAD DATA
@@ -871,7 +874,6 @@ function handleURLParameters() {
     // --- API CONFIGURATIONS ---
 const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
 // 🔴 ADD THIS LINE BELOW
-const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
     const KNOWN_VESSELS = [ "FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6", "Pilot 1", "Pilot 2", "BT 1", "BT 2" ];
 
     let currentBatchId = null;
