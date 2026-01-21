@@ -831,16 +831,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 2. Set Footer Year
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
-  // 3. Admin Sidebar Security Logic
-    const role = sessionStorage.getItem("user_role");
-    if (role === "Admin" || role === "Owner") {
-        const adminDiv = document.getElementById("admin-nav-link");
-        if (adminDiv) {
-            adminDiv.style.display = "block";
-            // Fix path since we are in /Brewing/ subfolder
-            adminDiv.querySelector('a').href = "../Admin.html";
-        }
-    }
+
     // 2. LOAD DATA
     refreshGrid();
 
@@ -2033,20 +2024,21 @@ const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-
 
     // --- MASTER INITIALIZATION ENGINE ---
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
+    // 🟢 1. Kickstart Global Portal UI from portal.js
+    // This now handles Name, Role, Avatar, and the Admin Console Link
     if (typeof setupUserProfile === 'function') setupUserProfile();
     if (typeof checkUnreadCount === 'function') checkUnreadCount();
 
     // 2. Set Footer Year
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
-    // 2. LOAD DATA
-    refreshGrid();
+    // 3. Load Cellar Specific Data
+    if (typeof refreshGrid === 'function') refreshGrid();
 
-    // 3. AUTO-EXPAND SIDEBAR
+    // 4. Auto-expand sidebar section based on active link
     const activeLink = document.querySelector('.nav-link.active');
     if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
+        const parentGroup = activeLink.closest('.collapsible-content') || activeLink.closest('.nav-group');
         if (parentGroup) parentGroup.classList.remove('collapsed');
     }
 
