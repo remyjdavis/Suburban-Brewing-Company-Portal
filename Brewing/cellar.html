@@ -152,7 +152,7 @@
       margin-left: 260px; 
       flex-grow: 1; 
       height: 100vh; 
-      overflow-y: auto; 
+      overflow: hidden;    /* 🔴 Prevents double scrollbars */
       transition: all 0.3s ease;
       width: 100%;
       display: flex;
@@ -171,7 +171,12 @@
       z-index: 10; 
     }
     
-    .container { padding: 30px; flex: 1; }
+    .container { 
+    padding: 30px; 
+    flex: 1;             /* 🟢 This pushes the footer down */
+    overflow-y: auto;    /* 🟢 This makes only the content scroll */
+    max-width: 100%;
+}
 
     /* --- DASHBOARD STATS --- */
     .dashboard-row {
@@ -353,7 +358,9 @@
 
     /* --- FOOTER STYLES (MATCHES INDEX) --- */
     .app-footer {
-        margin-top: auto;
+       height: 50px;        /* 🟢 Forces slim height */
+    flex-shrink: 0;      /* 🟢 Prevents footer from squishing */
+      margin-top: auto;
         padding: 10px 0; 
         border-top: 1px solid #e2e8f0;
         display: flex;
