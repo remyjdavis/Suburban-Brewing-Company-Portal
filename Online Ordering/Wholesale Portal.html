@@ -2056,7 +2056,9 @@ function generateDocs(type) {
 
     let html = "";
 
-    // --- CASE 1: SHELF TALKERS (5 x 3) ---
+    // ==========================================
+    // CASE 1: SHELF TALKERS (5 x 3)
+    // ==========================================
     if (type === 'shelf') {
         html = `<div class="print-grid-talkers" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4in; padding: 0.5in;">`;
         
@@ -2065,7 +2067,7 @@ function generateDocs(type) {
             const unitType = chk.dataset.unit;
             const p = groupedProducts[beerKey];
             
-            // Logic to grab the correct price input for this specific checkbox
+            // Grab price from corresponding input (price1 or price2)
             const inputNum = chk.id.includes('chk1') ? '1' : '2';
             const priceVal = document.getElementById(`price${inputNum}-${beerKey}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "$_______";
@@ -2082,18 +2084,24 @@ function generateDocs(type) {
         html += `</div>`;
     } 
 
-    // --- CASE 2: QR TAGS (3 x 1.75) ---
+    // ==========================================
+    // CASE 2: QR TAGS (3 x 1.75)
+    // ==========================================
     else if (type === 'qr') {
-        html = `<div style="display: flex; flex-wrap: wrap; padding: 0.3in; background: white;">`;
+        // Grid setup for small tags to fit multiple on one page
+        html = `<div style="display: flex; flex-wrap: wrap; padding: 0.3in; background: white; justify-content: flex-start;">`;
         
         checkedUnits.forEach(chk => {
             const beerKey = chk.dataset.beer;
             const unitType = chk.dataset.unit;
             const p = groupedProducts[beerKey];
+            
+            // Grab unique price for this unit
             const inputNum = chk.id.includes('chk1') ? '1' : '2';
             const priceVal = document.getElementById(`price${inputNum}-${beerKey}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "";
             
+            // Generate link for the QR Code
             const deepLink = `${baseUrl}?beer=${encodeURIComponent(p.name)}`;
             const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(deepLink)}`;
 
@@ -2118,7 +2126,9 @@ function generateDocs(type) {
         html += `</div>`;
     }
 
-    // --- CASE 3: MENU LIST ---
+    // ==========================================
+    // CASE 3: MENU LIST
+    // ==========================================
     else if (type === 'menu') {
         html = `<div style="padding: 0.6in; background: white; min-height: 100vh;">`;
         html += `<h1 style="text-align:center; text-transform:uppercase; border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 30px;">Current Availability</h1>`;
@@ -2149,10 +2159,10 @@ function generateDocs(type) {
         html += `</div>`;
     }
 
-    // Inject into the hidden print div and trigger dialog
+    // Inject and trigger print
     printArea.innerHTML = html;
     
-    // Give images a moment to load before opening the print preview
+    // Slight timeout ensures QR images and logos are fully ready before the browser print UI opens
     setTimeout(() => {
         window.print();
     }, 600); 
