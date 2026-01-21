@@ -149,15 +149,14 @@
 
     /* --- MAIN CONTENT AREA --- */
     .main-content { 
-      margin-left: 260px; 
-      flex-grow: 1; 
-      height: 100vh; 
-      overflow: hidden;    /* 🔴 Prevents double scrollbars */
-      transition: all 0.3s ease;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-    }
+    margin-left: 260px; 
+    height: 100vh; 
+    display: flex;          /* Allows children to use flex rules */
+    flex-direction: column; 
+    overflow: hidden;       /* Prevents the outer body from scrolling */
+    transition: all 0.3s ease;
+    width: 100%;
+}
     
     .header { 
       background: white; 
@@ -171,10 +170,10 @@
       z-index: 10; 
     }
     
-    .container { 
+   .container { 
     padding: 30px; 
-    flex: 1;             /* 🟢 This pushes the footer down */
-    overflow-y: auto;    /* 🟢 This makes only the content scroll */
+    flex: 1;                /* 🟢 Tells this area to take up all remaining space */
+    overflow-y: auto;       /* 🟢 Tells only this area to scroll */
     max-width: 100%;
 }
 
@@ -357,25 +356,18 @@
     .btn-orange { background: var(--accent-orange); }
 
     /* --- FOOTER STYLES (MATCHES INDEX) --- */
-    .app-footer {
-       height: 50px;        /* 🟢 Forces slim height */
-    flex-shrink: 0;      /* 🟢 Prevents footer from squishing */
-      margin-top: auto;
-        padding: 10px 0; 
-        border-top: 1px solid #e2e8f0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: #94a3b8; 
-        font-size: 11px;
-        font-weight: 500;
-        width: 100%;
-        margin-bottom: 10px;
-        background: #f8fafc; /* Matches page bg */
-        padding-left: 30px;
-        padding-right: 30px;
-    }
-
+   .app-footer {
+    height: 50px;           /* 🟢 Hard-coded height to prevent stretching */
+    flex-shrink: 0;         /* 🟢 Prevents footer from being squished */
+    background: #f8fafc; 
+    border-top: 1px solid #e2e8f0;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #94a3b8;
+    font-size: 11px;
+}
     .footer-links a {
         color: #94a3b8;
         text-decoration: none;
@@ -604,7 +596,6 @@
       <div id="grid-brite" class="vessel-grid"></div>
     </div>
     
-    <div style="flex-grow:1;"></div>
     <footer class="app-footer">
         <div class="footer-left">
             <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
