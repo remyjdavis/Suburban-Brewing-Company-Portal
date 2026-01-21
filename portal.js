@@ -37,13 +37,12 @@ window.addEventListener('load', () => {
     setInterval(checkUnreadCount, 60000); // Check for messages every minute
 });
 
-// --- 4. USER PROFILE & UI ---
-// --- 4. USER PROFILE & UI ---
+// --- 4. USER PROFILE & UI (Updated with Admin Link Logic) ---
 function setupUserProfile() {
     const name = sessionStorage.getItem("user_name") || "User";
     const title = sessionStorage.getItem("user_title") || "Staff";
     const pic = sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
-    const role = sessionStorage.getItem("user_role");
+    const role = sessionStorage.getItem("user_role"); // Admin, Owner, etc.
 
     // Update Header Elements
     if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
@@ -52,6 +51,26 @@ function setupUserProfile() {
         const img = document.getElementById("display-avatar");
         img.src = pic;
         img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
+    }
+
+    // 🟢 NEW: GLOBAL ADMIN CONSOLE TOGGLE
+    const adminDiv = document.getElementById("admin-nav-link");
+    if (adminDiv) {
+        if (role === "Admin" || role === "Owner") {
+            adminDiv.style.display = "block";
+            
+            // Fix path awareness (so links work from /Brewing/ subfolders)
+            const link = adminDiv.querySelector('a');
+            if (link) {
+                // If we are deep in a subfolder (like /Brewing/cellar.html), use ../
+                const isSubfolder = window.location.pathname.includes("/Brewing/") || 
+                                   window.location.pathname.includes("/sales/") || 
+                                   window.location.pathname.includes("/inventory/");
+                link.href = isSubfolder ? "../Admin.html" : "Admin.html";
+            }
+        } else {
+            adminDiv.style.display = "none";
+        }
     }
 
     // Inject Dropdown Menu Logic
@@ -63,7 +82,6 @@ function setupUserProfile() {
                 <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px;">0</span>
             </a>
             <a href="#" onclick="updateUserInfo(); toggleUserMenu(event);">⚙️ Update Info</a>
-            
             <hr style="margin:5px 0; border:0; border-top:1px solid #eee;">
             <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
         `;
