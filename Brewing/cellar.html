@@ -1230,6 +1230,1205 @@ const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-
       const opt = select.options[select.selectedIndex];
       document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
     }
+  
+  </script>
+</body>
+</html>  <style>
+    /* --- SHARED THEME VARIABLES (EXACT MATCH TO INDEX) --- */
+    :root { 
+      --bg: #f8fafc;
+      --sidebar: #0f172a; /* Dark Navy */
+      --accent: #2563eb;
+      --primary-dark: #111827;
+      --accent-green: #27ae60;
+      --accent-orange: #f39c12;
+      --status-dirty: #ef4444;
+      --status-clean: #10b981;
+      --qc-warning: #facc15;
+      --text: #1f2937;
+      --text-muted: #6b7280;
+      
+      --ready: #10b981;
+    }
+    
+    /* --- GLOBAL RESET & LAYOUT --- */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text); 
+      /* ⚠️ EXACT FONT MATCH */
+      font-family: 'Inter', -apple-system, system-ui, sans-serif; 
+      display: flex; 
+      height: 100vh; 
+      overflow: hidden; 
+    }
+
+    /* =========================================
+       SIDEBAR STYLES (COPIED FROM INDEX.HTML)
+       ========================================= */
+    .sidebar { 
+      width: 260px; 
+      background: var(--sidebar); 
+      color: #fff; 
+      padding: 24px 0; 
+      flex-shrink: 0; 
+      position: fixed; 
+      height: 100vh; 
+      overflow-y: auto; 
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar h2 { 
+      margin: 0 24px 32px; 
+      font-size: 20px; 
+      font-weight: 800; 
+      color: #fff; 
+      white-space: nowrap; /* Forces one line */
+    }
+
+    /* COLLAPSIBLE HEADERS */
+    .nav-section-title, .nav-section-header {
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: #94a3b8; 
+      margin: 18px 24px 8px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      cursor: pointer; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      user-select: none;
+    }
+    .nav-section-title:hover { color: #fff; }
+
+    .chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .collapsed .chevron { transform: rotate(-90deg); }
+
+    .collapsible-content {
+      max-height: 2000px; 
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+      opacity: 1;
+    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
+
+    /* LINKS */
+    .nav-link { 
+      display: flex; 
+      align-items: center; 
+      padding: 10px 24px; 
+      color: #64748b; 
+      text-decoration: none; 
+      font-size: 14px; 
+      transition: 0.2s; 
+      border-left: 4px solid transparent;
+      margin-bottom: 0;
+    }
+    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
+    .nav-link.active { border-left-color: var(--accent); color: #fff; font-weight: 600; }
+
+    /* LOGOUT LINK STYLE */
+    .logout-link { 
+      margin-top: 20px; 
+      color: #f87171 !important; 
+      border-left: 4px solid transparent; 
+      transition: all 0.2s ease; 
+      cursor: pointer; 
+    }
+    .logout-link:hover { 
+      background: #450a0a !important; 
+      color: #fee2e2 !important; 
+      border-left-color: #ef4444; 
+    }
+    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
+
+    /* --- MAIN CONTENT AREA --- */
+    .main-content { 
+    margin-left: 260px; 
+    height: 100vh; 
+    display: flex;          /* Allows children to use flex rules */
+    flex-direction: column; 
+    overflow: hidden;       /* Prevents the outer body from scrolling */
+    transition: all 0.3s ease;
+    width: 100%;
+}
+    
+    .header { 
+      background: white; 
+      padding: 15px 30px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      border-bottom: 1px solid #e5e7eb; 
+      position: sticky; 
+      top: 0; 
+      z-index: 10; 
+    }
+    
+   .container { 
+    padding: 30px; 
+    flex: 1;                /* 🟢 Tells this area to take up all remaining space */
+    overflow-y: auto;       /* 🟢 Tells only this area to scroll */
+    max-width: 100%;
+}
+
+    /* --- DASHBOARD STATS --- */
+    .dashboard-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .stat-label { font-size: 11px; text-transform: uppercase; color: #6b7280; font-weight: 700; }
+    .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--primary-dark); }
+
+    /* --- VESSEL GRID LAYOUT --- */
+    .grid-section-title {
+      font-size: 1.1rem; 
+      font-weight: 800; 
+      color: var(--primary-dark);
+      margin: 30px 0 15px 0; 
+      border-left: 5px solid var(--accent); 
+      padding-left: 10px;
+    }
+    
+    .vessel-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+      gap: 15px; 
+    }
+    
+    .vessel-card { 
+      background: white; 
+      border-radius: 12px; 
+      padding: 15px; 
+      text-align: center; 
+      border: 2px solid #e5e7eb; 
+      cursor: pointer; 
+      transition: 0.2s; 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+      position: relative;
+    }
+    
+    .vessel-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .vessel-card.active { border-color: var(--accent-green); border-width: 3px; }
+    .vessel-card.dirty { border-color: var(--status-dirty); border-width: 3px; background: #fef2f2; }
+    .vessel-card.clean { border-color: var(--status-clean); border-width: 3px; border-style: dashed; }
+    .vessel-card.waiting-qc { border-color: var(--qc-warning); border-width: 3px; }
+
+    .qc-badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: var(--qc-warning);
+      color: #854d0e;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .tank-name { font-size: 1.2rem; font-weight: bold; margin: 0; color: #111827; }
+    .status-tag { 
+      font-size: 0.65rem; 
+      font-weight: bold; 
+      padding: 3px 8px; 
+      border-radius: 4px; 
+      background: #f3f4f6; 
+      display: inline-block; 
+      margin-top: 5px; 
+      text-transform: uppercase; 
+    }
+
+    /* --- MODAL SYSTEM --- */
+    .overlay { 
+      display: none; 
+      position: fixed; 
+      top: 0; left: 0; 
+      width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.7); 
+      z-index: 1500; 
+    }
+    
+    #vessel-modal { 
+      display: none; 
+      position: fixed; 
+      top: 50%; left: 50%; 
+      transform: translate(-50%, -50%);
+      background: white; 
+      padding: 0; 
+      border-radius: 15px; 
+      z-index: 1600; 
+      width: 95%; max-width: 1000px;
+      max-height: 90vh;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
+      overflow: hidden;
+      flex-direction: column;
+    }
+    
+    .modal-header { 
+      background: #f9fafb; 
+      padding: 15px 20px; 
+      border-bottom: 1px solid #e5e7eb; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      flex-shrink: 0;
+    }
+    
+    .modal-tabs { 
+      display: flex; 
+      background: #f3f4f6; 
+      border-bottom: 1px solid #e5e7eb; 
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      flex-shrink: 0;
+    }
+    
+    .tab-btn { 
+      flex: 1; 
+      min-width: 120px; 
+      padding: 15px; 
+      border: none; 
+      background: none; 
+      cursor: pointer; 
+      font-weight: bold; 
+      color: #6b7280; 
+      border-bottom: 3px solid transparent; 
+      transition: 0.2s; 
+      white-space: nowrap;
+    }
+    
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: white; }
+    .modal-content-area { padding: 20px; overflow-y: auto; flex-grow: 1; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* --- FORM ELEMENTS --- */
+    .form-group { margin-bottom: 15px; }
+    .form-group label { 
+      display: block; 
+      font-size: 0.75rem; 
+      font-weight: bold; 
+      margin-bottom: 5px; 
+      color: #4b5563; 
+      text-transform: uppercase; 
+    }
+    
+    .form-group input, .form-group select, .form-group textarea { 
+      width: 100%; 
+      padding: 12px; 
+      border: 1px solid #d1d5db; 
+      border-radius: 6px; 
+      box-sizing: border-box; 
+      font-size: 16px; /* Prevents mobile zoom */
+    }
+    
+    .btn-action { 
+      width: 100%; 
+      padding: 14px; 
+      border: none; 
+      border-radius: 6px; 
+      font-weight: bold; 
+      cursor: pointer; 
+      color: white; 
+      margin-top: 10px; 
+    }
+    
+    .btn-green { background: var(--accent-green); }
+    .btn-blue { background: var(--accent); }
+    .btn-orange { background: var(--accent-orange); }
+
+    /* --- FOOTER STYLES (MATCHES INDEX) --- */
+   .app-footer {
+    height: 50px;           /* 🟢 Hard-coded height to prevent stretching */
+    flex-shrink: 0;         /* 🟢 Prevents footer from being squished */
+    background: #f8fafc; 
+    border-top: 1px solid #e2e8f0;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #94a3b8;
+    font-size: 11px;
+}
+    .footer-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        margin-left: 20px;
+        transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .system-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid #cbd5e1;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--ready); /* Green */
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* ============================================================
+       MOBILE & TABLET DRAWER LOGIC 
+       ============================================================ */
+    #menu-toggle { display: none; }
+    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
+
+    @media (max-width: 1024px) {
+      .sidebar { left: -260px; z-index: 2000; }
+      .sidebar.open { left: 0; }
+      .main-content { margin-left: 0 !important; }
+      .menu-overlay.active { display: block; }
+      
+      #menu-toggle {
+        display: flex; position: fixed; bottom: 25px; right: 25px;
+        width: 65px; height: 65px; background: var(--accent); color: white;
+        border-radius: 50%; justify-content: center; align-items: center;
+        font-size: 28px; z-index: 2100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
+      }
+
+      .header { padding: 10px 20px; }
+      .container { padding: 15px; }
+      .dashboard-row { grid-template-columns: 1fr; }
+      
+      #vessel-modal { width: 98%; height: 95vh; }
+      .modal-content-area > div { flex-direction: column !important; gap: 20px !important; }
+      .modal-content-area div[style*="border-right"] { border-right: none !important; padding-right: 0 !important; }
+      
+      /* Footer Stack */
+      .app-footer { flex-direction: column; gap: 15px; text-align: center; }
+      .footer-links a { margin: 0 10px; }
+      .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
+    }
+     /* --- USER PROFILE STYLES --- */
+    .user-profile {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+    .user-profile:hover { background: #f3f4f6; }
+    
+    .user-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        background-color: #e5e7eb; object-fit: cover; border: 2px solid var(--accent);
+    }
+    
+    .user-info-text { 
+        display: flex; flex-direction: column; line-height: 1.1; text-align: right; 
+    }
+    .user-name { font-weight: 700; font-size: 0.9rem; color: var(--primary-dark); }
+    .user-role { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    @media (max-width: 600px) { .user-info-text { display: none; } }
+
+    .user-dropdown-menu {
+        display: none; position: absolute; top: 55px; right: 0;
+        background-color: white; min-width: 180px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px;
+        z-index: 2000; overflow: hidden; border: 1px solid #e5e7eb;
+    }
+    .user-dropdown-menu.show { display: block; }
+    
+    .user-dropdown-menu a {
+        color: #374151; padding: 12px 16px; text-decoration: none;
+        display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    .user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
+    .container { 
+        padding: 20px; 
+        flex-grow: 1; 
+        overflow-y: auto; 
+        /* 🔴 CRITICAL: Prevents children from stretching the container */
+        max-width: 100%;
+        overflow-x: hidden; 
+    }
+  </style>
+</head>
+<body>
+<button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+<div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
+  
+  <aside class="sidebar">
+    <h2>SUBURBAN BREWING</h2>
+
+      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    <div id="admin-nav-link" style="display:none; margin-top: 10px; border-top: 1px solid #1e293b; padding-top:10px;">
+    <a href="../Admin.html" class="nav-link" style="color: #ef4444;">
+        <span>🔒 Admin Console</span>
+    </a>
+</div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
+      <span>Samplings</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sample" class="collapsible-content">
+      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
+      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
+      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-sales', this)">
+      <span>Sales</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-sales" class="collapsible-content">
+      <a href="../sales/sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
+      <a href="../sales/leads.html" class="nav-link"><span>AI Sales Leads</span></a>
+      <a href="../sales/invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
+      <a href="../sales/deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
+      <a href="../sales/new invoices.html" class="nav-link"><span>New Invoice</span></a>
+    </div>
+
+    <div class="nav-section-title" onclick="toggleGroup('grp-inv', this)">
+      <span>Inventory</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-inv" class="collapsible-content">
+      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
+      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
+      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
+      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-brew', this)">
+      <span>Brewing</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-brew" class="collapsible-content">
+      <a href="brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
+      <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="cellar.html" class="nav-link active"><span>Cellar Management</span></a>
+      <a href="qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
+    </div>
+    
+    <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)">
+      <span>Reporting & Analytics</span><span class="chevron">▼</span>
+    </div>
+    <div id="grp-rep" class="collapsible-content">
+      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
+      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
+      <a href="../Reports/Route.html" class="nav-link"><span>Sales Route Opt.</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+  <div class="header">
+    <div style="flex-grow: 1;">
+      <span style="font-weight: 600; color: #6b7280;">Brewing Operations</span>
+      <h1 style="margin:0; font-size:1.5rem; color:#111827;">Cellar Management</h1>
+    </div>
+
+    <div class="user-profile" onclick="toggleUserMenu(event)" style="margin-left: auto;">
+        <div id="msg-badge" class="notification-badge">0</div>
+        <div class="user-info-text" style="text-align:right; margin-right:10px;">
+            <span class="user-name" id="display-username">Brewer</span>
+            <span class="user-role" id="display-role">Staff</span>
+        </div>
+        <img src="../logo.png" class="user-avatar" id="display-avatar">
+        <div id="userDropdown" class="user-dropdown-menu"></div>
+    </div>
+</div>
+    
+  <div class="container">
+    <div class="dashboard-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Volume in Cellar</div>
+          <div class="stat-value" id="stat-total-bbl">-- BBL</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Fermentations</div>
+          <div class="stat-value" id="stat-active-count">--</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Batches Awaiting QC</div>
+          <div class="stat-value" id="stat-qc-pending" style="color: var(--accent-orange);">--</div>
+        </div>
+      </div>
+
+      <div class="grid-section-title">Production Fermenters (10 BBL)</div>
+      <div id="grid-production" class="vessel-grid"></div>
+
+      <div class="grid-section-title" style="border-color: var(--accent-orange);">Pilot Fermenters (1 BBL)</div>
+      <div id="grid-pilot" class="vessel-grid"></div>
+
+      <div class="grid-section-title" style="border-color: var(--accent-green);">Brite Tanks (10 BBL)</div>
+      <div id="grid-brite" class="vessel-grid"></div>
+    </div>
+    
+    <footer class="app-footer">
+        <div class="footer-left">
+            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
+            <span class="system-status">
+                <span class="status-dot"></span>
+                System Operational
+            </span>
+        </div>
+        <div class="footer-links">
+            <span>Portal v2.5</span>
+            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
+            <a href="#" onclick="Swal.fire({
+                title: 'App Support', 
+                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
+                icon: 'info',
+                confirmButtonColor: 'var(--accent)'
+            })">Support</a>
+            <a href="#" onclick="location.reload()">Refresh Data</a>
+        </div>
+    </footer>
+  </main>
+
+  <div class="overlay" id="overlay" onclick="closeModal()"></div>
+  
+  <div id="vessel-modal">
+    <div class="modal-header">
+      <div>
+        <h2 id="modal-title" style="margin:0;">Vessel Detail</h2>
+        <small id="modal-subtitle" style="color: #6b7280;">Loading...</small>
+      </div>
+      <button onclick="closeModal()" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+    </div>
+
+    <div class="modal-tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-daily', this)">Daily Log & QC</button>
+      <button class="tab-btn" onclick="switchTab('tab-actions', this)">Actions & Status</button>
+      <button class="tab-btn" onclick="switchTab('tab-additions', this)">Additions & Hops</button>
+      <button class="tab-btn" onclick="switchTab('tab-drops', this)">Drops & Harvests</button>
+      <button class="tab-btn" onclick="switchTab('tab-transfer', this)">Transfer / Brite</button>
+      <button class="tab-btn" onclick="switchTab('tab-ml', this)">ML Insights</button>
+    </div>
+
+    <div class="modal-content-area">
+      
+      <div id="tab-daily" class="tab-content active">
+        <div style="display: flex; gap: 30px;">
+          <div style="flex: 1; border-right: 1px solid #e5e7eb; padding-right: 25px;">
+            <div class="form-group"><label>Gravity (SG)</label><input type="number" step="0.001" id="log-sg"></div>
+            <div class="form-group"><label>Temp (°F)</label><input type="number" id="log-temp"></div>
+            <div class="form-group"><label>pH</label><input type="number" step="0.01" id="log-ph"></div>
+            
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 20px;">
+              <span class="qc-section-title">QUALITY CONTROL GATES</span>
+              <div class="form-group">
+                <label>VDK Test Result</label>
+                <select id="log-vdk">
+                  <option value="">-- No Test --</option>
+                  <option value="PASS">PASS (Diacetyl Clean)</option>
+                  <option value="FAIL">FAIL (Keep Warming)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Carbonation (CO2 Vol)</label>
+                <input type="number" step="0.01" id="log-carb" placeholder="e.g. 2.55">
+              </div>
+            </div>
+            
+            <button class="btn-action btn-green" onclick="submitDailyLog()">Save Log & QC Gates</button>
+          </div>
+          <div style="flex: 1.5; height: 380px;">
+            <canvas id="fermChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-actions" class="tab-content">
+        <div class="form-group">
+          <label>Update Tank Status</label>
+          <select id="status-select">
+            <option value="Primary Fermentation">Primary Fermentation</option>
+            <option value="Diacetyl Rest">Diacetyl Rest</option>
+            <option value="Cold Crash">Cold Crash</option>
+            <option value="Conditioning">Conditioning</option>
+            <option value="Ready to Package">Ready to Package</option>
+            <option value="Dirty">Dirty</option>
+            <option value="Clean">Clean / Available</option>
+          </select>
+        </div>
+        <div id="qc-alert-box" style="display:none; padding: 15px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; margin-bottom: 20px; color: #92400e; font-size: 13px; line-height: 1.5;">
+          ⚠️ <b>Verification Required:</b> This stage change requires a <b>VDK PASS</b> or <b>Carbonation Check</b> to be logged in the Daily Log before advancing.
+        </div>
+        <button class="btn-action btn-blue" onclick="updateStatus()">Apply Stage Transition</button>
+      </div>
+
+      <div id="tab-additions" class="tab-content">
+        <div style="display: flex; background: #f1f5f9; padding: 5px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+          <button id="toggle-dh" class="tab-btn active" style="flex:1; padding: 8px; font-size: 11px; border-radius: 6px; border:none;" onclick="setAdditionMode('DH')">Dry Hop (Recipe Driven)</button>
+          <button id="toggle-ing" class="tab-btn" style="flex:1; padding: 8px; font-size: 11px; border-radius: 6px; border:none;" onclick="setAdditionMode('ING')">Other Addition (Inventory)</button>
+        </div>
+
+        <div id="mode-dryhop">
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <label style="color: #1e40af; font-weight: 700; font-size: 10px; text-transform: uppercase;">Planned Recipe Additions</label>
+            <div id="recipe-dh-list" style="margin-top: 10px; font-size: 14px; font-weight: 600; color: #1e293b;">
+              <span style="color: #64748b; font-weight: 400; font-style: italic;">Loading recipe plan...</span>
+            </div>
+          </div>
+          
+          <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group"><label>Recipe Weight (lbs)</label><input type="number" id="dh-recipe-weight"></div>
+            <div class="form-group"><label>Recipe Target AA%</label><input type="number" step="0.1" id="dh-target-aa"></div>
+          </div>
+          <div class="form-group">
+            <label>Choose Inventory Lot (Updates AA%)</label>
+            <select id="dh-lot-select" onchange="calculateAAAdjustment()">
+              <option value="">-- Select Inventory Lot --</option>
+            </select>
+          </div>
+          <div id="aa-calc-display" class="aa-calculator-box">
+            ⚖️ <b>Alpha Adjustment:</b> Scaled weight to <span id="dh-adjusted-val" style="font-weight: 900; color: #2563eb;">0.00</span> lbs.
+          </div>
+          
+          <button class="btn-action btn-blue" onclick="submitAddition('Dry Hop')">Complete Dry Hop Task</button>
+        </div>
+
+        <div id="mode-ingredient" style="display: none;">
+          <div class="form-group">
+            <label>Available Stock Item (On-Hand)</label>
+            <select id="inv-item-select" class="actual-input" onchange="syncInvLot()">
+              <option value="">-- Select In-Stock Ingredient --</option>
+            </select>
+          </div>
+          <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group"><label>Quantity</label><input type="number" id="ing-qty"></div>
+            <div class="form-group"><label>Current Lot</label><input type="text" id="ing-lot-read" readonly style="background:#f8fafc; color: #64748b;"></div>
+          </div>
+          <div class="form-group">
+            <label>Addition Purpose</label>
+            <input type="text" id="ing-purpose" placeholder="e.g. Fruiting, Biofine, Spices">
+          </div>
+          <button class="btn-action btn-green" onclick="submitAddition('Ingredient')">Log Ingredient Addition</button>
+        </div>
+      </div>
+
+      <div id="tab-drops" class="tab-content">
+        <div class="form-group">
+          <label>Action Type</label>
+          <select id="drop-type">
+            <option value="Trub Dump">Trub Dump</option>
+            <option value="Yeast Harvest">Yeast Harvest</option>
+            <option value="Hop Drop">Hop Drop</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Est. Volume Removed (Gal)</label><input type="number" id="drop-vol"></div>
+        <div class="form-group"><label>Notes / Generation #</label><textarea id="drop-notes" rows="3"></textarea></div>
+        <button class="btn-action btn-green" onclick="logDrop()">Log Drop / Harvest</button>
+      </div>
+
+      <div id="tab-transfer" class="tab-content">
+        <div class="form-group">
+          <label>Destination Vessel (Brite/Conditioning)</label>
+          <select id="transfer-dest">
+            <option value="BT 1">BT 1</option>
+            <option value="BT 2">BT 2</option>
+            <option value="Kegs">Kegs (Direct Packaging)</option>
+          </select>
+        </div>
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group"><label>Transfer Vol (BBL)</label><input type="number" id="transfer-vol"></div>
+          <div class="form-group"><label>Final Gravity (P/SG)</label><input type="number" id="transfer-fg"></div>
+        </div>
+        <div class="form-group">
+          <label>Carb Stone Setting (PSI)</label>
+          <input type="number" id="transfer-psi">
+        </div>
+        <div style="padding: 15px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; margin-bottom: 15px; color: #065f46; font-size: 0.8rem;">
+          ℹ️ <b>Note:</b> Confirming this transfer will mark <b><span id="lbl-source-vessel">CURRENT</span></b> as "Empty/Dirty" and create a new active record for the destination tank.
+        </div>
+        <button class="btn-action btn-blue" onclick="submitTransfer()">Confirm Transfer</button>
+      </div>
+
+      <div id="tab-ml" class="tab-content">
+        <div style="background: #1f2937; color: #fff; padding: 20px; border-radius: 8px;">
+          <h3 style="margin-top:0; color: #60a5fa;">🤖 AI Fermentation Analyst</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+            <div>
+              <label style="color: #9ca3af; font-size: 0.7rem; text-transform: uppercase;">Predicted Finish Date</label>
+              <div id="ml-finish-date" style="font-size: 1.5rem; font-weight: bold;">--/--</div>
+            </div>
+            <div>
+              <label style="color: #9ca3af; font-size: 0.7rem; text-transform: uppercase;">Curve Health</label>
+              <div id="ml-health-status" style="font-size: 1.2rem; font-weight: bold;">Analyzing...</div>
+            </div>
+          </div>
+          <div id="ml-anomaly-box" style="margin-top: 15px; padding: 10px; background: #7f1d1d; color: #fecaca; border-radius: 4px; display: none;">
+            ⚠️ <b>ANOMALY DETECTED:</b> Fermentation is slower than historical average for this brand. Check temp control.
+          </div>
+          <button class="btn-action" style="background: #374151; margin-top: 20px;" onclick="runMLAnalysis()">Update Analysis</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- SIDEBAR TOGGLE ---
+    function toggleGroup(contentId, headerEl) {
+      const content = document.getElementById(contentId);
+      content.classList.toggle('collapsed');
+      headerEl.classList.toggle('collapsed');
+    }
+
+    // --- MOBILE DRAWER TOGGLE ---
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('menu-overlay');
+        const btn = document.getElementById('menu-toggle');
+        
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        
+        // Prevent background scrolling on phone while menu is open
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        
+        // Switch icon between Hamburger and X
+        btn.innerText = isOpen ? '✕' : '☰';
+    }
+
+    // --- MASTER INITIALIZATION ENGINE ---
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
+    if (typeof setupUserProfile === 'function') setupUserProfile();
+    if (typeof checkUnreadCount === 'function') checkUnreadCount();
+
+    // 2. Set Footer Year
+    document.getElementById('copyright-year').innerText = new Date().getFullYear();
+
+    // 2. LOAD DATA
+    refreshGrid();
+
+    // 3. AUTO-EXPAND SIDEBAR
+    const activeLink = document.querySelector('.nav-link.active');
+    if (activeLink) {
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) parentGroup.classList.remove('collapsed');
+    }
+
+    // 4. MOBILE NAVIGATION
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) {
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar.classList.contains('open')) toggleMobileMenu();
+            }
+        });
+    });
+
+    // 5. QR CODE CONTEXT HANDLING
+    handleURLParameters();
+});
+
+// Separated function for clarity
+function handleURLParameters() {
+    if (typeof google !== 'undefined' && google.script && google.script.url) {
+        google.script.url.getLocation((loc) => {
+            if (loc.parameter && loc.parameter.vessel) processQRContext(loc.parameter.vessel);
+        });
+    } else {
+        const qrVessel = new URLSearchParams(window.location.search).get('vessel');
+        if (qrVessel) processQRContext(qrVessel);
+    }
+}
+
+    // --- CELLAR API CONFIGURATION ---
+    // --- API CONFIGURATIONS ---
+const CELLAR_API_URL = "https://script.google.com/macros/s/AKfycbzyzJqFRnoeLudi-FtJInszxxuJrtSj24MAnioa1SNe6xsJEEpM9eGISdOUc0_qLUWH/exec";
+// 🔴 ADD THIS LINE BELOW
+    const KNOWN_VESSELS = [ "FV 1", "FV 2", "FV 3", "FV 4", "FV 5", "FV 6", "Pilot 1", "Pilot 2", "BT 1", "BT 2" ];
+
+    let currentBatchId = null;
+    let currentVessel = null;
+    let currentBrand = null;
+    let currentAdditionMode = 'DH';
+
+    // --- QR & INITIAL LOAD LOGIC ---
+    window.onload = function() {
+      // Force modal hidden on fresh load
+      document.getElementById('vessel-modal').style.setProperty('display', 'none', 'important');
+      document.getElementById('overlay').style.display = 'none';
+
+      refreshGrid();
+      
+      // Handle Google Apps Script URL context or standard URL params
+      if (typeof google !== 'undefined' && google.script && google.script.url) {
+        google.script.url.getLocation(function(location) {
+          if (location.parameter && location.parameter.vessel) {
+            processQRContext(location.parameter.vessel);
+          }
+        });
+      } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        const qrVessel = urlParams.get('vessel');
+        if (qrVessel) processQRContext(qrVessel);
+      }
+    };
+
+    // --- QR PROCESSING ENGINE ---
+    async function processQRContext(qrVessel) {
+      const decodedQR = decodeURIComponent(qrVessel);
+      const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+      Toast.fire({ icon: 'info', title: `Scanning ${decodedQR}...` });
+
+      try {
+        const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`);
+        const allTanks = await res.json();
+        
+        const normalize = (str) => String(str).replace(/[-\s]/g, '').toUpperCase();
+        const targetScan = normalize(decodedQR);
+        const dbMatch = allTanks.find(t => t.vessel && normalize(t.vessel) === targetScan && t.isActive);
+
+        if (dbMatch) {
+          openModal(dbMatch.vessel, dbMatch.batchId, dbMatch.brand, dbMatch.status);
+        } else {
+          const validTankName = KNOWN_VESSELS.find(v => normalize(v) === targetScan);
+          if (validTankName) {
+            Swal.fire({
+              title: `${validTankName} is Available`,
+              text: "Tank is empty. Choose an action:",
+              icon: 'info',
+              showCancelButton: true,
+              confirmButtonText: 'Start New Brew',
+              confirmButtonColor: '#2563eb',
+              cancelButtonText: 'Receive Transfer',
+              cancelButtonColor: '#10b981'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                window.location.href = "Brew-Log.html"; 
+              } else if (result.dismiss === Swal.DismissReason.cancel) {
+                document.getElementById('transfer-dest').value = validTankName;
+                currentVessel = validTankName; 
+                switchTab('tab-transfer', document.querySelectorAll('.tab-btn')[4]);
+                document.getElementById('vessel-modal').style.display = 'block';
+                document.getElementById('overlay').style.display = 'block';
+                document.getElementById('modal-title').innerText = validTankName + " (Receiver)";
+                Swal.fire("Ready", "Scan the SOURCE tank to push beer here, or enter manually.", "info");
+              }
+            });
+          } else {
+            Swal.fire("Unknown Vessel", `The code "${decodedQR}" does not match any known tanks.`, "error");
+          }
+        }
+      } catch (e) {
+        console.error("QR Error:", e);
+        Swal.fire("Connection Error", "Could not verify status.", "error");
+      }
+    }
+
+    // --- GRID REFRESH & DATA MAPPING ---
+    async function refreshGrid() {
+      const productionTanks = KNOWN_VESSELS.filter(n => n.startsWith("FV"));
+      const pilotTanks = KNOWN_VESSELS.filter(n => n.startsWith("Pilot"));
+      const briteTanks = KNOWN_VESSELS.filter(n => n.startsWith("BT"));
+
+      try {
+        const res = await fetch(`${CELLAR_API_URL}?action=getTankStatus`, { redirect: "follow" });
+        const live = await res.json();
+
+        let totalBBL = 0;
+        let activeCount = 0;
+        let qcPendingCount = 0;
+
+        const renderSection = (id, names) => {
+          const container = document.getElementById(id);
+          if (!container) return;
+          container.innerHTML = "";
+          
+          names.forEach(name => {
+            const data = Array.isArray(live) ? live.find(b => b.vessel === name && b.isActive) : null;
+            const active = !!data;
+            const status = active ? data.status : "Available";
+            
+            if(active) {
+              activeCount++;
+              totalBBL += name.includes('Pilot') ? 1 : 10;
+              if(status.includes("Rest") || status.includes("Condition")) qcPendingCount++;
+            }
+
+            let cardClass = active ? "active" : "clean";
+            if (status === "Dirty") cardClass = "dirty";
+            let qcBadge = (active && status.includes("Rest")) ? `<div class="qc-badge">VDK REQ</div>` : "";
+            if(qcBadge) cardClass += " waiting-qc";
+
+            container.innerHTML += `
+              <div class="vessel-card ${cardClass}" onclick="openModal('${name}', '${active ? data.batchId : ''}', '${active ? data.brand : ''}', '${status}')">
+                ${qcBadge}
+                <p class="tank-name">${name}</p>
+                <span class="status-tag">${status}</span>
+                <br><small>${active ? data.brand : '---'}</small>
+              </div>`;
+          });
+        };
+
+        renderSection('grid-production', productionTanks);
+        renderSection('grid-pilot', pilotTanks);
+        renderSection('grid-brite', briteTanks);
+
+        document.getElementById('stat-total-bbl').innerText = totalBBL + " BBL";
+        document.getElementById('stat-active-count').innerText = activeCount;
+        document.getElementById('stat-qc-pending').innerText = qcPendingCount;
+
+      } catch (e) { console.error("Grid Load Error:", e); }
+    }
+
+    // --- MODAL & DATA TAB LOGIC ---
+    async function openModal(vessel, batchId, beerName, status) {
+      currentVessel = vessel;
+      currentBatchId = batchId;
+      currentBrand = beerName;
+      
+      // Update this line to handle the !important override
+      document.getElementById('vessel-modal').style.setProperty('display', 'flex', 'important');
+      
+      document.getElementById('overlay').style.display = 'block';
+      document.getElementById('modal-title').innerText = vessel;
+      
+      const qcBox = document.getElementById('qc-alert-box');
+      qcBox.style.display = (status.includes("Rest") || status.includes("Condition")) ? 'block' : 'none';
+
+      if (batchId && batchId !== "") {
+        document.getElementById('modal-subtitle').innerText = `${beerName} (Batch #${batchId})`;
+        fetchRecipeHops(beerName); 
+        loadInventoryLots(); 
+        initChart(batchId, beerName); 
+      } else {
+        document.getElementById('modal-subtitle').innerText = "Vessel Status: " + status;
+        const ctx = document.getElementById('fermChart').getContext('2d');
+        if(window.fermChartObj) window.fermChartObj.destroy();
+      }
+    }
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if(btn) btn.classList.add('active');
+    }
+
+    function closeModal() { 
+      // Update this line
+      document.getElementById('vessel-modal').style.setProperty('display', 'none', 'important');
+      
+      document.getElementById('overlay').style.display = 'none'; 
+      document.body.style.overflow = ''; 
+    }
+
+    async function loadInventoryLots() {
+      const select = document.getElementById('dh-lot-select');
+      try {
+        const res = await fetch(`${CELLAR_API_URL}?action=getHopAlphaData`);
+        const items = await res.json();
+        select.innerHTML = '<option value="">-- Choose Inventory Lot --</option>';
+        items.forEach(i => {
+          select.innerHTML += `<option value="${i.lot}" data-aa="${i.aa}">${i.variety} (Lot: ${i.lot} | ${i.aa}%)</option>`;
+        });
+      } catch (e) { console.error(e); }
+    }
+
+    async function fetchRecipeHops(recipeName) {
+      const listDiv = document.getElementById('recipe-dh-list');
+      try {
+        const res = await fetch(`${CELLAR_API_URL}?action=getRecipePlan&name=${encodeURIComponent(recipeName)}`);
+        const plan = await res.json();
+        if (plan && plan.hops && plan.hops.length > 0) {
+          listDiv.innerHTML = plan.hops.map(h => 
+            `<div style="padding: 4px 0; border-bottom: 1px solid #dbeafe;">
+               <span style="color: #1e40af;">${h.variety}</span>: ${h.amount} lbs (Target: ${h.targetAA}%)
+             </div>`
+          ).join('');
+          document.getElementById('dh-recipe-weight').value = plan.hops[0].amount;
+          document.getElementById('dh-target-aa').value = plan.hops[0].targetAA;
+        }
+      } catch (e) { listDiv.innerHTML = "Recipe data retrieval error."; }
+    }
+
+    function calculateAAAdjustment() {
+      const recipeWeight = parseFloat(document.getElementById('dh-recipe-weight').value);
+      const targetAA = parseFloat(document.getElementById('dh-target-aa').value);
+      const select = document.getElementById('dh-lot-select');
+      const actualAA = parseFloat(select.options[select.selectedIndex].getAttribute('data-aa'));
+
+      if (!recipeWeight || !targetAA || !actualAA) return;
+
+      const adjusted = (recipeWeight * targetAA) / actualAA;
+      document.getElementById('dh-adjusted-val').innerText = adjusted.toFixed(2);
+      document.getElementById('aa-calc-display').style.display = 'block';
+    }
+
+    async function submitDailyLog() {
+      const payload = {
+        batchId: currentBatchId,
+        gravity: document.getElementById('log-sg').value,
+        temp: document.getElementById('log-temp').value,
+        ph: document.getElementById('log-ph').value,
+        vdkResult: document.getElementById('log-vdk').value,
+        co2Check: document.getElementById('log-carb').value
+      };
+      await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDaily', data: payload }) });
+      Swal.fire("Logged", "Data saved.", "success").then(() => { closeModal(); refreshGrid(); });
+    }
+
+    async function submitAddition(type) {
+      const isDH = type === 'Dry Hop';
+      const payload = {
+        action: isDH ? 'logDryHop' : 'logIngredient',
+        data: {
+          batchId: currentBatchId,
+          vessel: currentVessel,
+          item: isDH ? document.getElementById('dh-lot-select').options[document.getElementById('dh-lot-select').selectedIndex].text.split(' (')[0] : document.getElementById('inv-item-select').value,
+          qty: isDH ? document.getElementById('dh-recipe-weight').value : document.getElementById('ing-qty').value,
+          recipeTargetAA: isDH ? document.getElementById('dh-target-aa').value : 0,
+          lot: isDH ? document.getElementById('dh-lot-select').value : document.getElementById('ing-lot-read').value,
+          notes: isDH ? "AA% Adjusted" : document.getElementById('ing-purpose').value
+        }
+      };
+      await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+      Swal.fire("Success", `${type} logged.`, "success").then(() => { closeModal(); refreshGrid(); });
+    }
+
+    async function updateStatus() {
+      const stage = document.getElementById('status-select').value;
+      await fetch(CELLAR_API_URL, {
+        method: 'POST', mode: 'no-cors',
+        body: JSON.stringify({ action: 'updateStage', data: { batchId: currentBatchId, stage: stage } })
+      });
+      Swal.fire('Updated', `Stage: ${stage}`, 'success').then(() => { closeModal(); refreshGrid(); });
+    }
+
+    async function logDrop() {
+      const payload = {
+        batchId: currentBatchId,
+        vessel: currentVessel,
+        type: document.getElementById('drop-type').value,
+        volume: document.getElementById('drop-vol').value,
+        notes: document.getElementById('drop-notes').value
+      };
+      await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'logDrop', data: payload }) });
+      Swal.fire("Logged", "Entry saved.", "success");
+    }
+
+    async function submitTransfer() {
+      if(!confirm("Are you sure? This will empty the current vessel.")) return;
+      const payload = {
+        action: 'transferVolume',
+        data: {
+          batchId: currentBatchId,
+          sourceVessel: currentVessel,
+          destVessel: document.getElementById('transfer-dest').value,
+          volume: document.getElementById('transfer-vol').value,
+          gravity: document.getElementById('transfer-fg').value,
+          carb: document.getElementById('transfer-psi').value,
+          brandName: currentBrand
+        }
+      };
+      Swal.fire({title: 'Transferring...', didOpen: () => Swal.showLoading()});
+      await fetch(CELLAR_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+      Swal.fire("Success", "Volume transferred.", "success").then(() => { location.reload(); });
+    }
+
+    async function runMLAnalysis() {
+      document.getElementById('ml-health-status').innerText = "Computing...";
+      try {
+        const res = await fetch(`${CELLAR_API_URL}?action=runMLPrediction&batchId=${currentBatchId}`);
+        const mlData = await res.json();
+        document.getElementById('ml-finish-date').innerText = mlData.prediction || "Unknown";
+        if (mlData.anomaly) {
+          document.getElementById('ml-health-status').innerText = "Deviation Detected";
+          document.getElementById('ml-health-status').style.color = "#ef4444";
+          document.getElementById('ml-anomaly-box').style.display = "block";
+        } else {
+          document.getElementById('ml-health-status').innerText = "Healthy Curve";
+          document.getElementById('ml-health-status').style.color = "#10b981";
+          document.getElementById('ml-anomaly-box').style.display = "none";
+        }
+      } catch (e) {
+        console.error("ML Error", e);
+        document.getElementById('ml-health-status').innerText = "Data Error";
+      }
+    }
+
+    async function initChart(batchId, brand) {
+      const ctx = document.getElementById('fermChart').getContext('2d');
+      if(window.fermChartObj) window.fermChartObj.destroy();
+      try {
+        const res = await fetch(`${CELLAR_API_URL}?action=getFermAnalysis&batchId=${batchId}&brand=${encodeURIComponent(brand)}`);
+        const comparison = await res.json();
+        window.fermChartObj = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: comparison.benchmark.map(b => 'Day ' + b.day),
+            datasets: [
+              { label: 'Current Gravity', data: comparison.current.map(c => c.gravity), borderColor: '#2563eb', fill: true, tension: 0.3 },
+              { label: 'Historical Benchmark', data: comparison.benchmark.map(b => b.benchmarkGravity), borderColor: '#94a3b8', borderDash: [5, 5], fill: false, tension: 0.3 }
+            ]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      } catch (e) { console.warn("Chart Load Error", e); }
+    }
+
+    function setAdditionMode(mode) {
+      currentAdditionMode = mode;
+      document.getElementById('mode-dryhop').style.display = mode === 'DH' ? 'block' : 'none';
+      document.getElementById('mode-ingredient').style.display = mode === 'ING' ? 'block' : 'none';
+      document.getElementById('toggle-dh').classList.toggle('active', mode === 'DH');
+      document.getElementById('toggle-ing').classList.toggle('active', mode === 'ING');
+      if (mode === 'ING') loadInventoryDropdown();
+    }
+
+    async function loadInventoryDropdown() {
+      const select = document.getElementById('inv-item-select');
+      try {
+        const res = await fetch(`${CELLAR_API_URL}?action=getInventoryItems`);
+        const items = await res.json();
+        select.innerHTML = '<option value="">-- Select In-Stock Ingredient --</option>';
+        items.forEach(i => {
+          select.innerHTML += `<option value="${i.name}" data-lot="${i.lot}">${i.name} (Lot: ${i.lot})</option>`;
+        });
+      } catch (e) { console.error(e); }
+    }
+
+    function syncInvLot() {
+      const select = document.getElementById('inv-item-select');
+      const opt = select.options[select.selectedIndex];
+      document.getElementById('ing-lot-read').value = opt.getAttribute('data-lot') || "";
+    }
   function setupUserProfile() {
     // 1. Get standard user info
     const name = sessionStorage.getItem("user_name") || "Brewer";
