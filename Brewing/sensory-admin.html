@@ -223,23 +223,26 @@
         overflow-x: hidden; 
     }
    /* --- FOOTER STYLES (MATCHES INDEX) --- */
-    .app-footer {
-       height: 50px;        /* 🟢 Forces slim height */
-    flex-shrink: 0;      /* 🟢 Prevents footer from squishing */
-      margin-top: auto;
-        padding: 10px 0; 
-        border-top: 1px solid #e2e8f0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+  .app-footer { 
+        margin-top: auto; 
+        
+        /* 🟢 THIS FIXES THE LEFT/RIGHT GAPS */
+        margin-left: -40px;
+        margin-right: -40px;
+        width: calc(100% + 80px);
+        padding: 0 40px; /* Aligns content with the rest of the page */
+
+        border-top: 1px solid #e2e8f0; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
         color: #94a3b8; 
-        font-size: 11px;
-        font-weight: 500;
-        width: 100%;
-        margin-bottom: 0;
-        background: #f8fafc; /* Matches page bg */
-        padding-left: 30px;
-        padding-right: 30px;
+        font-size: 11px; 
+        font-weight: 500; 
+        margin-bottom: 0; 
+        background: #f8fafc; 
+        flex-shrink: 0; 
+        height: 50px; 
     }
 
     .footer-links a {
@@ -410,8 +413,8 @@
     </div>
    
    <div style="flex-grow:1;"></div>
-   
-   <footer class="app-footer">
+
+    <footer class="app-footer">
         <div class="footer-left">
             <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
             <span class="system-status">
@@ -419,7 +422,6 @@
                 System Operational
             </span>
         </div>
-  
         <div class="footer-links">
             <span>Portal v2.5</span>
             <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
@@ -429,7 +431,7 @@
                 icon: 'info',
                 confirmButtonColor: 'var(--accent)'
             })">Support</a>
-            <a href="#" onclick="location.reload()">Refresh Data</a>
+            <a href="#" onclick="loadAdminData()">Refresh Data</a>
         </div>
     </footer>
   </main>
