@@ -2039,8 +2039,8 @@ function generateDocs(type) {
     const inputs = document.querySelectorAll('.product-selector input[type="checkbox"]:checked');
     const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
     
-    // 1. GET YOUR APP URL (Strips any existing search params)
-    // This automatically grabs your github.io URL
+    // 🟢 BACKEND AUTO-MODE DETECTION
+    const mode = document.getElementById('pos-print-mode').value; 
     const baseUrl = window.location.href.split('?')[0];
 
     if (inputs.length === 0) {
@@ -2050,79 +2050,80 @@ function generateDocs(type) {
     let html = "";
 
     if (type === 'shelf') {
-        // ... (Keep your Shelf Talker code exactly as it is) ...
-        html = `<div class="print-grid-talkers">`;
+        html = `<div class="print-grid-talkers" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">`;
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
             const priceVal = document.getElementById(`price-${input.value}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "$_______";
-            
-            html += `
-            <div class="talker-card" style="flex-direction: row; align-items: center; text-align: left; padding: 15px;">
-                <div style="flex: 0 0 35%; display:flex; align-items:center; justify-content:center; border-right:2px solid #eee; padding-right:15px; margin-right:15px; height:100%;">
-                    <img src="${logoUrl}" style="width: 100%; max-height: 100%; object-fit: contain;">
-                </div>
-                <div style="flex: 1; display:flex; flex-direction:column; justify-content:center;">
-                    <div class="talker-header" style="font-size:1.1rem; margin-bottom:5px;">${p.name}</div>
-                    <div class="talker-sub" style="font-size:0.8rem; margin-bottom:8px;">${p.abv}% ABV • 4-PACK</div>
-                    <div class="talker-desc" style="font-size:0.75rem; margin-bottom:10px;">${p.desc}</div>
-                    <div style="align-self: flex-start;">
-                        <div class="talker-price-area" style="font-size:1.2rem; padding:4px 8px;">${displayPrice}</div>
+
+            // 🟢 DUAL UNIT LOGIC
+            const units = (mode === 'retail') ? ['4-PACK CANS', 'SINGLE CAN'] : ['PINT POUR', 'CAN POUR'];
+
+            units.forEach(unit => {
+                html += `
+                <div class="talker-card" style="border: 2px dashed #000; padding: 15px; height: 3in; display: flex; flex-direction: row; align-items: center; text-align: left; background: white; page-break-inside: avoid;">
+                    <div style="flex: 0 0 30%; display:flex; align-items:center; justify-content:center; border-right:2px solid #eee; padding-right:15px; margin-right:15px; height:100%;">
+                        <img src="${logoUrl}" style="width: 100%; max-height: 100%; object-fit: contain;">
                     </div>
-                </div>
-            </div>`;
+                    <div style="flex: 1; display:flex; flex-direction:column; justify-content:center;">
+                        <div class="talker-header" style="font-size:1.1rem; margin-bottom:2px;">${p.name}</div>
+                        <div class="talker-sub" style="font-size:0.75rem; color:#444; margin-bottom:5px;">${p.abv}% ABV • ${unit}</div>
+                        <div class="talker-desc" style="font-size:0.7rem; line-height:1.2; font-style:italic; margin-bottom:8px;">${p.desc}</div>
+                        <div class="talker-price-area" style="font-size:1.3rem; padding:4px 10px; border:2px solid #000; border-radius:8px; align-self:flex-start; font-weight:900;">${displayPrice}</div>
+                    </div>
+                </div>`;
+            });
         });
         html += `</div>`;
     } 
     else if (type === 'qr') {
-        // --- 3" x 1.75" QR TAGS (UPDATED TO USE URL) ---
         html = `<div style="display:flex; flex-wrap:wrap; align-content: flex-start; padding: 0.25in;">`;
-        
+        inputs.forEach(input => {
+            const p = groupedProducts[input.value];
+            const priceVal = document.getElementById(`price-${input.value}`).value;
+            const displayPrice = priceVal ? `$${priceVal}` : "";
+            const deepLink = `${baseUrl}?beer=${encodeURIComponent(p.name)}`;
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(deepLink)}`;
+
+            // 🟢 DUAL UNIT LOGIC
+            const units = (mode === 'retail') ? ['4-PACK', 'SINGLE'] : ['PINT', 'CAN'];
+
+            units.forEach(unit => {
+                html += `
+                <div class="qr-talker-card" style="width: 3in; height: 1.75in; border: 1px dashed #ccc; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; float: left; margin: 5px; background: white; overflow: hidden; page-break-inside: avoid;">
+                    <div class="tag-header" style="display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 5px; height: 40%;">
+                        <img src="${logoUrl}" style="height: 100%; width: auto; margin-right: 10px; object-fit: contain;">
+                        <div style="flex: 1; text-align: left; line-height: 1.1;">
+                            <div class="tag-name" style="font-size: 10pt; font-weight: 900; text-transform: uppercase;">${p.name}</div>
+                            <div class="tag-abv" style="font-size: 8pt; font-weight: bold; color: #555;">${p.abv}% • ${unit}</div>
+                        </div>
+                    </div>
+                    <div class="tag-body" style="display: flex; align-items: center; justify-content: space-between; height: 60%;">
+                        <div class="tag-qr-col" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40%;">
+                            <img src="${qrSrc}" class="tag-qr-img" style="height: 0.6in; width: 0.6in;">
+                            <div class="tag-qr-text" style="font-size: 6px; text-transform: uppercase; font-weight: bold; margin-top: 2px;">Scan Info</div>
+                        </div>
+                        <div class="tag-price-col" style="flex: 1; text-align: center;">
+                            <div class="tag-price" style="font-size: 24pt; font-weight: 900;">${displayPrice}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        });
+        html += `</div>`;
+    }
+    else if (type === 'menu') {
+        html = `<div class="print-menu-list" style="padding: 40px; background: white;">`;
         inputs.forEach(input => {
             const p = groupedProducts[input.value];
             const priceVal = document.getElementById(`price-${input.value}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "";
             
-            // 🔴 CHANGED: Generate a URL Link instead of Plain Text
-            // This links to your app with ?beer=PRODUCTNAME
-            const deepLink = `${baseUrl}?beer=${encodeURIComponent(p.name)}`;
-
-            // Generate QR pointing to that URL
-            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(deepLink)}`;
+            // 🟢 DUAL CONTEXT SUBTITLE
+            const unitContext = (mode === 'retail') ? 'Cans Available' : 'On Draught & Cans';
 
             html += `
-            <div class="qr-talker-card">
-                <div class="tag-header">
-                    <img src="${logoUrl}" class="tag-logo">
-                    <div class="tag-info">
-                        <div class="tag-name">${p.name}</div>
-                        <div class="tag-abv">${p.abv}% ABV • 4-PACK</div>
-                    </div>
-                </div>
-
-                <div class="tag-body">
-                    <div class="tag-qr-col">
-                        <img src="${qrSrc}" class="tag-qr-img">
-                        <div class="tag-qr-text">Scan for Info</div>
-                    </div>
-
-                    <div class="tag-price-col">
-                        <div class="tag-price">${displayPrice}</div>
-                    </div>
-                </div>
-            </div>`;
-        });
-        html += `</div>`;
-    }
-    else if (type === 'menu') {
-        // ... (Keep your Menu code exactly as it is) ...
-        html = `<div class="print-menu-list" style="padding-top:20px;">`;
-        inputs.forEach(input => {
-            const p = groupedProducts[input.value];
-            const priceVal = document.getElementById(`price-${input.value}`).value;
-            const displayPrice = priceVal ? `$${priceVal}` : "";
-            html += `
-            <div class="menu-item" style="display:flex; align-items:center; margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #e2e8f0;">
+            <div class="menu-item" style="display:flex; align-items:center; margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #e2e8f0; page-break-inside: avoid;">
                 <div style="flex: 0 0 80px; margin-right:20px; display:flex; align-items:center;">
                      <img src="${logoUrl}" style="width:100%; object-fit:contain;">
                 </div>
@@ -2131,7 +2132,7 @@ function generateDocs(type) {
                         <span style="font-size:1.4rem; font-weight:800; text-transform:uppercase;">${p.name}</span>
                         <span style="font-weight:bold; font-size:1.3rem;">${displayPrice}</span>
                     </div>
-                    <div style="font-weight:bold; color:#64748b; font-size:0.95rem; margin-bottom:6px;">${p.abv}% ABV</div>
+                    <div style="font-weight:bold; color:#64748b; font-size:0.95rem; margin-bottom:6px;">${p.abv}% ABV • ${unitContext}</div>
                     <div style="font-size:0.9rem; color:#334155; line-height:1.4; font-style:italic;">${p.desc}</div>
                 </div>
             </div>`;
