@@ -2051,17 +2051,17 @@ function generateDocs(type) {
     const baseUrl = window.location.href.split('?')[0];
 
     if (checkedUnits.length === 0) {
-        return Swal.fire("Selection Required", "Please check at least one unit checkbox (e.g., 4-Pack or Single).", "warning");
+        return Swal.fire("Selection Required", "Please check at least one unit checkbox.", "warning");
     }
 
     let html = "";
 
     // ==========================================
-    // CASE 1: SHELF TALKERS (5 x 3) - VERTICAL STACK
+    // CASE 1: SHELF TALKERS (5 x 3)
     // ==========================================
     if (type === 'shelf') {
-        // Changed to flex-column centered to prevent side-clipping of 5" cards
-        html = `<div class="print-container-shelf" style="width: 100%; display: flex; flex-direction: column; align-items: center; padding: 0.5in; background: white;">`;
+        // 🔴 THE FIX: Centered column with a forced page-break-inside rule
+        html = `<div class="print-container-shelf" style="width: 100%; display: flex; flex-direction: column; align-items: center; background: white;">`;
         
         checkedUnits.forEach(chk => {
             const beerKey = chk.dataset.beer;
@@ -2073,7 +2073,22 @@ function generateDocs(type) {
             const displayPrice = priceVal ? `$${priceVal}` : "$_______";
 
             html += `
-            <div class="talker-card" style="border: 2px dashed #000; padding: 20px; height: 3in; width: 5in; display: flex; flex-direction: column; text-align: center; page-break-inside: avoid; background: white; margin-bottom: 0.4in;">
+            <div class="talker-card" style="
+                border: 2px dashed #000; 
+                padding: 20px; 
+                height: 3in; 
+                width: 5in; 
+                display: flex; 
+                flex-direction: column; 
+                text-align: center; 
+                background: white; 
+                margin-bottom: 0.5in;
+                box-sizing: border-box;
+                /* 🔴 THIS PREVENTS THE SPLIT */
+                break-inside: avoid; 
+                page-break-inside: avoid;
+                position: relative;
+            ">
                 <img src="${logoUrl}" style="height: 40px; object-fit: contain; margin: 0 auto 8px;">
                 <div style="font-size: 1.3rem; font-weight: 900; text-transform: uppercase; line-height: 1.1; margin-bottom: 4px;">${p.name}</div>
                 <div style="font-size: 0.9rem; font-weight: 800; color: #444; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">${unitType.toUpperCase()}</div>
@@ -2085,17 +2100,15 @@ function generateDocs(type) {
     } 
 
     // ==========================================
-    // CASE 2: QR TAGS (3 x 1.75) - GRID LAYOUT
+    // CASE 2: QR TAGS (3 x 1.75)
     // ==========================================
     else if (type === 'qr') {
-        // Grid setup for small tags - 3" width allows 2-across on 8.5" paper
         html = `<div style="display: flex; flex-wrap: wrap; padding: 0.3in; background: white; justify-content: center; gap: 10px;">`;
         
         checkedUnits.forEach(chk => {
             const beerKey = chk.dataset.beer;
             const unitType = chk.dataset.unit;
             const p = groupedProducts[beerKey];
-            
             const inputNum = chk.id.includes('chk1') ? '1' : '2';
             const priceVal = document.getElementById(`price${inputNum}-${beerKey}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "";
@@ -2104,7 +2117,7 @@ function generateDocs(type) {
             const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(deepLink)}`;
 
             html += `
-            <div class="qr-talker-card" style="width: 3in; height: 1.75in; border: 1px dashed #ccc; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; margin: 8px; background: white; page-break-inside: avoid;">
+            <div class="qr-talker-card" style="width: 3in; height: 1.75in; border: 1px dashed #ccc; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; margin: 8px; background: white; break-inside: avoid; page-break-inside: avoid;">
                 <div style="display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 6px; height: 40%;">
                     <img src="${logoUrl}" style="height: 100%; width: auto; margin-right: 12px; object-fit: contain;">
                     <div style="flex: 1; text-align: left; line-height: 1.1;">
@@ -2140,7 +2153,7 @@ function generateDocs(type) {
             const displayPrice = priceVal ? `$${priceVal}` : "";
 
             html += `
-            <div style="display: flex; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 15px; page-break-inside: avoid;">
+            <div style="display: flex; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 15px; break-inside: avoid; page-break-inside: avoid;">
                 <div style="flex: 0 0 90px; margin-right: 25px;">
                      <img src="${logoUrl}" style="width: 100%; object-fit: contain;">
                 </div>
@@ -2157,10 +2170,8 @@ function generateDocs(type) {
         html += `</div>`;
     }
 
-    // Inject and trigger print
     printArea.innerHTML = html;
     
-    // Slight timeout ensures QR images and logos are fully ready before the browser print UI opens
     setTimeout(() => {
         window.print();
     }, 600); 
