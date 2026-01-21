@@ -1977,171 +1977,185 @@ function renderPOSDownloads() {
     const container = document.getElementById('pos-content-area');
     container.className = ""; 
     
-    // 🟢 BACKEND LOGIC: Detect mode based on customer type, but keep it hidden from the UI
+    // 🟢 DETECT CUSTOMER CONTEXT
     const clientType = state.customer ? state.customer.type.toLowerCase() : 'retailer';
-    const hiddenMode = (clientType === 'restaurant') ? 'restaurant' : 'retail';
+    const isRestaurant = (clientType === 'restaurant');
+    
+    // Set labels based on account type
+    const unit1Label = isRestaurant ? 'Pint' : '4-Pack';
+    const unit2Label = isRestaurant ? 'Can Pour' : 'Single Can';
 
-    // 1. Auto-select logic (Cart items first, then latest order history)
+    // Auto-select logic for checked items (Cart or History)
     let preSelectedItems = [];
     const cartItems = Object.values(state.cart).map(i => i.beer);
     if (cartItems.length > 0) preSelectedItems = cartItems;
     else if (state.latestOrderProducts && state.latestOrderProducts.length > 0) preSelectedItems = state.latestOrderProducts;
 
-    // 2. Build List with Price Inputs
     let listHtml = '';
     for (const key in groupedProducts) {
         const p = groupedProducts[key];
-        const isChecked = preSelectedItems.includes(p.name) ? 'checked' : '';
+        const isPreChecked = preSelectedItems.includes(p.name);
         
         listHtml += `
-        <div class="checkbox-row" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f1f5f9;">
-            <div style="flex:1; display:flex; align-items:center;">
-                <input type="checkbox" id="chk-${key}" value="${key}" ${isChecked} style="transform:scale(1.2); margin-right:10px;">
-                <label for="chk-${key}" style="font-weight:500;">
-                    ${p.name} <br><span style="color:#64748b; font-size:0.75em;">${p.abv}</span>
-                </label>
+        <div class="pos-selection-row" style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+            <div style="flex: 1; min-width: 140px;">
+                <div style="font-weight: 800; font-size: 1rem; color: #1e293b; text-transform: uppercase;">${p.name}</div>
+                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">${p.abv}% ABV</div>
             </div>
-            <div style="text-align:right;">
-                <input type="text" id="price-${key}" placeholder="$0.00" 
-                       style="width:70px; padding:6px; border:1px solid #cbd5e1; border-radius:6px; text-align:right; font-size:0.9rem;">
+            
+            <div style="display: flex; gap: 12px; flex: 2; justify-content: flex-end;">
+                
+                <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                    <input type="checkbox" id="chk1-${key}" class="unit-selector" data-beer="${key}" data-unit="${unit1Label}" ${isPreChecked ? 'checked' : ''} style="transform: scale(1.3);">
+                    <label for="chk1-${key}" style="font-size: 0.85rem; font-weight: 700; color: #334155;">${unit1Label}</label>
+                    <input type="text" id="price1-${key}" placeholder="$0.00" style="width: 65px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: right; font-size: 0.9rem; font-weight: 700;">
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                    <input type="checkbox" id="chk2-${key}" class="unit-selector" data-beer="${key}" data-unit="${unit2Label}" style="transform: scale(1.3);">
+                    <label for="chk2-${key}" style="font-size: 0.85rem; font-weight: 700; color: #334155;">${unit2Label}</label>
+                    <input type="text" id="price2-${key}" placeholder="$0.00" style="width: 65px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: right; font-size: 0.9rem; font-weight: 700;">
+                </div>
+
             </div>
         </div>`;
     }
 
     container.innerHTML = `
-        <div class="generator-controls">
-            <h3 style="margin-top:0;">🖨️ Signage Generator</h3>
+        <div class="generator-controls" style="background: #ffffff; padding: 20px; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: var(--card-shadow);">
+            <h2 style="margin-top:0; font-size: 1.3rem;">🖨️ Signage & POS Generator</h2>
+            <p style="font-size:0.85rem; color:#64748b; margin-bottom: 20px;">Check the specific units you want to print labels for and enter your retail prices.</p>
             
-            <input type="hidden" id="pos-print-mode" value="${hiddenMode}">
-
-            <p style="font-size:0.85rem; color:#666;">Enter your retail price (e.g. 16.00) to auto-fill the tags.</p>
-            
-            <div class="product-selector" style="max-height:400px;">
+            <div class="product-selector" style="max-height:550px; overflow-y:auto; padding-right:8px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
                 ${listHtml}
             </div>
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
-                <button class="btn btn-primary" onclick="generateDocs('shelf')">🏷️ Shelf Talkers</button>
-                <button class="btn btn-outline" onclick="generateDocs('menu')">📝 Menu Insert</button>
-                <button class="btn btn-outline" onclick="generateDocs('qr')">📱 Small QR Tags</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:25px;">
+                <button class="btn btn-primary" onclick="generateDocs('shelf')" style="height: 50px; font-size: 1rem;">🏷️ Print Shelf Talkers</button>
+                <button class="btn btn-outline" onclick="generateDocs('qr')" style="height: 50px; font-size: 1rem;">📱 Print QR Tags</button>
+                <button class="btn btn-outline" onclick="generateDocs('menu')" style="grid-column: span 2; height: 50px;">📝 Create Menu List</button>
             </div>
         </div>
         
-        <h3 style="margin: 20px 0 10px; border-bottom:1px solid #eee;">📂 Brand Assets</h3>
+        <h3 style="margin: 30px 0 15px; color: #1e293b; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">📂 Downloadable Brand Assets</h3>
         <div class="pos-grid">
-             ${createDocCard("Brand Logo Pack", "All Formats", "🎨", "https://github.com/remyjdavis/Suburban-Brewing-Company-Portal/raw/main/Online%20Ordering/SBC-Logos.zip")}
+             ${createDocCard("Brand Logo Pack", "Hi-Res Formats", "🎨", "https://github.com/remyjdavis/Suburban-Brewing-Company-Portal/raw/main/Online%20Ordering/SBC-Logos.zip")}
         </div>`;
 }
 
 // --- GENERATOR ENGINE (With QR Tags) ---//
 function generateDocs(type) {
     const printArea = document.getElementById('print-area');
-    const inputs = document.querySelectorAll('.product-selector input[type="checkbox"]:checked');
+    const checkedUnits = document.querySelectorAll('.unit-selector:checked');
     const logoUrl = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/logo.png";
-    
-    // 🟢 BACKEND AUTO-MODE DETECTION
-    const mode = document.getElementById('pos-print-mode').value; 
     const baseUrl = window.location.href.split('?')[0];
 
-    if (inputs.length === 0) {
-        return Swal.fire("Select Products", "Please check at least one product.", "warning");
+    if (checkedUnits.length === 0) {
+        return Swal.fire("Selection Required", "Please check at least one unit checkbox (e.g., 4-Pack or Single).", "warning");
     }
 
     let html = "";
 
+    // --- CASE 1: SHELF TALKERS (5 x 3) ---
     if (type === 'shelf') {
-        html = `<div class="print-grid-talkers" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">`;
-        inputs.forEach(input => {
-            const p = groupedProducts[input.value];
-            const priceVal = document.getElementById(`price-${input.value}`).value;
+        html = `<div class="print-grid-talkers" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4in; padding: 0.5in;">`;
+        
+        checkedUnits.forEach(chk => {
+            const beerKey = chk.dataset.beer;
+            const unitType = chk.dataset.unit;
+            const p = groupedProducts[beerKey];
+            
+            // Logic to grab the correct price input for this specific checkbox
+            const inputNum = chk.id.includes('chk1') ? '1' : '2';
+            const priceVal = document.getElementById(`price${inputNum}-${beerKey}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "$_______";
 
-            // 🟢 DUAL UNIT LOGIC
-            const units = (mode === 'retail') ? ['4-PACK CANS', 'SINGLE CAN'] : ['PINT POUR', 'CAN POUR'];
-
-            units.forEach(unit => {
-                html += `
-                <div class="talker-card" style="border: 2px dashed #000; padding: 15px; height: 3in; display: flex; flex-direction: row; align-items: center; text-align: left; background: white; page-break-inside: avoid;">
-                    <div style="flex: 0 0 30%; display:flex; align-items:center; justify-content:center; border-right:2px solid #eee; padding-right:15px; margin-right:15px; height:100%;">
-                        <img src="${logoUrl}" style="width: 100%; max-height: 100%; object-fit: contain;">
-                    </div>
-                    <div style="flex: 1; display:flex; flex-direction:column; justify-content:center;">
-                        <div class="talker-header" style="font-size:1.1rem; margin-bottom:2px;">${p.name}</div>
-                        <div class="talker-sub" style="font-size:0.75rem; color:#444; margin-bottom:5px;">${p.abv}% ABV • ${unit}</div>
-                        <div class="talker-desc" style="font-size:0.7rem; line-height:1.2; font-style:italic; margin-bottom:8px;">${p.desc}</div>
-                        <div class="talker-price-area" style="font-size:1.3rem; padding:4px 10px; border:2px solid #000; border-radius:8px; align-self:flex-start; font-weight:900;">${displayPrice}</div>
-                    </div>
-                </div>`;
-            });
+            html += `
+            <div class="talker-card" style="border: 2px dashed #000; padding: 20px; height: 3in; width: 5in; display: flex; flex-direction: column; text-align: center; page-break-inside: avoid; background: white;">
+                <img src="${logoUrl}" style="height: 40px; object-fit: contain; margin: 0 auto 8px;">
+                <div style="font-size: 1.3rem; font-weight: 900; text-transform: uppercase; line-height: 1.1; margin-bottom: 4px;">${p.name}</div>
+                <div style="font-size: 0.9rem; font-weight: 800; color: #444; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">${unitType.toUpperCase()}</div>
+                <div style="font-size: 0.75rem; line-height: 1.4; font-style: italic; flex-grow: 1; overflow: hidden; color: #333;">${p.desc}</div>
+                <div style="margin-top: 15px; font-weight: 900; font-size: 30px; border: 3px solid #000; border-radius: 10px; padding: 5px 15px; align-self: center; background: #000; color: #fff;">${displayPrice}</div>
+            </div>`;
         });
         html += `</div>`;
     } 
+
+    // --- CASE 2: QR TAGS (3 x 1.75) ---
     else if (type === 'qr') {
-        html = `<div style="display:flex; flex-wrap:wrap; align-content: flex-start; padding: 0.25in;">`;
-        inputs.forEach(input => {
-            const p = groupedProducts[input.value];
-            const priceVal = document.getElementById(`price-${input.value}`).value;
+        html = `<div style="display: flex; flex-wrap: wrap; padding: 0.3in; background: white;">`;
+        
+        checkedUnits.forEach(chk => {
+            const beerKey = chk.dataset.beer;
+            const unitType = chk.dataset.unit;
+            const p = groupedProducts[beerKey];
+            const inputNum = chk.id.includes('chk1') ? '1' : '2';
+            const priceVal = document.getElementById(`price${inputNum}-${beerKey}`).value;
             const displayPrice = priceVal ? `$${priceVal}` : "";
+            
             const deepLink = `${baseUrl}?beer=${encodeURIComponent(p.name)}`;
             const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(deepLink)}`;
 
-            // 🟢 DUAL UNIT LOGIC
-            const units = (mode === 'retail') ? ['4-PACK', 'SINGLE'] : ['PINT', 'CAN'];
-
-            units.forEach(unit => {
-                html += `
-                <div class="qr-talker-card" style="width: 3in; height: 1.75in; border: 1px dashed #ccc; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; float: left; margin: 5px; background: white; overflow: hidden; page-break-inside: avoid;">
-                    <div class="tag-header" style="display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 5px; height: 40%;">
-                        <img src="${logoUrl}" style="height: 100%; width: auto; margin-right: 10px; object-fit: contain;">
-                        <div style="flex: 1; text-align: left; line-height: 1.1;">
-                            <div class="tag-name" style="font-size: 10pt; font-weight: 900; text-transform: uppercase;">${p.name}</div>
-                            <div class="tag-abv" style="font-size: 8pt; font-weight: bold; color: #555;">${p.abv}% • ${unit}</div>
-                        </div>
-                    </div>
-                    <div class="tag-body" style="display: flex; align-items: center; justify-content: space-between; height: 60%;">
-                        <div class="tag-qr-col" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40%;">
-                            <img src="${qrSrc}" class="tag-qr-img" style="height: 0.6in; width: 0.6in;">
-                            <div class="tag-qr-text" style="font-size: 6px; text-transform: uppercase; font-weight: bold; margin-top: 2px;">Scan Info</div>
-                        </div>
-                        <div class="tag-price-col" style="flex: 1; text-align: center;">
-                            <div class="tag-price" style="font-size: 24pt; font-weight: 900;">${displayPrice}</div>
-                        </div>
-                    </div>
-                </div>`;
-            });
-        });
-        html += `</div>`;
-    }
-    else if (type === 'menu') {
-        html = `<div class="print-menu-list" style="padding: 40px; background: white;">`;
-        inputs.forEach(input => {
-            const p = groupedProducts[input.value];
-            const priceVal = document.getElementById(`price-${input.value}`).value;
-            const displayPrice = priceVal ? `$${priceVal}` : "";
-            
-            // 🟢 DUAL CONTEXT SUBTITLE
-            const unitContext = (mode === 'retail') ? 'Cans Available' : 'On Draught & Cans';
-
             html += `
-            <div class="menu-item" style="display:flex; align-items:center; margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #e2e8f0; page-break-inside: avoid;">
-                <div style="flex: 0 0 80px; margin-right:20px; display:flex; align-items:center;">
-                     <img src="${logoUrl}" style="width:100%; object-fit:contain;">
-                </div>
-                <div style="flex:1;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                        <span style="font-size:1.4rem; font-weight:800; text-transform:uppercase;">${p.name}</span>
-                        <span style="font-weight:bold; font-size:1.3rem;">${displayPrice}</span>
+            <div class="qr-talker-card" style="width: 3in; height: 1.75in; border: 1px dashed #ccc; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; margin: 8px; background: white; page-break-inside: avoid;">
+                <div style="display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 6px; height: 40%;">
+                    <img src="${logoUrl}" style="height: 100%; width: auto; margin-right: 12px; object-fit: contain;">
+                    <div style="flex: 1; text-align: left; line-height: 1.1;">
+                        <div style="font-size: 11pt; font-weight: 900; text-transform: uppercase;">${p.name}</div>
+                        <div style="font-size: 8pt; font-weight: bold; color: #555;">${p.abv}% • ${unitType.toUpperCase()}</div>
                     </div>
-                    <div style="font-weight:bold; color:#64748b; font-size:0.95rem; margin-bottom:6px;">${p.abv}% ABV • ${unitContext}</div>
-                    <div style="font-size:0.9rem; color:#334155; line-height:1.4; font-style:italic;">${p.desc}</div>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; height: 60%;">
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 40%;">
+                        <img src="${qrSrc}" style="height: 0.65in; width: 0.65in;">
+                        <div style="font-size: 7px; text-transform: uppercase; font-weight: 900; margin-top: 3px;">Scan Info</div>
+                    </div>
+                    <div style="flex: 1; text-align: center; font-size: 26pt; font-weight: 900; letter-spacing: -1px;">${displayPrice}</div>
                 </div>
             </div>`;
         });
         html += `</div>`;
     }
 
+    // --- CASE 3: MENU LIST ---
+    else if (type === 'menu') {
+        html = `<div style="padding: 0.6in; background: white; min-height: 100vh;">`;
+        html += `<h1 style="text-align:center; text-transform:uppercase; border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 30px;">Current Availability</h1>`;
+        
+        checkedUnits.forEach(chk => {
+            const beerKey = chk.dataset.beer;
+            const unitType = chk.dataset.unit;
+            const p = groupedProducts[beerKey];
+            const inputNum = chk.id.includes('chk1') ? '1' : '2';
+            const priceVal = document.getElementById(`price${inputNum}-${beerKey}`).value;
+            const displayPrice = priceVal ? `$${priceVal}` : "";
+
+            html += `
+            <div style="display: flex; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 15px; page-break-inside: avoid;">
+                <div style="flex: 0 0 90px; margin-right: 25px;">
+                     <img src="${logoUrl}" style="width: 100%; object-fit: contain;">
+                </div>
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
+                        <span style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase;">${p.name}</span>
+                        <span style="font-weight: 900; font-size: 1.4rem; background: #000; color: #fff; padding: 2px 10px; border-radius: 4px;">${displayPrice}</span>
+                    </div>
+                    <div style="font-weight: 800; color: #555; font-size: 1rem; margin-bottom: 8px;">${p.abv}% ABV • ${unitType}</div>
+                    <div style="font-size: 0.95rem; color: #444; line-height: 1.4; font-style: italic;">${p.desc}</div>
+                </div>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    // Inject into the hidden print div and trigger dialog
     printArea.innerHTML = html;
-    setTimeout(() => window.print(), 500); 
+    
+    // Give images a moment to load before opening the print preview
+    setTimeout(() => {
+        window.print();
+    }, 600); 
 }
 
 // Helper for the static downloads
