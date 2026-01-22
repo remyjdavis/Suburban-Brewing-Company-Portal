@@ -2415,8 +2415,15 @@ function showPublicBeerPage(beerKey) {
 // --- MESSAGING LOGIC ---
     function openMessageModal() {
         document.getElementById('messageModal').style.display = "flex";
-        // Clear previous input
         document.getElementById('msgBody').value = ""; 
+        
+        // 🔴 NEW: Pre-fill the email input if we have it
+        const emailInput = document.getElementById('msgEmail');
+        if (state.customer && state.customer.email) {
+            emailInput.value = state.customer.email;
+        } else {
+            emailInput.value = "";
+        }
     }
 
     function closeMessageModal() {
@@ -2426,47 +2433,33 @@ function showPublicBeerPage(beerKey) {
     async function submitMessage() {
         const type = document.getElementById('msgType').value;
         const body = document.getElementById('msgBody').value.trim();
+        // 🔴 NEW: Get email directly from the form
+        const emailInput = document.getElementById('msgEmail').value.trim();
         const btn = document.querySelector('#messageModal .btn-add-order');
 
-        if (!body) return Swal.fire("Empty Message", "Please type something first.", "warning");
+        // Validation
+        if (!emailInput) return Swal.fire("Email Required", "Please enter your email address so we can reply.", "warning");
+        if (!body) return Swal.fire("Empty Message", "Please type a message first.", "warning");
 
-        // 1. Check if we need to ask for email
-        let clientEmail = state.customer.email;
-
-        if (!clientEmail) {
-            const { value: emailInput } = await Swal.fire({
-                title: 'Email Required',
-                text: 'We need your email address so the team can reply to you.',
-                input: 'email',
-                inputPlaceholder: 'Enter your email address',
-                showCancelButton: true,
-                confirmButtonText: 'Save & Send',
-                confirmButtonColor: '#2563eb'
-            });
-
-            if (!emailInput) return; // User cancelled
+        // 🔴 LOGIC: If email changed (or was new), save it to backend
+        if (state.customer.email !== emailInput) {
+            state.customer.email = emailInput; // Update local state
+            localStorage.setItem('sbc_customer_email', emailInput); // Update local storage
             
-            // A. Update local state
-            state.customer.email = emailInput;
-            clientEmail = emailInput;
-            
-            // B. Save to Local Storage
-            localStorage.setItem('sbc_customer_email', emailInput);
-
-            // C. 🔴 SAVE TO BACKEND PERMANENTLY
+            // Fire and forget background save
             fetch(API_URL, {
                 method: "POST",
                 mode: "no-cors",
                 body: JSON.stringify({
                     action: 'updateCustomerEmail',
-                    key: state.customer.key, // Identify user by their Access Key
+                    key: state.customer.key,
                     email: emailInput,
                     secret: 'SBC_SECURE_2026'
                 })
             });
         }
 
-        // 2. Send the Message
+        // UI Loading state
         const originalText = btn.innerText;
         btn.innerText = "Sending...";
         btn.disabled = true;
@@ -2474,11 +2467,7 @@ function showPublicBeerPage(beerKey) {
         try {
             const payload = {
                 action: 'sendClientMessage',
-                customer: {
-                    name: state.customer.name,
-                    key: state.customer.key,
-                    email: clientEmail // Ensure this is the new email
-                },
+                customer: state.customer, // This now includes the correct email
                 type: type,
                 message: body,
                 secret: 'SBC_SECURE_2026'
