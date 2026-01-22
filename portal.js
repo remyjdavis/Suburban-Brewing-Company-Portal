@@ -382,3 +382,69 @@ async function saveProfile(data) {
         Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
     }
 }
+// 🟢 MISSING FUNCTION: Handles the "New Message" popup
+window.openComposeModal = async function(to="", subj="") {
+    // 1. Try to fetch user list for the dropdown
+    let users = [];
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getUsers`);
+        const json = await res.json();
+        users = json.users || [];
+    } catch(e) {
+        console.warn("Could not load user list. Defaulting to text input.");
+    }
+
+    // 2. Build the Recipient Field
+    // If users loaded: Show Dropdown. If failed (CORS error): Show Text Box.
+    let recipientHTML = '';
+    if (users.length > 0) {
+        const options = users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('');
+        recipientHTML = `<select id="swal-to" class="swal2-input">${options}</select>`;
+    } else {
+        recipientHTML = `<input id="swal-to" class="swal2-input" placeholder="To: (Type Name)" value="${to}">`;
+    }
+
+    // 3. Show the Popup
+    const {value:f} = await Swal.fire({ 
+        title: 'New Message', 
+        html: `
+            ${recipientHTML}
+            <input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}">
+            <textarea id="swal-body" class="swal2-textarea" placeholder="Message..." style="height:150px;"></textarea>
+        `, 
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Send 🚀',
+        preConfirm: () => ({ 
+            to: document.getElementById('swal-to').value, 
+            sub: document.getElementById('swal-sub').value, 
+            body: document.getElementById('swal-body').value 
+        }) 
+    });
+    
+    // 4. Send the Message
+    if(f && f.to) {
+        Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
+        
+        try {
+            await fetch(MASTER_API_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', // 🔴 Critical: Prevents "Fetch API cannot load" errors
+                body: JSON.stringify({
+                    action: 'sendMessage', 
+                    data: {
+                        sender: sessionStorage.getItem("user_name"), 
+                        recipient: f.to, 
+                        subject: f.sub, 
+                        body: f.body
+                    }
+                }) 
+            });
+            
+            Swal.fire('Sent!', 'Message sent successfully.', 'success');
+        } catch(e) {
+            console.error(e);
+            Swal.fire('Error', 'Message failed to send.', 'error');
+        }
+    }
+}
