@@ -33,7 +33,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
+  <script src="/Suburban-Brewing-Company-Portal/portal.js"></script>
   <style>
     /* --- SHARED THEME VARIABLES (MATCHING INDEX) --- */
     :root {
@@ -362,8 +362,13 @@
   
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-  
+
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
+    <div id="admin-nav-link" style="display:none; margin-top: 10px; border-top: 1px solid #1e293b; padding-top:10px;">
+    <a href="../Admin.html" class="nav-link" style="color: #ef4444;">
+        <span>🔒 Admin Console</span>
+    </a>
+</div>
     
     <div class="nav-section-title" onclick="toggleGroup('grp-sample', this)">
       <span>Samplings</span><span class="chevron">▼</span>
@@ -399,12 +404,13 @@
       <span>Brewing</span><span class="chevron">▼</span>
     </div>
     <div id="grp-brew" class="collapsible-content">
-      <a href="brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
-      <a href="Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-      <a href="Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-      <a href="cellar.html" class="nav-link"><span>Cellar Management</span></a>
-      <a href="qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
-      <a href="packaging.html" class="nav-link"><span>Packaging log</span></a>
+      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brew Calendar</span></a>
+      <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
+      <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
+      <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
+      <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
+      <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+      <a href="../Brewing/sensory-admin.html" class="nav-link"><span>Sensory Admin</span></a>
     </div>
     
     <div class="nav-section-title" onclick="toggleGroup('grp-rep', this)">
@@ -426,19 +432,16 @@
         <input type="date" id="routeDate" class="date-picker" onchange="fetchRoute()">
       </div>
 
-      <div class="user-profile" onclick="toggleUserMenu(event)">
-        <div class="user-info-text">
-          <span class="user-name" id="display-username">Loading...</span>
-          <span class="user-role" id="display-role">...</span>
+      <div class="user-profile" onclick="toggleUserMenu(event)" style="margin-left: auto;">
+        <div id="msg-badge" class="notification-badge">0</div>
+        <div class="user-info-text" style="text-align:right; margin-right:10px;">
+            <span class="user-name" id="display-username">Brewer</span>
+            <span class="user-role" id="display-role">Staff</span>
         </div>
-        <img src="" class="user-avatar" id="display-avatar" onerror="this.src='../logo.png'">
-
-        <div id="userDropdown" class="user-dropdown-menu">
-          <a href="#" onclick="updateUserInfo()">⚙️ Update Info</a>
-          <div style="border-top: 1px solid #eee;"></div>
-          <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
-        </div>
-      </div>
+        <img src="../logo.png" class="user-avatar" id="display-avatar">
+        <div id="userDropdown" class="user-dropdown-menu"></div>
+    </div>
+</div>
 
     </div>
     <div id="loading" style="text-align: center; padding: 50px; color: var(--text-dim);">Optimizing stops...</div>
@@ -482,7 +485,6 @@
     }
 
     const scriptURL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-    const MASTER_API_URL = 'https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec';
     let currentRoute = [];
     document.getElementById('routeDate').valueAsDate = new Date();
 
@@ -498,11 +500,14 @@
     }
 
     // --- CONSOLIDATED INITIALIZATION ---
-    document.addEventListener("DOMContentLoaded", () => {
-       // 1. SET VISUALS IMMEDIATELY (Fixes "Loading..." issue)
-    setupUserProfile(); 
-      document.getElementById('copyright-year').innerText = new Date().getFullYear();
+    window.addEventListener('DOMContentLoaded', () => {
+    // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
+    if (typeof setupUserProfile === 'function') setupUserProfile();
+    if (typeof checkUnreadCount === 'function') checkUnreadCount();
 
+    // 2. Set Footer Year
+    document.getElementById('copyright-year').innerText = new Date().getFullYear();
+      
       // 1. Sidebar Logic (Auto-expand active group)
       const activeLink = document.querySelector('.nav-link.active');
       if (activeLink) {
@@ -537,13 +542,15 @@
       list.innerHTML = "";
       document.getElementById('mainNavBtn').style.display = "none";
 
-      const proxyUrl = "https://api.allorigins.win/get?url=";
       const targetUrl = `${scriptURL}?action=getOptimizedDailyRoute&date=${date}`;
 
       try {
-        const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
-        const data = await response.json();
-        const result = JSON.parse(data.contents); 
+        // 🟢 FIXED: REMOVED PROXY, ADDED DIRECT FETCH OPTIONS
+        const response = await fetch(targetUrl, {
+            method: 'GET',
+            redirect: 'follow'
+        });
+        const result = await response.json(); 
 
         if (result.error) {
           loader.innerText = "Error: " + result.error;
@@ -551,10 +558,10 @@
         }
         renderStops(result);
       } catch (err) {
+        console.error(err);
         loader.innerText = "Connection lost. Please refresh.";
       }
     }
-
     function renderStops(stops) {
       document.getElementById('loading').style.display = "none";
       const list = document.getElementById('routeList');
@@ -594,126 +601,7 @@
       const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypoints}&travelmode=driving`;
       window.open(url, '_blank');
     }
-    // --- CONSOLIDATED USER MANAGEMENT ---
-
-function setupUserProfile() {
-    const name = sessionStorage.getItem("user_name") || "Brewer";
-    const role = sessionStorage.getItem("user_role") || "Staff";
-    const pic = sessionStorage.getItem("user_pic");
-
-    const nameEl = document.getElementById("display-username");
-    const roleEl = document.getElementById("display-role");
-    const picEl = document.getElementById("display-avatar");
-
-    if (nameEl) nameEl.innerText = name;
-    if (roleEl) roleEl.innerText = role;
-    if (picEl && pic) picEl.src = pic;
-}
-
-function toggleUserMenu(event) {
-    event.stopPropagation();
-    const dropdown = document.getElementById("userDropdown");
-    if (dropdown) dropdown.classList.toggle("show");
-}
-
-async function updateUserInfo() {
-    const { value: formValues } = await Swal.fire({
-        title: 'Edit Profile Settings',
-        background: '#1e293b',
-        color: '#ffffff',
-        padding: '2em',
-        width: '450px', // Fixed width for better consistency
-        showConfirmButton: true,
-        confirmButtonText: 'Save Changes',
-        confirmButtonColor: '#2563eb',
-        showCancelButton: true,
-        cancelButtonColor: '#475569',
-        html: `
-            <div style="text-align: left; font-family: 'Inter', sans-serif;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="position: relative; display: inline-block;">
-                        <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || '../logo.png'}" 
-                             style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; background: #334155;">
-                        <button type="button" onclick="document.getElementById('file-input').click()" 
-                                style="position: absolute; bottom: 0; right: 0; background: #2563eb; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                            📷
-                        </button>
-                    </div>
-                    <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Email Address</label>
-                    <input id="p-email" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" value="${sessionStorage.getItem('user_email') || ''}">
-                </div>
-
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Phone Number</label>
-                    <input id="p-phone" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" value="${sessionStorage.getItem('user_phone') || ''}">
-                </div>
-
-                <div style="border-top: 1px solid #334155; padding-top: 20px;">
-                    <label style="display: block; font-size: 10px; color: #f87171; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Security / Update Password</label>
-                    <input id="p-pass" type="password" class="swal2-input" style="width: 100%; margin: 0; height: 45px; font-size: 14px; background: #0f172a; color: white; border: 1px solid #334155;" placeholder="Enter new password (optional)">
-                    <p style="color: #64748b; font-size: 11px; margin-top: 8px; font-style: italic;">Leave blank to keep your current password.</p>
-                </div>
-            </div>
-        `,
-        preConfirm: () => {
-            return {
-                email: document.getElementById('p-email').value,
-                phone: document.getElementById('p-phone').value,
-                pass: document.getElementById('p-pass').value,
-                pic: document.getElementById('preview-pic').src
-            }
-        }
-    });
-
-    if (formValues) saveProfile(formValues);
-}
-function handleFileSelect(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => { document.getElementById('preview-pic').src = e.target.result; };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-async function saveProfile(data) {
-    Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() });
-    const username = sessionStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
     
-    try {
-        const response = await fetch(MASTER_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ 
-                action: 'updateProfile', 
-                user: username, 
-                ...data // 🔴 This now includes email, phone, pic, AND pass
-            })
-        });
-        const result = await response.json();
-        
-        if (result.status === "success") {
-            // Update session storage for non-sensitive info
-            sessionStorage.setItem("user_pic", data.pic);
-            sessionStorage.setItem("user_email", data.email);
-            sessionStorage.setItem("user_phone", data.phone);
-            
-            setupUserProfile();
-            Swal.fire('Saved!', 'Profile and Security settings updated.', 'success');
-        } else {
-            throw new Error(result.message || "Update failed");
-        }
-    } catch (e) {
-        Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
-    }
-}
-     function handleLogout() {
-        sessionStorage.removeItem("sbc_auth");
-        const repoPath = "/Suburban-Brewing-Company-Portal/";
-        window.location.replace(repoPath + "login.html");
-      }
   </script>
 </body>
 </html>
