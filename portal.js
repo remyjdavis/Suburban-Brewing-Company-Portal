@@ -5,17 +5,24 @@
     if (params.get("key") === "boss") {
         localStorage.setItem("sbc_auth", "true");
         localStorage.setItem("user_name", "Eric Yost");
+        
+        // 🟢 IDENTITY: This is what displays under your name (Column F)
         localStorage.setItem("user_role", "Owner");
         
-        // 🟢 SET THIS TO EXACTLY WHAT YOU WANT TO SEE (e.g., "Owner", "Head Brewer")
-        localStorage.setItem("user_title", "Owner"); 
+        // 🟢 PERMISSION: This is what grants access to the Admin Console (Column G)
+        localStorage.setItem("user_access", "Admin"); 
         
+        localStorage.setItem("user_title", "Owner"); 
         localStorage.setItem("sbc_driver_name", "Eric Yost");
         window.history.replaceState({}, document.title, "hub.html");
-    } // 🟢 SYNTAX ERROR FIXED: Added missing closing brace for if(params)
+    } 
 
     const auth = localStorage.getItem("sbc_auth") === "true" || sessionStorage.getItem("sbc_auth") === "true";
+    
+    // Check access level for logic, but keep role for display
     const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
+    const access = localStorage.getItem("user_access") || sessionStorage.getItem("user_access");
+    
     const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/") || window.location.pathname.includes("login.html");
     
     // Allow boss mode or auth session
