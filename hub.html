@@ -10,33 +10,32 @@
   
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   
   <script>
     /* =========================================
-       MAGIC LOGIN LOGIC (BOSS MODE)
+       🔐 PERSISTENT LOGIN LOGIC
        ========================================= */
     (function() {
         const params = new URLSearchParams(window.location.search);
         
-        // 1. Check for the Magic Key in the URL
-        // You will send him the link: hub.html?key=boss
+        // 1. BOSS MODE (URL Injection)
+        // Link: hub.html?key=boss
         if (params.get("key") === "boss") {
+            // Save to LOCAL Storage (Permanent) instead of Session
+            localStorage.setItem("sbc_auth", "true");
+            localStorage.setItem("user_name", "Eric Yost");
+            localStorage.setItem("user_role", "Owner");
+            localStorage.setItem("sbc_driver_name", "Eric Yost");
             
-            // A. Auto-Login him
-            sessionStorage.setItem("sbc_auth", "true");
-            
-            // B. Auto-Set his Driver Name (Customize "Corey" to his actual name)
-            // This ensures the "Deliveries" page doesn't ask him who he is.
-            if (!localStorage.getItem("sbc_driver_name")) {
-                localStorage.setItem("sbc_driver_name", "Eric Yost"); 
-            }
+            // Clean URL
+            window.history.replaceState({}, document.title, "hub.html");
         }
 
-        // 2. Standard Security Check
-        const auth = sessionStorage.getItem("sbc_auth");
-        if (auth !== "true") {
+        // 2. CHECK AUTH (Local Storage first, then Session)
+        const isAuth = localStorage.getItem("sbc_auth") === "true" || sessionStorage.getItem("sbc_auth") === "true";
+        
+        if (!isAuth) {
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html?redirect=hub.html");
         }
@@ -44,160 +43,289 @@
   </script>
 
   <style>
+    /* --- CORE STYLES --- */
     body {
       margin: 0;
-      background: #0f172a; /* Dark Navy Background */
+      background: #0f172a; /* Dark Navy */
       color: white;
       font-family: 'Inter', sans-serif;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      padding: 20px;
+      padding-top: 80px; /* Space for fixed header */
+      padding-bottom: 40px;
     }
 
-    header {
-      text-align: center;
-      margin-bottom: 30px;
-      margin-top: 10px;
+    /* --- MOBILE HEADER (Sticky) --- */
+    .mobile-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 70px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
 
-    h1 {
-      margin: 10px 0 5px;
-      font-size: 24px;
-      font-weight: 800;
-      letter-spacing: 1px;
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    p {
-      margin: 0;
-      color: #94a3b8;
-      font-size: 14px;
+    .header-brand img { height: 40px; }
+    
+    .header-text h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        line-height: 1.1;
+    }
+    
+    .header-text span {
+        font-size: 11px;
+        color: #94a3b8;
+        font-weight: 600;
+        text-transform: uppercase;
     }
 
-    .grid {
+    /* --- USER PROFILE (Mini) --- */
+    .user-profile {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        background: #334155;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        border: 2px solid #475569;
+        transition: 0.2s;
+        overflow: hidden;
+    }
+    
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* --- GRID LAYOUT (2 Columns) --- */
+    .grid-container {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr 1fr; /* Two equal columns */
       gap: 15px;
-      max-width: 400px;
-      width: 100%;
+      padding: 20px;
+      max-width: 600px;
       margin: 0 auto;
+    }
+
+    /* Full width for primary items */
+    .card.full-width {
+        grid-column: span 2;
     }
 
     .card {
       background: #1e293b;
       border: 1px solid #334155;
       border-radius: 16px;
-      padding: 25px;
+      padding: 20px;
       text-decoration: none;
       color: white;
       display: flex;
+      flex-direction: column;
       align-items: center;
+      text-align: center;
       transition: transform 0.2s, background 0.2s;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      position: relative;
+      overflow: hidden;
     }
 
     .card:active {
-      transform: scale(0.98);
+      transform: scale(0.96);
       background: #334155;
     }
 
     .icon-box {
-      width: 50px;
-      height: 50px;
-      background: rgba(37, 99, 235, 0.2);
+      width: 45px;
+      height: 45px;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      margin-right: 20px;
-      color: #60a5fa;
+      font-size: 22px;
+      margin-bottom: 12px;
     }
 
-    .card-content { flex: 1; }
-
     .card-title {
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 700;
       margin-bottom: 4px;
-      display: block;
+      color: #f1f5f9;
     }
 
     .card-desc {
-      font-size: 13px;
+      font-size: 11px;
       color: #94a3b8;
-      display: block;
+      line-height: 1.3;
     }
 
-    /* Colors */
+    /* --- COLORS --- */
     .delivery-icon { background: rgba(16, 185, 129, 0.2); color: #34d399; }
     .invoice-icon { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
     .leads-icon { background: rgba(37, 99, 235, 0.2); color: #60a5fa; }
-    
-    .logout-btn {
-      margin-top: auto;
-      text-align: center;
-      padding: 20px;
-      color: #f87171;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 14px;
-      opacity: 0.5;
+    .inventory-icon { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .crm-icon { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
+    .admin-icon { background: rgba(255, 255, 255, 0.1); color: #cbd5e1; }
+
+    /* --- DROPDOWN MENU --- */
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 60px;
+        right: 10px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        width: 200px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        z-index: 2000;
+        overflow: hidden;
     }
+
+    .dropdown-menu.show { display: block; }
+
+    .menu-header {
+        padding: 15px;
+        background: #0f172a;
+        border-bottom: 1px solid #334155;
+    }
+    
+    .menu-name { font-weight: bold; font-size: 14px; display: block; }
+    .menu-role { font-size: 11px; color: #94a3b8; }
+
+    .menu-item {
+        display: block;
+        padding: 12px 15px;
+        color: #cbd5e1;
+        text-decoration: none;
+        font-size: 14px;
+        border-bottom: 1px solid #334155;
+    }
+
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item.danger { color: #f87171; }
   </style>
 </head>
 <body>
 
-  <header>
-    <img src="logo.png" style="height: 60px; margin-bottom: 10px;">
-    <h1>Suburban Brewing</h1>
-    <p>Mobile Command Center</p>
+  <header class="mobile-header">
+    <div class="header-brand">
+        <img src="logo.png" alt="Logo">
+        <div class="header-text">
+            <h1>SUBURBAN</h1>
+            <span>Mobile Hub</span>
+        </div>
+    </div>
+    
+    <div class="user-profile" onclick="toggleMenu()">
+        <div class="user-avatar">
+            <span id="avatar-initial">👤</span>
+            </div>
+    </div>
   </header>
 
-  <div class="grid">
-    
-    <a href="sales/deliveries.html" class="card">
-      <div class="icon-box delivery-icon">🚚</div>
-      <div class="card-content">
-        <span class="card-title">Do Deliveries</span>
-        <span class="card-desc">Scan barcodes & drop off orders</span>
+  <div id="userMenu" class="dropdown-menu">
+      <div class="menu-header">
+          <span class="menu-name" id="menu-user-name">Loading...</span>
+          <span class="menu-role" id="menu-user-role">...</span>
       </div>
-      <span style="font-size: 20px; color: #475569;">›</span>
+      <a href="Admin.html" class="menu-item">⚙️ Admin Console</a>
+      <a href="index.html" class="menu-item">💻 Desktop View</a>
+      <div class="menu-item danger" onclick="logout()">🚪 Log Out</div>
+  </div>
+
+  <div class="grid-container">
+    
+    <a href="sales/deliveries.html" class="card full-width">
+      <div class="icon-box delivery-icon">🚚</div>
+      <span class="card-title">Driver Mode</span>
+      <span class="card-desc">Route optimization & delivery scanning</span>
     </a>
 
     <a href="sales/new invoices.html" class="card">
       <div class="icon-box invoice-icon">📄</div>
-      <div class="card-content">
-        <span class="card-title">Create Invoice</span>
-        <span class="card-desc">Write an order for a customer</span>
-      </div>
-      <span style="font-size: 20px; color: #475569;">›</span>
+      <span class="card-title">New Order</span>
+      <span class="card-desc">Write invoice</span>
     </a>
 
     <a href="sales/leads.html" class="card">
       <div class="icon-box leads-icon">🎯</div>
-      <div class="card-content">
-        <span class="card-title">Sales Leads</span>
-        <span class="card-desc">View AI recommended stops</span>
-      </div>
-      <span style="font-size: 20px; color: #475569;">›</span>
+      <span class="card-title">Sales CRM</span>
+      <span class="card-desc">Leads & Notes</span>
     </a>
 
-    <a href="index.html" class="card" style="background: transparent; border: 1px dashed #334155;">
-      <div class="icon-box" style="background: #334155; color: #94a3b8;">💻</div>
-      <div class="card-content">
-        <span class="card-title" style="color: #94a3b8;">Full Desktop Site</span>
-      </div>
+    <a href="inventory/kegs.html" class="card">
+      <div class="icon-box inventory-icon">🛢️</div>
+      <span class="card-title">Keg Inventory</span>
+      <span class="card-desc">Check stock</span>
+    </a>
+
+    <a href="crm.html" class="card">
+      <div class="icon-box crm-icon">👥</div>
+      <span class="card-title">Clients</span>
+      <span class="card-desc">Customer DB</span>
+    </a>
+
+    <a href="Admin.html" class="card full-width" style="border-style: dashed; background: rgba(30, 41, 59, 0.5);">
+      <div class="icon-box admin-icon">⚙️</div>
+      <span class="card-title">Full Admin Console</span>
+      <span class="card-desc">Manage Products, Users & Data</span>
     </a>
 
   </div>
 
-  <div class="logout-btn" onclick="logout()">Log Out</div>
-
   <script>
+    // --- UI LOGIC ---
+    
+    // 1. Populate Header
+    const userName = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "Boss";
+    const userRole = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Admin";
+    const userPic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic");
+
+    document.getElementById("menu-user-name").innerText = userName;
+    document.getElementById("menu-user-role").innerText = userRole;
+    document.getElementById("avatar-initial").innerText = userName.charAt(0).toUpperCase();
+
+    if (userPic) {
+        const avatarDiv = document.querySelector('.user-avatar');
+        avatarDiv.innerHTML = `<img src="${userPic}" onerror="this.style.display='none'">`;
+    }
+
+    // 2. Toggle Menu
+    function toggleMenu() {
+        document.getElementById("userMenu").classList.toggle("show");
+    }
+
+    // Close menu when clicking outside
+    window.onclick = function(event) {
+        if (!event.target.closest('.user-profile') && !event.target.closest('.dropdown-menu')) {
+            document.getElementById("userMenu").classList.remove("show");
+        }
+    }
+
+    // 3. Logout (Clears Local Storage too!)
     function logout() {
-      sessionStorage.removeItem("sbc_auth");
-      window.location.replace("login.html");
+        sessionStorage.clear();
+        localStorage.removeItem("sbc_auth"); // Clears persistent login
+        window.location.replace("login.html");
     }
   </script>
 
