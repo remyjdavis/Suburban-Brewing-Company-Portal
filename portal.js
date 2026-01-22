@@ -58,17 +58,18 @@ window.addEventListener('load', () => {
 });
 
 function setupUserProfile() {
-    // 1. Get Data from Storage (Prioritizing Boss/Local Mode, then Session)
+    // 1. Get Data (Prioritizing Local/Boss Mode, then Session)
     const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
     const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
     
-    // 🟢 ROLE: This is the identity displayed to the user (e.g., "Sales Rep", "Owner", "Brewer")
+    // 🟢 ROLE: This is Column F (e.g., "Owner", "Sales Rep", "Brewer")
     const roleDisplay = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
     
-    // 🟢 ACCESS LEVEL: This is the permission level (e.g., "Admin", "Staff")
+    // 🟢 ACCESS: This is Column G (e.g., "Admin", "Staff")
     const accessLevel = localStorage.getItem("user_access") || sessionStorage.getItem("user_access") || "Staff";
 
-    // A. Desktop Header Elements
+    // --- A. DESKTOP HEADER (All Pages) ---
+    // This replaces the "ADMIN" placeholder on standard dashboard pages
     if(document.getElementById("display-username")) {
         document.getElementById("display-username").innerText = name;
     }
@@ -81,7 +82,8 @@ function setupUserProfile() {
         img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
 
-    // B. Mobile Hub Elements (Header - This replaces the hardcoded "ADMIN")
+    // --- B. MOBILE HUB HEADER (hub.html) ---
+    // This targets the specific "ADMIN" text seen in your hub screenshot
     if(document.getElementById("menu-user-name")) {
         document.getElementById("menu-user-name").innerText = name;
     }
@@ -89,7 +91,7 @@ function setupUserProfile() {
         document.getElementById("menu-user-role").innerText = roleDisplay; 
     }
     
-    // C. Dropdown Menu Elements
+    // --- C. DROPDOWN MENU ELEMENTS (All Pages) ---
     if(document.getElementById("dropdown-user-name")) {
         document.getElementById("dropdown-user-name").innerText = name;
     }
@@ -97,10 +99,10 @@ function setupUserProfile() {
         document.getElementById("dropdown-user-role").innerText = roleDisplay; 
     }
 
-    // D. Hub Logo/Avatar Image Fix
+    // --- D. HUB LOGO/AVATAR IMAGE FIX ---
     const hubAvatarImg = document.getElementById("avatar-img");
     if (hubAvatarImg) {
-        if (pic && pic !== PORTAL_ROOT + "Logo.png" && pic !== "Logo.png") {
+        if (pic && pic !== PORTAL_ROOT + "Logo.png" && pic !== "logo.png") {
             hubAvatarImg.src = pic;
         } else {
             hubAvatarImg.src = "logo.png"; 
@@ -108,25 +110,19 @@ function setupUserProfile() {
         hubAvatarImg.onerror = function() { this.src = "logo.png"; };
     }
 
-    // E. Admin Console Visibility (BASED ON ACCESS LEVEL, NOT ROLE)
-    const adminDiv = document.getElementById("admin-nav-link");
-    if (adminDiv) {
-        // Only show if the Access_Level column in your sheet is "Admin"
-        if (accessLevel === "Admin") {
-            adminDiv.style.display = "block";
-            const link = adminDiv.querySelector('a');
-            if (link) {
-                const isSubfolder = window.location.pathname.includes("/Brewing/") || 
-                                   window.location.pathname.includes("/sales/") || 
-                                   window.location.pathname.includes("/inventory/");
-                link.href = isSubfolder ? "../Admin.html" : "Admin.html";
-            }
-        } else {
-            adminDiv.style.display = "none";
-        }
+    // --- E. ADMIN CONSOLE VISIBILITY (Logic based on Column G) ---
+    const adminNav = document.getElementById("admin-nav-link"); // Desktop Sidebar/Nav
+    const hubAdminCard = document.querySelector('a[href="Admin.html"]'); // Mobile Hub Card
+
+    if (accessLevel === "Admin") {
+        if (adminNav) adminNav.style.display = "block";
+        if (hubAdminCard) hubAdminCard.style.display = "flex";
+    } else {
+        if (adminNav) adminNav.style.display = "none";
+        if (hubAdminCard) hubAdminCard.style.display = "none";
     }
 
-    // F. Desktop Dropdown Injection
+    // --- F. DESKTOP DROPDOWN INJECTION ---
     const dropdown = document.getElementById("userDropdown");
     if (dropdown && !document.getElementById("userMenu")) {
         dropdown.innerHTML = `
