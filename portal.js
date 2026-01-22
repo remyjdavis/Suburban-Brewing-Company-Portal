@@ -53,7 +53,6 @@ window.addEventListener('load', () => {
 function setupUserProfile() {
     // 1. Get Data (Prioritizing Local/Boss Mode, then Session)
     const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
-    const title = localStorage.getItem("user_title") || sessionStorage.getItem("user_title") || "Staff";
     const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
     const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
 
@@ -66,11 +65,15 @@ function setupUserProfile() {
         img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
 
-    // B. Mobile Hub Elements (Header)
+    // B. Mobile Hub Elements (The area in your screenshot showing "ADMIN")
     if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
-    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role; 
     
-    // C. Dropdown Menu Elements (Specific to Hub HTML)
+    // 🟢 THIS LINE replaces the hardcoded "ADMIN" with your Role (e.g., Sales Rep)
+    if(document.getElementById("menu-user-role")) {
+        document.getElementById("menu-user-role").innerText = role;
+    }
+    
+    // C. Dropdown Menu Elements
     if(document.getElementById("dropdown-user-name")) document.getElementById("dropdown-user-name").innerText = name;
     if(document.getElementById("dropdown-user-role")) document.getElementById("dropdown-user-role").innerText = role; 
 
@@ -85,10 +88,10 @@ function setupUserProfile() {
         hubAvatarImg.onerror = function() { this.src = "logo.png"; };
     }
 
-    // E. Admin Console Link Logic
+    // E. Admin Console Link Logic (Keep this using 'role' for permissions)
     const adminDiv = document.getElementById("admin-nav-link");
     if (adminDiv) {
-        if (role === "Admin" || role === "Owner") {
+        if (role === "Admin" || role === "Owner" || role === "Administrator") {
             adminDiv.style.display = "block";
             const link = adminDiv.querySelector('a');
             if (link) {
