@@ -151,7 +151,20 @@
         min-height: 100vh;
     }
 
-    .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 900; }
+    /* 🟢 SLIM HEADER (MATCHES PACKAGED INVENTORY) */
+    .topbar { 
+        background: #fff; 
+        border-bottom: 1px solid #e5e7eb; 
+        padding: 16px 24px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; /* Centers vertically */
+        position: sticky; 
+        top: 0; 
+        z-index: 900; 
+        height: 70px; /* Fixed height for consistency */
+    }
+    
     .content { padding: 24px; flex: 1; }
     
     #restaurantContainer { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
@@ -351,30 +364,30 @@
   </aside>
 
   <div class="main">
-    <header class="topbar" style="display: flex; justify-content: space-between; align-items: flex-start; padding: 20px;">
-      
-  <h1 style="margin:0; font-size:1.5rem; color:#111827;">Restaurant Gallery</h1>
+    <header class="topbar">
+      <h1 style="margin:0; font-size:1.5rem; color:#111827;">Restaurant Gallery</h1>
 
-      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
-        
-        <div class="user-profile" onclick="toggleUserMenu(event)" style="margin: 0;">
-            <div id="msg-badge" class="notification-badge">0</div>
-            <div class="user-info-text" style="text-align:right; margin-right:10px;">
-                <span class="user-name" id="display-username">Brewer</span>
-                <span class="user-role" id="display-role">Staff</span>
-            </div>
-            <img src="../logo.png" class="user-avatar" id="display-avatar">
-            <div id="userDropdown" class="user-dropdown-menu"></div>
-        </div>
-
-        <button class="btn-primary" onclick="openAddModal()" style="font-size: 0.85rem; padding: 8px 16px;">
-            + Add Restaurant
-        </button>
-
+      <div class="user-profile" onclick="toggleUserMenu(event)" style="margin: 0;">
+          <div id="msg-badge" class="notification-badge">0</div>
+          <div class="user-info-text" style="text-align:right; margin-right:10px;">
+              <span class="user-name" id="display-username">Brewer</span>
+              <span class="user-role" id="display-role">Staff</span>
+          </div>
+          <img src="../logo.png" class="user-avatar" id="display-avatar">
+          <div id="userDropdown" class="user-dropdown-menu"></div>
       </div>
     </header>
     
-    <section class="content" id="restaurantContainer"></section>
+    <section class="content">
+        <div style="margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <div>
+               <button class="btn-primary" onclick="openAddModal()">+ Add Restaurant</button>
+            </div>
+            <span style="font-size: 13px; color: var(--text-muted); font-style: italic;">Manage Fintech & Check Customers.</span>
+        </div>
+
+        <div id="restaurantContainer" class="grid-container"></div>
+    </section>
     
     <div style="flex-grow:1;"></div>
     <footer class="app-footer">
