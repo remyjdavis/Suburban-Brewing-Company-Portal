@@ -66,7 +66,7 @@ function setupUserProfile() {
         img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
 
-    // B. Mobile Hub Elements (Header)
+    // B. Mobile Hub Elements (Header - This is the area in your screenshot)
     if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
     if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role; // 🟢 FIXED: Now shows Role
     
@@ -77,7 +77,6 @@ function setupUserProfile() {
     // D. Hub Logo/Avatar Image Fix
     const hubAvatarImg = document.getElementById("avatar-img");
     if (hubAvatarImg) {
-        // Use custom pic if it's not the default logo path
         if (pic && pic !== PORTAL_ROOT + "Logo.png" && pic !== "Logo.png") {
             hubAvatarImg.src = pic;
         } else {
