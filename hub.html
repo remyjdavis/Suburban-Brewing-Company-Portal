@@ -12,32 +12,21 @@
   <link rel="apple-touch-icon" href="logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="/Suburban-Brewing-Company-Portal/portal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <script>
-    /* =========================================
-       🔐 PERSISTENT LOGIN LOGIC
-       ========================================= */
     (function() {
         const params = new URLSearchParams(window.location.search);
         
-        // 1. BOSS MODE (URL Injection)
-        // Link: hub.html?key=boss
+        // If "Boss Key" is present, set Local Storage AUTH immediately
         if (params.get("key") === "boss") {
-            // Save to LOCAL Storage (Permanent) instead of Session
             localStorage.setItem("sbc_auth", "true");
             localStorage.setItem("user_name", "Eric Yost");
             localStorage.setItem("user_role", "Owner");
             localStorage.setItem("sbc_driver_name", "Eric Yost");
             
-            // Clean URL
+            // Clean URL so the key isn't visible
             window.history.replaceState({}, document.title, "hub.html");
-        }
-
-        // 2. CHECK AUTH (Local Storage first, then Session)
-        const isAuth = localStorage.getItem("sbc_auth") === "true" || sessionStorage.getItem("sbc_auth") === "true";
-        
-        if (!isAuth) {
-            const repoPath = "/Suburban-Brewing-Company-Portal/";
-            window.location.replace(repoPath + "login.html?redirect=hub.html");
         }
     })();
   </script>
@@ -46,17 +35,17 @@
     /* --- CORE STYLES --- */
     body {
       margin: 0;
-      background: #0f172a; /* Dark Navy */
+      background: #0f172a;
       color: white;
       font-family: 'Inter', sans-serif;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      padding-top: 80px; /* Space for fixed header */
+      padding-top: 80px; 
       padding-bottom: 40px;
     }
 
-    /* --- MOBILE HEADER (Sticky) --- */
+    /* --- MOBILE HEADER --- */
     .mobile-header {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -72,156 +61,74 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
 
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
+    .header-brand { display: flex; align-items: center; gap: 12px; }
     .header-brand img { height: 40px; }
     
-    .header-text h1 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        line-height: 1.1;
-    }
-    
-    .header-text span {
-        font-size: 11px;
-        color: #94a3b8;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
+    .header-text h1 { margin: 0; font-size: 16px; font-weight: 800; line-height: 1.1; }
+    .header-text span { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
 
-    /* --- USER PROFILE (Mini) --- */
-    .user-profile {
-        position: relative;
-        cursor: pointer;
-    }
-
+    /* --- USER PROFILE --- */
+    .user-profile { position: relative; cursor: pointer; }
     .user-avatar {
-        width: 40px;
-        height: 40px;
-        background: #334155;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        border: 2px solid #475569;
-        transition: 0.2s;
-        overflow: hidden;
+        width: 40px; height: 40px; background: #334155; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px solid #475569; overflow: hidden;
     }
-    
     .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* --- GRID LAYOUT (2 Columns) --- */
+    /* 🔴 NOTIFICATION BADGE (Managed by portal.js) */
+    .badge-dot {
+        position: absolute; top: -2px; right: -2px;
+        background: #ef4444; color: white; font-size: 10px; font-weight: bold;
+        height: 18px; min-width: 18px; border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px solid #0f172a;
+        display: none; 
+    }
+
+    /* --- DROPDOWN MENU --- */
+    .dropdown-menu {
+        display: none; position: absolute; top: 60px; right: 10px;
+        background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+        width: 220px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 2000; overflow: hidden;
+    }
+    .dropdown-menu.show { display: block; }
+    .menu-header { padding: 15px; background: #0f172a; border-bottom: 1px solid #334155; }
+    .menu-name { font-weight: bold; font-size: 14px; display: block; }
+    .menu-role { font-size: 11px; color: #94a3b8; }
+    .menu-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 12px 15px; color: #cbd5e1; text-decoration: none; font-size: 14px; border-bottom: 1px solid #334155;
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item.danger { color: #f87171; }
+    .inbox-count {
+        background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px; display: none;
+    }
+
+    /* --- GRID --- */
     .grid-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr; /* Two equal columns */
-      gap: 15px;
-      padding: 20px;
-      max-width: 600px;
-      margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+      padding: 20px; max-width: 600px; margin: 0 auto;
     }
-
-    /* Full width for primary items */
-    .card.full-width {
-        grid-column: span 2;
-    }
-
+    .card.full-width { grid-column: span 2; }
     .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 16px;
-      padding: 20px;
-      text-decoration: none;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      transition: transform 0.2s, background 0.2s;
-      position: relative;
-      overflow: hidden;
+      background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 20px;
+      text-decoration: none; color: white; display: flex; flex-direction: column;
+      align-items: center; text-align: center; position: relative; overflow: hidden;
     }
+    .card:active { transform: scale(0.96); background: #334155; }
+    .icon-box { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 12px; }
+    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #f1f5f9; }
+    .card-desc { font-size: 11px; color: #94a3b8; line-height: 1.3; }
 
-    .card:active {
-      transform: scale(0.96);
-      background: #334155;
-    }
-
-    .icon-box {
-      width: 45px;
-      height: 45px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      margin-bottom: 12px;
-    }
-
-    .card-title {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 4px;
-      color: #f1f5f9;
-    }
-
-    .card-desc {
-      font-size: 11px;
-      color: #94a3b8;
-      line-height: 1.3;
-    }
-
-    /* --- COLORS --- */
+    /* Colors */
     .delivery-icon { background: rgba(16, 185, 129, 0.2); color: #34d399; }
     .invoice-icon { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
     .leads-icon { background: rgba(37, 99, 235, 0.2); color: #60a5fa; }
     .inventory-icon { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
     .crm-icon { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
     .admin-icon { background: rgba(255, 255, 255, 0.1); color: #cbd5e1; }
-
-    /* --- DROPDOWN MENU --- */
-    .dropdown-menu {
-        display: none;
-        position: absolute;
-        top: 60px;
-        right: 10px;
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 12px;
-        width: 200px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        z-index: 2000;
-        overflow: hidden;
-    }
-
-    .dropdown-menu.show { display: block; }
-
-    .menu-header {
-        padding: 15px;
-        background: #0f172a;
-        border-bottom: 1px solid #334155;
-    }
-    
-    .menu-name { font-weight: bold; font-size: 14px; display: block; }
-    .menu-role { font-size: 11px; color: #94a3b8; }
-
-    .menu-item {
-        display: block;
-        padding: 12px 15px;
-        color: #cbd5e1;
-        text-decoration: none;
-        font-size: 14px;
-        border-bottom: 1px solid #334155;
-    }
-
-    .menu-item:last-child { border-bottom: none; }
-    .menu-item.danger { color: #f87171; }
   </style>
 </head>
 <body>
@@ -235,10 +142,11 @@
         </div>
     </div>
     
-    <div class="user-profile" onclick="toggleMenu()">
+    <div class="user-profile" onclick="toggleUserMenu(event)">
         <div class="user-avatar">
             <span id="avatar-initial">👤</span>
-            </div>
+        </div>
+        <div id="header-badge" class="badge-dot">0</div>
     </div>
   </header>
 
@@ -247,9 +155,13 @@
           <span class="menu-name" id="menu-user-name">Loading...</span>
           <span class="menu-role" id="menu-user-role">...</span>
       </div>
+      <a href="#" onclick="openInbox()" class="menu-item">
+          <span>📩 Team Inbox</span>
+          <span id="dropdown-badge" class="inbox-count">0</span>
+      </a>
       <a href="Admin.html" class="menu-item">⚙️ Admin Console</a>
       <a href="index.html" class="menu-item">💻 Desktop View</a>
-      <div class="menu-item danger" onclick="logout()">🚪 Log Out</div>
+      <div class="menu-item danger" onclick="handleLogout()">🚪 Log Out</div>
   </div>
 
   <div class="grid-container">
@@ -291,43 +203,6 @@
     </a>
 
   </div>
-
-  <script>
-    // --- UI LOGIC ---
-    
-    // 1. Populate Header
-    const userName = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "Boss";
-    const userRole = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Admin";
-    const userPic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic");
-
-    document.getElementById("menu-user-name").innerText = userName;
-    document.getElementById("menu-user-role").innerText = userRole;
-    document.getElementById("avatar-initial").innerText = userName.charAt(0).toUpperCase();
-
-    if (userPic) {
-        const avatarDiv = document.querySelector('.user-avatar');
-        avatarDiv.innerHTML = `<img src="${userPic}" onerror="this.style.display='none'">`;
-    }
-
-    // 2. Toggle Menu
-    function toggleMenu() {
-        document.getElementById("userMenu").classList.toggle("show");
-    }
-
-    // Close menu when clicking outside
-    window.onclick = function(event) {
-        if (!event.target.closest('.user-profile') && !event.target.closest('.dropdown-menu')) {
-            document.getElementById("userMenu").classList.remove("show");
-        }
-    }
-
-    // 3. Logout (Clears Local Storage too!)
-    function logout() {
-        sessionStorage.clear();
-        localStorage.removeItem("sbc_auth"); // Clears persistent login
-        window.location.replace("login.html");
-    }
-  </script>
 
 </body>
 </html>
