@@ -101,7 +101,6 @@ function setupUserProfile() {
             adminDiv.style.display = "none";
         }
     }
-}
 
     // F. Desktop Dropdown Injection
     const dropdown = document.getElementById("userDropdown");
