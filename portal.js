@@ -417,23 +417,34 @@ window.openComposeModal = async function(to="", subj="") {
     }
 }
 // 🔴 NEW DEDICATED FUNCTION: Specifically for the Hub Header
+// 🟢 DEDICATED HUB FUNCTION: Only handles the Hub UI
 function updateHubIdentity() {
-    // 1. Get the Role directly from Column F storage
-    const roleForHub = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
-    const nameForHub = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
+    // 1. Try to find the job title in any possible storage key
+    // This covers Column F regardless of what it's named in the browser
+    const hubRole = localStorage.getItem("user_role") || 
+                    localStorage.getItem("user_title") || 
+                    sessionStorage.getItem("user_role") || 
+                    sessionStorage.getItem("user_title") || 
+                    "Staff";
 
-    // 2. Target the Hub-Specific Element
-    const hubRoleElement = document.getElementById("menu-user-role");
-    const hubNameElement = document.getElementById("menu-user-name");
+    const hubName = localStorage.getItem("user_name") || 
+                    sessionStorage.getItem("user_name") || 
+                    "User";
 
-    // 3. Force the overwrite (Killing the hardcoded "ADMIN")
-    if (hubRoleElement) {
-        hubRoleElement.innerText = roleForHub;
-        hubRoleElement.style.visibility = "visible";
-        console.log("✅ Hub Role forced to:", roleForHub);
+    // 2. Target the specific Hub Header IDs
+    const roleEl = document.getElementById("menu-user-role");
+    const nameEl = document.getElementById("menu-user-name");
+
+    // 3. Force the overwrite of the hardcoded "ADMIN"
+    if (roleEl) {
+        roleEl.innerText = hubRole;
+        // Ensure it's not hidden by other scripts
+        roleEl.style.display = "block"; 
+        roleEl.style.visibility = "visible";
+        console.log("🛠️ Hub UI Fixed: Role set to", hubRole);
     }
 
-    if (hubNameElement) {
-        hubNameElement.innerText = nameForHub;
+    if (nameEl) {
+        nameEl.innerText = hubName;
     }
 }
