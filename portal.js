@@ -432,7 +432,7 @@ window.openComposeModal = async function(to="", subj="") {
                 body: JSON.stringify({
                     action: 'sendMessage', 
                     data: {
-                        sender: sessionStorage.getItem("user_name"), 
+                        sender: sessionStorage.getItem("user_name") || localStorage.getItem("user_name"),
                         recipient: f.to, 
                         subject: f.sub, 
                         body: f.body
