@@ -70,14 +70,19 @@ function setupUserProfile() {
     if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role;
     if(document.getElementById("avatar-initial")) document.getElementById("avatar-initial").innerText = name.charAt(0).toUpperCase();
 
-    // C. Universal Avatar Injection (For Hub)
-    const avatarElements = document.querySelectorAll(".user-avatar"); 
-    avatarElements.forEach(el => {
-        // Only inject if it's the div container style (Hub), not the img tag style (Desktop)
-        if (el.tagName === 'DIV' && pic && pic !== PORTAL_ROOT + "Logo.png") {
-             el.innerHTML = `<img src="${pic}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`;
+    // 🟢 C. THE LOGO FIX: Specific targeting for the Hub Image
+    const hubAvatarImg = document.getElementById("avatar-img");
+    if (hubAvatarImg) {
+        // If a custom user pic exists (is not the default Logo), use it.
+        // Otherwise, make sure it points to the local logo.png
+        if (pic && pic !== PORTAL_ROOT + "Logo.png" && pic !== "Logo.png") {
+            hubAvatarImg.src = pic;
+        } else {
+            hubAvatarImg.src = "logo.png"; 
         }
-    });
+        
+        hubAvatarImg.onerror = function() { this.src = "logo.png"; };
+    }
 
     // Admin Console Link Logic
     const adminDiv = document.getElementById("admin-nav-link");
