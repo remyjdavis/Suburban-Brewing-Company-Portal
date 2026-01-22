@@ -11,6 +11,7 @@
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
@@ -57,6 +58,8 @@
         border: 2px solid #475569; overflow: hidden;
     }
     .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    
+    /* Notification Badge */
     .badge-dot {
         position: absolute; top: -2px; right: -2px; background: #ef4444; color: white;
         font-size: 10px; font-weight: bold; height: 18px; min-width: 18px; border-radius: 9px;
@@ -117,18 +120,34 @@
         </div>
     </div>
     
-    <div class="user-profile" onclick="toggleUserMenu(event)" style="margin: 0;">
-            <div id="msg-badge" class="notification-badge">0</div>
-            <div class="user-info-text" style="text-align:right; margin-right:10px;">
-                <span class="user-name" id="display-username">Brewer</span>
-                <span class="user-role" id="display-role">Staff</span>
-            </div>
-            <img src="../logo.png" class="user-avatar" id="display-avatar">
-            <div id="userDropdown" class="user-dropdown-menu"></div>
+    <div class="user-profile" onclick="toggleUserMenu(event)">
+        <div class="user-avatar">
+            <span id="avatar-initial">👤</span>
         </div>
+        <div id="header-badge" class="badge-dot">0</div>
     </div>
   </header>
-  
+
+  <div id="userMenu" class="dropdown-menu">
+      <div class="menu-header">
+          <span class="menu-name" id="menu-user-name">Loading...</span>
+          <span class="menu-role" id="menu-user-role">...</span>
+      </div>
+      
+      <a href="#" onclick="editUserProfile()" class="menu-item">
+          <span>✏️ Edit Profile</span>
+      </a>
+
+      <a href="#" onclick="openInbox()" class="menu-item">
+          <span>📩 Team Inbox</span>
+          <span id="dropdown-badge" class="inbox-count">0</span>
+      </a>
+      
+      <a href="index.html" class="menu-item">💻 Desktop View</a>
+      
+      <div class="menu-item danger" onclick="handleLogout()">🚪 Log Out</div>
+  </div>
+
   <div class="grid-container">
     
     <a href="sales/deliveries.html" class="card full-width">
@@ -149,19 +168,22 @@
       <span class="card-desc">Leads & Notes</span>
     </a>
 
-    <a href="inventory/kegs.html" class="card">
+    <a href="inventory/brewery.html" class="card">
       <div class="icon-box inventory-icon">🛢️</div>
-      <span class="card-title">Keg Inventory</span>
+      <span class="card-title">Packaged Inventory</span>
       <span class="card-desc">Check stock</span>
     </a>
 
-    <a href="crm.html" class="card">
+    <a href="inventory/wholesaler-inventory.html" class="card">
       <div class="icon-box crm-icon">👥</div>
-      <span class="card-title">Clients</span>
-      <span class="card-desc">Customer DB</span>
+      <span class="card-title">Wholesale Inventory</span>
+    </a>
+    <a href="inventory/restaurant-inventory.html" class="card">
+      <div class="icon-box crm-icon">👥</div>
+      <span class="card-title">Restaurant Inventory</span>
     </a>
 
-    <a href="Admin.html" class="card full-width" style="border-style: dashed; background: rgba(30, 41, 59, 0.5);">
+    <a href="Admin.html" class="card">
       <div class="icon-box admin-icon">⚙️</div>
       <span class="card-title">Full Admin Console</span>
       <span class="card-desc">Manage Products, Users & Data</span>
