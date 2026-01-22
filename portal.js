@@ -416,43 +416,40 @@ window.openComposeModal = async function(to="", subj="") {
         } catch(e) { Swal.fire('Error', 'Message failed to send.', 'error'); }
     }
 }
-// 🟢 DIRECT BACKEND CONNECTION: Pings the Sheet every load to fix the header
-async function updateHubIdentity() {
-    try {
-        // 1. Get the current user's name to look them up
-        const userName = localStorage.getItem("user_name") || sessionStorage.getItem("user_name");
-        if (!userName) return;
+// 🟢 THE WATCHDOG: This sits in the background and kills "ADMIN" text the millisecond it appears
+function updateHubIdentity() {
+    // 1. Get the target role from storage (Column F)
+    const realRole = localStorage.getItem("user_role") || localStorage.getItem("user_title") || "Owner";
 
-        // 2. Ping the Backend directly for the Role (Column F)
-        // We use the 'getUsers' action to find the current user's actual role
-        const response = await fetch(`${MASTER_API_URL}?action=getUsers`);
-        const data = await response.json();
-        
-        if (data && data.users) {
-            const currentUser = data.users.find(u => u.name.toLowerCase() === userName.toLowerCase());
-            
-            if (currentUser && currentUser.role) {
-                const realRole = currentUser.role; // This is Column F from the Sheet
-
-                // 3. TARGET THE HEADER (Search and Destroy "ADMIN")
-                // This targets every potential element in the header area
-                const headerAreas = document.querySelectorAll('.user-info, .header, .user-profile');
-                
-                headerAreas.forEach(container => {
-                    const elements = container.querySelectorAll('span, small, p, #menu-user-role');
-                    elements.forEach(el => {
-                        // If it says "ADMIN" or has the specific ID, overwrite it
-                        if (el.innerText.trim() === "ADMIN" || el.id === "menu-user-role") {
-                            el.innerText = realRole;
-                            el.style.display = "block";
-                            el.style.visibility = "visible";
-                            console.log("🚀 BACKEND FIX: Forced role to", realRole);
-                        }
-                    });
-                });
+    // 2. The Search & Destroy Function
+    const killAdminText = () => {
+        const headerAreas = document.querySelectorAll('.user-info, .header, .user-profile, .right-nav');
+        headerAreas.forEach(container => {
+            // Find every single element inside the header area
+            const allElements = container.getElementsByTagName("*");
+            for (let el of allElements) {
+                if (el.children.length === 0 && el.innerText.trim() === "ADMIN") {
+                    el.innerText = realRole;
+                    el.style.display = "block";
+                    el.style.visibility = "visible";
+                }
             }
-        }
-    } catch (error) {
-        console.error("Backend Connection Failed", error);
-    }
+        });
+        
+        // Target specific ID just in case
+        const specificId = document.getElementById("menu-user-role");
+        if (specificId) specificId.innerText = realRole;
+    };
+
+    // 3. Run immediately on load
+    killAdminText();
+
+    // 4. 🚀 THE FIX: Monitor the header for changes
+    // This catches "ADMIN" even if another script tries to put it back later
+    const observer = new MutationObserver(() => {
+        killAdminText();
+    });
+
+    const headerNode = document.querySelector('.header') || document.body;
+    observer.observe(headerNode, { childList: true, subtree: true });
 }
