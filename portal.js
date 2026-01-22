@@ -3,10 +3,11 @@
     // 🟢 BOSS MODE: Auto-Login if key is present
     const params = new URLSearchParams(window.location.search);
     if (params.get("key") === "boss") {
-        localStorage.setItem("sbc_auth", "true");
-        localStorage.setItem("user_name", "Eric Yost");
-        localStorage.setItem("user_role", "Owner");
-        localStorage.setItem("sbc_driver_name", "Eric Yost");
+    localStorage.setItem("sbc_auth", "true");
+    localStorage.setItem("user_name", "Eric Yost");
+    localStorage.setItem("user_role", "Owner");
+    localStorage.setItem("user_title", "Owner"); // 🟢 Make sure this line exists!
+    localStorage.setItem("sbc_driver_name", "Eric Yost");
         // Clean URL
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
