@@ -416,33 +416,43 @@ window.openComposeModal = async function(to="", subj="") {
         } catch(e) { Swal.fire('Error', 'Message failed to send.', 'error'); }
     }
 }
-// 🔴 FINAL DEDICATED HUB FIX: Targets the header text directly
-function updateHubIdentity() {
-    // 1. Get the Role from any available storage key
-    const roleForHub = localStorage.getItem("user_role") || 
-                        localStorage.getItem("user_title") || 
-                        sessionStorage.getItem("user_role") || 
-                        "Staff";
+// 🟢 DIRECT BACKEND CONNECTION: Pings the Sheet every load to fix the header
+async function updateHubIdentity() {
+    try {
+        // 1. Get the current user's name to look them up
+        const userName = localStorage.getItem("user_name") || sessionStorage.getItem("user_name");
+        if (!userName) return;
 
-    // 2. TARGET THE HEADER SUBTEXT: 
-    // We search for the specific element ID you used in your HTML for that header role
-    const hubRoleEl = document.getElementById("menu-user-role");
+        // 2. Ping the Backend directly for the Role (Column F)
+        // We use the 'getUsers' action to find the current user's actual role
+        const response = await fetch(`${MASTER_API_URL}?action=getUsers`);
+        const data = await response.json();
+        
+        if (data && data.users) {
+            const currentUser = data.users.find(u => u.name.toLowerCase() === userName.toLowerCase());
+            
+            if (currentUser && currentUser.role) {
+                const realRole = currentUser.role; // This is Column F from the Sheet
 
-    // 3. FORCE THE OVERWRITE
-    if (hubRoleEl) {
-        hubRoleEl.innerText = roleForHub;
-        // Ensure it doesn't revert to "ADMIN" by locking the style
-        hubRoleEl.style.display = "block";
-        hubRoleEl.style.visibility = "visible";
-        hubRoleEl.style.textTransform = "uppercase"; // Matches your screenshot style
-    }
-
-    // 4. BRUTE FORCE BACKUP: 
-    // If the ID is missing, we look for the <span> containing "ADMIN" in the header
-    const spans = document.querySelectorAll('.user-profile span, .header span');
-    spans.forEach(span => {
-        if (span.innerText.trim() === "ADMIN") {
-            span.innerText = roleForHub;
+                // 3. TARGET THE HEADER (Search and Destroy "ADMIN")
+                // This targets every potential element in the header area
+                const headerAreas = document.querySelectorAll('.user-info, .header, .user-profile');
+                
+                headerAreas.forEach(container => {
+                    const elements = container.querySelectorAll('span, small, p, #menu-user-role');
+                    elements.forEach(el => {
+                        // If it says "ADMIN" or has the specific ID, overwrite it
+                        if (el.innerText.trim() === "ADMIN" || el.id === "menu-user-role") {
+                            el.innerText = realRole;
+                            el.style.display = "block";
+                            el.style.visibility = "visible";
+                            console.log("🚀 BACKEND FIX: Forced role to", realRole);
+                        }
+                    });
+                });
+            }
         }
-    });
+    } catch (error) {
+        console.error("Backend Connection Failed", error);
+    }
 }
