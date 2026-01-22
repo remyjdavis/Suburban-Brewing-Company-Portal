@@ -50,64 +50,55 @@ window.addEventListener('load', () => {
 
 // --- 4. USER PROFILE & UI ---
 function setupUserProfile() {
-    // 1. Get Data from Storage
+    // Check Local Storage first (for Boss), then Session
     const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
+    const title = localStorage.getItem("user_title") || sessionStorage.getItem("user_title") || "Staff";
     const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
-    
-    // 🟢 IDENTITY: This is Column F (e.g., "Owner", "Sales Rep")
-    const roleDisplay = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
-    
-    // 🟢 PERMISSION: This is Column G (e.g., "Admin", "Staff")
-    const accessLevel = localStorage.getItem("user_access") || sessionStorage.getItem("user_access") || "Staff";
+    const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
 
-    // --- 2. UNIVERSAL TEXT UPDATE (Fixes "ADMIN" everywhere) ---
-    const uiElements = {
-        "display-username": name,      // Desktop Name
-        "display-role": roleDisplay,    // Desktop Role
-        "menu-user-name": name,        // Mobile Hub Name
-        "menu-user-role": roleDisplay,  // Mobile Hub Role
-        "dropdown-user-name": name,    // Dropdown Name
-        "dropdown-user-role": roleDisplay // Dropdown Role
-    };
-
-    for (const [id, value] of Object.entries(uiElements)) {
-        const el = document.getElementById(id);
-        if (el) el.innerText = value;
+    // A. Desktop Header Elements
+    if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
+    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title;
+    if(document.getElementById("display-avatar")) {
+        const img = document.getElementById("display-avatar");
+        img.src = pic;
+        img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
 
-    // --- 3. AVATAR / IMAGE UPDATE ---
-    const avatars = ["avatar-img", "display-avatar"];
-    avatars.forEach(id => {
-        const img = document.getElementById(id);
-        if (img) {
-            img.src = (pic && pic !== "logo.png" && pic !== PORTAL_ROOT + "Logo.png") ? pic : "logo.png";
-            img.onerror = function() { this.src = "logo.png"; };
+    // B. Mobile Hub Elements
+    if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
+    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role;
+    if(document.getElementById("avatar-initial")) document.getElementById("avatar-initial").innerText = name.charAt(0).toUpperCase();
+
+    // C. Universal Avatar Injection (For Hub)
+    const avatarElements = document.querySelectorAll(".user-avatar"); 
+    avatarElements.forEach(el => {
+        // Only inject if it's the div container style (Hub), not the img tag style (Desktop)
+        if (el.tagName === 'DIV' && pic && pic !== PORTAL_ROOT + "Logo.png") {
+             el.innerHTML = `<img src="${pic}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`;
         }
     });
 
-    // --- 4. 🔴 THE GRID FIX: Admin Console Visibility ---
-    const adminNav = document.getElementById("admin-nav-link"); 
-    const hubAdminCard = document.querySelector('a[href="Admin.html"]');
-
-    // Handle Desktop Sidebar Link
-    if (adminNav) {
-        adminNav.style.display = (accessLevel === "Admin") ? "block" : "none";
-    }
-
-    // Handle Hub Grid Card (Prevents layout shifting)
-    if (hubAdminCard) {
-        const cardContainer = hubAdminCard.closest('.card') || hubAdminCard;
-        if (accessLevel === "Admin") {
-            cardContainer.style.display = "flex"; 
-            cardContainer.style.visibility = "visible";
+    // Admin Console Link Logic
+    const adminDiv = document.getElementById("admin-nav-link");
+    if (adminDiv) {
+        if (role === "Admin" || role === "Owner") {
+            adminDiv.style.display = "block";
+            const link = adminDiv.querySelector('a');
+            if (link) {
+                const isSubfolder = window.location.pathname.includes("/Brewing/") || 
+                                   window.location.pathname.includes("/sales/") || 
+                                   window.location.pathname.includes("/inventory/");
+                link.href = isSubfolder ? "../Admin.html" : "Admin.html";
+            }
         } else {
-            // Setting to none can break grid-template-columns if not careful
-            cardContainer.style.display = "none"; 
+            adminDiv.style.display = "none";
         }
     }
 
-    // --- 5. DESKTOP DROPDOWN INJECTION ---
+    // Dropdown Menu Injection (Desktop Only - Hub has its own HTML)
     const dropdown = document.getElementById("userDropdown");
+    // Only inject if empty (prevents overwriting Hub menu if identifiers clash)
     if (dropdown && dropdown.innerHTML.trim() === "") {
         dropdown.innerHTML = `
             <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
