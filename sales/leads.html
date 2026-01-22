@@ -142,13 +142,29 @@
         flex-grow: 1; 
         min-height: 100vh; 
         transition: all 0.3s ease; 
-        /* 🟢 FIX: Correct width calculation */
+        
+        /* 🟢 FIX: This subtracts sidebar width from total screen width */
         width: calc(100% - 260px);
+        
         display: flex;
         flex-direction: column; 
     }
     
-    .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
+    .header { 
+        background: white; 
+        padding: 15px 30px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        border-bottom: 1px solid #e5e7eb; 
+        position: sticky; 
+        top: 0; 
+        z-index: 10;
+        
+        /* 🟢 FIX: Force full width and handle padding correctly */
+        width: 100%;
+        box-sizing: border-box; 
+    }
     .container { padding: 30px; max-width: 800px; margin: 0 auto; width: 100%; }
 
     /* Form Card */
