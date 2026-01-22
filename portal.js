@@ -1,40 +1,18 @@
 // --- 1. THE GATEKEEPER (Security) ---
 (function() {
-    // 🟢 BOSS MODE: Auto-Login if key is present
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("key") === "boss") {
-        localStorage.setItem("sbc_auth", "true");
-        localStorage.setItem("user_name", "Eric Yost");
-        
-        // 🟢 IDENTITY: This is what displays under your name (Column F)
-        localStorage.setItem("user_role", "Owner");
-        
-        // 🟢 PERMISSION: This is what grants access to the Admin Console (Column G)
-        localStorage.setItem("user_access", "Admin"); 
-        
-        localStorage.setItem("user_title", "Owner"); 
-        localStorage.setItem("sbc_driver_name", "Eric Yost");
-        window.history.replaceState({}, document.title, "hub.html");
-    } 
-
-    const auth = localStorage.getItem("sbc_auth") === "true" || sessionStorage.getItem("sbc_auth") === "true";
+    const auth = sessionStorage.getItem("sbc_auth");
+    const role = sessionStorage.getItem("user_role");
+    // Get current path to avoid infinite loop on index.html
+    const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/");
     
-    // Check access level for logic, but keep role for display
-    const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
-    const access = localStorage.getItem("user_access") || sessionStorage.getItem("user_access");
-    
-    const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/") || window.location.pathname.includes("login.html");
-    
-    // Allow boss mode or auth session
-    if (!auth && !isLoginPage) {
+    if ((auth !== "true" || !role) && !isLoginPage) {
         console.warn("⛔ Unauthorized. Redirecting...");
-        const repoPath = "/Suburban-Brewing-Company-Portal/";
-        window.location.href = repoPath + "login.html";
+        window.location.href = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/index.html";
     }
 })();
 
 // --- CONFIGURATION ---
-const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec"; 
+const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec";
 const PORTAL_ROOT = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/";
 
 // --- 2. ONESIGNAL INIT (Notifications) ---
@@ -46,7 +24,9 @@ OneSignalDeferred.push(async function(OneSignal) {
         serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
         allowLocalhostAsSecureOrigin: true,
     });
-    const user = sessionStorage.getItem("user_name") || localStorage.getItem("user_name");
+    
+    // Auto-Login Sync
+    const user = sessionStorage.getItem("user_name");
     if(user) OneSignal.login(user.toLowerCase());
 });
 
@@ -54,58 +34,48 @@ OneSignalDeferred.push(async function(OneSignal) {
 window.addEventListener('load', () => {
     setupUserProfile();
     checkUnreadCount();
-    setInterval(checkUnreadCount, 60000); // Poll every minute
+    setInterval(checkUnreadCount, 60000); // Check for messages every minute
 });
 
+// --- 4. USER PROFILE & UI (Updated with Admin Link Logic) ---
 function setupUserProfile() {
-    // 1. Get Data from Storage
-    const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
-    const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
-    
-    // 🟢 IDENTITY: Shown under name (Column F)
-    const roleDisplay = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
-    
-    // 🟢 PERMISSION: Controls Admin Button visibility (Column G)
-    const accessLevel = localStorage.getItem("user_access") || sessionStorage.getItem("user_access") || "Staff";
+    const name = sessionStorage.getItem("user_name") || "User";
+    const title = sessionStorage.getItem("user_title") || "Staff";
+    const pic = sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
+    const role = sessionStorage.getItem("user_role"); // Admin, Owner, etc.
 
-    // 2. Universal Text Update (Fixes "ADMIN" on all pages)
-    const uiUpdates = {
-        "display-username": name,      // Desktop Name
-        "display-role": roleDisplay,    // Desktop Role (Column F)
-        "menu-user-name": name,        // Mobile Hub Name
-        "menu-user-role": roleDisplay,  // Mobile Hub Role (Column F)
-        "dropdown-user-name": name,    // Dropdown Name
-        "dropdown-user-role": roleDisplay // Dropdown Role (Column F)
-    };
-
-    for (const [id, value] of Object.entries(uiUpdates)) {
-        const el = document.getElementById(id);
-        if (el) el.innerText = value;
+    // Update Header Elements
+    if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
+    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title;
+    if(document.getElementById("display-avatar")) {
+        const img = document.getElementById("display-avatar");
+        img.src = pic;
+        img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
 
-    // 3. Avatar Injection
-    const avatarImg = document.getElementById("avatar-img") || document.getElementById("display-avatar");
-    if (avatarImg) {
-        avatarImg.src = (pic && pic !== PORTAL_ROOT + "Logo.png" && pic !== "logo.png") ? pic : "logo.png";
-        avatarImg.onerror = function() { this.src = "logo.png"; };
+    // 🟢 NEW: GLOBAL ADMIN CONSOLE TOGGLE
+    const adminDiv = document.getElementById("admin-nav-link");
+    if (adminDiv) {
+        if (role === "Admin" || role === "Owner") {
+            adminDiv.style.display = "block";
+            
+            // Fix path awareness (so links work from /Brewing/ subfolders)
+            const link = adminDiv.querySelector('a');
+            if (link) {
+                // If we are deep in a subfolder (like /Brewing/cellar.html), use ../
+                const isSubfolder = window.location.pathname.includes("/Brewing/") || 
+                                   window.location.pathname.includes("/sales/") || 
+                                   window.location.pathname.includes("/inventory/");
+                link.href = isSubfolder ? "../Admin.html" : "Admin.html";
+            }
+        } else {
+            adminDiv.style.display = "none";
+        }
     }
 
-    // 4. Access Control (Admin Console Visibility)
-    // Controlled by Column G, NOT Role text
-    const adminNav = document.getElementById("admin-nav-link"); 
-    const hubAdminCard = document.querySelector('a[href="Admin.html"]');
-
-    if (accessLevel === "Admin") {
-        if (adminNav) adminNav.style.display = "block";
-        if (hubAdminCard) hubAdminCard.style.display = "flex";
-    } else {
-        if (adminNav) adminNav.style.display = "none";
-        if (hubAdminCard) hubAdminCard.style.display = "none";
-    }
-
-    // 5. Desktop Dropdown Setup
+    // Inject Dropdown Menu Logic
     const dropdown = document.getElementById("userDropdown");
-    if (dropdown && !document.getElementById("userMenu")) {
+    if (dropdown) {
         dropdown.innerHTML = `
             <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <span>📩 Team Inbox</span>
@@ -118,201 +88,220 @@ function setupUserProfile() {
     }
 }
 
-// Universal Menu Toggle
-window.toggleUserMenu = function(e) {
+function toggleUserMenu(e) {
     if(e) e.stopPropagation();
-    const d = document.getElementById("userDropdown") || document.getElementById("userMenu");
+    const d = document.getElementById("userDropdown");
     if(d) d.classList.toggle("show");
 }
 
-// Close menu when clicking outside
+// Close dropdown when clicking outside
 window.onclick = function(event) {
-    if (!event.target.closest('.user-profile') && !event.target.closest('.dropdown-menu')) {
-        const d = document.getElementById("userDropdown") || document.getElementById("userMenu");
+    if (!event.target.closest('.user-profile')) {
+        const d = document.getElementById("userDropdown");
         if (d && d.classList.contains('show')) d.classList.remove('show');
     }
 }
 
-// --- 5. MESSAGING SYSTEM ---
-
-// A. Check for Unread Messages (Inbound Only)
+// --- 5. MESSAGING SYSTEM (The Inbox) ---
 async function checkUnreadCount() {
+    const user = sessionStorage.getItem("user_name");
+    if(!user) return;
     try {
-        const res = await fetch(`${MASTER_API_URL}?action=getInbox`);
-        const messages = await res.json();
-        
-        if (Array.isArray(messages)) {
-            const count = messages.filter(m => m.direction === 'Inbound' && m.status === 'Unread').length;
+        const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}`);
+        const json = await res.json();
+        if (json.status === 'success') {
+            const count = json.messages.filter(m => m.status === "Unread").length;
             updateBadgeUI(count);
         }
     } catch(e) { console.error("Badge Error", e); }
 }
 
 function updateBadgeUI(count) {
-    // Desktop Badges
-    const desktopOuter = document.getElementById('msg-badge');
-    const desktopInner = document.getElementById('dropdown-badge');
-    
-    // Mobile Hub Badges
-    const mobileHeader = document.getElementById('header-badge');
-
+    const outer = document.getElementById('msg-badge');
+    const inner = document.getElementById('dropdown-badge');
     if (count > 0) {
-        if(desktopOuter) { desktopOuter.innerText = count > 9 ? '9+' : count; desktopOuter.style.display = 'flex'; }
-        if(desktopInner) { desktopInner.innerText = count; desktopInner.style.display = 'inline-block'; }
-        if(mobileHeader) { mobileHeader.innerText = count > 9 ? '!' : count; mobileHeader.style.display = 'flex'; }
+        if(outer) { outer.innerText = count > 9 ? '9+' : count; outer.style.display = 'flex'; }
+        if(inner) { inner.innerText = count; inner.style.display = 'inline-block'; }
     } else {
-        if(desktopOuter) desktopOuter.style.display = 'none';
-        if(desktopInner) desktopInner.style.display = 'none';
-        if(mobileHeader) mobileHeader.style.display = 'none';
+        if(outer) outer.style.display = 'none';
+        if(inner) inner.style.display = 'none';
     }
 }
 
-// B. Open Team Inbox
-window.openInbox = async function() {
-    // Close menus first
-    const d = document.getElementById("userDropdown") || document.getElementById("userMenu");
-    if(d) d.classList.remove("show");
-
-    Swal.fire({ title: 'Loading Inbox...', didOpen: () => Swal.showLoading() });
-    
+async function openInbox() {
+    const user = sessionStorage.getItem("user_name");
+    Swal.fire({ title: 'Loading...', didOpen: () => Swal.showLoading() });
     try {
-        const res = await fetch(`${MASTER_API_URL}?action=getInbox`);
-        const messages = await res.json();
+        const res = await fetch(`${MASTER_API_URL}?action=getMessages&user=${encodeURIComponent(user)}`);
+        const json = await res.json();
+        let html = '<div style="text-align:center;color:#888;padding:20px;">No messages.</div>';
         
-        let html = '<div style="text-align:center;color:#888;padding:20px;">No messages found.</div>';
-        
-        if (Array.isArray(messages) && messages.length > 0) {
-            html = '<div style="max-height:400px; overflow-y:auto; border:1px solid #eee; border-radius:8px; text-align:left;">';
-            
-            messages.forEach(m => {
-                const isInbound = m.direction === 'Inbound';
+        if (json.status === 'success' && json.messages.length > 0) {
+            html = '<div style="max-height:400px;overflow-y:auto;border:1px solid #eee;border-radius:8px;">' + 
+            json.messages.map(m => {
                 const bg = m.status === "Unread" ? "#f0f9ff" : "#fff";
-                const border = isInbound ? "4px solid #2563eb" : "4px solid #94a3b8";
-                const icon = isInbound ? "📥" : "↩️";
-                const titleStyle = m.status === "Unread" ? "font-weight:bold; color:#1e293b;" : "color:#333;";
-                
-                html += `
-                <div style="background:${bg}; padding:12px; border-bottom:1px solid #eee; border-left:${border}; cursor:pointer;"
-                     onclick="readMessage('${m.id}', '${m.user}', '${m.email}', '${m.topic}', \`${m.text.replace(/`/g, "'")}\`)">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="font-size:11px; color:#64748b;">${icon} ${new Date(m.date).toLocaleDateString()}</span>
-                        <span style="font-size:10px; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${m.topic}</span>
+                const bold = m.status === "Unread" ? "font-weight:bold;" : "";
+                return `
+                <div style="background:${bg};padding:12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+                    <div onclick="readMessage('${m.id}','${m.from}','${m.subject}','${m.body}')" style="cursor:pointer;text-align:left;flex:1;">
+                        <div style="font-size:11px;color:#666;">${new Date(m.date).toLocaleDateString()} • ${m.from}</div>
+                        <div style="${bold}color:#333;">${m.subject}</div>
                     </div>
-                    <div style="${titleStyle} font-size:14px;">${m.user}</div>
-                    <div style="font-size:12px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                        ${m.text}
-                    </div>
+                    <button onclick="deleteMessage('${m.id}')" style="background:transparent;border:none;color:#f87171;cursor:pointer;padding:5px;">🗑️</button>
                 </div>`;
-            });
-            html += '</div>';
+            }).join('') + '</div>';
         }
-        
-        // 🟢 ADDED: THE MISSING "NEW MESSAGE" BUTTON
-        html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:10px; background-color:#10b981;">+ New Message</button>`;
-        
-        Swal.fire({ 
-            title: 'Team Inbox', 
-            width: '600px', 
-            html: html, 
-            showConfirmButton: false, 
-            showCloseButton: true 
-        });
-
-    } catch(e) { 
-        console.error(e);
-        Swal.fire('Error', 'Could not load inbox.', 'error'); 
-    }
+        Swal.fire({ title: 'Team Inbox', width: '500px', html: html + '<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%;margin-top:10px;">+ New Message</button>', showConfirmButton: false, showCloseButton: true });
+    } catch(e) { Swal.fire('Error', 'Inbox failed.', 'error'); }
 }
-window.readMessage = function(id, user, email, topic, text) {
-    Swal.fire({
-        title: `Message from ${user}`,
-        html: `
-            <div style="text-align:left; font-size:14px; line-height:1.5;">
-                <p><strong>Topic:</strong> ${topic}</p>
-                <p><strong>Email:</strong> ${email}</p>
-                <hr>
-                <div style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
-                    ${text}
-                </div>
-            </div>
-        `,
+async function deleteMessage(id) {
+    const result = await Swal.fire({
+        title: 'Delete Message?',
+        text: "This cannot be undone.",
+        icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: "✉️ Reply to Client",
-        cancelButtonText: "Close",
-        confirmButtonColor: "#2563eb"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            openReplyModal(id, user, email, topic);
-        } else {
-            openInbox(); 
-        }
-    });
-}
-
-async function openReplyModal(originalId, user, email, topic) {
-    const { value: replyText } = await Swal.fire({
-        title: `Reply to ${user}`,
-        input: 'textarea',
-        inputLabel: `Sending email to: ${email}`,
-        inputPlaceholder: 'Type your reply here...',
-        showCancelButton: true,
-        confirmButtonText: '🚀 Send Reply',
-        confirmButtonColor: '#10b981'
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Yes, delete it'
     });
 
-    if (replyText) {
-        Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
-        
+    if (result.isConfirmed) {
         try {
-            const payload = {
-                action: 'replyToMessage',
-                originalId: originalId,
-                customerName: user,
-                customerEmail: email,
-                topic: topic,
-                message: replyText
-            };
-
             await fetch(MASTER_API_URL, {
                 method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ action: 'deleteMessage', id: id })
             });
-
-            Swal.fire('Sent!', 'Reply has been emailed to the client.', 'success');
+            // Refresh the inbox view immediately
+            openInbox(); 
+            // Update the notification badge
+            checkUnreadCount(); 
         } catch (e) {
-            Swal.fire('Error', 'Failed to send reply.', 'error');
+            Swal.fire('Error', 'Could not delete message.', 'error');
+        }
+    }
+}
+function readMessage(id, from, subj, body) {
+    Swal.fire({
+        title: subj,
+        html: `<div style="text-align:left;color:#555;"><small>From: ${from}</small><hr>${body}</div>`,
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: "Reply",
+        denyButtonText: "Delete",
+        denyButtonColor: "#ef4444",
+        cancelButtonText: "Close"
+    }).then(r => {
+        // 1. Mark read in background regardless of button clicked
+        fetch(MASTER_API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'markRead', id: id }) 
+        }).then(checkUnreadCount);
+
+        // 2. Handle Actions
+        if (r.isConfirmed) {
+            // Reply Logic
+            openComposeModal(from, "Re: " + subj);
+        } else if (r.isDenied) {
+            // Delete Logic
+            deleteMessage(id); 
+        } else {
+            // Just closed the message
+            openInbox();
+        }
+    });
+}
+async function openComposeModal(to="", subj="") {
+    // 1. Try to get users, but prepare for failure
+    let users = [];
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getUsers`);
+        const json = await res.json();
+        users = json.users || [];
+    } catch(e) {
+        console.warn("User list failed to load. Switching to manual entry.");
+    }
+
+    // 2. Decide: Show Dropdown (if users found) OR Text Input (if offline/error)
+    let recipientField = '';
+    if (users.length > 0) {
+        const options = users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('');
+        recipientField = `<select id="swal-to" class="swal2-input">${options}</select>`;
+    } else {
+        recipientField = `<input id="swal-to" class="swal2-input" placeholder="To (Type Name)" value="${to}">`;
+    }
+
+    // 3. Show the Modal
+    const {value:f} = await Swal.fire({ 
+        title: 'New Message', 
+        html: `
+            ${recipientField}
+            <input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}">
+            <textarea id="swal-body" class="swal2-textarea" placeholder="Type your message..." style="height:150px;"></textarea>
+        `, 
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Send 🚀',
+        preConfirm: () => ({ 
+            to: document.getElementById('swal-to').value, 
+            sub: document.getElementById('swal-sub').value, 
+            body: document.getElementById('swal-body').value 
+        }) 
+    });
+    
+    // 4. Send Logic
+    if(f && f.to) {
+        Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
+        
+        try {
+            await fetch(MASTER_API_URL, { 
+                method:'POST', 
+                mode: 'no-cors', // 🔴 Added to bypass CORS on simple sends
+                body:JSON.stringify({
+                    action:'sendMessage', 
+                    data:{
+                        sender: sessionStorage.getItem("user_name") || "Unknown", 
+                        recipient: f.to, 
+                        subject: f.sub, 
+                        body: f.body
+                    }
+                }) 
+            });
+            
+            // Success Message
+            Swal.fire('Sent!', 'Message sent to ' + f.to, 'success');
+
+        } catch(e) {
+            Swal.fire('Error', 'Message failed to send.', 'error');
         }
     }
 }
 
-// --- 6. PROFILE EDIT LOGIC (Preserved from your request) ---
-window.updateUserInfo = async function() {
+ // --- PROFILE EDIT MODAL (CORRECTED INLINE PASSWORD) ---
+async function updateUserInfo() {
     const { value: formValues } = await Swal.fire({
         title: 'Profile Settings',
         background: '#1e293b',
         color: '#ffffff',
         html: `
             <div style="text-align: center; margin-bottom: 20px;">
-                <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || localStorage.getItem('user_pic') || PORTAL_ROOT + 'Logo.png'}" 
+                <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || PORTAL_ROOT + 'Logo.png'}" 
                      style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
                 <br>
                 <button type="button" onclick="document.getElementById('file-input').click()" 
                         style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px; cursor:pointer;">
                     Change Photo
                 </button>
-                <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="window.handleFileSelect(this)">
+                <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
             </div>
             
             <div style="text-align: left; display: flex; flex-direction: column; gap: 15px;">
                 <div style="display: flex; align-items: center;">
                     <label style="flex: 0 0 120px; font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email Address</label>
-                    <input id="p-email" class="swal2-input" style="margin: 0; flex: 1;" value="${sessionStorage.getItem('user_email') || localStorage.getItem('user_email') || ''}">
+                    <input id="p-email" class="swal2-input" style="margin: 0; flex: 1;" value="${sessionStorage.getItem('user_email') || ''}">
                 </div>
                 
                 <div style="display: flex; align-items: center;">
                     <label style="flex: 0 0 120px; font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone Number</label>
-                    <input id="p-phone" class="swal2-input" style="margin: 0; flex: 1;" value="${sessionStorage.getItem('user_phone') || localStorage.getItem('user_phone') || ''}">
+                    <input id="p-phone" class="swal2-input" style="margin: 0; flex: 1;" value="${sessionStorage.getItem('user_phone') || ''}">
                 </div>
 
                 <div style="display: flex; align-items: center;">
@@ -333,124 +322,46 @@ window.updateUserInfo = async function() {
 
     if (formValues) saveProfile(formValues);
 }
-
-window.handleFileSelect = function(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) { document.getElementById('preview-pic').src = e.target.result; };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-window.handleLogout = function() {
-    sessionStorage.clear();
-    localStorage.removeItem("sbc_auth"); // Clear persistent login
-    localStorage.removeItem("user_name");
-    localStorage.removeItem("user_role");
-    
-    const repoPath = "/Suburban-Brewing-Company-Portal/";
-    window.location.replace(repoPath + "login.html");
-}
-
-async function saveProfile(data) {
-    Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
-    
-    // Check both Session and Local storage for username ID
-    const username = sessionStorage.getItem("user_login_id") || localStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
-    
-    if (!username) {
-        Swal.fire('Session Error', 'Could not identify user. Please log out and log back in.', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${MASTER_API_URL}`, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'updateProfile', user: username, ...data })
-        });
-        const result = await response.json();
-        
-        if (result.status === "success") {
-            // Update both storages to keep them in sync
-            const storage = localStorage.getItem("sbc_auth") ? localStorage : sessionStorage;
-            
-            storage.setItem("user_pic", data.pic);
-            storage.setItem("user_email", data.email);
-            storage.setItem("user_phone", data.phone);
-            
-            setupUserProfile(); 
-            Swal.fire('Saved!', 'Profile updated.', 'success');
-        } else {
-            throw new Error(result.message || "Update failed");
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('preview-pic').src = e.target.result; };
+            reader.readAsDataURL(input.files[0]);
         }
-    } catch (e) {
-        Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
     }
-}
-
-// 🟢 MISSING FUNCTION: Handles the "New Message" popup
-window.openComposeModal = async function(to="", subj="") {
-    // 1. Try to fetch user list for the dropdown
-    let users = [];
-    try {
-        const res = await fetch(`${MASTER_API_URL}?action=getUsers`);
-        const json = await res.json();
-        users = json.users || [];
-    } catch(e) {
-        console.warn("Could not load user list. Defaulting to text input.");
-    }
-
-    // 2. Build the Recipient Field
-    // If users loaded: Show Dropdown. If failed (CORS error): Show Text Box.
-    let recipientHTML = '';
-    if (users.length > 0) {
-        const options = users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('');
-        recipientHTML = `<select id="swal-to" class="swal2-input">${options}</select>`;
-    } else {
-        recipientHTML = `<input id="swal-to" class="swal2-input" placeholder="To: (Type Name)" value="${to}">`;
-    }
-
-    // 3. Show the Popup
-    const {value:f} = await Swal.fire({ 
-        title: 'New Message', 
-        html: `
-            ${recipientHTML}
-            <input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}">
-            <textarea id="swal-body" class="swal2-textarea" placeholder="Message..." style="height:150px;"></textarea>
-        `, 
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'Send 🚀',
-        preConfirm: () => ({ 
-            to: document.getElementById('swal-to').value, 
-            sub: document.getElementById('swal-sub').value, 
-            body: document.getElementById('swal-body').value 
-        }) 
-    });
-    
-    // 4. Send the Message
-    if(f && f.to) {
-        Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
+ function handleLogout() {
+        sessionStorage.removeItem("sbc_auth");
+        const repoPath = "/Suburban-Brewing-Company-Portal/";
+        window.location.replace(repoPath + "login.html");
+      }
+    async function saveProfile(data) {
+        Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
         
+        const username = sessionStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
+        
+        if (!username) {
+            Swal.fire('Session Error', 'Could not identify user. Please log out and log back in.', 'error');
+            return;
+        }
+
         try {
-            await fetch(MASTER_API_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', // 🔴 Critical: Prevents "Fetch API cannot load" errors
-                body: JSON.stringify({
-                    action: 'sendMessage', 
-                    data: {
-                        sender: sessionStorage.getItem("user_name") || localStorage.getItem("user_name"),
-                        recipient: f.to, 
-                        subject: f.sub, 
-                        body: f.body
-                    }
-                }) 
+            const response = await fetch(`${MASTER_API_URL}`, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'updateProfile', user: username, ...data })
             });
+            const result = await response.json();
             
-            Swal.fire('Sent!', 'Message sent successfully.', 'success');
-        } catch(e) {
-            console.error(e);
-            Swal.fire('Error', 'Message failed to send.', 'error');
+            if (result.status === "success") {
+                sessionStorage.setItem("user_pic", data.pic);
+                sessionStorage.setItem("user_email", data.email);
+                sessionStorage.setItem("user_phone", data.phone);
+                
+                setupUserProfile(); 
+                Swal.fire('Saved!', 'Profile updated.', 'success');
+            } else {
+                throw new Error(result.message || "Update failed");
+            }
+        } catch (e) {
+            Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
         }
     }
-}
