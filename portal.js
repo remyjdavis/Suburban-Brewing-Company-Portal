@@ -416,3 +416,24 @@ window.openComposeModal = async function(to="", subj="") {
         } catch(e) { Swal.fire('Error', 'Message failed to send.', 'error'); }
     }
 }
+// 🔴 NEW DEDICATED FUNCTION: Specifically for the Hub Header
+function updateHubIdentity() {
+    // 1. Get the Role directly from Column F storage
+    const roleForHub = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
+    const nameForHub = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
+
+    // 2. Target the Hub-Specific Element
+    const hubRoleElement = document.getElementById("menu-user-role");
+    const hubNameElement = document.getElementById("menu-user-name");
+
+    // 3. Force the overwrite (Killing the hardcoded "ADMIN")
+    if (hubRoleElement) {
+        hubRoleElement.innerText = roleForHub;
+        hubRoleElement.style.visibility = "visible";
+        console.log("✅ Hub Role forced to:", roleForHub);
+    }
+
+    if (hubNameElement) {
+        hubNameElement.innerText = nameForHub;
+    }
+}
