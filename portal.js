@@ -416,35 +416,33 @@ window.openComposeModal = async function(to="", subj="") {
         } catch(e) { Swal.fire('Error', 'Message failed to send.', 'error'); }
     }
 }
-// 🔴 NEW DEDICATED FUNCTION: Specifically for the Hub Header
-// 🟢 DEDICATED HUB FUNCTION: Only handles the Hub UI
+// 🔴 FINAL DEDICATED HUB FIX: Targets the header text directly
 function updateHubIdentity() {
-    // 1. Try to find the job title in any possible storage key
-    // This covers Column F regardless of what it's named in the browser
-    const hubRole = localStorage.getItem("user_role") || 
-                    localStorage.getItem("user_title") || 
-                    sessionStorage.getItem("user_role") || 
-                    sessionStorage.getItem("user_title") || 
-                    "Staff";
+    // 1. Get the Role from any available storage key
+    const roleForHub = localStorage.getItem("user_role") || 
+                        localStorage.getItem("user_title") || 
+                        sessionStorage.getItem("user_role") || 
+                        "Staff";
 
-    const hubName = localStorage.getItem("user_name") || 
-                    sessionStorage.getItem("user_name") || 
-                    "User";
+    // 2. TARGET THE HEADER SUBTEXT: 
+    // We search for the specific element ID you used in your HTML for that header role
+    const hubRoleEl = document.getElementById("menu-user-role");
 
-    // 2. Target the specific Hub Header IDs
-    const roleEl = document.getElementById("menu-user-role");
-    const nameEl = document.getElementById("menu-user-name");
-
-    // 3. Force the overwrite of the hardcoded "ADMIN"
-    if (roleEl) {
-        roleEl.innerText = hubRole;
-        // Ensure it's not hidden by other scripts
-        roleEl.style.display = "block"; 
-        roleEl.style.visibility = "visible";
-        console.log("🛠️ Hub UI Fixed: Role set to", hubRole);
+    // 3. FORCE THE OVERWRITE
+    if (hubRoleEl) {
+        hubRoleEl.innerText = roleForHub;
+        // Ensure it doesn't revert to "ADMIN" by locking the style
+        hubRoleEl.style.display = "block";
+        hubRoleEl.style.visibility = "visible";
+        hubRoleEl.style.textTransform = "uppercase"; // Matches your screenshot style
     }
 
-    if (nameEl) {
-        nameEl.innerText = hubName;
-    }
+    // 4. BRUTE FORCE BACKUP: 
+    // If the ID is missing, we look for the <span> containing "ADMIN" in the header
+    const spans = document.querySelectorAll('.user-profile span, .header span');
+    spans.forEach(span => {
+        if (span.innerText.trim() === "ADMIN") {
+            span.innerText = roleForHub;
+        }
+    });
 }
