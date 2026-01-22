@@ -162,6 +162,7 @@ function updateBadgeUI(count) {
 }
 
 // B. Open Team Inbox
+// B. Open Team Inbox
 window.openInbox = async function() {
     // Close menus first
     const d = document.getElementById("userDropdown") || document.getElementById("userMenu");
@@ -185,17 +186,14 @@ window.openInbox = async function() {
                 const icon = isInbound ? "📥" : "↩️";
                 const titleStyle = m.status === "Unread" ? "font-weight:bold; color:#1e293b;" : "color:#333;";
                 
-                const safeUser = m.user || "Unknown";
-                const safeTopic = m.topic || "General";
-                
                 html += `
                 <div style="background:${bg}; padding:12px; border-bottom:1px solid #eee; border-left:${border}; cursor:pointer;"
-                     onclick="readMessage('${m.id}', '${safeUser}', '${m.email}', '${safeTopic}', \`${m.text.replace(/`/g, "'")}\`)">
+                     onclick="readMessage('${m.id}', '${m.user}', '${m.email}', '${m.topic}', \`${m.text.replace(/`/g, "'")}\`)">
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="font-size:11px; color:#64748b;">${icon} ${new Date(m.date).toLocaleDateString()}</span>
-                        <span style="font-size:10px; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${safeTopic}</span>
+                        <span style="font-size:10px; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${m.topic}</span>
                     </div>
-                    <div style="${titleStyle} font-size:14px;">${safeUser}</div>
+                    <div style="${titleStyle} font-size:14px;">${m.user}</div>
                     <div style="font-size:12px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         ${m.text}
                     </div>
@@ -203,6 +201,9 @@ window.openInbox = async function() {
             });
             html += '</div>';
         }
+        
+        // 🟢 THIS WAS MISSING: THE BUTTON TO TRIGGER THE COMPOSE FUNCTION
+        html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:10px; background-color:#10b981;">+ New Message</button>`;
         
         Swal.fire({ 
             title: 'Team Inbox', 
@@ -217,7 +218,6 @@ window.openInbox = async function() {
         Swal.fire('Error', 'Could not load inbox.', 'error'); 
     }
 }
-
 window.readMessage = function(id, user, email, topic, text) {
     Swal.fire({
         title: `Message from ${user}`,
