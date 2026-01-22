@@ -179,7 +179,7 @@ window.openInbox = async function() {
         const res = await fetch(`${MASTER_API_URL}?action=getInbox`);
         const messages = await res.json();
         
-        let html = '<div style="text-align:center;color:#888;padding:20px;">No messages found.</div>';
+        let html = '';
         
         if (Array.isArray(messages) && messages.length > 0) {
             html = '<div style="max-height:400px; overflow-y:auto; border:1px solid #eee; border-radius:8px; text-align:left;">';
@@ -208,9 +208,11 @@ window.openInbox = async function() {
                 </div>`;
             });
             html += '</div>';
+        } else {
+            html = '<div style="text-align:center;color:#888;padding:20px;">No messages found.</div>';
         }
         
-        // 🟢 RESTORED COMPOSE BUTTON
+        // 🟢 BUTTON MOVED HERE (Outside the empty check)
         html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:10px; background-color:#10b981;">+ New Message</button>`;
         
         Swal.fire({ 
