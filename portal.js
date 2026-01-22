@@ -162,7 +162,6 @@ function updateBadgeUI(count) {
 }
 
 // B. Open Team Inbox
-// B. Open Team Inbox
 window.openInbox = async function() {
     // Close menus first
     const d = document.getElementById("userDropdown") || document.getElementById("userMenu");
@@ -202,7 +201,7 @@ window.openInbox = async function() {
             html += '</div>';
         }
         
-        // 🟢 THIS WAS MISSING: THE BUTTON TO TRIGGER THE COMPOSE FUNCTION
+        // 🟢 ADDED: THE MISSING "NEW MESSAGE" BUTTON
         html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:10px; background-color:#10b981;">+ New Message</button>`;
         
         Swal.fire({ 
