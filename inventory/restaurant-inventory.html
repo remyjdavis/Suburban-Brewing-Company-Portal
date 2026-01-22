@@ -138,34 +138,40 @@
     }
     .logout-link span.icon { margin-right: 12px; font-size: 16px; }
 
-    /* --- MAIN CONTENT --- */
+    /* --- MAIN CONTENT (FIXED PADDING) --- */
     .main { 
         flex: 1; 
         margin-left: 260px; 
-        /* Match Index Padding Logic */
-        padding: 40px 40px 0 40px; 
+        
+        /* 🟢 FIX: Remove padding here so Header hits the top */
+        padding: 0; 
+        
         display: flex; 
         flex-direction: column; 
         transition: all 0.3s ease; 
-        width: 100%; 
+        width: calc(100% - 260px); 
         min-height: 100vh;
     }
 
-    /* 🟢 SLIM HEADER (MATCHES PACKAGED INVENTORY) */
+    /* 🟢 HEADER (Added Side Padding) */
     .topbar { 
         background: #fff; 
         border-bottom: 1px solid #e5e7eb; 
-        padding: 16px 24px; 
+        padding: 16px 40px; /* Aligns with content below */
         display: flex; 
         justify-content: space-between; 
-        align-items: center; /* Centers vertically */
+        align-items: center; 
         position: sticky; 
         top: 0; 
         z-index: 900; 
-        height: 70px; /* Fixed height for consistency */
+        height: 70px;
     }
     
-    .content { padding: 24px; flex: 1; }
+    /* 🟢 CONTENT (Restored Spacing) */
+    .content { 
+        padding: 40px; /* Keeps grid away from edges */
+        flex: 1; 
+    }
     
     #restaurantContainer { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
     .account-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.2s; }
