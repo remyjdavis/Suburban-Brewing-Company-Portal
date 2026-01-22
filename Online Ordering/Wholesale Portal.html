@@ -887,6 +887,54 @@ body,
         color: #000;
     }
 }
+        /* --- MESSAGING STYLES --- */
+    .header-icon-btn {
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+        transition: 0.2s;
+        vertical-align: middle;
+    }
+    .header-icon-btn:hover {
+        background: #e2e8f0;
+        transform: scale(1.05);
+    }
+
+    .msg-textarea {
+        width: 100%;
+        background: #0f172a;
+        border: 2px solid #334155;
+        border-radius: 8px;
+        color: white;
+        padding: 12px;
+        font-size: 16px;
+        min-height: 120px;
+        margin: 15px 0;
+        resize: none;
+    }
+    .msg-textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+    
+    .msg-select {
+        width: 100%;
+        background: #0f172a;
+        color: white;
+        border: 2px solid #334155;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
     </style>
 </head>
 <body>
@@ -956,6 +1004,29 @@ body,
     
 <div id="installBanner" class="install-banner">
     </div>
+    <div id="messageModal" class="order-modal">
+    <div class="order-modal-content">
+        <div class="modal-header">
+            <h3>Contact The Team</h3>
+            <button class="close-modal" onclick="closeMessageModal()">&times;</button>
+        </div>
+        
+        <p style="font-size:0.9rem; color:#cbd5e1; margin-bottom:15px;">
+            Send a note to your Sales Rep and the Delivery Team.
+        </p>
+
+        <select id="msgType" class="msg-select">
+            <option value="General">General Inquiry</option>
+            <option value="Order Issue">Order Issue</option>
+            <option value="Urgent">Urgent / Delivery</option>
+            <option value="Request">Product Request</option>
+        </select>
+
+        <textarea id="msgBody" class="msg-textarea" placeholder="Type your message here..."></textarea>
+
+        <button class="btn-add-order" onclick="submitMessage()">🚀 Send Message</button>
+    </div>
+</div>
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbz2YK1MnItnIMJpNHNRCFXoo4hxRJPaF9NmO6ginxaJjfkm7FnbV-gO82_uL8X73AaR/exec?secret=SBC_SECURE_2026"; 
     const BASE_IMG_URL = "https://raw.githubusercontent.com/remyjdavis/Suburban-Brewing-Company-Portal/main/Online%20Ordering/";
@@ -1088,14 +1159,18 @@ async function init() {
 
     // 1. Header & Tab Visibility Logic
     if (state.step >= 2 && state.customer) {
+        // 🔴 UPDATED: Added message button next to user badge
         headerUser.innerHTML = `
-            <div class="user-badge" onclick="changeAccessKey()" style="cursor: pointer;">
-                👤 ${state.customer.name}
-            </div>`; 
-        tabNav.style.display = "flex"; // Show Tabs
+            <div class="header-actions">
+                <button class="header-icon-btn" onclick="openMessageModal()" title="Message Team">💬</button>
+                <div class="user-badge" onclick="changeAccessKey()" style="cursor: pointer;">
+                    👤 ${state.customer.name}
+                </div>
+            </div>`;
+        tabNav.style.display = "flex"; 
     } else {
         headerUser.innerHTML = "";
-        tabNav.style.display = "none"; // Hide Tabs
+        tabNav.style.display = "none";
     }
 
         // STEP 0: LEGAL AGREEMENT
@@ -2331,6 +2406,62 @@ function showPublicBeerPage(beerKey) {
 
     setTimeout(function() { window.scrollTo(0, 1); }, 100);
 }
+// --- MESSAGING LOGIC ---
+    function openMessageModal() {
+        document.getElementById('messageModal').style.display = "flex";
+        // Clear previous input
+        document.getElementById('msgBody').value = ""; 
+    }
+
+    function closeMessageModal() {
+        document.getElementById('messageModal').style.display = "none";
+    }
+
+    async function submitMessage() {
+        const type = document.getElementById('msgType').value;
+        const body = document.getElementById('msgBody').value.trim();
+        const btn = document.querySelector('#messageModal .btn-add-order');
+
+        if (!body) return Swal.fire("Empty Message", "Please type something first.", "warning");
+
+        // UI Loading state
+        const originalText = btn.innerText;
+        btn.innerText = "Sending...";
+        btn.disabled = true;
+
+        try {
+            const payload = {
+                action: 'sendClientMessage', // 🔴 Make sure your Google Script handles this action!
+                customer: state.customer,
+                type: type,
+                message: body,
+                secret: 'SBC_SECURE_2026'
+            };
+
+            // Send to Google Script
+            await fetch(API_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify(payload)
+            });
+
+            // Success feedback
+            closeMessageModal();
+            Swal.fire({
+                title: "Message Sent!",
+                text: "The team has been notified.",
+                icon: "success",
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+        } catch (e) {
+            Swal.fire("Error", "Could not send message. Check connection.", "error");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
 </script>
 
 <div id="scanner-container">
