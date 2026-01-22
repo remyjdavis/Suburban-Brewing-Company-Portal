@@ -54,37 +54,28 @@ function setupUserProfile() {
     const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
     const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
     
-    // 🟢 THE FIX: We pull FROM user_role but ensure user_title is also updated so other pages don't break
+    // 🟢 IDENTITY: This is Column F (e.g., "Owner", "Sales Rep")
     const roleDisplay = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
+    
+    // 🟢 PERMISSION: This is Column G (e.g., "Admin", "Staff")
     const accessLevel = localStorage.getItem("user_access") || sessionStorage.getItem("user_access") || "Staff";
 
-    // --- A. Desktop Header Elements ---
-    if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
-    
-    // This targets the job title on other dashboard pages
-    if(document.getElementById("display-role")) {
-        document.getElementById("display-role").innerText = roleDisplay;
-    }
-    
-    if(document.getElementById("display-avatar")) {
-        const img = document.getElementById("display-avatar");
-        img.src = pic;
-        img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
+    // --- 2. UNIVERSAL TEXT UPDATE (Fixes "ADMIN" everywhere) ---
+    const uiElements = {
+        "display-username": name,      // Desktop Name
+        "display-role": roleDisplay,    // Desktop Role
+        "menu-user-name": name,        // Mobile Hub Name
+        "menu-user-role": roleDisplay,  // Mobile Hub Role
+        "dropdown-user-name": name,    // Dropdown Name
+        "dropdown-user-role": roleDisplay // Dropdown Role
+    };
+
+    for (const [id, value] of Object.entries(uiElements)) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = value;
     }
 
-    // --- B. Mobile Hub Elements ---
-    if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
-    
-    // This targets the Hub header where you were seeing "ADMIN"
-    if(document.getElementById("menu-user-role")) {
-        document.getElementById("menu-user-role").innerText = roleDisplay;
-    }
-    
-    if(document.getElementById("avatar-initial")) {
-        document.getElementById("avatar-initial").innerText = name.charAt(0).toUpperCase();
-    }
-
-    // --- C. Universal Avatar Injection ---
+    // --- 3. AVATAR / IMAGE UPDATE ---
     const avatars = ["avatar-img", "display-avatar"];
     avatars.forEach(id => {
         const img = document.getElementById(id);
@@ -94,27 +85,28 @@ function setupUserProfile() {
         }
     });
 
-    // --- D. Admin Console Link Logic (Column G) ---
-    const adminNav = document.getElementById("admin-nav-link");
+    // --- 4. 🔴 THE GRID FIX: Admin Console Visibility ---
+    const adminNav = document.getElementById("admin-nav-link"); 
     const hubAdminCard = document.querySelector('a[href="Admin.html"]');
 
-    if (accessLevel === "Admin") {
-        if (adminNav) adminNav.style.display = "block";
-        if (hubAdminCard) {
-            hubAdminCard.style.display = "flex";
-            hubAdminCard.parentElement.style.display = "flex";
-        }
-    } else {
-        if (adminNav) adminNav.style.display = "none";
-        if (hubAdminCard) {
-            hubAdminCard.style.display = "none";
-            if (hubAdminCard.parentElement && hubAdminCard.parentElement.classList.contains('card')) {
-                hubAdminCard.parentElement.style.display = "none";
-            }
+    // Handle Desktop Sidebar Link
+    if (adminNav) {
+        adminNav.style.display = (accessLevel === "Admin") ? "block" : "none";
+    }
+
+    // Handle Hub Grid Card (Prevents layout shifting)
+    if (hubAdminCard) {
+        const cardContainer = hubAdminCard.closest('.card') || hubAdminCard;
+        if (accessLevel === "Admin") {
+            cardContainer.style.display = "flex"; 
+            cardContainer.style.visibility = "visible";
+        } else {
+            // Setting to none can break grid-template-columns if not careful
+            cardContainer.style.display = "none"; 
         }
     }
 
-    // --- E. Dropdown Menu Injection ---
+    // --- 5. DESKTOP DROPDOWN INJECTION ---
     const dropdown = document.getElementById("userDropdown");
     if (dropdown && dropdown.innerHTML.trim() === "") {
         dropdown.innerHTML = `
