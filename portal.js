@@ -1,30 +1,17 @@
 // --- 1. THE GATEKEEPER (Security) ---
 (function() {
-    // 🟢 BOSS MODE: Auto-Login if key is present
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("key") === "boss") {
-        localStorage.setItem("sbc_auth", "true");
-        localStorage.setItem("user_name", "Eric Yost");
-        localStorage.setItem("user_role", "Owner");
-        localStorage.setItem("sbc_driver_name", "Eric Yost");
-        // Clean URL
-        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
-    }
-
-    const auth = localStorage.getItem("sbc_auth") === "true" || sessionStorage.getItem("sbc_auth") === "true";
-    const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
-    const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/") || window.location.pathname.includes("login.html");
+    const auth = sessionStorage.getItem("sbc_auth");
+    const role = sessionStorage.getItem("user_role");
+    const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/");
     
-    // Allow boss mode or auth session
-    if (!auth && !isLoginPage) {
+    if ((auth !== "true" || !role) && !isLoginPage) {
         console.warn("⛔ Unauthorized. Redirecting...");
-        const repoPath = "/Suburban-Brewing-Company-Portal/";
-        window.location.href = repoPath + "login.html";
+        window.location.href = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/index.html";
     }
 })();
 
 // --- CONFIGURATION ---
+// 🔴 ENSURE THIS IS YOUR MASTER SCRIPT URL
 const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-cF_m0NrdJe53WqQEqRDPa4Fa0nQz9-tu7kII6XmU29N3fe5T6UDF/exec"; 
 const PORTAL_ROOT = "https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/";
 
@@ -37,7 +24,7 @@ OneSignalDeferred.push(async function(OneSignal) {
         serviceWorkerParam: { scope: "/Suburban-Brewing-Company-Portal/" },
         allowLocalhostAsSecureOrigin: true,
     });
-    const user = sessionStorage.getItem("user_name") || localStorage.getItem("user_name");
+    const user = sessionStorage.getItem("user_name");
     if(user) OneSignal.login(user.toLowerCase());
 });
 
@@ -50,13 +37,12 @@ window.addEventListener('load', () => {
 
 // --- 4. USER PROFILE & UI ---
 function setupUserProfile() {
-    // Check Local Storage first (for Boss), then Session
-    const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
-    const title = localStorage.getItem("user_title") || sessionStorage.getItem("user_title") || "Staff";
-    const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
-    const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
+    const name = sessionStorage.getItem("user_name") || "User";
+    const title = sessionStorage.getItem("user_title") || "Staff";
+    const pic = sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
+    const role = sessionStorage.getItem("user_role");
 
-    // A. Desktop Header Elements
+    // Header Elements
     if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
     if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title;
     if(document.getElementById("display-avatar")) {
@@ -64,20 +50,6 @@ function setupUserProfile() {
         img.src = pic;
         img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
-
-    // B. Mobile Hub Elements
-    if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
-    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role;
-    if(document.getElementById("avatar-initial")) document.getElementById("avatar-initial").innerText = name.charAt(0).toUpperCase();
-
-    // C. Universal Avatar Injection (For Hub)
-    const avatarElements = document.querySelectorAll(".user-avatar"); 
-    avatarElements.forEach(el => {
-        // Only inject if it's the div container style (Hub), not the img tag style (Desktop)
-        if (el.tagName === 'DIV' && pic && pic !== PORTAL_ROOT + "Logo.png") {
-             el.innerHTML = `<img src="${pic}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`;
-        }
-    });
 
     // Admin Console Link Logic
     const adminDiv = document.getElementById("admin-nav-link");
@@ -96,10 +68,9 @@ function setupUserProfile() {
         }
     }
 
-    // Dropdown Menu Injection (Desktop Only - Hub has its own HTML)
+    // Dropdown Menu
     const dropdown = document.getElementById("userDropdown");
-    // Only inject if empty (prevents overwriting Hub menu if identifiers clash)
-    if (dropdown && dropdown.innerHTML.trim() === "") {
+    if (dropdown) {
         dropdown.innerHTML = `
             <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <span>📩 Team Inbox</span>
@@ -112,22 +83,20 @@ function setupUserProfile() {
     }
 }
 
-// Universal Menu Toggle
-window.toggleUserMenu = function(e) {
+function toggleUserMenu(e) {
     if(e) e.stopPropagation();
-    const d = document.getElementById("userDropdown") || document.getElementById("userMenu");
+    const d = document.getElementById("userDropdown");
     if(d) d.classList.toggle("show");
 }
 
-// Close menu when clicking outside
 window.onclick = function(event) {
-    if (!event.target.closest('.user-profile') && !event.target.closest('.dropdown-menu')) {
-        const d = document.getElementById("userDropdown") || document.getElementById("userMenu");
+    if (!event.target.closest('.user-profile')) {
+        const d = document.getElementById("userDropdown");
         if (d && d.classList.contains('show')) d.classList.remove('show');
     }
 }
 
-// --- 5. MESSAGING SYSTEM ---
+// --- 5. MESSAGING SYSTEM (Updated for Master Backend) ---
 
 // A. Check for Unread Messages (Inbound Only)
 async function checkUnreadCount() {
@@ -136,6 +105,7 @@ async function checkUnreadCount() {
         const messages = await res.json();
         
         if (Array.isArray(messages)) {
+            // Count only 'Inbound' messages that are 'Unread'
             const count = messages.filter(m => m.direction === 'Inbound' && m.status === 'Unread').length;
             updateBadgeUI(count);
         }
@@ -143,30 +113,19 @@ async function checkUnreadCount() {
 }
 
 function updateBadgeUI(count) {
-    // Desktop Badges
-    const desktopOuter = document.getElementById('msg-badge');
-    const desktopInner = document.getElementById('dropdown-badge');
-    
-    // Mobile Hub Badges
-    const mobileHeader = document.getElementById('header-badge');
-
+    const outer = document.getElementById('msg-badge');
+    const inner = document.getElementById('dropdown-badge');
     if (count > 0) {
-        if(desktopOuter) { desktopOuter.innerText = count > 9 ? '9+' : count; desktopOuter.style.display = 'flex'; }
-        if(desktopInner) { desktopInner.innerText = count; desktopInner.style.display = 'inline-block'; }
-        if(mobileHeader) { mobileHeader.innerText = count > 9 ? '!' : count; mobileHeader.style.display = 'flex'; }
+        if(outer) { outer.innerText = count > 9 ? '9+' : count; outer.style.display = 'flex'; }
+        if(inner) { inner.innerText = count; inner.style.display = 'inline-block'; }
     } else {
-        if(desktopOuter) desktopOuter.style.display = 'none';
-        if(desktopInner) desktopInner.style.display = 'none';
-        if(mobileHeader) mobileHeader.style.display = 'none';
+        if(outer) outer.style.display = 'none';
+        if(inner) inner.style.display = 'none';
     }
 }
 
-// B. Open Team Inbox
-window.openInbox = async function() {
-    // Close menus first
-    const d = document.getElementById("userDropdown") || document.getElementById("userMenu");
-    if(d) d.classList.remove("show");
-
+// B. Open Team Inbox (SweetAlert Modal)
+async function openInbox() {
     Swal.fire({ title: 'Loading Inbox...', didOpen: () => Swal.showLoading() });
     
     try {
@@ -179,12 +138,14 @@ window.openInbox = async function() {
             html = '<div style="max-height:400px; overflow-y:auto; border:1px solid #eee; border-radius:8px; text-align:left;">';
             
             messages.forEach(m => {
+                // Formatting
                 const isInbound = m.direction === 'Inbound';
                 const bg = m.status === "Unread" ? "#f0f9ff" : "#fff";
                 const border = isInbound ? "4px solid #2563eb" : "4px solid #94a3b8";
                 const icon = isInbound ? "📥" : "↩️";
                 const titleStyle = m.status === "Unread" ? "font-weight:bold; color:#1e293b;" : "color:#333;";
                 
+                // Safe handling of data
                 const safeUser = m.user || "Unknown";
                 const safeTopic = m.topic || "General";
                 
@@ -218,7 +179,8 @@ window.openInbox = async function() {
     }
 }
 
-window.readMessage = function(id, user, email, topic, text) {
+// C. Read & Reply to Message
+function readMessage(id, user, email, topic, text) {
     Swal.fire({
         title: `Message from ${user}`,
         html: `
@@ -236,20 +198,25 @@ window.readMessage = function(id, user, email, topic, text) {
         cancelButtonText: "Close",
         confirmButtonColor: "#2563eb"
     }).then((result) => {
+        // Mark as read immediately when opened
+        // (Optional: You can add an API action for 'markRead' later)
+        
         if (result.isConfirmed) {
             openReplyModal(id, user, email, topic);
         } else {
-            openInbox(); 
+            openInbox(); // Re-open list when closed
         }
     });
 }
 
+// D. Compose Reply
 async function openReplyModal(originalId, user, email, topic) {
     const { value: replyText } = await Swal.fire({
         title: `Reply to ${user}`,
         input: 'textarea',
         inputLabel: `Sending email to: ${email}`,
         inputPlaceholder: 'Type your reply here...',
+        inputAttributes: { 'aria-label': 'Type your reply here' },
         showCancelButton: true,
         confirmButtonText: '🚀 Send Reply',
         confirmButtonColor: '#10b981'
@@ -281,33 +248,33 @@ async function openReplyModal(originalId, user, email, topic) {
     }
 }
 
-// --- 6. PROFILE EDIT LOGIC (Preserved from your request) ---
-window.updateUserInfo = async function() {
+// --- 6. PROFILE EDIT LOGIC (Unchanged) ---
+async function updateUserInfo() {
     const { value: formValues } = await Swal.fire({
         title: 'Profile Settings',
         background: '#1e293b',
         color: '#ffffff',
         html: `
             <div style="text-align: center; margin-bottom: 20px;">
-                <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || localStorage.getItem('user_pic') || PORTAL_ROOT + 'Logo.png'}" 
+                <img id="preview-pic" src="${sessionStorage.getItem('user_pic') || PORTAL_ROOT + 'Logo.png'}" 
                      style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">
                 <br>
                 <button type="button" onclick="document.getElementById('file-input').click()" 
                         style="margin-top: 10px; font-size: 11px; padding: 5px 10px; background: #334155; color: white; border: none; border-radius: 4px; cursor:pointer;">
                     Change Photo
                 </button>
-                <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="window.handleFileSelect(this)">
+                <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="handleFileSelect(this)">
             </div>
             
             <div style="text-align: left; display: flex; flex-direction: column; gap: 15px;">
                 <div style="display: flex; align-items: center;">
                     <label style="flex: 0 0 120px; font-size: 11px; color: #94a3b8; text-transform: uppercase;">Email Address</label>
-                    <input id="p-email" class="swal2-input" style="margin: 0; flex: 1;" value="${sessionStorage.getItem('user_email') || localStorage.getItem('user_email') || ''}">
+                    <input id="p-email" class="swal2-input" style="margin: 0; flex: 1;" value="${sessionStorage.getItem('user_email') || ''}">
                 </div>
                 
                 <div style="display: flex; align-items: center;">
                     <label style="flex: 0 0 120px; font-size: 11px; color: #94a3b8; text-transform: uppercase;">Phone Number</label>
-                    <input id="p-phone" class="swal2-input" style="margin: 0; flex: 1;" value="${sessionStorage.getItem('user_phone') || localStorage.getItem('user_phone') || ''}">
+                    <input id="p-phone" class="swal2-input" style="margin: 0; flex: 1;" value="${sessionStorage.getItem('user_phone') || ''}">
                 </div>
 
                 <div style="display: flex; align-items: center;">
@@ -329,7 +296,7 @@ window.updateUserInfo = async function() {
     if (formValues) saveProfile(formValues);
 }
 
-window.handleFileSelect = function(input) {
+function handleFileSelect(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) { document.getElementById('preview-pic').src = e.target.result; };
@@ -337,12 +304,8 @@ window.handleFileSelect = function(input) {
     }
 }
 
-window.handleLogout = function() {
-    sessionStorage.clear();
-    localStorage.removeItem("sbc_auth"); // Clear persistent login
-    localStorage.removeItem("user_name");
-    localStorage.removeItem("user_role");
-    
+function handleLogout() {
+    sessionStorage.removeItem("sbc_auth");
     const repoPath = "/Suburban-Brewing-Company-Portal/";
     window.location.replace(repoPath + "login.html");
 }
@@ -350,8 +313,7 @@ window.handleLogout = function() {
 async function saveProfile(data) {
     Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
     
-    // Check both Session and Local storage for username ID
-    const username = sessionStorage.getItem("user_login_id") || localStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
+    const username = sessionStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
     
     if (!username) {
         Swal.fire('Session Error', 'Could not identify user. Please log out and log back in.', 'error');
@@ -366,12 +328,9 @@ async function saveProfile(data) {
         const result = await response.json();
         
         if (result.status === "success") {
-            // Update both storages to keep them in sync
-            const storage = localStorage.getItem("sbc_auth") ? localStorage : sessionStorage;
-            
-            storage.setItem("user_pic", data.pic);
-            storage.setItem("user_email", data.email);
-            storage.setItem("user_phone", data.phone);
+            sessionStorage.setItem("user_pic", data.pic);
+            sessionStorage.setItem("user_email", data.email);
+            sessionStorage.setItem("user_phone", data.phone);
             
             setupUserProfile(); 
             Swal.fire('Saved!', 'Profile updated.', 'success');
