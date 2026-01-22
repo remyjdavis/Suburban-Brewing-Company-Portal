@@ -210,30 +210,71 @@ function readMessage(id, from, subj, body) {
     });
 }
 async function openComposeModal(to="", subj="") {
-    // We need users list first
+    // 1. Try to get users, but prepare for failure
     let users = [];
     try {
         const res = await fetch(`${MASTER_API_URL}?action=getUsers`);
         const json = await res.json();
         users = json.users || [];
-    } catch(e){}
+    } catch(e) {
+        console.warn("User list failed to load. Switching to manual entry.");
+    }
 
-    const options = users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('');
-    const {value:f} = await Swal.fire({ title:'Compose', html:`<select id="swal-to" class="swal2-input">${options}</select><input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}"><textarea id="swal-body" class="swal2-textarea" placeholder="Message"></textarea>`, preConfirm: () => ({ to:document.getElementById('swal-to').value, sub:document.getElementById('swal-sub').value, body:document.getElementById('swal-body').value }) });
+    // 2. Decide: Show Dropdown (if users found) OR Text Input (if offline/error)
+    let recipientField = '';
+    if (users.length > 0) {
+        const options = users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('');
+        recipientField = `<select id="swal-to" class="swal2-input">${options}</select>`;
+    } else {
+        recipientField = `<input id="swal-to" class="swal2-input" placeholder="To (Type Name)" value="${to}">`;
+    }
+
+    // 3. Show the Modal
+    const {value:f} = await Swal.fire({ 
+        title: 'New Message', 
+        html: `
+            ${recipientField}
+            <input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}">
+            <textarea id="swal-body" class="swal2-textarea" placeholder="Type your message..." style="height:150px;"></textarea>
+        `, 
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Send 🚀',
+        preConfirm: () => ({ 
+            to: document.getElementById('swal-to').value, 
+            sub: document.getElementById('swal-sub').value, 
+            body: document.getElementById('swal-body').value 
+        }) 
+    });
     
-    if(f) {
+    // 4. Send Logic
+    if(f && f.to) {
         Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
-        await fetch(MASTER_API_URL, { method:'POST', body:JSON.stringify({action:'sendMessage', data:{sender:sessionStorage.getItem("user_name"), recipient:f.to, subject:f.sub, body:f.body}}) });
         
-        // Local Notification Trigger
-        if(Notification.permission === 'granted' && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.ready.then(reg => reg.showNotification("Message Sent", {body:`To: ${f.to}`, icon: PORTAL_ROOT+'logo.png'}));
+        try {
+            await fetch(MASTER_API_URL, { 
+                method:'POST', 
+                mode: 'no-cors', // 🔴 Added to bypass CORS on simple sends
+                body:JSON.stringify({
+                    action:'sendMessage', 
+                    data:{
+                        sender: sessionStorage.getItem("user_name") || "Unknown", 
+                        recipient: f.to, 
+                        subject: f.sub, 
+                        body: f.body
+                    }
+                }) 
+            });
+            
+            // Success Message
+            Swal.fire('Sent!', 'Message sent to ' + f.to, 'success');
+
+        } catch(e) {
+            Swal.fire('Error', 'Message failed to send.', 'error');
         }
-        Swal.fire('Sent!', '', 'success');
     }
 }
 
-// --- PROFILE EDIT MODAL ---
  // --- PROFILE EDIT MODAL (CORRECTED INLINE PASSWORD) ---
 async function updateUserInfo() {
     const { value: formValues } = await Swal.fire({
