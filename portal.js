@@ -6,12 +6,13 @@
     localStorage.setItem("sbc_auth", "true");
     localStorage.setItem("user_name", "Eric Yost");
     localStorage.setItem("user_role", "Owner");
-    localStorage.setItem("user_title", "Owner"); // 🟢 Make sure this line exists!
+    
+    // 🟢 SET THIS TO EXACTLY WHAT YOU WANT TO SEE (e.g., "Owner", "Head Brewer")
+    localStorage.setItem("user_title", "Owner"); 
+    
     localStorage.setItem("sbc_driver_name", "Eric Yost");
-        // Clean URL
-        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
-    }
+    window.history.replaceState({}, document.title, "hub.html");
+}
 
     const auth = localStorage.getItem("sbc_auth") === "true" || sessionStorage.getItem("sbc_auth") === "true";
     const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
@@ -54,11 +55,11 @@ function setupUserProfile() {
     const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
     const title = localStorage.getItem("user_title") || sessionStorage.getItem("user_title") || "Staff";
     const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
-    const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
+    const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
 
     // A. Desktop Header Elements
     if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
-    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title; // 🟢 Set to Title
+    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = role; // 🟢 FIXED: Now shows Role
     if(document.getElementById("display-avatar")) {
         const img = document.getElementById("display-avatar");
         img.src = pic;
@@ -67,11 +68,11 @@ function setupUserProfile() {
 
     // B. Mobile Hub Elements (Header)
     if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
-    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = title; // 🟢 Set to Title
+    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role; // 🟢 FIXED: Now shows Role
     
     // C. Dropdown Menu Elements (Specific to Hub HTML)
     if(document.getElementById("dropdown-user-name")) document.getElementById("dropdown-user-name").innerText = name;
-    if(document.getElementById("dropdown-user-role")) document.getElementById("dropdown-user-role").innerText = title; // 🟢 Set to Title
+    if(document.getElementById("dropdown-user-role")) document.getElementById("dropdown-user-role").innerText = role; // 🟢 FIXED: Now shows Role
 
     // D. Hub Logo/Avatar Image Fix
     const hubAvatarImg = document.getElementById("avatar-img");
@@ -101,6 +102,7 @@ function setupUserProfile() {
             adminDiv.style.display = "none";
         }
     }
+}
 
     // F. Desktop Dropdown Injection
     const dropdown = document.getElementById("userDropdown");
