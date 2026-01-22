@@ -3,13 +3,10 @@
     // 🟢 BOSS MODE: Auto-Login if key is present
     const params = new URLSearchParams(window.location.search);
     if (params.get("key") === "boss") {
-    localStorage.setItem("sbc_auth", "true");
-    localStorage.setItem("user_name", "Eric Yost");
-    localStorage.setItem("user_role", "Owner");  // 🟢 Column F
-    localStorage.setItem("user_title", "Owner"); // 🟢 Force Title to match Role
-    localStorage.setItem("user_access", "Admin"); // 🟢 Column G (Permissions Only)
-    localStorage.setItem("sbc_driver_name", "Eric Yost");
-}
+        localStorage.setItem("sbc_auth", "true");
+        localStorage.setItem("user_name", "Eric Yost");
+        localStorage.setItem("user_role", "Owner");
+        localStorage.setItem("sbc_driver_name", "Eric Yost");
         // Clean URL
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
@@ -46,11 +43,11 @@ OneSignalDeferred.push(async function(OneSignal) {
 
 // --- 3. GLOBAL INITIALIZATION ---
 window.addEventListener('load', () => {
-    setupUserProfile(); // Handles Desktop
-    updateHubIdentity(); // 🟢 Handles Hub specifically
+    setupUserProfile();
     checkUnreadCount();
-    setInterval(checkUnreadCount, 60000); 
+    setInterval(checkUnreadCount, 60000); // Poll every minute
 });
+
 // --- 4. USER PROFILE & UI ---
 function setupUserProfile() {
     // Check Local Storage first (for Boss), then Session
@@ -419,28 +416,24 @@ window.openComposeModal = async function(to="", subj="") {
         } catch(e) { Swal.fire('Error', 'Message failed to send.', 'error'); }
     }
 }
-// 🟢 THE WATCHDOG: This sits in the background and kills "ADMIN" text the millisecond it appears
+// 🔴 NEW DEDICATED FUNCTION: Specifically for the Hub Header
 function updateHubIdentity() {
-    const realRole = localStorage.getItem("user_role") || "Staff";
+    // 1. Get the Role directly from Column F storage
+    const roleForHub = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
+    const nameForHub = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
 
-    const killAdminText = () => {
-        // Search all header-related containers shown in your screenshots
-        const headerAreas = document.querySelectorAll('.user-info, .header, .user-profile, .right-nav');
-        headerAreas.forEach(container => {
-            const allElements = container.getElementsByTagName("*");
-            for (let el of allElements) {
-                // 🟢 The Fix: Replace the text "ADMIN" with your actual Role
-                if (el.children.length === 0 && el.innerText.trim().toUpperCase() === "ADMIN") {
-                    el.innerText = realRole;
-                }
-            }
-        });
-        if (document.getElementById("menu-user-role")) {
-            document.getElementById("menu-user-role").innerText = realRole;
-        }
-    };
+    // 2. Target the Hub-Specific Element
+    const hubRoleElement = document.getElementById("menu-user-role");
+    const hubNameElement = document.getElementById("menu-user-name");
 
-    killAdminText();
-    // Watch for template changes that might try to put "ADMIN" back
-    new MutationObserver(killAdminText).observe(document.body, { childList: true, subtree: true });
+    // 3. Force the overwrite (Killing the hardcoded "ADMIN")
+    if (hubRoleElement) {
+        hubRoleElement.innerText = roleForHub;
+        hubRoleElement.style.visibility = "visible";
+        console.log("✅ Hub Role forced to:", roleForHub);
+    }
+
+    if (hubNameElement) {
+        hubNameElement.innerText = nameForHub;
+    }
 }
