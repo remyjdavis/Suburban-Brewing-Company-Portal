@@ -48,9 +48,8 @@ window.addEventListener('load', () => {
     setInterval(checkUnreadCount, 60000); // Poll every minute
 });
 
-// --- 4. USER PROFILE & UI ---
 function setupUserProfile() {
-    // Check Local Storage first (for Boss), then Session
+    // 1. Get Data (Prioritizing Local/Boss Mode, then Session)
     const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
     const title = localStorage.getItem("user_title") || sessionStorage.getItem("user_title") || "Staff";
     const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
@@ -58,33 +57,34 @@ function setupUserProfile() {
 
     // A. Desktop Header Elements
     if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
-    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title;
+    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title; // 🟢 Set to Title
     if(document.getElementById("display-avatar")) {
         const img = document.getElementById("display-avatar");
         img.src = pic;
         img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
 
-    // B. Mobile Hub Elements
+    // B. Mobile Hub Elements (Header)
     if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
-    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role;
-    if(document.getElementById("avatar-initial")) document.getElementById("avatar-initial").innerText = name.charAt(0).toUpperCase();
+    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = title; // 🟢 Set to Title
+    
+    // C. Dropdown Menu Elements (Specific to Hub HTML)
+    if(document.getElementById("dropdown-user-name")) document.getElementById("dropdown-user-name").innerText = name;
+    if(document.getElementById("dropdown-user-role")) document.getElementById("dropdown-user-role").innerText = title; // 🟢 Set to Title
 
-    // 🟢 C. THE LOGO FIX: Specific targeting for the Hub Image
+    // D. Hub Logo/Avatar Image Fix
     const hubAvatarImg = document.getElementById("avatar-img");
     if (hubAvatarImg) {
-        // If a custom user pic exists (is not the default Logo), use it.
-        // Otherwise, make sure it points to the local logo.png
+        // Use custom pic if it's not the default logo path
         if (pic && pic !== PORTAL_ROOT + "Logo.png" && pic !== "Logo.png") {
             hubAvatarImg.src = pic;
         } else {
             hubAvatarImg.src = "logo.png"; 
         }
-        
         hubAvatarImg.onerror = function() { this.src = "logo.png"; };
     }
 
-    // Admin Console Link Logic
+    // E. Admin Console Link Logic (Keep this using 'role' for permissions)
     const adminDiv = document.getElementById("admin-nav-link");
     if (adminDiv) {
         if (role === "Admin" || role === "Owner") {
@@ -101,10 +101,9 @@ function setupUserProfile() {
         }
     }
 
-    // Dropdown Menu Injection (Desktop Only - Hub has its own HTML)
+    // F. Desktop Dropdown Injection
     const dropdown = document.getElementById("userDropdown");
-    // Only inject if empty (prevents overwriting Hub menu if identifiers clash)
-    if (dropdown && dropdown.innerHTML.trim() === "") {
+    if (dropdown && !document.getElementById("userMenu")) {
         dropdown.innerHTML = `
             <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <span>📩 Team Inbox</span>
