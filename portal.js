@@ -173,11 +173,11 @@ window.openInbox = async function() {
         const res = await fetch(`${MASTER_API_URL}?action=getInbox`);
         const messages = await res.json();
         
-        let html = '<div style="text-align:center;color:#888;padding:20px;">No messages found.</div>';
+        // 1. Start the HTML with the messages container (if any)
+        let html = '';
         
         if (Array.isArray(messages) && messages.length > 0) {
             html = '<div style="max-height:400px; overflow-y:auto; border:1px solid #eee; border-radius:8px; text-align:left;">';
-            
             messages.forEach(m => {
                 const isInbound = m.direction === 'Inbound';
                 const bg = m.status === "Unread" ? "#f0f9ff" : "#fff";
@@ -185,24 +185,27 @@ window.openInbox = async function() {
                 const icon = isInbound ? "📥" : "↩️";
                 const titleStyle = m.status === "Unread" ? "font-weight:bold; color:#1e293b;" : "color:#333;";
                 
-                const safeUser = m.user || "Unknown";
-                const safeTopic = m.topic || "General";
-                
                 html += `
                 <div style="background:${bg}; padding:12px; border-bottom:1px solid #eee; border-left:${border}; cursor:pointer;"
-                     onclick="readMessage('${m.id}', '${safeUser}', '${m.email}', '${safeTopic}', \`${m.text.replace(/`/g, "'")}\`)">
+                     onclick="readMessage('${m.id}', '${m.user}', '${m.email}', '${m.topic}', \`${m.text.replace(/`/g, "'")}\`)">
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="font-size:11px; color:#64748b;">${icon} ${new Date(m.date).toLocaleDateString()}</span>
-                        <span style="font-size:10px; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${safeTopic}</span>
+                        <span style="font-size:10px; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${m.topic}</span>
                     </div>
-                    <div style="${titleStyle} font-size:14px;">${safeUser}</div>
+                    <div style="${titleStyle} font-size:14px;">${m.user}</div>
                     <div style="font-size:12px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         ${m.text}
                     </div>
                 </div>`;
             });
             html += '</div>';
+        } else {
+            // Placeholder if no messages exist
+            html = '<div style="text-align:center;color:#888;padding:20px;">No messages found.</div>';
         }
+        
+        // 2. 🟢 THE FIX: Always append the Compose Button at the bottom, outside the message check
+        html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:10px; background-color:#10b981;">+ New Message</button>`;
         
         Swal.fire({ 
             title: 'Team Inbox', 
@@ -380,5 +383,36 @@ async function saveProfile(data) {
         }
     } catch (e) {
         Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
+    }
+}
+// 🟢 ADDED: Function to create a new message anytime
+window.openComposeModal = async function(to="", subj="") {
+    let users = [];
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getUsers`);
+        const json = await res.json();
+        users = json.users || [];
+    } catch(e) { console.warn("User list failed."); }
+
+    let recipientHTML = users.length > 0 
+        ? `<select id="swal-to" class="swal2-input">${users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('')}</select>`
+        : `<input id="swal-to" class="swal2-input" placeholder="To: (Type Name)" value="${to}">`;
+
+    const {value:f} = await Swal.fire({ 
+        title: 'New Message', 
+        html: `${recipientHTML}<input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}"><textarea id="swal-body" class="swal2-textarea" placeholder="Message..." style="height:150px;"></textarea>`, 
+        focusConfirm: false, showCancelButton: true, confirmButtonText: 'Send 🚀',
+        preConfirm: () => ({ to: document.getElementById('swal-to').value, sub: document.getElementById('swal-sub').value, body: document.getElementById('swal-body').value }) 
+    });
+    
+    if(f && f.to) {
+        Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
+        try {
+            await fetch(MASTER_API_URL, { 
+                method: 'POST', mode: 'no-cors', 
+                body: JSON.stringify({ action: 'sendMessage', data: { sender: localStorage.getItem("user_name"), recipient: f.to, subject: f.sub, body: f.body } }) 
+            });
+            Swal.fire('Sent!', 'Message sent successfully.', 'success');
+        } catch(e) { Swal.fire('Error', 'Message failed to send.', 'error'); }
     }
 }
