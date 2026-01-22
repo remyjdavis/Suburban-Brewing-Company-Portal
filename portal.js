@@ -50,66 +50,85 @@ window.addEventListener('load', () => {
 
 // --- 4. USER PROFILE & UI ---
 function setupUserProfile() {
-    // Check Local Storage first (for Boss), then Session
-    const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
-    const title = localStorage.getItem("user_title") || sessionStorage.getItem("user_title") || "Staff";
-    const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
-    const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
+    // Load values (Local Storage first, then Session)
+    const name = (localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User").trim();
+    const title = (localStorage.getItem("user_title") || sessionStorage.getItem("user_title") || "Staff").trim();
+    const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || (PORTAL_ROOT + "logo.png");
+    let role = (localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || title);
+    role = role ? role.trim() : title;
+text
 
-    // A. Desktop Header Elements
-    if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
-    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title;
-    if(document.getElementById("display-avatar")) {
-        const img = document.getElementById("display-avatar");
-        img.src = pic;
-        img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
-    }
+Collapse
 
-    // B. Mobile Hub Elements
-    if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
-    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role;
-    if(document.getElementById("avatar-initial")) document.getElementById("avatar-initial").innerText = name.charAt(0).toUpperCase();
+ Copy
+// Choose visible label everywhere (use friendly title)
+const visibleRole = title;
 
-    // C. Universal Avatar Injection (For Hub)
-    const avatarElements = document.querySelectorAll(".user-avatar"); 
-    avatarElements.forEach(el => {
-        // Only inject if it's the div container style (Hub), not the img tag style (Desktop)
-        if (el.tagName === 'DIV' && pic && pic !== PORTAL_ROOT + "Logo.png") {
-             el.innerHTML = `<img src="${pic}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`;
+// A. Desktop Header Elements
+const displayUsername = document.getElementById("display-username");
+if (displayUsername) displayUsername.innerText = name;
+
+const displayRole = document.getElementById("display-role");
+if (displayRole) displayRole.innerText = visibleRole;
+
+const displayAvatar = document.getElementById("display-avatar");
+if (displayAvatar) {
+    displayAvatar.src = pic;
+    displayAvatar.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
+}
+
+// B. Mobile Hub Elements
+const menuUserName = document.getElementById("menu-user-name");
+if (menuUserName) menuUserName.innerText = name;
+
+const menuUserRole = document.getElementById("menu-user-role");
+if (menuUserRole) menuUserRole.innerText = visibleRole;
+
+const avatarInitial = document.getElementById("avatar-initial");
+if (avatarInitial) avatarInitial.innerText = name ? name.charAt(0).toUpperCase() : "U";
+
+// C. Universal Avatar Injection (For Hub)
+const avatarElements = document.querySelectorAll(".user-avatar");
+avatarElements.forEach(el => {
+    // Only inject if it's the div container style (Hub), not the img tag style (Desktop)
+    if (el.tagName === 'DIV') {
+        // If pic is default logo, don't inject image into hub div (keep initials)
+        if (pic && pic !== (PORTAL_ROOT + "logo.png")) {
+            el.innerHTML = `<img src="${pic}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`;
         }
-    });
+    }
+});
 
-    // Admin Console Link Logic
-    const adminDiv = document.getElementById("admin-nav-link");
-    if (adminDiv) {
-        if (role === "Admin" || role === "Owner") {
-            adminDiv.style.display = "block";
-            const link = adminDiv.querySelector('a');
-            if (link) {
-                const isSubfolder = window.location.pathname.includes("/Brewing/") || 
-                                   window.location.pathname.includes("/sales/") || 
-                                   window.location.pathname.includes("/inventory/");
-                link.href = isSubfolder ? "../Admin.html" : "Admin.html";
-            }
-        } else {
-            adminDiv.style.display = "none";
+// Admin Console Link Logic (case-insensitive)
+const adminDiv = document.getElementById("admin-nav-link");
+if (adminDiv) {
+    const roleLower = (role || "").toLowerCase();
+    if (roleLower === "admin" || roleLower === "owner") {
+        adminDiv.style.display = "block";
+        const link = adminDiv.querySelector('a');
+        if (link) {
+            const path = window.location.pathname.toLowerCase();
+            const isSubfolder = path.includes("/brewing/") || path.includes("/sales/") || path.includes("/inventory/");
+            link.href = isSubfolder ? "../Admin.html" : "Admin.html";
         }
+    } else {
+        adminDiv.style.display = "none";
     }
+}
 
-    // Dropdown Menu Injection (Desktop Only - Hub has its own HTML)
-    const dropdown = document.getElementById("userDropdown");
-    // Only inject if empty (prevents overwriting Hub menu if identifiers clash)
-    if (dropdown && dropdown.innerHTML.trim() === "") {
-        dropdown.innerHTML = `
-            <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <span>📩 Team Inbox</span>
-                <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px;">0</span>
-            </a>
-            <a href="#" onclick="updateUserInfo(); toggleUserMenu(event);">⚙️ Update Info</a>
-            <hr style="margin:5px 0; border:0; border-top:1px solid #eee;">
-            <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
-        `;
-    }
+// Dropdown Menu Injection (Desktop Only - Hub has its own HTML)
+const dropdown = document.getElementById("userDropdown");
+if (dropdown && dropdown.innerHTML.trim() === "") {
+    dropdown.innerHTML = `
+        <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <span>📩 Team Inbox</span>
+            <span id="dropdown-badge" style="display: none; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px;">0</span>
+        </a>
+        <a href="#" onclick="updateUserInfo(); toggleUserMenu(event);">⚙️ Update Info</a>
+        <hr style="margin:5px 0; border:0; border-top:1px solid #eee;">
+        <a href="#" onclick="handleLogout()" style="color: #ef4444;">🚪 Logout</a>
+    `;
+}
 }
 
 // Universal Menu Toggle
