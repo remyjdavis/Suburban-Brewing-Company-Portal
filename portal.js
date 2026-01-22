@@ -3,10 +3,13 @@
     // 🟢 BOSS MODE: Auto-Login if key is present
     const params = new URLSearchParams(window.location.search);
     if (params.get("key") === "boss") {
-        localStorage.setItem("sbc_auth", "true");
-        localStorage.setItem("user_name", "Eric Yost");
-        localStorage.setItem("user_role", "Owner");
-        localStorage.setItem("sbc_driver_name", "Eric Yost");
+    localStorage.setItem("sbc_auth", "true");
+    localStorage.setItem("user_name", "Eric Yost");
+    localStorage.setItem("user_role", "Owner");  // 🟢 Column F
+    localStorage.setItem("user_title", "Owner"); // 🟢 Force Title to match Role
+    localStorage.setItem("user_access", "Admin"); // 🟢 Column G (Permissions Only)
+    localStorage.setItem("sbc_driver_name", "Eric Yost");
+}
         // Clean URL
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
@@ -418,38 +421,26 @@ window.openComposeModal = async function(to="", subj="") {
 }
 // 🟢 THE WATCHDOG: This sits in the background and kills "ADMIN" text the millisecond it appears
 function updateHubIdentity() {
-    // 1. Get the target role from storage (Column F)
-    const realRole = localStorage.getItem("user_role") || localStorage.getItem("user_title") || "Owner";
+    const realRole = localStorage.getItem("user_role") || "Staff";
 
-    // 2. The Search & Destroy Function
     const killAdminText = () => {
+        // Search all header-related containers shown in your screenshots
         const headerAreas = document.querySelectorAll('.user-info, .header, .user-profile, .right-nav');
         headerAreas.forEach(container => {
-            // Find every single element inside the header area
             const allElements = container.getElementsByTagName("*");
             for (let el of allElements) {
-                if (el.children.length === 0 && el.innerText.trim() === "ADMIN") {
+                // 🟢 The Fix: Replace the text "ADMIN" with your actual Role
+                if (el.children.length === 0 && el.innerText.trim().toUpperCase() === "ADMIN") {
                     el.innerText = realRole;
-                    el.style.display = "block";
-                    el.style.visibility = "visible";
                 }
             }
         });
-        
-        // Target specific ID just in case
-        const specificId = document.getElementById("menu-user-role");
-        if (specificId) specificId.innerText = realRole;
+        if (document.getElementById("menu-user-role")) {
+            document.getElementById("menu-user-role").innerText = realRole;
+        }
     };
 
-    // 3. Run immediately on load
     killAdminText();
-
-    // 4. 🚀 THE FIX: Monitor the header for changes
-    // This catches "ADMIN" even if another script tries to put it back later
-    const observer = new MutationObserver(() => {
-        killAdminText();
-    });
-
-    const headerNode = document.querySelector('.header') || document.body;
-    observer.observe(headerNode, { childList: true, subtree: true });
+    // Watch for template changes that might try to put "ADMIN" back
+    new MutationObserver(killAdminText).observe(document.body, { childList: true, subtree: true });
 }
