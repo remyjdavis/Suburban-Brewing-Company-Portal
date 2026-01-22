@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>
+   <script>
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
@@ -12,17 +12,26 @@
     })();
   </script>
   
-  <meta charset="UTF-8" />
-  <title>Marketing Hub | Suburban Brewing</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Suburban Brewing">
+  
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0f172a">
   
+   <link rel="icon" type="image/png" href="../logo.png">
+<link rel="apple-touch-icon" href="../logo.png">
+  <link rel="manifest" href="../manifest.json">
+  <title>Marketing Hub | Suburban Brewing</title>
   <link rel="icon" type="image/png" href="https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/logo.png">
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
+  <script src="/Suburban-Brewing-Company-Portal/portal.js"></script>
   <style>
     /* --- STANDARD VARIABLES (NO THEMES) --- */
     :root { 
@@ -48,10 +57,40 @@
     .chevron { transition: transform 0.3s; font-size: 10px; }
     .collapsed .chevron { transform: rotate(-90deg); }
 
-    /* MAIN CONTENT */
-    .main { flex: 1; margin-left: 260px; width: 100%; display: flex; flex-direction: column; }
-    .content { padding: 40px 40px 0 40px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
-    .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+    /* MAIN CONTENT (FIXED PADDING) */
+    .main { 
+        flex: 1; 
+        margin-left: 260px; 
+        padding: 0; /* Remove padding here so Header hits top */
+        width: 100%; 
+        display: flex; 
+        flex-direction: column; 
+        min-height: 100vh;
+    }
+
+    /* HEADER (FIXED) */
+    .header { 
+        background: #fff; 
+        border-bottom: 1px solid #e5e7eb; 
+        padding: 16px 40px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        position: sticky; 
+        top: 0; 
+        z-index: 900; 
+        height: 70px;
+        margin-bottom: 0; /* Remove bottom margin */
+    }
+    
+    /* CONTENT CONTAINER (RESTORED PADDING) */
+    .content { 
+        padding: 40px; 
+        max-width: 1200px; 
+        margin: 0 auto; 
+        width: 100%; 
+        flex: 1; 
+    }
     
     /* TABS SYSTEM */
     .tabs { display: flex; gap: 20px; border-bottom: 2px solid #e5e7eb; margin-bottom: 25px; overflow-x: auto; }
@@ -363,6 +402,102 @@
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
+     /* --- USER PROFILE STYLES --- */
+    .user-profile {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+    .user-profile:hover { background: #f3f4f6; }
+    
+    .user-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        background-color: #e5e7eb; object-fit: cover; border: 2px solid var(--accent);
+    }
+    
+    .user-info-text { 
+        display: flex; flex-direction: column; line-height: 1.1; text-align: right; 
+    }
+    .user-name { font-weight: 700; font-size: 0.9rem; color: var(--primary-dark); }
+    .user-role { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    @media (max-width: 600px) { .user-info-text { display: none; } }
+
+    .user-dropdown-menu {
+        display: none; position: absolute; top: 55px; right: 0;
+        background-color: white; min-width: 180px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px;
+        z-index: 2000; overflow: hidden; border: 1px solid #e5e7eb;
+    }
+    .user-dropdown-menu.show { display: block; }
+    
+    .user-dropdown-menu a {
+        color: #374151; padding: 12px 16px; text-decoration: none;
+        display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    .user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
+     /* --- FOOTER STYLES (MATCHES INDEX) --- */
+    .app-footer {
+       height: 50px; 
+       flex-shrink: 0; 
+       margin-top: auto;
+       padding: 10px 40px; /* Aligned with Header/Content */
+       border-top: 1px solid #e2e8f0;
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       color: #94a3b8; 
+       font-size: 11px;
+       font-weight: 500;
+       width: 100%;
+       margin-bottom: 10px;
+       background: #f8fafc; 
+    }
+
+    .footer-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        margin-left: 20px;
+        transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .system-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid #cbd5e1;
+    }
+
+    /* 🟢 FIX: Status Dot Visibility */
+    .status-dot {
+        display: inline-block; 
+        width: 8px;
+        height: 8px;
+        background-color: var(--ready); 
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
 </style>
 </head>
 <body>
@@ -371,25 +506,13 @@
 
   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header"><span>System</span></div>
-    <div class="collapsible-content">
-      <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-        <span class="icon">🚪</span> <span>Logout of Portal</span>
-      </a>
-    </div>
 
-    <script>
-      function handleLogout() {
-        sessionStorage.removeItem("sbc_auth");
-        const repoPath = "/Suburban-Brewing-Company-Portal/";
-        window.location.replace(repoPath + "login.html");
-     }
-    </script>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)"><span>Main Menu</span><span class="chevron">▼</span></div>
-    <div id="grp-main" class="collapsible-content">
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    </div>
+    <div id="admin-nav-link" style="display:none; margin-top: 10px; border-top: 1px solid #1e293b; padding-top:10px;">
+    <a href="../Admin.html" class="nav-link" style="color: #ef4444;">
+        <span>🔒 Admin Console</span>
+    </a>
+</div>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)"><span>Samplings</span><span class="chevron">▼</span></div>
     <div id="grp-sample" class="collapsible-content">
@@ -424,6 +547,7 @@
       <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
       <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
       <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+      <a href="../Brewing/sensory-admin.html" class="nav-link"><span>Sensory Admin</span></a>
     </div>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)"><span>Reporting & Analytics</span><span class="chevron">▼</span></div>
@@ -435,17 +559,31 @@
   </aside>
 
   <div class="main">
-    <div class="content">
-      
-      <div id="dashboard-view">
-          <div class="header">
-            <div>
-                <h1 style="margin:0; font-size: 24px;">Marketing & Outreach</h1>
-                <div style="font-size:13px; color:#6b7280;">Manage Campaigns & Assets</div>
+    <div class="header">
+        <div>
+            <h1 style="margin:0; font-size: 24px;">Marketing & Outreach</h1>
+            <div style="font-size:13px; color:#6b7280;">Manage Campaigns & Assets</div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:12px;">
+            <div class="user-profile" onclick="toggleUserMenu(event)" style="margin: 0;">
+                <div id="msg-badge" class="notification-badge">0</div>
+                <div class="user-info-text" style="text-align:right; margin-right:10px;">
+                    <span class="user-name" id="display-username">Brewer</span>
+                    <span class="user-role" id="display-role">Staff</span>
+                </div>
+                <img src="../logo.png" class="user-avatar" id="display-avatar">
+                <div id="userDropdown" class="user-dropdown-menu"></div>
             </div>
-            <button class="secondary" onclick="location.reload()">🔄 Refresh Data</button>
-          </div>
+            
+            <button class="secondary" onclick="location.reload()" style="font-size:0.8rem; padding:6px 12px;">
+                🔄 Refresh Data
+            </button>
+        </div>
+    </div>
 
+       <div class="content">
+      <div id="dashboard-view">
           <div class="tabs">
     <div class="tab active" onclick="switchTab('tab-assets', this)">📂 Assets</div>
     <div class="tab" onclick="switchTab('tab-email', this)">📧 Fresh Sheet</div>
@@ -810,7 +948,26 @@
         </div>
     </div>
   </div>
-
+ <footer class="app-footer">
+        <div class="footer-left">
+            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
+            <span class="system-status">
+                <span class="status-dot"></span>
+                System Operational
+            </span>
+        </div>
+        <div class="footer-links">
+            <span>Portal v2.5</span>
+            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
+            <a href="#" onclick="Swal.fire({
+                title: 'App Support', 
+                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
+                icon: 'info',
+                confirmButtonColor: 'var(--accent)'
+            })">Support</a>
+            <a href="#" onclick="location.reload()">Refresh Data</a>
+        </div>
+    </footer>
 <script>
 // 1. RENAME the old URL to OPS_API_URL
 const OPS_API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
@@ -823,7 +980,13 @@ let inventoryData = {};
 let marketingData = {};
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Set Date (Dashboard)
+   // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
+    if (typeof setupUserProfile === 'function') setupUserProfile();
+    if (typeof checkUnreadCount === 'function') checkUnreadCount();
+
+    // 2. Set Footer Year
+    document.getElementById('copyright-year').innerText = new Date().getFullYear();
+  // 1. Set Date (Dashboard)
     if(document.getElementById('currentDate')) {
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
     }
