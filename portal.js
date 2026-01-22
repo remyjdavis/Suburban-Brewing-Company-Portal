@@ -50,55 +50,72 @@ window.addEventListener('load', () => {
 
 // --- 4. USER PROFILE & UI ---
 function setupUserProfile() {
-    // Check Local Storage first (for Boss), then Session
+    // 1. Get Data from Storage
     const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
-    const title = localStorage.getItem("user_title") || sessionStorage.getItem("user_title") || "Staff";
     const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
-    const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
+    
+    // 🟢 THE FIX: We pull FROM user_role but ensure user_title is also updated so other pages don't break
+    const roleDisplay = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
+    const accessLevel = localStorage.getItem("user_access") || sessionStorage.getItem("user_access") || "Staff";
 
-    // A. Desktop Header Elements
+    // --- A. Desktop Header Elements ---
     if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
-    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title;
+    
+    // This targets the job title on other dashboard pages
+    if(document.getElementById("display-role")) {
+        document.getElementById("display-role").innerText = roleDisplay;
+    }
+    
     if(document.getElementById("display-avatar")) {
         const img = document.getElementById("display-avatar");
         img.src = pic;
         img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
 
-    // B. Mobile Hub Elements
+    // --- B. Mobile Hub Elements ---
     if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
-    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role;
-    if(document.getElementById("avatar-initial")) document.getElementById("avatar-initial").innerText = name.charAt(0).toUpperCase();
+    
+    // This targets the Hub header where you were seeing "ADMIN"
+    if(document.getElementById("menu-user-role")) {
+        document.getElementById("menu-user-role").innerText = roleDisplay;
+    }
+    
+    if(document.getElementById("avatar-initial")) {
+        document.getElementById("avatar-initial").innerText = name.charAt(0).toUpperCase();
+    }
 
-    // C. Universal Avatar Injection (For Hub)
-    const avatarElements = document.querySelectorAll(".user-avatar"); 
-    avatarElements.forEach(el => {
-        // Only inject if it's the div container style (Hub), not the img tag style (Desktop)
-        if (el.tagName === 'DIV' && pic && pic !== PORTAL_ROOT + "Logo.png") {
-             el.innerHTML = `<img src="${pic}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`;
+    // --- C. Universal Avatar Injection ---
+    const avatars = ["avatar-img", "display-avatar"];
+    avatars.forEach(id => {
+        const img = document.getElementById(id);
+        if (img) {
+            img.src = (pic && pic !== "logo.png" && pic !== PORTAL_ROOT + "Logo.png") ? pic : "logo.png";
+            img.onerror = function() { this.src = "logo.png"; };
         }
     });
 
-    // Admin Console Link Logic
-    const adminDiv = document.getElementById("admin-nav-link");
-    if (adminDiv) {
-        if (role === "Admin" || role === "Owner") {
-            adminDiv.style.display = "block";
-            const link = adminDiv.querySelector('a');
-            if (link) {
-                const isSubfolder = window.location.pathname.includes("/Brewing/") || 
-                                   window.location.pathname.includes("/sales/") || 
-                                   window.location.pathname.includes("/inventory/");
-                link.href = isSubfolder ? "../Admin.html" : "Admin.html";
+    // --- D. Admin Console Link Logic (Column G) ---
+    const adminNav = document.getElementById("admin-nav-link");
+    const hubAdminCard = document.querySelector('a[href="Admin.html"]');
+
+    if (accessLevel === "Admin") {
+        if (adminNav) adminNav.style.display = "block";
+        if (hubAdminCard) {
+            hubAdminCard.style.display = "flex";
+            hubAdminCard.parentElement.style.display = "flex";
+        }
+    } else {
+        if (adminNav) adminNav.style.display = "none";
+        if (hubAdminCard) {
+            hubAdminCard.style.display = "none";
+            if (hubAdminCard.parentElement && hubAdminCard.parentElement.classList.contains('card')) {
+                hubAdminCard.parentElement.style.display = "none";
             }
-        } else {
-            adminDiv.style.display = "none";
         }
     }
 
-    // Dropdown Menu Injection (Desktop Only - Hub has its own HTML)
+    // --- E. Dropdown Menu Injection ---
     const dropdown = document.getElementById("userDropdown");
-    // Only inject if empty (prevents overwriting Hub menu if identifiers clash)
     if (dropdown && dropdown.innerHTML.trim() === "") {
         dropdown.innerHTML = `
             <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
