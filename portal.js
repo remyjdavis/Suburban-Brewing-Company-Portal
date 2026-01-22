@@ -6,16 +6,11 @@
         localStorage.setItem("sbc_auth", "true");
         localStorage.setItem("user_name", "Eric Yost");
         localStorage.setItem("user_role", "Owner");
-        localStorage.setItem("user_access", "Admin"); 
-        
-        // 🟢 SET THIS TO EXACTLY WHAT YOU WANT TO SEE (e.g., "Owner", "Head Brewer")
-        localStorage.setItem("user_title", "Owner"); 
-        
         localStorage.setItem("sbc_driver_name", "Eric Yost");
         // Clean URL
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
-    } 
+    }
 
     const auth = localStorage.getItem("sbc_auth") === "true" || sessionStorage.getItem("sbc_auth") === "true";
     const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
@@ -57,58 +52,53 @@ window.addEventListener('load', () => {
 function setupUserProfile() {
     // Check Local Storage first (for Boss), then Session
     const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
+    const title = localStorage.getItem("user_title") || sessionStorage.getItem("user_title") || "Staff";
     const pic = localStorage.getItem("user_pic") || sessionStorage.getItem("user_pic") || PORTAL_ROOT + "Logo.png";
-    const roleDisplay = localStorage.getItem("user_role") || sessionStorage.getItem("user_role") || "Staff";
-    const accessLevel = localStorage.getItem("user_access") || sessionStorage.getItem("user_access") || "Staff";
+    const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
 
-    // A. Brute Force Overwrite (Forces Role from Column F)
-    const targets = {
-        "display-username": name,
-        "display-role": roleDisplay,
-        "menu-user-name": name,
-        "menu-user-role": roleDisplay,
-        "dropdown-user-name": name,
-        "dropdown-user-role": roleDisplay
-    };
-
-    for (const [id, val] of Object.entries(targets)) {
-        const el = document.getElementById(id);
-        if (el) {
-            el.innerText = val;
-            el.style.visibility = "visible";
-        }
+    // A. Desktop Header Elements
+    if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
+    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = title;
+    if(document.getElementById("display-avatar")) {
+        const img = document.getElementById("display-avatar");
+        img.src = pic;
+        img.onerror = function() { this.src = PORTAL_ROOT + "logo.png"; };
     }
 
-    // B. Universal Avatar Injection (For Hub)
-    const avatars = ["avatar-img", "display-avatar"];
-    avatars.forEach(id => {
-        const img = document.getElementById(id);
-        if (img) {
-            img.src = (pic && pic !== "logo.png" && pic !== PORTAL_ROOT + "Logo.png") ? pic : "logo.png";
-            img.onerror = function() { this.src = "logo.png"; };
+    // B. Mobile Hub Elements
+    if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
+    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role;
+    if(document.getElementById("avatar-initial")) document.getElementById("avatar-initial").innerText = name.charAt(0).toUpperCase();
+
+    // C. Universal Avatar Injection (For Hub)
+    const avatarElements = document.querySelectorAll(".user-avatar"); 
+    avatarElements.forEach(el => {
+        // Only inject if it's the div container style (Hub), not the img tag style (Desktop)
+        if (el.tagName === 'DIV' && pic && pic !== PORTAL_ROOT + "Logo.png") {
+             el.innerHTML = `<img src="${pic}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`;
         }
     });
 
-    // C. Admin Console Link Logic (Based on Access Level Column G)
+    // Admin Console Link Logic
     const adminDiv = document.getElementById("admin-nav-link");
-    const hubAdminCard = document.querySelector('a[href="Admin.html"]');
-
-    if (accessLevel === "Admin") {
-        if (adminDiv) adminDiv.style.display = "block";
-        if (hubAdminCard) {
-            hubAdminCard.style.display = "flex";
-            hubAdminCard.parentElement.style.display = "flex";
-        }
-    } else {
-        if (adminDiv) adminDiv.style.display = "none";
-        if (hubAdminCard) {
-            hubAdminCard.style.display = "none";
-            if (hubAdminCard.parentElement.classList.contains('card')) hubAdminCard.parentElement.style.display = "none";
+    if (adminDiv) {
+        if (role === "Admin" || role === "Owner") {
+            adminDiv.style.display = "block";
+            const link = adminDiv.querySelector('a');
+            if (link) {
+                const isSubfolder = window.location.pathname.includes("/Brewing/") || 
+                                   window.location.pathname.includes("/sales/") || 
+                                   window.location.pathname.includes("/inventory/");
+                link.href = isSubfolder ? "../Admin.html" : "Admin.html";
+            }
+        } else {
+            adminDiv.style.display = "none";
         }
     }
 
-    // D. Dropdown Menu Injection (Desktop Only)
+    // Dropdown Menu Injection (Desktop Only - Hub has its own HTML)
     const dropdown = document.getElementById("userDropdown");
+    // Only inject if empty (prevents overwriting Hub menu if identifiers clash)
     if (dropdown && dropdown.innerHTML.trim() === "") {
         dropdown.innerHTML = `
             <a href="#" onclick="openInbox(); toggleUserMenu(event);" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -153,8 +143,11 @@ async function checkUnreadCount() {
 }
 
 function updateBadgeUI(count) {
+    // Desktop Badges
     const desktopOuter = document.getElementById('msg-badge');
     const desktopInner = document.getElementById('dropdown-badge');
+    
+    // Mobile Hub Badges
     const mobileHeader = document.getElementById('header-badge');
 
     if (count > 0) {
@@ -170,6 +163,7 @@ function updateBadgeUI(count) {
 
 // B. Open Team Inbox
 window.openInbox = async function() {
+    // Close menus first
     const d = document.getElementById("userDropdown") || document.getElementById("userMenu");
     if(d) d.classList.remove("show");
 
@@ -179,7 +173,7 @@ window.openInbox = async function() {
         const res = await fetch(`${MASTER_API_URL}?action=getInbox`);
         const messages = await res.json();
         
-        let html = '';
+        let html = '<div style="text-align:center;color:#888;padding:20px;">No messages found.</div>';
         
         if (Array.isArray(messages) && messages.length > 0) {
             html = '<div style="max-height:400px; overflow-y:auto; border:1px solid #eee; border-radius:8px; text-align:left;">';
@@ -208,12 +202,7 @@ window.openInbox = async function() {
                 </div>`;
             });
             html += '</div>';
-        } else {
-            html = '<div style="text-align:center;color:#888;padding:20px;">No messages found.</div>';
         }
-        
-        // 🟢 FIX: Moved button outside of any message checks so it ALWAYS shows
-        html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:10px; background-color:#10b981;">+ New Message</button>`;
         
         Swal.fire({ 
             title: 'Team Inbox', 
@@ -268,6 +257,7 @@ async function openReplyModal(originalId, user, email, topic) {
 
     if (replyText) {
         Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
+        
         try {
             const payload = {
                 action: 'replyToMessage',
@@ -277,50 +267,21 @@ async function openReplyModal(originalId, user, email, topic) {
                 topic: topic,
                 message: replyText
             };
+
             await fetch(MASTER_API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 body: JSON.stringify(payload)
             });
-            Swal.fire('Sent!', 'Reply emailed to client.', 'success');
+
+            Swal.fire('Sent!', 'Reply has been emailed to the client.', 'success');
         } catch (e) {
             Swal.fire('Error', 'Failed to send reply.', 'error');
         }
     }
 }
 
-window.openComposeModal = async function(to="", subj="") {
-    let users = [];
-    try {
-        const res = await fetch(`${MASTER_API_URL}?action=getUsers`);
-        const json = await res.json();
-        users = json.users || [];
-    } catch(e) { console.warn("User list failed."); }
-
-    let recipientHTML = users.length > 0 
-        ? `<select id="swal-to" class="swal2-input">${users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('')}</select>`
-        : `<input id="swal-to" class="swal2-input" placeholder="To: (Type Name)" value="${to}">`;
-
-    const {value:f} = await Swal.fire({ 
-        title: 'New Message', 
-        html: `${recipientHTML}<input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}"><textarea id="swal-body" class="swal2-textarea" placeholder="Message..." style="height:150px;"></textarea>`, 
-        focusConfirm: false, showCancelButton: true, confirmButtonText: 'Send 🚀',
-        preConfirm: () => ({ to: document.getElementById('swal-to').value, sub: document.getElementById('swal-sub').value, body: document.getElementById('swal-body').value }) 
-    });
-    
-    if(f && f.to) {
-        Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
-        try {
-            await fetch(MASTER_API_URL, { 
-                method: 'POST', mode: 'no-cors', 
-                body: JSON.stringify({ action: 'sendMessage', data: { sender: localStorage.getItem("user_name"), recipient: f.to, subject: f.sub, body: f.body } }) 
-            });
-            Swal.fire('Sent!', 'Message sent.', 'success');
-        } catch(e) { Swal.fire('Error', 'Failed to send.', 'error'); }
-    }
-}
-
-// --- 6. PROFILE EDIT LOGIC ---
+// --- 6. PROFILE EDIT LOGIC (Preserved from your request) ---
 window.updateUserInfo = async function() {
     const { value: formValues } = await Swal.fire({
         title: 'Profile Settings',
@@ -378,19 +339,22 @@ window.handleFileSelect = function(input) {
 
 window.handleLogout = function() {
     sessionStorage.clear();
-    localStorage.removeItem("sbc_auth"); 
+    localStorage.removeItem("sbc_auth"); // Clear persistent login
     localStorage.removeItem("user_name");
     localStorage.removeItem("user_role");
-    localStorage.removeItem("user_access");
-    window.location.replace(PORTAL_ROOT + "login.html");
+    
+    const repoPath = "/Suburban-Brewing-Company-Portal/";
+    window.location.replace(repoPath + "login.html");
 }
 
 async function saveProfile(data) {
     Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
+    
+    // Check both Session and Local storage for username ID
     const username = sessionStorage.getItem("user_login_id") || localStorage.getItem("user_login_id") || sessionStorage.getItem("user_email");
     
     if (!username) {
-        Swal.fire('Session Error', 'Identify failed. Log out/in.', 'error');
+        Swal.fire('Session Error', 'Could not identify user. Please log out and log back in.', 'error');
         return;
     }
 
@@ -402,10 +366,13 @@ async function saveProfile(data) {
         const result = await response.json();
         
         if (result.status === "success") {
+            // Update both storages to keep them in sync
             const storage = localStorage.getItem("sbc_auth") ? localStorage : sessionStorage;
+            
             storage.setItem("user_pic", data.pic);
             storage.setItem("user_email", data.email);
             storage.setItem("user_phone", data.phone);
+            
             setupUserProfile(); 
             Swal.fire('Saved!', 'Profile updated.', 'success');
         } else {
