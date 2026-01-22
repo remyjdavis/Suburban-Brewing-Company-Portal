@@ -212,7 +212,7 @@ window.openInbox = async function() {
             html = '<div style="text-align:center;color:#888;padding:20px;">No messages found.</div>';
         }
         
-        // 🟢 BUTTON MOVED HERE (Outside the empty check)
+        // 🟢 FIX: Moved button outside of any message checks so it ALWAYS shows
         html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:10px; background-color:#10b981;">+ New Message</button>`;
         
         Swal.fire({ 
