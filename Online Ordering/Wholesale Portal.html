@@ -1159,14 +1159,16 @@ async function init() {
 
     // 1. Header & Tab Visibility Logic
     if (state.step >= 2 && state.customer) {
-        // 🔴 UPDATED: Added message button next to user badge
+        // 🔴 UPDATED: Message Button is now a Pill Button with Text
         headerUser.innerHTML = `
-            <div class="header-actions">
-                <button class="header-icon-btn" onclick="openMessageModal()" title="Message Team">💬</button>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button class="header-icon-btn" onclick="openMessageModal()">
+                    💬 <span class="btn-text-span">Message Team</span>
+                </button>
                 <div class="user-badge" onclick="changeAccessKey()" style="cursor: pointer;">
                     👤 ${state.customer.name}
                 </div>
-            </div>`;
+            </div>`; 
         tabNav.style.display = "flex"; 
     } else {
         headerUser.innerHTML = "";
