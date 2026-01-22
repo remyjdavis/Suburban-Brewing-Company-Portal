@@ -3,16 +3,16 @@
     // 🟢 BOSS MODE: Auto-Login if key is present
     const params = new URLSearchParams(window.location.search);
     if (params.get("key") === "boss") {
-    localStorage.setItem("sbc_auth", "true");
-    localStorage.setItem("user_name", "Eric Yost");
-    localStorage.setItem("user_role", "Owner");
-    
-    // 🟢 SET THIS TO EXACTLY WHAT YOU WANT TO SEE (e.g., "Owner", "Head Brewer")
-    localStorage.setItem("user_title", "Owner"); 
-    
-    localStorage.setItem("sbc_driver_name", "Eric Yost");
-    window.history.replaceState({}, document.title, "hub.html");
-}
+        localStorage.setItem("sbc_auth", "true");
+        localStorage.setItem("user_name", "Eric Yost");
+        localStorage.setItem("user_role", "Owner");
+        
+        // 🟢 SET THIS TO EXACTLY WHAT YOU WANT TO SEE (e.g., "Owner", "Head Brewer")
+        localStorage.setItem("user_title", "Owner"); 
+        
+        localStorage.setItem("sbc_driver_name", "Eric Yost");
+        window.history.replaceState({}, document.title, "hub.html");
+    } // 🟢 SYNTAX ERROR FIXED: Added missing closing brace for if(params)
 
     const auth = localStorage.getItem("sbc_auth") === "true" || sessionStorage.getItem("sbc_auth") === "true";
     const role = localStorage.getItem("user_role") || sessionStorage.getItem("user_role");
@@ -59,7 +59,7 @@ function setupUserProfile() {
 
     // A. Desktop Header Elements
     if(document.getElementById("display-username")) document.getElementById("display-username").innerText = name;
-    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = role; // 🟢 FIXED: Now shows Role
+    if(document.getElementById("display-role")) document.getElementById("display-role").innerText = role; // Shows Role
     if(document.getElementById("display-avatar")) {
         const img = document.getElementById("display-avatar");
         img.src = pic;
@@ -68,15 +68,16 @@ function setupUserProfile() {
 
     // B. Mobile Hub Elements (Header - This is the area in your screenshot)
     if(document.getElementById("menu-user-name")) document.getElementById("menu-user-name").innerText = name;
-    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role; // 🟢 FIXED: Now shows Role
+    if(document.getElementById("menu-user-role")) document.getElementById("menu-user-role").innerText = role; // Shows Role
     
     // C. Dropdown Menu Elements (Specific to Hub HTML)
     if(document.getElementById("dropdown-user-name")) document.getElementById("dropdown-user-name").innerText = name;
-    if(document.getElementById("dropdown-user-role")) document.getElementById("dropdown-user-role").innerText = role; // 🟢 FIXED: Now shows Role
+    if(document.getElementById("dropdown-user-role")) document.getElementById("dropdown-user-role").innerText = role; // Shows Role
 
     // D. Hub Logo/Avatar Image Fix
     const hubAvatarImg = document.getElementById("avatar-img");
     if (hubAvatarImg) {
+        // Use custom pic if it's not the default logo path
         if (pic && pic !== PORTAL_ROOT + "Logo.png" && pic !== "Logo.png") {
             hubAvatarImg.src = pic;
         } else {
@@ -386,6 +387,7 @@ async function saveProfile(data) {
         Swal.fire('Error', 'Update Failed: ' + e.message, 'error');
     }
 }
+
 // 🟢 MISSING FUNCTION: Handles the "New Message" popup
 window.openComposeModal = async function(to="", subj="") {
     // 1. Try to fetch user list for the dropdown
