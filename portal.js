@@ -43,11 +43,11 @@ OneSignalDeferred.push(async function(OneSignal) {
 
 // --- 3. GLOBAL INITIALIZATION ---
 window.addEventListener('load', () => {
-    setupUserProfile();
+    setupUserProfile(); // Handles Desktop
+    updateHubIdentity(); // 🟢 Handles Hub specifically
     checkUnreadCount();
-    setInterval(checkUnreadCount, 60000); // Poll every minute
+    setInterval(checkUnreadCount, 60000); 
 });
-
 // --- 4. USER PROFILE & UI ---
 function setupUserProfile() {
     // Check Local Storage first (for Boss), then Session
