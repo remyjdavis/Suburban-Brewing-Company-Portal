@@ -438,25 +438,30 @@ function updateHubIdentity() {
         hubNameElement.innerText = nameForHub;
     }
 }
-// 🟢 HUB NAVIGATION: Manages the "Return to Hub" button
+// 🟢 HUB NAVIGATION: Shows "⬅ Hub" button ONLY on Mobile & ONLY if visited Hub
 function setupHubReturn() {
-    // 1. DEFINE YOUR HUB FILE NAME
-    // Based on your URL, your Hub is likely the root ("/") or "index.html"
+    // 1. MOBILE CHECK: Match your CSS breakpoint (1024px)
+    // If screen is wider than 1024px (Desktop/Laptop), STOP immediately.
+    if (window.innerWidth > 1024) return; 
+
+    // 2. Identify Current Page
     const isHub = window.location.pathname.endsWith("/") || window.location.pathname.includes("index.html");
     const isLogin = window.location.pathname.includes("login.html");
 
-    // 2. SET THE FLAG: If we are effectively on the Hub, mark the session
+    // 3. SET FLAG: If we are physically on the Hub, mark the session
     if (isHub) {
         sessionStorage.setItem("sbc_hub_mode", "active");
     }
 
-    // 3. SHOW BUTTON: If NOT on Hub, NOT on Login, and Flag is Active
+    // 4. SHOW BUTTON IF:
+    //    - Not on Hub (already there)
+    //    - Not on Login
+    //    - The "Hub Mode" flag exists (proving we came from the Hub)
     if (!isHub && !isLogin && sessionStorage.getItem("sbc_hub_mode") === "active") {
         
         const btn = document.createElement("button");
         btn.innerHTML = "⬅ Hub";
         
-        // STYLING: Fixed to bottom-left, Red, High Visibility
         btn.style.cssText = `
             position: fixed; 
             bottom: 20px; 
@@ -464,19 +469,20 @@ function setupHubReturn() {
             z-index: 10000; 
             background-color: #ef4444; 
             color: white; 
-            padding: 12px 20px; 
+            padding: 10px 18px; 
             border-radius: 30px; 
             border: none; 
             font-weight: bold; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
             cursor: pointer;
+            font-family: system-ui, -apple-system, sans-serif;
             font-size: 14px;
-            font-family: sans-serif;
         `;
 
-        // ACTION: Go back to Hub
         btn.onclick = function() {
-            window.location.href = PORTAL_ROOT + "index.html"; 
+            // Smart path handling
+            const root = (typeof PORTAL_ROOT !== 'undefined') ? PORTAL_ROOT : "../";
+            window.location.href = root + "index.html"; 
         };
 
         document.body.appendChild(btn);
