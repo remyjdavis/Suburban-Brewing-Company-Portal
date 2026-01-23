@@ -331,25 +331,30 @@ table.invoice-table {
     .footer-message {
       text-transform: uppercase;
     }
-    /* Find this class in New Invoice.html and REPLACE it */
+    /* REPLACE YOUR EXISTING .invoice-action-bar CSS WITH THIS */
 .invoice-action-bar {
     display: flex;
-    flex-direction: row;        /* 🔴 Force Horizontal Row */
-    align-items: center;        /* 🔴 Prevent Vertical Stretching */
-    justify-content: flex-end;  /* Align to right */
+    flex-direction: row;        /* Force horizontal row */
+    align-items: center;        /* Stop vertical stretching */
+    justify-content: flex-end;  /* Align buttons to the right */
     gap: 12px;
     
-    /* 🔴 Lock it to the Invoice Paper Width */
+    /* 🔴 THE FIX: Lock width to match the paper exactly */
     width: 8.5in;              
     max-width: 100%;
-    margin: 20px auto 50px auto; 
-    padding: 0 0.4in;           /* Match invoice padding */
+    
+    /* Center the bar on the screen */
+    margin: 10px auto 50px auto; 
+    
+    /* Align with invoice text */
+    padding: 0 0.4in;           
+    box-sizing: border-box;
 }
 
-/* Ensure the buttons have a fixed height/size */
+/* Ensure buttons don't explode in size */
 .invoice-btn {
     padding: 10px 18px;
-    height: 40px;               /* 🔴 Force normal height */
+    height: 40px;
     font-size: 14px;
     font-weight: 600;
     background: #2563eb;
@@ -357,7 +362,7 @@ table.invoice-table {
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    flex-shrink: 0;             /* Don't let them squish */
+    white-space: nowrap;
 }
 
     .invoice-btn:hover {
