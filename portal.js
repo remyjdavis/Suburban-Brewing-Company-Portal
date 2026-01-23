@@ -72,40 +72,42 @@ function sendPortalNotification(title, body) {
 }
 
 // C. Poll for Invoices, Orders, Comments
+// 3. MAIN LOOP: Checks everything
 async function checkBusinessActivity() {
     try {
-        // Hits the Backend Action "getActivityFeed"
         const res = await fetch(`${MASTER_API_URL}?action=getActivityFeed`);
         const data = await res.json();
 
-        // 1. INVOICE CHECK
+        // A. INVOICE ALERT
         if (data.latestInvoice) {
             const lastInv = localStorage.getItem("last_inv_id");
-            if (lastInv !== String(data.latestInvoice.id)) {
+            // Check if ID is new (compare as strings to be safe)
+            if (String(data.latestInvoice.id) !== lastInv) {
                 localStorage.setItem("last_inv_id", data.latestInvoice.id);
-                sendPortalNotification("🧾 New Invoice", `#${data.latestInvoice.id} created for ${data.latestInvoice.customer}`);
+                sendPortalNotification("🧾 New Invoice Generated", `#${data.latestInvoice.id} for ${data.latestInvoice.customer}`);
             }
         }
 
-        // 2. WEB ORDER CHECK
+        // B. WEB ORDER ALERT (Updated to use Customer Name)
         if (data.latestOrder) {
             const lastOrd = localStorage.getItem("last_order_id");
-            if (lastOrd !== String(data.latestOrder.id)) {
+            if (String(data.latestOrder.id) !== lastOrd) {
                 localStorage.setItem("last_order_id", data.latestOrder.id);
-                sendPortalNotification("🛒 New Web Order", `#${data.latestOrder.id}: ${data.latestOrder.items}`);
+                // 🔴 UPDATED: Uses .customer instead of .items
+                sendPortalNotification("🛒 New Web Order", `Order #${data.latestOrder.id} from ${data.latestOrder.customer}`);
             }
         }
 
-        // 3. MARKETING COMMENT CHECK
+        // C. MARKETING ALERT
         if (data.latestComment) {
             const lastComm = localStorage.getItem("last_comment_id");
-            if (lastComm !== String(data.latestComment.id)) {
+            if (String(data.latestComment.id) !== lastComm) {
                 localStorage.setItem("last_comment_id", data.latestComment.id);
-                sendPortalNotification("💬 Marketing Hub", `${data.latestComment.author} commented: "${data.latestComment.text}"`);
+                sendPortalNotification("💬 Marketing Comment", `${data.latestComment.author} on "${data.latestComment.post}": ${data.latestComment.text}`);
             }
         }
 
-    } catch (e) { console.warn("Activity sync skipped"); }
+    } catch (e) { console.warn("Activity sync silent fail"); }
 }
 
 // --- 4. MESSAGING SYSTEM (Enhanced) ---
