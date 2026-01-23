@@ -5,7 +5,6 @@
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
-
         if (auth !== "true" && !isLoginPage) {
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
@@ -31,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+  <script src="/Suburban-Brewing-Company-Portal/portal.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -597,39 +596,62 @@ table.invoice-table {
     .logout-link { margin-top: 12px; color: #f87171 !important; border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
     .logout-link:hover { background: #450a0a !important; color: #fee2e2 !important; border-left-color: #ef4444; }
     .logout-link span.icon { margin-right: 12px; font-size: 16px; }
-  
+  /* --- USER PROFILE STYLES --- */
+    .user-profile {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+    .user-profile:hover { background: #f3f4f6; }
+    
+    .user-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        background-color: #e5e7eb; object-fit: cover; border: 2px solid var(--accent);
+    }
+    
+    .user-info-text { 
+        display: flex; flex-direction: column; line-height: 1.1; text-align: right; 
+    }
+    .user-name { font-weight: 700; font-size: 0.9rem; color: var(--primary-dark); }
+    .user-role { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    @media (max-width: 600px) { .user-info-text { display: none; } }
+
+    .user-dropdown-menu {
+        display: none; position: absolute; top: 55px; right: 0;
+        background-color: white; min-width: 180px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px;
+        z-index: 2000; overflow: hidden; border: 1px solid #e5e7eb;
+    }
+    .user-dropdown-menu.show { display: block; }
+    
+    .user-dropdown-menu a {
+        color: #374151; padding: 12px 16px; text-decoration: none;
+        display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    .user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
   </style>
 </head>
 <body>
   <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
   <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
   
-  <aside class="sidebar">
+   <aside class="sidebar">
     <h2>SUBURBAN BREWING</h2>
-    <div class="nav-section-header">
-      <span>System</span>
-    </div>
-    
-    <a href="#" class="nav-link logout-link" onclick="handleLogout()">
-      <span class="icon">🚪</span>
-      <span>Logout of Portal</span>
-    </a>
 
-    <script>
-     function handleLogout() {
-       sessionStorage.removeItem("sbc_auth");
-       const repoPath = "/Suburban-Brewing-Company-Portal/";
-       window.location.replace(repoPath + "login.html");
-    }
-    </script>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-main', this)">
-      <span>Main Menu</span><span class="chevron">▼</span>
-    </div>
-    <div id="grp-main" class="collapsible-content">
       <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    </div>
-    
+    <div id="admin-nav-link" style="display:none; margin-top: 10px; border-top: 1px solid #1e293b; padding-top:10px;">
+    <a href="../Admin.html" class="nav-link" style="color: #ef4444;">
+        <span>🔒 Admin Console</span>
+    </a>
+</div>
+     
     <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)">
       <span>Samplings</span><span class="chevron">▼</span>
     </div>
@@ -671,6 +693,7 @@ table.invoice-table {
       <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
       <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
       <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
+      <a href="../Brewing/sensory-admin.html" class="nav-link"><span>Sensory Admin</span></a>
     </div>
     
     <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)">
@@ -686,11 +709,20 @@ table.invoice-table {
   <main class="main">
 
     <div class="header-bar">
-      <h1>New Invoice</h1>
+      <h1 style="margin:0; font-size:20px;">New Invoice</h1>
+      
+      <div style="display:flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+          <div class="user-profile" onclick="toggleUserMenu(event)" style="cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 0;">
+              <div id="msg-badge" class="notification-badge">0</div>
+              <div class="user-info-text" style="text-align:right; margin-right:5px;">
+                  <span class="user-name" id="display-username" style="font-weight:700; font-size:0.9rem; display:block;">Brewer</span>
+                  <span class="user-role" id="display-role" style="font-size:0.75rem; color:#64748b;">Staff</span>
+              </div>
+              <img src="../logo.png" class="user-avatar" id="display-avatar" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid #2563eb;">
+              <div id="userDropdown" class="user-dropdown-menu"></div>
+          </div>
       <div id="current-date"></div>
     </div>
-
-    <div class="section-heading">Invoice Details</div>
 
     <section class="invoice-page">
 
@@ -869,7 +901,13 @@ table.invoice-table {
     document.getElementById("current-date").textContent = today;
     document.getElementById("invoice-date").textContent = today;
     
+   // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
+    if (typeof setupUserProfile === 'function') setupUserProfile();
+    if (typeof checkUnreadCount === 'function') checkUnreadCount();
+
+    // 2. Set Footer Year
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
+      
    document.getElementById("email-invoice-btn").addEventListener("click", async () => {
     // 1. Validation: Ensure the invoice was saved first to get the fileId
     if (!window.currentInvoiceFileId) {
