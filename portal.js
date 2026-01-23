@@ -45,6 +45,7 @@ OneSignalDeferred.push(async function(OneSignal) {
 window.addEventListener('load', () => {
     setupUserProfile();
     checkUnreadCount();
+    setupHubReturn(); // 🟢 Add this line
     setInterval(checkUnreadCount, 60000); // Poll every minute
 });
 
@@ -435,5 +436,49 @@ function updateHubIdentity() {
 
     if (hubNameElement) {
         hubNameElement.innerText = nameForHub;
+    }
+}
+// 🟢 HUB NAVIGATION: Manages the "Return to Hub" button
+function setupHubReturn() {
+    // 1. DEFINE YOUR HUB FILE NAME
+    // Based on your URL, your Hub is likely the root ("/") or "index.html"
+    const isHub = window.location.pathname.endsWith("/") || window.location.pathname.includes("index.html");
+    const isLogin = window.location.pathname.includes("login.html");
+
+    // 2. SET THE FLAG: If we are effectively on the Hub, mark the session
+    if (isHub) {
+        sessionStorage.setItem("sbc_hub_mode", "active");
+    }
+
+    // 3. SHOW BUTTON: If NOT on Hub, NOT on Login, and Flag is Active
+    if (!isHub && !isLogin && sessionStorage.getItem("sbc_hub_mode") === "active") {
+        
+        const btn = document.createElement("button");
+        btn.innerHTML = "⬅ Hub";
+        
+        // STYLING: Fixed to bottom-left, Red, High Visibility
+        btn.style.cssText = `
+            position: fixed; 
+            bottom: 20px; 
+            left: 20px; 
+            z-index: 10000; 
+            background-color: #ef4444; 
+            color: white; 
+            padding: 12px 20px; 
+            border-radius: 30px; 
+            border: none; 
+            font-weight: bold; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+            cursor: pointer;
+            font-size: 14px;
+            font-family: sans-serif;
+        `;
+
+        // ACTION: Go back to Hub
+        btn.onclick = function() {
+            window.location.href = PORTAL_ROOT + "index.html"; 
+        };
+
+        document.body.appendChild(btn);
     }
 }
