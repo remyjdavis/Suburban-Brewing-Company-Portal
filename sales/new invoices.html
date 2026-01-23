@@ -331,26 +331,34 @@ table.invoice-table {
     .footer-message {
       text-transform: uppercase;
     }
-    .invoice-action-bar {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      margin-top: 20px;
-      margin-bottom: 50px; 
-    }
+    /* Find this class in New Invoice.html and REPLACE it */
+.invoice-action-bar {
+    display: flex;
+    flex-direction: row;        /* 🔴 Force Horizontal Row */
+    align-items: center;        /* 🔴 Prevent Vertical Stretching */
+    justify-content: flex-end;  /* Align to right */
+    gap: 12px;
+    
+    /* 🔴 Lock it to the Invoice Paper Width */
+    width: 8.5in;              
+    max-width: 100%;
+    margin: 20px auto 50px auto; 
+    padding: 0 0.4in;           /* Match invoice padding */
+}
 
-    /* Base button style */
-    .invoice-btn {
-      padding: 10px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      background: #2563eb;
-      color: #ffffff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      appearance: none;
-    }
+/* Ensure the buttons have a fixed height/size */
+.invoice-btn {
+    padding: 10px 18px;
+    height: 40px;               /* 🔴 Force normal height */
+    font-size: 14px;
+    font-weight: 600;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;             /* Don't let them squish */
+}
 
     .invoice-btn:hover {
       background: #1d4ed8;
