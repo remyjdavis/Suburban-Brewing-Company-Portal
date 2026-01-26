@@ -673,7 +673,7 @@ window.addEventListener('DOMContentLoaded', () => {
  
  async function loadPageData() {
     try {
-        // 1. Fetch with Cache Buster (Forces fresh data from Google)
+        // 1. Fetch with Cache Buster to force fresh data
         const cacheBuster = "?v=" + new Date().getTime();
         const res = await fetch(RECIPE_API_URL + cacheBuster, {
             method: 'GET',
@@ -684,9 +684,9 @@ window.addEventListener('DOMContentLoaded', () => {
         
         const data = await res.json();
         
-        // --- 🟢 THIS IS THE MISSING LINE THAT FIXES THE ERROR ---
+        // --- 🟢 FIX: SAVE DATA GLOBALLY FOR PORTAL.JS ---
         window.PageData = data; 
-        // --------------------------------------------------------
+        // ------------------------------------------------
 
         let recipes = [];
         if (Array.isArray(data)) { recipes = data; } 
