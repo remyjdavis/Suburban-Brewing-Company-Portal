@@ -1206,20 +1206,15 @@ function renderPortfolio(recipes) {
       // 1. Calculate Color
       const colorHex = getSRMColor(r.grains, r.batchSize);
       
-      // 2. FORCE IBU Calculation
-      // We ignore the saved value for a moment to see if we can calc it live
-      let displayIBU = r.ibu;
+      // 2. FORCE IBU Calculation (Always calculate live)
+    // We stop trusting the saved value because it might be "0" from the old bug.
+    let displayIBU = calculateCardIBU(r);
       
-      // If invalid, calculate it now
-      if (!displayIBU || displayIBU == 0 || displayIBU === "-" || isNaN(displayIBU)) {
-          displayIBU = calculateCardIBU(r);
-      }
-
-      // 3. FORCE ABV Display
-      let displayABV = r.abv;
-      if (!displayABV || displayABV === "") {
-          displayABV = "-"; 
-      }
+    // 3. FORCE ABV Display
+    let displayABV = r.abv;
+    if (!displayABV || displayABV === "") {
+         displayABV = "-"; 
+    }
       
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -1251,48 +1246,41 @@ function renderPortfolio(recipes) {
   enableMouseDragScrolling();
 }
 
-// REPLACE your existing calculateCardIBU with this robust version:
-// ===============================================
-// FINAL IBU CALCULATOR (Ignores Dextrose/Sugar)
-// ===============================================
 function calculateCardIBU(r) {
     let boilList = r.boil;
 
-    // 1. Safety Check: Is boil list text or a real list?
+    // 1. Parse List
     if (typeof boilList === 'string') {
-        try { boilList = JSON.parse(boilList); } 
-        catch (e) { return 0; }
+        try { boilList = JSON.parse(boilList); } catch (e) { return 0; }
     }
     if (!boilList || !Array.isArray(boilList)) return 0;
 
-    // 2. Safety Check: Batch Size (Defaults to 10 BBL if missing)
+    // 2. Get Batch Size (Default 10)
     let batchBBL = parseFloat(r.batchSize);
     if (!batchBBL || batchBBL === 0) batchBBL = 10.0;
     const batchGal = batchBBL * 31;
 
-    // 3. Safety Check: OG (Defaults to 1.050 if missing)
+    // 3. Get OG (Default 1.050)
     let estimatedOG = parseFloat(r.og);
     if (!estimatedOG || estimatedOG === 0) estimatedOG = 1.050;
 
     let totalIBU = 0;
 
     boilList.forEach(row => {
-        // Row Structure: [Name, AA, Oz, Min, Type]
         const name = String(row[0] || "").toLowerCase();
         
-        // --- THE FIX: IGNORE NON-HOPS ---
-        // We convert the AA input to a number. 
-        // If it's Dextrose, this becomes 0.
-        const aa = Number(row[1]); 
+        // --- FIX: USE parseFloat INSTEAD OF Number ---
+        // parseFloat("12.5%") -> 12.5 (Works!)
+        // Number("12.5%") -> NaN (Fails!)
+        const aa = parseFloat(row[1]); 
 
-        // If AA is 0, NaN, or blank -> SKIP THIS ITEM completely
-        if (!aa || aa <= 0) {
-            // console.log(`Skipping ${name} (No Alpha Acid)`);
+        // Skip if AA is missing, 0, or not a number (e.g. Dextrose)
+        if (!aa || isNaN(aa) || aa <= 0) {
             return; 
         }
 
-        const oz = Number(row[2]) || 0;
-        const min = Number(row[3]) || 0;
+        const oz = parseFloat(row[2]) || 0;
+        const min = parseFloat(row[3]) || 0;
         const type = String(row[4] || "").toLowerCase();
 
         if (oz > 0) {
@@ -1301,14 +1289,12 @@ function calculateCardIBU(r) {
             const timeFactor = (1 - Math.exp(-0.04 * min)) / 4.15;
             let util = bigness * timeFactor;
             
-            // Whirlpool Exception (0 min + "whirl" label = 5% util)
+            // Whirlpool Logic
             if (min === 0 && (type.includes('whirl') || type.includes('stand'))) {
                 util = 0.05; 
             }
 
-            // Calculate IBU for this hop only
-            const thisIBU = (aa * oz * util * 74.9) / batchGal;
-            totalIBU += thisIBU;
+            totalIBU += (aa * oz * util * 74.9) / batchGal;
         }
     });
     
