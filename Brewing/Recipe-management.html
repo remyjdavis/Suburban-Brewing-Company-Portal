@@ -673,7 +673,7 @@ window.addEventListener('DOMContentLoaded', () => {
  
  async function loadPageData() {
     try {
-        // --- FIX: Add Cache Buster (?v=...) to force fresh data ---
+        // 1. Fetch with Cache Buster
         const cacheBuster = "?v=" + new Date().getTime();
         const res = await fetch(RECIPE_API_URL + cacheBuster, {
             method: 'GET',
@@ -683,17 +683,21 @@ window.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) throw new Error('Network response was not ok');
         
         const data = await res.json();
-      
-      let recipes = [];
-      if (Array.isArray(data)) { recipes = data; } 
-      else {
-        recipes = data.recipes || [];
-        refGrains = data.refGrains || [];
-        refWaterAdditions = data.refWaterAdditions || [];
-        refYeast = data.refYeast || [];
-        refHops = data.refHops || [];       
-        refBoilMisc = data.refBoilMisc || []; 
-      }
+        
+        // --- ADD THIS LINE ---
+        window.PageData = data;  // <--- FIXES "Can't find variable: PageData"
+        // ---------------------
+
+        let recipes = [];
+        if (Array.isArray(data)) { recipes = data; } 
+        else {
+          recipes = data.recipes || [];
+          refGrains = data.refGrains || [];
+          refWaterAdditions = data.refWaterAdditions || [];
+          refYeast = data.refYeast || [];
+          refHops = data.refHops || [];       
+          refBoilMisc = data.refBoilMisc || []; 
+        }
 
       const list = document.getElementById('grain-list');
       list.innerHTML = '';
