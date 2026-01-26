@@ -984,111 +984,142 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function calculateStats() {
+    // --- 1. GET INPUTS ---
     const batchBBL = parseFloat(document.getElementById('edit-batch-size').value) || 0;
     const eff = parseFloat(document.getElementById('efficiency').value) || 85;
 
-    // Safety Check
     if (batchBBL === 0) return;
 
     let totalPoints = 0;
     let totalMCU = 0;
     let totalWeight = 0;
+    
+    // Convert Batch Size to Gallons for calculations
+    const batchGal = batchBBL * 31;
 
     console.log("--- Calculation Debug ---");
 
-    // -------------------------------------------------------
-    // 1. GRAIN CALCULATION (Mashed Items)
-    // -------------------------------------------------------
+    // --- 2. GRAIN LOGIC (Mashed Items) ---
     document.querySelectorAll('#grain-container .ingredient-entry').forEach(row => {
         const name = row.querySelector('.grain-search').value;
         const weight = parseFloat(row.querySelector('.grain-weight').value) || 0;
         const ref = refGrains.find(r => r.name === name);
 
         if (ref && weight > 0) {
-            // Get Moisture (Default to 4% if missing)
+            // Moisture Correction (Default 4%)
             const moisture = ref.moisture ? parseFloat(ref.moisture) : 4.0;
             
-            // Determine Dry Basis Yield (FGDB)
+            // Potential Logic (Handle %, SG, or Points)
             let rawPotential = parseFloat(ref.potential);
             let fgdbPercent = 0;
 
-            if (isNaN(rawPotential)) { fgdbPercent = 0; } 
-            else if (rawPotential < 1.0) { fgdbPercent = rawPotential * 100; } 
-            else if (rawPotential >= 1.0 && rawPotential < 2.0) { fgdbPercent = ((rawPotential - 1) * 1000) / 46 * 100; } 
-            else { fgdbPercent = rawPotential; }
+            if (isNaN(rawPotential)) fgdbPercent = 0;
+            else if (rawPotential < 1.0) fgdbPercent = rawPotential * 100;
+            else if (rawPotential >= 1.0 && rawPotential < 2.0) fgdbPercent = ((rawPotential - 1) * 1000) / 46 * 100;
+            else fgdbPercent = rawPotential;
 
-            // Convert to "As-Is" PPG
             const moistureFactor = 1 - (moisture / 100);
             const asIsPPG = 46 * (fgdbPercent / 100) * moistureFactor;
 
-            // Calculate mashed points (Subject to Efficiency)
+            // Mashed points (Efficiency applied)
             const points = asIsPPG * weight * (eff / 100);
-
             totalPoints += points;
+            
+            // Color
             totalMCU += (weight * (parseFloat(ref.color) || 0));
             totalWeight += weight;
         }
     });
 
-    // -------------------------------------------------------
-    // 2. BOIL ADDITIONS (Sugars/Extracts)
-    // -------------------------------------------------------
+    // --- 3. BOIL SUGARS (Extract/Sugar) ---
+    // (Sugars add Gravity but are 100% efficient)
     document.querySelectorAll('#boil-container .ingredient-entry').forEach(row => {
         const name = row.querySelector('.boil-name').value.toLowerCase();
-        // Assuming boil additions for SUGAR are in LBS for a 10 BBL system
-        const weight = parseFloat(row.querySelector('.boil-oz').value) || 0; 
+        const weight = parseFloat(row.querySelector('.boil-oz').value) || 0; // Assumes input is LBS for sugar
         
+        // Simple helper to detect sugar types
         let sugarPPG = 0;
+        if (name.includes('dextrose') || name.includes('corn sugar') || name.includes('sugar')) sugarPPG = 46;
+        else if (name.includes('lactose') || name.includes('milk')) sugarPPG = 35;
+        else if (name.includes('dme') || name.includes('dry malt')) sugarPPG = 44;
+        else if (name.includes('lme') || name.includes('liquid malt')) sugarPPG = 36;
+        else if (name.includes('honey')) sugarPPG = 35;
 
-        // Detect type based on name
-        if (name.includes('dextrose') || name.includes('corn sugar') || name.includes('sugar')) {
-            sugarPPG = 46;
-        } else if (name.includes('lactose') || name.includes('milk sugar')) {
-            sugarPPG = 35; // Unfermentable, but adds to OG
-        } else if (name.includes('dme') || name.includes('dry malt')) {
-            sugarPPG = 44;
-        } else if (name.includes('lme') || name.includes('liquid malt')) {
-            sugarPPG = 36;
-        } else if (name.includes('honey')) {
-            sugarPPG = 35;
-        } else if (name.includes('candy') || name.includes('candi')) {
-            sugarPPG = 32;
-        }
-
+        // Note: For HOP logic below, we assume input is OUNCES. 
+        // For SUGAR logic here, we assume POUNDS (standard commercial convention).
+        // If you enter 5 lbs of lactose, this works. 
         if (sugarPPG > 0 && weight > 0) {
-            // Sugars are 100% Efficient (They dissolve completely)
-            const points = sugarPPG * weight; 
-            totalPoints += points;
-            console.log(`Boil Sugar: ${name} | ${weight} lbs | +${points} Points`);
+             totalPoints += (sugarPPG * weight); 
         }
     });
 
-    // -------------------------------------------------------
-    // 3. FINAL TOTALS & UI UPDATES
-    // -------------------------------------------------------
-    
-    // Update Grain Percentages
-    document.querySelectorAll('#grain-container .ingredient-entry').forEach(row => {
-        const weight = parseFloat(row.querySelector('.grain-weight').value) || 0;
-        const pctField = row.querySelector('.grain-pct');
-        if (totalWeight > 0) pctField.value = ((weight / totalWeight) * 100).toFixed(1) + "%";
-        else pctField.value = "0%";
-    });
-
-    const volGal = batchBBL * 31;
-    const gravityPoints = totalPoints / volGal;
+    // --- 4. CALCULATE OG ---
+    const gravityPoints = totalPoints / batchGal;
     const estimatedOG = 1 + (gravityPoints / 1000);
-    
-    // Update Est OG
+
+    // Update OG UI
     document.getElementById('calc-preboil').innerText = estimatedOG.toFixed(3);
     const targetInput = document.getElementById('edit-og');
     if (targetInput) targetInput.value = estimatedOG.toFixed(3);
 
-    // Update Est Color
-    const MCU = totalMCU / volGal;
+    // --- 5. IBU CALCULATION (Tinseth) ---
+    let totalIBU = 0;
+    
+    document.querySelectorAll('#boil-container .ingredient-entry').forEach(row => {
+        const name = row.querySelector('.boil-name').value.toLowerCase();
+        const aa = parseFloat(row.querySelector('.boil-aa').value) || 0;
+        const weightOz = parseFloat(row.querySelector('.boil-oz').value) || 0; // Assumes Ounces for Hops
+        const min = parseFloat(row.querySelector('.boil-min').value) || 0;
+        const type = row.querySelector('.boil-type').value.toLowerCase();
+
+        // Skip sugars
+        if (aa === 0 || weightOz === 0) return;
+
+        // 1. Gravity Factor (Use estimated OG)
+        // Note: Tinseth uses Boil Gravity, but Batch OG is a close enough proxy for this UI
+        const bignessFactor = 1.65 * Math.pow(0.000125, (estimatedOG - 1));
+
+        // 2. Boil Time Factor
+        const timeFactor = (1 - Math.exp(-0.04 * min)) / 4.15;
+
+        // 3. Utilization
+        let utilization = bignessFactor * timeFactor;
+
+        // *Special Case: Whirlpool*
+        // Tinseth gives 0 utilization for 0 min. 
+        // Commercial brewers often assume ~15-20% utilization for hot whirlpool (180F+).
+        if ((type.includes('whirl') || type.includes('stand')) && min === 0) {
+             utilization = 0.05; // Arbitrary 5% utilization for WP logic (Adjust as needed)
+        }
+
+        // *Special Case: Incognito*
+        // If it's pure extract, utilization is higher, but we'll stick to Tinseth for now unless specified.
+
+        // 4. IBU Formula
+        // IBU = (AA% * W_oz * U% * 74.9) / V_gal
+        const ibu = (aa * weightOz * utilization * 74.9) / batchGal;
+        
+        totalIBU += ibu;
+    });
+
+    // Update IBU UI
+    const ibuInput = document.getElementById('edit-ibu');
+    if (ibuInput) ibuInput.value = Math.round(totalIBU);
+
+    // --- 6. COLOR (SRM) ---
+    const MCU = totalMCU / batchGal;
     const SRM = 1.4922 * Math.pow(MCU, 0.6859);
+    
     document.getElementById('calc-srm').innerText = isNaN(SRM) ? "0.0" : SRM.toFixed(1);
     document.getElementById('calc-swatch').style.background = srmToHex(SRM || 0);
+    
+    // --- 7. UPDATE PCT ---
+    document.querySelectorAll('#grain-container .ingredient-entry').forEach(row => {
+      const weight = parseFloat(row.querySelector('.grain-weight').value) || 0;
+      const pctField = row.querySelector('.grain-pct');
+      if(totalWeight > 0) pctField.value = ((weight / totalWeight) * 100).toFixed(1) + "%";
+      else pctField.value = "0%";
+    });
 }
 
   function getSRMColor(grains, batchSize) {
