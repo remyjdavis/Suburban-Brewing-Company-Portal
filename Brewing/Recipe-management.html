@@ -668,13 +668,14 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    loadPageData();
+    PageData();
 });
  
-  async function loadPageData() {
+ async function loadPageData() {
     try {
-        // Added redirect: 'follow' to ensure we follow Google's redirect to the data
-        const res = await fetch(RECIPE_API_URL, {
+        // --- FIX: Add Cache Buster (?v=...) to force fresh data ---
+        const cacheBuster = "?v=" + new Date().getTime();
+        const res = await fetch(RECIPE_API_URL + cacheBuster, {
             method: 'GET',
             redirect: 'follow'
         });
@@ -1257,7 +1258,7 @@ function calculateCardIBU(r) {
     }
     if (!boilList || !Array.isArray(boilList)) return 0;
 
-    // 2. Default Batch Size (Critical for older recipes)
+    // 2. Default Batch Size
     let batchBBL = parseFloat(r.batchSize);
     if (!batchBBL || batchBBL === 0) batchBBL = 10.0;
     const batchGal = batchBBL * 31;
@@ -1269,16 +1270,18 @@ function calculateCardIBU(r) {
     let totalIBU = 0;
 
     boilList.forEach(row => {
+        // --- CRITICAL FIX: Handle "Undefined" Rows ---
+        // If a row is null/undefined, skip it immediately to prevent crash
+        if (!row) return; 
+
         // Expected Row: [Name, AA, Oz, Min, Type]
         const name = String(row[0] || "").toLowerCase();
         
         // Use parseFloat to handle strings like "12.5"
         const aa = parseFloat(row[1]); 
         
-        // --- SKIP LOGIC ---
-        // If AA is missing, 0, or NaN (e.g. Dextrose/Lactose), skip this row.
+        // Skip if AA is missing, 0, or NaN (e.g. Dextrose)
         if (!aa || isNaN(aa) || aa <= 0) {
-            // console.log(`Skipping non-bitter ingredient: ${name}`);
             return; 
         }
 
