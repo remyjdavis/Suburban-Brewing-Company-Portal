@@ -673,7 +673,7 @@ window.addEventListener('DOMContentLoaded', () => {
  
  async function loadPageData() {
     try {
-        // 1. Fetch with Cache Buster
+        // 1. Fetch with Cache Buster (Forces fresh data from Google)
         const cacheBuster = "?v=" + new Date().getTime();
         const res = await fetch(RECIPE_API_URL + cacheBuster, {
             method: 'GET',
@@ -684,9 +684,9 @@ window.addEventListener('DOMContentLoaded', () => {
         
         const data = await res.json();
         
-        // --- ADD THIS LINE ---
-        window.PageData = data;  // <--- FIXES "Can't find variable: PageData"
-        // ---------------------
+        // --- 🟢 THIS IS THE MISSING LINE THAT FIXES THE ERROR ---
+        window.PageData = data; 
+        // --------------------------------------------------------
 
         let recipes = [];
         if (Array.isArray(data)) { recipes = data; } 
@@ -699,53 +699,54 @@ window.addEventListener('DOMContentLoaded', () => {
           refBoilMisc = data.refBoilMisc || []; 
         }
 
-      const list = document.getElementById('grain-list');
-      list.innerHTML = '';
-      refGrains.forEach(g => {
-        const opt = document.createElement('option');
-        opt.value = g.name;
-        list.appendChild(opt);
-      });
+        // ... Populate Dropdowns ...
+        const list = document.getElementById('grain-list');
+        list.innerHTML = '';
+        refGrains.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.name;
+            list.appendChild(opt);
+        });
 
-      const saltList = document.getElementById('salt-list');
-      saltList.innerHTML = '';
-      refWaterAdditions.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.name; 
-        saltList.appendChild(opt);
-      });
+        const saltList = document.getElementById('salt-list');
+        saltList.innerHTML = '';
+        refWaterAdditions.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.name; 
+            saltList.appendChild(opt);
+        });
 
-      const hopList = document.getElementById('hop-list');
-      hopList.innerHTML = '';
-      refHops.forEach(h => {
-        const opt = document.createElement('option');
-        opt.value = h.name;
-        hopList.appendChild(opt);
-      });
-      
-      const boilList = document.getElementById('boil-ingredients-list');
-      boilList.innerHTML = '';
-      refHops.forEach(h => { const opt = document.createElement('option'); opt.value = h.name; boilList.appendChild(opt); });
-      refBoilMisc.forEach(m => { const opt = document.createElement('option'); opt.value = m.name; boilList.appendChild(opt); });
+        const hopList = document.getElementById('hop-list');
+        hopList.innerHTML = '';
+        refHops.forEach(h => {
+            const opt = document.createElement('option');
+            opt.value = h.name;
+            hopList.appendChild(opt);
+        });
+        
+        const boilList = document.getElementById('boil-ingredients-list');
+        boilList.innerHTML = '';
+        refHops.forEach(h => { const opt = document.createElement('option'); opt.value = h.name; boilList.appendChild(opt); });
+        refBoilMisc.forEach(m => { const opt = document.createElement('option'); opt.value = m.name; boilList.appendChild(opt); });
 
-      const yeastSelect = document.getElementById('yeast-strain');
-      yeastSelect.innerHTML = '<option value="">Select Yeast</option>';
-      refYeast.forEach(y => {
-        const opt = document.createElement('option');
-        opt.value = y.strain;
-        opt.textContent = `${y.strain} (${y.lab || ''})`;
-        yeastSelect.appendChild(opt);
-      });
+        const yeastSelect = document.getElementById('yeast-strain');
+        yeastSelect.innerHTML = '<option value="">Select Yeast</option>';
+        refYeast.forEach(y => {
+            const opt = document.createElement('option');
+            opt.value = y.strain;
+            opt.textContent = `${y.strain} (${y.lab || ''})`;
+            yeastSelect.appendChild(opt);
+        });
 
-      document.getElementById('yeast-strain').addEventListener('change', e => {
-        const y = refYeast.find(r => r.strain === e.target.value);
-        if (!y) return;
-        document.getElementById('pitch-rate').value ||= y.defaultPitch || '';
-        document.getElementById('ko-temp').value ||= y.idealTemp || '';
-      });
+        document.getElementById('yeast-strain').addEventListener('change', e => {
+            const y = refYeast.find(r => r.strain === e.target.value);
+            if (!y) return;
+            document.getElementById('pitch-rate').value ||= y.defaultPitch || '';
+            document.getElementById('ko-temp').value ||= y.idealTemp || '';
+        });
 
-      recipes.sort((a, b) => a.name.localeCompare(b.name));
-      renderPortfolio(recipes);
+        recipes.sort((a, b) => a.name.localeCompare(b.name));
+        renderPortfolio(recipes);
 
     } catch (err) { console.error("API Error:", err); }
   }
