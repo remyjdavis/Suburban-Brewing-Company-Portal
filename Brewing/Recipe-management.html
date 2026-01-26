@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <script>
+    window.PageData = {}; // <--- PASTE THIS HERE
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
@@ -671,9 +672,9 @@ window.addEventListener('DOMContentLoaded', () => {
     PageData();
 });
  
- async function loadPageData() {
+async function loadPageData() {
     try {
-        // 1. Fetch with Cache Buster to force fresh data
+        // --- PASTE THESE LINES ---
         const cacheBuster = "?v=" + new Date().getTime();
         const res = await fetch(RECIPE_API_URL + cacheBuster, {
             method: 'GET',
@@ -683,10 +684,8 @@ window.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) throw new Error('Network response was not ok');
         
         const data = await res.json();
-        
-        // --- 🟢 FIX: SAVE DATA GLOBALLY FOR PORTAL.JS ---
-        window.PageData = data; 
-        // ------------------------------------------------
+        window.PageData = data; // <--- CRITICAL FIX
+        // -------------------------
 
         let recipes = [];
         if (Array.isArray(data)) { recipes = data; } 
