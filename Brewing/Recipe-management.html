@@ -987,45 +987,42 @@ window.addEventListener('DOMContentLoaded', () => {
     const batchBBL = parseFloat(document.getElementById('edit-batch-size').value) || 0;
     const eff = parseFloat(document.getElementById('efficiency').value) || 85;
 
-    // 1. Safety Check: Cannot calculate gravity without volume
+    // Safety Check
     if (batchBBL === 0) return;
 
     let totalPoints = 0;
     let totalMCU = 0;
     let totalWeight = 0;
 
-    // 2. Iterate through all grain rows
+    console.log("--- Calculation Debug ---");
+
+    // -------------------------------------------------------
+    // 1. GRAIN CALCULATION (Mashed Items)
+    // -------------------------------------------------------
     document.querySelectorAll('#grain-container .ingredient-entry').forEach(row => {
         const name = row.querySelector('.grain-search').value;
         const weight = parseFloat(row.querySelector('.grain-weight').value) || 0;
-
-        // Find the grain in your reference data
         const ref = refGrains.find(r => r.name === name);
 
         if (ref && weight > 0) {
-            // --- FIX: ROBUST POTENTIAL DETECTION ---
+            // Get Moisture (Default to 4% if missing)
+            const moisture = ref.moisture ? parseFloat(ref.moisture) : 4.0;
+            
+            // Determine Dry Basis Yield (FGDB)
             let rawPotential = parseFloat(ref.potential);
-            let potentialPPG = 0;
+            let fgdbPercent = 0;
 
-            if (isNaN(rawPotential)) {
-                potentialPPG = 0;
-            } else if (rawPotential < 1.0) {
-                // Case A: Decimal Yield (e.g., 0.78 for 78%)
-                // Fixes the "Below 1" issue
-                potentialPPG = 46 * rawPotential;
-            } else if (rawPotential >= 1.0 && rawPotential < 2.0) {
-                // Case B: Specific Gravity (e.g., 1.036)
-                potentialPPG = (rawPotential - 1) * 1000;
-            } else if (rawPotential > 48) {
-                // Case C: Percentage Yield (e.g., 78 or 78%)
-                potentialPPG = 46 * (rawPotential / 100);
-            } else {
-                // Case D: Points (e.g., 36 or 37)
-                potentialPPG = rawPotential;
-            }
+            if (isNaN(rawPotential)) { fgdbPercent = 0; } 
+            else if (rawPotential < 1.0) { fgdbPercent = rawPotential * 100; } 
+            else if (rawPotential >= 1.0 && rawPotential < 2.0) { fgdbPercent = ((rawPotential - 1) * 1000) / 46 * 100; } 
+            else { fgdbPercent = rawPotential; }
 
-            // Calculate points: PPG * Lbs * Efficiency
-            const points = potentialPPG * weight * (eff / 100);
+            // Convert to "As-Is" PPG
+            const moistureFactor = 1 - (moisture / 100);
+            const asIsPPG = 46 * (fgdbPercent / 100) * moistureFactor;
+
+            // Calculate mashed points (Subject to Efficiency)
+            const points = asIsPPG * weight * (eff / 100);
 
             totalPoints += points;
             totalMCU += (weight * (parseFloat(ref.color) || 0));
@@ -1033,7 +1030,44 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. Update Weight Percentages
+    // -------------------------------------------------------
+    // 2. BOIL ADDITIONS (Sugars/Extracts)
+    // -------------------------------------------------------
+    document.querySelectorAll('#boil-container .ingredient-entry').forEach(row => {
+        const name = row.querySelector('.boil-name').value.toLowerCase();
+        // Assuming boil additions for SUGAR are in LBS for a 10 BBL system
+        const weight = parseFloat(row.querySelector('.boil-oz').value) || 0; 
+        
+        let sugarPPG = 0;
+
+        // Detect type based on name
+        if (name.includes('dextrose') || name.includes('corn sugar') || name.includes('sugar')) {
+            sugarPPG = 46;
+        } else if (name.includes('lactose') || name.includes('milk sugar')) {
+            sugarPPG = 35; // Unfermentable, but adds to OG
+        } else if (name.includes('dme') || name.includes('dry malt')) {
+            sugarPPG = 44;
+        } else if (name.includes('lme') || name.includes('liquid malt')) {
+            sugarPPG = 36;
+        } else if (name.includes('honey')) {
+            sugarPPG = 35;
+        } else if (name.includes('candy') || name.includes('candi')) {
+            sugarPPG = 32;
+        }
+
+        if (sugarPPG > 0 && weight > 0) {
+            // Sugars are 100% Efficient (They dissolve completely)
+            const points = sugarPPG * weight; 
+            totalPoints += points;
+            console.log(`Boil Sugar: ${name} | ${weight} lbs | +${points} Points`);
+        }
+    });
+
+    // -------------------------------------------------------
+    // 3. FINAL TOTALS & UI UPDATES
+    // -------------------------------------------------------
+    
+    // Update Grain Percentages
     document.querySelectorAll('#grain-container .ingredient-entry').forEach(row => {
         const weight = parseFloat(row.querySelector('.grain-weight').value) || 0;
         const pctField = row.querySelector('.grain-pct');
@@ -1041,24 +1075,18 @@ window.addEventListener('DOMContentLoaded', () => {
         else pctField.value = "0%";
     });
 
-    // 4. Calculate Final Gravity Stats
-    const volGal = batchBBL * 31; // Convert BBL to Gallons
+    const volGal = batchBBL * 31;
     const gravityPoints = totalPoints / volGal;
+    const estimatedOG = 1 + (gravityPoints / 1000);
     
-    // Ensure OG never drops below 1.000 (Physics check)
-    const estimatedOG = 1 + (Math.max(0, gravityPoints) / 1000);
-
-    // Update the "Est. OG" display in the top bar
+    // Update Est OG
     document.getElementById('calc-preboil').innerText = estimatedOG.toFixed(3);
-
-    // Push Calculated OG to the "Target OG" input field
     const targetInput = document.getElementById('edit-og');
     if (targetInput) targetInput.value = estimatedOG.toFixed(3);
 
-    // 5. Calculate Color (SRM)
+    // Update Est Color
     const MCU = totalMCU / volGal;
     const SRM = 1.4922 * Math.pow(MCU, 0.6859);
-
     document.getElementById('calc-srm').innerText = isNaN(SRM) ? "0.0" : SRM.toFixed(1);
     document.getElementById('calc-swatch').style.background = srmToHex(SRM || 0);
 }
