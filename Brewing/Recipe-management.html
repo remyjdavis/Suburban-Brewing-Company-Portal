@@ -1254,61 +1254,51 @@ async function loadPageData() {
 // UPDATED CALCULATOR: Handles Text Inputs & Skips Dextrose
 // ---------------------------------------------------------
 function calculateCardIBU(r) {
-    let boilList = r.boil;
+      let boilList = r.boil;
+      // 1. Safety Check: Ensure list exists
+      if (typeof boilList === 'string') { try { boilList = JSON.parse(boilList); } catch (e) { return 0; } }
+      if (!boilList || !Array.isArray(boilList)) return 0;
 
-    // 1. Parse stringified JSON if necessary
-    if (typeof boilList === 'string') {
-        try { boilList = JSON.parse(boilList); } catch (e) { return 0; }
-    }
-    if (!boilList || !Array.isArray(boilList)) return 0;
+      // 2. Safety Check: Default Batch Size to 10 if missing
+      let batchBBL = parseFloat(r.batchSize);
+      if (!batchBBL || batchBBL <= 0) batchBBL = 10.0;
+      const batchGal = batchBBL * 31;
 
-    // 2. Default Batch Size
-    let batchBBL = parseFloat(r.batchSize);
-    if (!batchBBL || batchBBL === 0) batchBBL = 10.0;
-    const batchGal = batchBBL * 31;
+      // 3. Safety Check: Default OG
+      let estimatedOG = parseFloat(r.og);
+      if (!estimatedOG || estimatedOG <= 0) estimatedOG = 1.050;
 
-    // 3. Default OG
-    let estimatedOG = parseFloat(r.og);
-    if (!estimatedOG || estimatedOG === 0) estimatedOG = 1.050;
+      let totalIBU = 0;
 
-    let totalIBU = 0;
+      boilList.forEach(row => {
+          if (!row) return; // Skip empty rows
 
-    boilList.forEach(row => {
-        // --- CRITICAL FIX: Handle "Undefined" Rows ---
-        // If a row is null/undefined, skip it immediately to prevent crash
-        if (!row) return; 
+          // FIX: Handle "23.00%" string by removing % before parsing
+          let aaString = String(row[1] || ""); 
+          let aa = parseFloat(aaString.replace("%", ""));
 
-        // Expected Row: [Name, AA, Oz, Min, Type]
-        const name = String(row[0] || "").toLowerCase();
-        
-        // Use parseFloat to handle strings like "12.5"
-        const aa = parseFloat(row[1]); 
-        
-        // Skip if AA is missing, 0, or NaN (e.g. Dextrose)
-        if (!aa || isNaN(aa) || aa <= 0) {
-            return; 
-        }
+          // FIX: If AA is blank (Dextrose) or 0, skip this ingredient
+          if (!aa || isNaN(aa) || aa <= 0) return;
 
-        const oz = parseFloat(row[2]) || 0;
-        const min = parseFloat(row[3]) || 0;
-        const type = String(row[4] || "").toLowerCase();
+          const oz = parseFloat(row[2]) || 0;
+          const min = parseFloat(row[3]) || 0;
+          const type = String(row[4] || "").toLowerCase();
 
-        if (oz > 0) {
-            const bigness = 1.65 * Math.pow(0.000125, (estimatedOG - 1));
-            const timeFactor = (1 - Math.exp(-0.04 * min)) / 4.15;
-            let util = bigness * timeFactor;
-            
-            // Whirlpool Logic (0 min + "whirl" = 5% Util)
-            if (min === 0 && (type.includes('whirl') || type.includes('stand'))) {
-                util = 0.05; 
-            }
+          if (oz > 0) {
+              const bigness = 1.65 * Math.pow(0.000125, (estimatedOG - 1));
+              const timeFactor = (1 - Math.exp(-0.04 * min)) / 4.15;
+              let util = bigness * timeFactor;
+              
+              // Whirlpool Exception (0 min + "whirl" = 5% Util)
+              if (min === 0 && (type.includes('whirl') || type.includes('stand'))) { 
+                  util = 0.05; 
+              }
 
-            totalIBU += (aa * oz * util * 74.9) / batchGal;
-        }
-    });
-    
-    return totalIBU;
-}
+              totalIBU += (aa * oz * util * 74.9) / batchGal;
+          }
+      });
+      return totalIBU;
+  }
 </script>
 </body>
 </html>
