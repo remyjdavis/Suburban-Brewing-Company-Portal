@@ -1177,98 +1177,138 @@ window.addEventListener('DOMContentLoaded', () => {
     if(!active) el.classList.add('active');
   }
 
-  function renderPortfolio(recipes) {
-    const container = document.getElementById('portfolio-container');
-    container.innerHTML = '';
-    const categories = [...new Set(recipes.map(r => r.category || 'Uncategorized'))];
+  // REPLACE your existing renderPortfolio function with this:
+function renderPortfolio(recipes) {
+  const container = document.getElementById('portfolio-container');
+  container.innerHTML = '';
+  const categories = [...new Set(recipes.map(r => r.category || 'Uncategorized'))];
+  
+  console.log("--- DEBUG: Rendering Portfolio ---");
+
+  categories.forEach(cat => {
+    const group = document.createElement('div');
+    group.className = 'category-group';
     
-    categories.forEach(cat => {
-      const group = document.createElement('div');
-      group.className = 'category-group';
-      const title = document.createElement('div');
-      title.className = 'category-header';
-      title.innerText = cat;
+    // Header
+    const title = document.createElement('div');
+    title.className = 'category-header';
+    title.innerText = cat;
+    group.appendChild(title);
+    
+    // Scroll Container
+    const scrollArea = document.createElement('div');
+    scrollArea.className = 'horizontal-scroll-container';
+    
+    recipes.filter(r => (r.category || 'Uncategorized') === cat).forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'recipe-card';
       
-      const scrollArea = document.createElement('div');
-      scrollArea.className = 'horizontal-scroll-container';
+      // 1. Calculate Color
+      const colorHex = getSRMColor(r.grains, r.batchSize);
       
-      recipes.filter(r => (r.category || 'Uncategorized') === cat).forEach(r => {
-        const card = document.createElement('div');
-        card.className = 'recipe-card';
-        const colorHex = getSRMColor(r.grains, r.batchSize);
-        
-        // --- FIX: Auto-Calculate IBU for Display if missing ---
-        let displayIBU = r.ibu;
-        if (!displayIBU || displayIBU === "" || displayIBU === "0") {
-             displayIBU = calculateCardIBU(r); // Calc on the fly
-        }
-        
-        card.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:start;">
-            <div>
-              <h3 style="margin:0 0 5px 0;">${r.name}</h3>
-              <div style="font-size:0.8rem; color:#6b7280; font-weight:bold;">${r.style}</div>
-            </div>
-            <div style="width:20px; height:20px; border-radius:50%; background:${colorHex}; border:1px solid #ddd;" title="Est. Color"></div>
+      // 2. FORCE IBU Calculation
+      // We ignore the saved value for a moment to see if we can calc it live
+      let displayIBU = r.ibu;
+      
+      // If invalid, calculate it now
+      if (!displayIBU || displayIBU == 0 || displayIBU === "-" || isNaN(displayIBU)) {
+          displayIBU = calculateCardIBU(r);
+      }
+
+      // 3. FORCE ABV Display
+      let displayABV = r.abv;
+      if (!displayABV || displayABV === "") {
+          displayABV = "-"; 
+      }
+      
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:start;">
+          <div>
+            <h3 style="margin:0 0 5px 0;">${r.name}</h3>
+            <div style="font-size:0.8rem; color:#6b7280; font-weight:bold;">${r.style}</div>
           </div>
-          <div style="margin-top:15px; display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.85rem;">
-            <div style="background:#f3f4f6; padding:8px; border-radius:6px; text-align:center;">
-              <div style="font-size:0.7rem; color:#6b7280; font-weight:bold;">ABV</div>
-              <div style="font-weight:800;">${r.abv || '-'}%</div>
-            </div>
-            <div style="background:#f3f4f6; padding:8px; border-radius:6px; text-align:center;">
-              <div style="font-size:0.7rem; color:#6b7280; font-weight:bold;">IBU</div>
-              <div style="font-weight:800;">${Math.round(displayIBU) || '-'}</div>
-            </div>
+          <div style="width:20px; height:20px; border-radius:50%; background:${colorHex}; border:1px solid #ddd;" title="Est. Color"></div>
+        </div>
+        <div style="margin-top:15px; display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.85rem;">
+          <div style="background:#f3f4f6; padding:8px; border-radius:6px; text-align:center;">
+            <div style="font-size:0.7rem; color:#6b7280; font-weight:bold;">ABV</div>
+            <div style="font-weight:800;">${displayABV}%</div>
           </div>
-          <button class="btn-edit" onclick='openEditor("EDIT", "${r.name.replace(/'/g, "&#39;")}", ${JSON.stringify(r).replace(/'/g, "&#39;")})'>Edit Recipe</button>
-        `;
-        scrollArea.appendChild(card);
-      });
-      group.appendChild(title);
-      group.appendChild(scrollArea);
-      container.appendChild(group);
+          <div style="background:#f3f4f6; padding:8px; border-radius:6px; text-align:center;">
+            <div style="font-size:0.7rem; color:#6b7280; font-weight:bold;">IBU</div>
+            <div style="font-weight:800;">${Math.round(displayIBU)}</div>
+          </div>
+        </div>
+        <button class="btn-edit" onclick='openEditor("EDIT", "${r.name.replace(/'/g, "&#39;")}", ${JSON.stringify(r).replace(/'/g, "&#39;")})'>Edit Recipe</button>
+      `;
+      scrollArea.appendChild(card);
     });
-    enableMouseDragScrolling();
-  }
+    
+    group.appendChild(scrollArea);
+    container.appendChild(group);
+  });
+  
+  enableMouseDragScrolling();
+}
 
-  // --- NEW HELPER FUNCTION: Calculate IBU for the Card View ---
-  function calculateCardIBU(r) {
-      if (!r.boil || !r.batchSize) return 0;
+// REPLACE your existing calculateCardIBU with this robust version:
+function calculateCardIBU(r) {
+    let boilList = r.boil;
 
-      let totalIBU = 0;
-      const batchGal = parseFloat(r.batchSize) * 31;
-      const estimatedOG = parseFloat(r.og) || 1.050; // Default to 1.050 if OG is missing
+    // FIX 1: Handle if Backend sent a JSON string instead of an Array
+    if (typeof boilList === 'string') {
+        try {
+            boilList = JSON.parse(boilList);
+        } catch (e) {
+            console.warn(`Cannot parse boil list for ${r.name}`);
+            return 0;
+        }
+    }
 
-      r.boil.forEach(row => {
-          // Data structure: [Name, AA, Oz, Min, Type]
-          const aa = parseFloat(row[1]) || 0;
-          const oz = parseFloat(row[2]) || 0;
-          const min = parseFloat(row[3]) || 0;
-          const type = (row[4] || "").toLowerCase();
+    // Check if list is valid
+    if (!boilList || !Array.isArray(boilList) || boilList.length === 0) {
+        return 0;
+    }
 
-          if (aa > 0 && oz > 0) {
-              // 1. Bigness Factor
-              const bigness = 1.65 * Math.pow(0.000125, (estimatedOG - 1));
-              
-              // 2. Time Factor
-              const timeFactor = (1 - Math.exp(-0.04 * min)) / 4.15;
-              
-              // 3. Utilization
-              let util = bigness * timeFactor;
-              
-              // Whirlpool adjustment (if 0 min but labeled whirlpool)
-              if (min === 0 && (type.includes('whirl') || type.includes('stand'))) {
-                  util = 0.05; 
-              }
+    // FIX 2: Default Batch Size to 10 if missing (Prevents division by zero)
+    let batchBBL = parseFloat(r.batchSize);
+    if (!batchBBL || isNaN(batchBBL) || batchBBL === 0) {
+        batchBBL = 10.0; 
+    }
+    const batchGal = batchBBL * 31;
 
-              // 4. IBU
-              totalIBU += (aa * oz * util * 74.9) / batchGal;
-          }
-      });
-      
-      return totalIBU;
-  }
+    // FIX 3: Default OG to 1.050 if missing
+    let estimatedOG = parseFloat(r.og);
+    if (!estimatedOG || isNaN(estimatedOG)) estimatedOG = 1.050;
+
+    let totalIBU = 0;
+
+    boilList.forEach(row => {
+        // Data Structure: [Name, AA, Oz, Min, Type]
+        // Ensure values are numbers
+        const aa = parseFloat(row[1]) || 0;
+        const oz = parseFloat(row[2]) || 0;
+        const min = parseFloat(row[3]) || 0;
+        const type = (row[4] || "").toLowerCase();
+
+        if (aa > 0 && oz > 0) {
+            // Tinseth Formula
+            const bigness = 1.65 * Math.pow(0.000125, (estimatedOG - 1));
+            const timeFactor = (1 - Math.exp(-0.04 * min)) / 4.15;
+            let util = bigness * timeFactor;
+            
+            // Handle Whirlpool (0 min but labeled whirlpool = 5% Util)
+            if (min === 0 && (type.includes('whirl') || type.includes('stand') || type.includes('pool'))) {
+                util = 0.05; 
+            }
+
+            // IBU = (AA% * Oz * Util * 74.9) / Gallons
+            totalIBU += (aa * oz * util * 74.9) / batchGal;
+        }
+    });
+    
+    return totalIBU;
+}
 </script>
 </body>
 </html>
