@@ -1197,6 +1197,12 @@ window.addEventListener('DOMContentLoaded', () => {
         card.className = 'recipe-card';
         const colorHex = getSRMColor(r.grains, r.batchSize);
         
+        // --- FIX: Auto-Calculate IBU for Display if missing ---
+        let displayIBU = r.ibu;
+        if (!displayIBU || displayIBU === "" || displayIBU === "0") {
+             displayIBU = calculateCardIBU(r); // Calc on the fly
+        }
+        
         card.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:start;">
             <div>
@@ -1212,7 +1218,7 @@ window.addEventListener('DOMContentLoaded', () => {
             </div>
             <div style="background:#f3f4f6; padding:8px; border-radius:6px; text-align:center;">
               <div style="font-size:0.7rem; color:#6b7280; font-weight:bold;">IBU</div>
-              <div style="font-weight:800;">${r.ibu || '-'}</div>
+              <div style="font-weight:800;">${Math.round(displayIBU) || '-'}</div>
             </div>
           </div>
           <button class="btn-edit" onclick='openEditor("EDIT", "${r.name.replace(/'/g, "&#39;")}", ${JSON.stringify(r).replace(/'/g, "&#39;")})'>Edit Recipe</button>
@@ -1224,6 +1230,44 @@ window.addEventListener('DOMContentLoaded', () => {
       container.appendChild(group);
     });
     enableMouseDragScrolling();
+  }
+
+  // --- NEW HELPER FUNCTION: Calculate IBU for the Card View ---
+  function calculateCardIBU(r) {
+      if (!r.boil || !r.batchSize) return 0;
+
+      let totalIBU = 0;
+      const batchGal = parseFloat(r.batchSize) * 31;
+      const estimatedOG = parseFloat(r.og) || 1.050; // Default to 1.050 if OG is missing
+
+      r.boil.forEach(row => {
+          // Data structure: [Name, AA, Oz, Min, Type]
+          const aa = parseFloat(row[1]) || 0;
+          const oz = parseFloat(row[2]) || 0;
+          const min = parseFloat(row[3]) || 0;
+          const type = (row[4] || "").toLowerCase();
+
+          if (aa > 0 && oz > 0) {
+              // 1. Bigness Factor
+              const bigness = 1.65 * Math.pow(0.000125, (estimatedOG - 1));
+              
+              // 2. Time Factor
+              const timeFactor = (1 - Math.exp(-0.04 * min)) / 4.15;
+              
+              // 3. Utilization
+              let util = bigness * timeFactor;
+              
+              // Whirlpool adjustment (if 0 min but labeled whirlpool)
+              if (min === 0 && (type.includes('whirl') || type.includes('stand'))) {
+                  util = 0.05; 
+              }
+
+              // 4. IBU
+              totalIBU += (aa * oz * util * 74.9) / batchGal;
+          }
+      });
+      
+      return totalIBU;
   }
 </script>
 </body>
