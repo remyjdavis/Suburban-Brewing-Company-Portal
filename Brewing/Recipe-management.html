@@ -986,25 +986,51 @@ window.addEventListener('DOMContentLoaded', () => {
   function calculateStats() {
     const batchBBL = parseFloat(document.getElementById('edit-batch-size').value) || 0;
     const eff = parseFloat(document.getElementById('efficiency').value) || 85;
+    
+    // 1. Safety Check: Cannot calculate gravity without volume
     if(batchBBL === 0) return;
 
     let totalPoints = 0;
     let totalMCU = 0;
     let totalWeight = 0;
     
+    // 2. Iterate through all grain rows
     document.querySelectorAll('#grain-container .ingredient-entry').forEach(row => {
       const name = row.querySelector('.grain-search').value;
       const weight = parseFloat(row.querySelector('.grain-weight').value) || 0;
+      
+      // Find the grain in your reference data
       const ref = refGrains.find(r => r.name === name);
+      
       if(ref && weight > 0) {
-        const potentialPPG = 46 * (parseFloat(ref.potential) / 100); 
+        // --- FIX: ROBUST POTENTIAL DETECTION ---
+        let rawPotential = parseFloat(ref.potential);
+        let potentialPPG = 0;
+
+        if (isNaN(rawPotential)) {
+            potentialPPG = 0; 
+        } else if (rawPotential < 2.0) {
+            // Case A: Data is Specific Gravity (e.g., 1.036)
+            potentialPPG = (rawPotential - 1) * 1000;
+        } else if (rawPotential > 48) {
+            // Case B: Data is Yield % (e.g., 78 or 78%)
+            // (Assumes max PPG is 46 for sucrose, so >48 must be %)
+            potentialPPG = 46 * (rawPotential / 100);
+        } else {
+            // Case C: Data is Points (e.g., 36 or 37)
+            potentialPPG = rawPotential;
+        }
+
+        // Calculate points: PPG * Lbs * Efficiency
         const points = potentialPPG * weight * (eff / 100);
+        
         totalPoints += points;
-        totalMCU += (weight * ref.color);
+        totalMCU += (weight * (parseFloat(ref.color) || 0));
         totalWeight += weight;
       }
     });
 
+    // 3. Update Weight Percentages
     document.querySelectorAll('#grain-container .ingredient-entry').forEach(row => {
       const weight = parseFloat(row.querySelector('.grain-weight').value) || 0;
       const pctField = row.querySelector('.grain-pct');
@@ -1012,15 +1038,25 @@ window.addEventListener('DOMContentLoaded', () => {
       else pctField.value = "0%";
     });
 
-    const volGal = batchBBL * 31; 
+    // 4. Calculate Final Gravity Stats
+    const volGal = batchBBL * 31; // Convert BBL to Gallons
     const gravityPoints = totalPoints / volGal;
     const estimatedOG = 1 + (gravityPoints / 1000);
+    
+    // Update the "Est. OG" display in the top bar
     document.getElementById('calc-preboil').innerText = estimatedOG.toFixed(3);
 
+    // --- FIX: Push Calculated OG to the "Target OG" input field ---
+    // This ensures the saved recipe uses the calculated value
+    const targetInput = document.getElementById('edit-og');
+    if (targetInput) targetInput.value = estimatedOG.toFixed(3);
+
+    // 5. Calculate Color (SRM)
     const MCU = totalMCU / volGal;
     const SRM = 1.4922 * Math.pow(MCU, 0.6859);
-    document.getElementById('calc-srm').innerText = SRM.toFixed(1);
-    document.getElementById('calc-swatch').style.background = srmToHex(SRM);
+    
+    document.getElementById('calc-srm').innerText = isNaN(SRM) ? "0.0" : SRM.toFixed(1);
+    document.getElementById('calc-swatch').style.background = srmToHex(SRM || 0);
   }
 
   function getSRMColor(grains, batchSize) {
