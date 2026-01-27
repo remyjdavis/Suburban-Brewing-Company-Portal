@@ -6,8 +6,6 @@
         localStorage.setItem("user_name", "Eric Yost");
         localStorage.setItem("user_role", "Owner");
         localStorage.setItem("sbc_driver_name", "Eric Yost");
-        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
     } 
 
     const auth = localStorage.getItem("sbc_auth") === "true" || sessionStorage.getItem("sbc_auth") === "true";
