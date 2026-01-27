@@ -1,17 +1,29 @@
-// --- 1. THE GATEKEEPER (Security) ---
+// --- 1. THE GATEKEEPER (Security & Boss Mode) ---
 (function() {
+    // A. CHECK FOR MAGIC KEY (URL)
     const params = new URLSearchParams(window.location.search);
     if (params.get("key") === "boss") {
         localStorage.setItem("sbc_auth", "true");
         localStorage.setItem("user_name", "Eric Yost");
         localStorage.setItem("user_role", "Owner");
+        localStorage.setItem("user_title", "Owner");
         localStorage.setItem("sbc_driver_name", "Eric Yost");
+        // Note: URL cleaning removed so key stays in bookmark
+    }
+
+    // B. BOSS MEMORY CHECK (Centralized Boss Mode)
+    // If the phone remembers he is the Owner, auto-login immediately.
+    if (localStorage.getItem("user_role") === "Owner") {
+        localStorage.setItem("sbc_auth", "true");
+        sessionStorage.setItem("sbc_auth", "true");
     } 
 
+    // C. SECURITY CHECK
     const auth = localStorage.getItem("sbc_auth") === "true" || sessionStorage.getItem("sbc_auth") === "true";
     const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/") || window.location.pathname.includes("login.html");
     
     if (!auth && !isLoginPage) {
+        // Only redirect if NOT the boss
         window.location.href = "/Suburban-Brewing-Company-Portal/login.html";
     }
 })();
