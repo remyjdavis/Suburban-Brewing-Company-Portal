@@ -1879,6 +1879,30 @@ function saveInvoice() {
     }
 }
     document.getElementById("print-invoice-btn").addEventListener("click", printInvoice);
+    // Add this inside your window.addEventListener('DOMContentLoaded', ...) block
+// OR run it at the bottom of your script
+
+(async function autoPopulateInvoiceNumber() {
+    const invInput = document.getElementById("invoice-number");
+    if (!invInput) return;
+
+    invInput.value = "Generating..."; // Placeholder
+
+    try {
+        // 🟢 FIX: Changed MASTER_API_URL to API_URL
+        const res = await fetch(`${API_URL}?action=getNextInvoiceNumber`);
+        const data = await res.json();
+
+        if (data.nextInvoice) {
+            invInput.value = data.nextInvoice; 
+        } else {
+            invInput.value = ""; 
+        }
+    } catch (e) {
+        console.error("Auto-pop failed", e);
+        invInput.value = ""; 
+    }
+})();
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
   <div style="background:#fff; width:450px; margin:5% auto; padding:25px; border-radius:8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
