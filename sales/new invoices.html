@@ -1879,22 +1879,22 @@ function saveInvoice() {
     }
 }
     document.getElementById("print-invoice-btn").addEventListener("click", printInvoice);
-    // Add this inside your window.addEventListener('DOMContentLoaded', ...) block
-// OR run it at the bottom of your script
-
-(async function autoPopulateInvoiceNumber() {
+  
+    (async function autoPopulateInvoiceNumber() {
     const invInput = document.getElementById("invoice-number");
     if (!invInput) return;
 
-    invInput.value = "Generating..."; // Placeholder
+    invInput.value = "Generating..."; 
 
     try {
-        // 🟢 FIX: Changed MASTER_API_URL to API_URL
         const res = await fetch(`${API_URL}?action=getNextInvoiceNumber`);
         const data = await res.json();
 
         if (data.nextInvoice) {
             invInput.value = data.nextInvoice; 
+            
+            // 🟢 FORCE THE BARCODE TO GENERATE
+            invInput.dispatchEvent(new Event('change')); 
         } else {
             invInput.value = ""; 
         }
