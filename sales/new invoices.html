@@ -908,73 +908,89 @@ table.invoice-table {
       return found;
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Basic UI Setup
     const today = new Date().toLocaleDateString();
     document.getElementById("current-date").textContent = today;
     document.getElementById("invoice-date").textContent = today;
-    
-   // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
+    document.getElementById('copyright-year').innerText = new Date().getFullYear();
+
     if (typeof setupUserProfile === 'function') setupUserProfile();
     if (typeof checkUnreadCount === 'function') checkUnreadCount();
 
-    // 2. Set Footer Year
-    document.getElementById('copyright-year').innerText = new Date().getFullYear();
-      
-   document.getElementById("email-invoice-btn").addEventListener("click", async () => {
-    // 1. Validation: Ensure the invoice was saved first to get the fileId
-    if (!window.currentInvoiceFileId) {
-        Swal.fire("Save First", "You must save the invoice before emailing the team.", "warning");
-        return;
+    // 2. CHECK URL FOR EDIT PARAMETERS
+    const urlParams = new URLSearchParams(window.location.search);
+    const editInvoiceNum = urlParams.get('invoice');
+    const editCustomerName = urlParams.get('customer');
+
+    // 3. LOAD DATA (AND WAIT FOR IT)
+    // We use Promise.all to load everything in parallel, but wait until ALL are done
+    // before we try to populate the form.
+    await Promise.all([
+        loadCustomers(), 
+        loadProducts(), 
+        loadInventory()
+    ]);
+
+    // 4. BRANCHING LOGIC: EDIT vs NEW
+    if (editInvoiceNum) {
+        // --- EDIT MODE ---
+        // If an invoice number exists in the URL, load that invoice
+        await loadInvoiceForEdit(editInvoiceNum, editCustomerName);
+    } else {
+        // --- NEW MODE ---
+        // Otherwise, set up a blank form and get the next invoice number
+        addProductRow();
+        autoPopulateInvoiceNumber();
     }
 
-    // 2. UI Feedback
-    Swal.fire({
-        title: 'Attaching PDF...',
-        text: 'The backend is fetching the file and notifying Eric, Lambert, and Cassandra.',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
+    // 5. Email Button Logic
+    document.getElementById("email-invoice-btn").addEventListener("click", async () => {
+        if (!window.currentInvoiceFileId) {
+            Swal.fire("Save First", "You must save the invoice before emailing the team.", "warning");
+            return;
+        }
+
+        Swal.fire({
+            title: 'Attaching PDF...',
+            text: 'The backend is fetching the file and notifying the team.',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        const payload = {
+            fileId: window.currentInvoiceFileId,
+            invoiceNumber: window.currentInvoiceNumber,
+            customer: selectedCustomer ? selectedCustomer.name : "Internal Order",
+            total: document.getElementById("invoice-total").textContent.replace("$", "")
+        };
+
+        try {
+            const response = await fetch(`${API_URL}?action=emailInvoice&data=${encodeURIComponent(JSON.stringify(payload))}`);
+            const result = await response.json();
+
+            if (result.success) {
+                Swal.fire({
+                    title: "Email Sent!",
+                    text: "The invoice has been sent as a PDF attachment to the team.",
+                    icon: "success",
+                    confirmButtonColor: "#2563eb"
+                });
+            } else {
+                throw new Error(result.error || "Server failed to send email");
+            }
+        } catch (err) {
+            Swal.fire("Error", "Failed to send email: " + err.message, "error");
+        }
     });
 
-    // 3. Build Payload
-    const payload = {
-        fileId: window.currentInvoiceFileId,
-        invoiceNumber: window.currentInvoiceNumber,
-        customer: selectedCustomer ? selectedCustomer.name : "Internal Order",
-        total: document.getElementById("invoice-total").textContent.replace("$", "")
-    };
-
-    try {
-        // 4. Call the Backend email action
-        const response = await fetch(`${API_URL}?action=emailInvoice&data=${encodeURIComponent(JSON.stringify(payload))}`);
-        const result = await response.json();
-
-        if (result.success) {
-            Swal.fire({
-                title: "Email Sent!",
-                text: "The invoice has been sent as a PDF attachment to the team.",
-                icon: "success",
-                confirmButtonColor: "#2563eb"
-            });
-        } else {
-            throw new Error(result.error || "Server failed to send email");
-        }
-    } catch (err) {
-        Swal.fire("Error", "Failed to send email: " + err.message, "error");
-    }
-});
-    loadCustomers();
-    loadProducts();
-    addProductRow();
-    loadInventory();
-    
-    // Auto-close menu when a link is clicked on mobile
+    // 6. Mobile & Sidebar Logic
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => {
             if (window.innerWidth <= 1024) toggleMobileMenu();
         });
     });
 
-    // Existing Sidebar Logic (Keep active group expanded)
     const activeLink = document.querySelector('.nav-link.active');
     if (activeLink) {
         const parentGroup = activeLink.closest('.collapsible-content');
@@ -1721,70 +1737,80 @@ if (type === "Case") {
         });
     }
     /* ===== BUILD INVOICE PAYLOAD FUNCTION (WITH LOGGING) ===== */
-    function buildInvoicePayload() {
-      if (!selectedCustomer) { alert("Select a customer first"); return null; }
+   /* ===== BUILD INVOICE PAYLOAD FUNCTION (UPDATED) ===== */
+function buildInvoicePayload() {
+  if (!selectedCustomer) { alert("Select a customer first"); return null; }
 
-      const items = [];
-      overrideLogs = []; // Reset logs
+  const items = [];
+  overrideLogs = []; // Reset logs
 
-      document.querySelectorAll("#product-body tr").forEach(row => {
-        const productInput = row.querySelector(".product-input");
-        if (!productInput || !productInput.value) return;
+  // 1. GATHER ITEMS
+  document.querySelectorAll("#product-body tr").forEach(row => {
+    const productInput = row.querySelector(".product-input");
+    if (!productInput || !productInput.value) return;
 
-        const productName = productInput.value;
+    const productName = productInput.value;
 
-        row.querySelectorAll(".qty-group div").forEach(div => {
-          const type = div.dataset.type;
-          const qty = Number(div.querySelector("input").value || 0);
+    row.querySelectorAll(".qty-group div").forEach(div => {
+      const type = div.dataset.type;
+      const qty = Number(div.querySelector("input").value || 0);
 
-          if (qty <= 0) return;
+      if (qty <= 0) return;
 
-          // GRAB PRICE & CHECK FOR OVERRIDE
-          const priceInput = row.querySelector(`.price-cell input[data-type="${type}"]`);
-          let finalPrice = 0;
+      // GRAB PRICE & CHECK FOR OVERRIDE
+      const priceInput = row.querySelector(`.price-cell input[data-type="${type}"]`);
+      let finalPrice = 0;
+      
+      if(priceInput) {
+          finalPrice = Number(priceInput.value);
+          // Safety check: ensure dataset exists before accessing
+          const originalPrice = priceInput.dataset.original ? Number(priceInput.dataset.original) : finalPrice;
           
-          if(priceInput) {
-              finalPrice = Number(priceInput.value);
-              const originalPrice = Number(priceInput.dataset.original);
-              
-              // 📝 LOGGING: If price differs from original
-              if(finalPrice !== originalPrice) {
-                  const logEntry = `Price Override: ${productName} (${type}) changed from $${originalPrice.toFixed(2)} to $${finalPrice.toFixed(2)}`;
-                  overrideLogs.push(logEntry);
-              }
+          // 📝 LOGGING: If price differs from original
+          if(finalPrice !== originalPrice) {
+              const logEntry = `Price Override: ${productName} (${type}) changed from $${originalPrice.toFixed(2)} to $${finalPrice.toFixed(2)}`;
+              overrideLogs.push(logEntry);
           }
+      }
 
-          items.push({
-            product: productName,
-            type: type,
-            qty: qty,
-            price: finalPrice,
-            sku: groupedProducts[productName][type].sku || ""
-          });
-        });
+      items.push({
+        product: productName,
+        type: type,
+        qty: qty,
+        price: finalPrice,
+        sku: groupedProducts[productName] && groupedProducts[productName][type] ? groupedProducts[productName][type].sku : ""
       });
+    });
+  });
 
-      if (items.length === 0) { alert("Add at least one product"); return null; }
+  if (items.length === 0) { alert("Add at least one product"); return null; }
 
-      const subtotal = Number(document.getElementById("invoice-subtotal").textContent.replace("$", ""));
-      const discount = document.getElementById("discount-row").style.display !== "none" ? Number(document.getElementById("invoice-discount").textContent.replace(/[^0-9.-]/g, "")) : 0;
-      const deposit = document.getElementById("deposit-row").style.display !== "none" ? Number(document.getElementById("invoice-deposit").textContent.replace("$", "")) : 0;
-      const tax = document.getElementById("tax-row").style.display !== "none" ? Number(document.getElementById("invoice-tax").textContent.replace("$", "")) : 0;
-      const total = Number(document.getElementById("invoice-total").textContent.replace("$", ""));
+  // 2. GATHER TOTALS
+  const subtotal = Number(document.getElementById("invoice-subtotal").textContent.replace("$", ""));
+  const discount = document.getElementById("discount-row").style.display !== "none" ? Number(document.getElementById("invoice-discount").textContent.replace(/[^0-9.-]/g, "")) : 0;
+  const deposit = document.getElementById("deposit-row").style.display !== "none" ? Number(document.getElementById("invoice-deposit").textContent.replace("$", "")) : 0;
+  const tax = document.getElementById("tax-row").style.display !== "none" ? Number(document.getElementById("invoice-tax").textContent.replace("$", "")) : 0;
+  const total = Number(document.getElementById("invoice-total").textContent.replace("$", ""));
 
-      return {
-        invoiceNumber: currentInvoiceNumber,
-        customer: selectedCustomer.name,
-        address: selectedCustomer.address,
-        customerType: selectedCustomer.type,
-        paymentMethod: selectedCustomer.paymentMethod,
-        subtotal, discount, tax, deposit, total,
-        items,
-        
-        // 🔒 SEND LOGS TO BACKEND
-        logs: overrideLogs 
-      };
-    }
+  // 3. RETURN PAYLOAD
+  return {
+    invoiceNumber: currentInvoiceNumber,
+    customer: selectedCustomer.name,
+    address: selectedCustomer.address,
+    customerType: selectedCustomer.type,
+    paymentMethod: selectedCustomer.paymentMethod,
+    subtotal, 
+    discount, 
+    tax, 
+    deposit, 
+    total,
+    items,
+    
+    // 🔒 LOGS & EDIT FLAGS
+    logs: overrideLogs,
+    forceUpdate: true // <--- Signals backend to overwrite existing invoice
+  };
+}
     /* ===============================
        BUTTON STATE CONTROL
        =============================== */
@@ -1880,15 +1906,23 @@ function saveInvoice() {
 }
     document.getElementById("print-invoice-btn").addEventListener("click", printInvoice);
   
-    (async function autoPopulateInvoiceNumber() {
+    async function autoPopulateInvoiceNumber() {
     const invInput = document.getElementById("invoice-number");
     if (!invInput) return;
+
+    // 🔴 NEW GUARD: If the box already has a number (from Edit Mode), STOP.
+    if (invInput.value && invInput.value !== "Generating...") {
+        return;
+    }
 
     invInput.value = "Generating..."; 
 
     try {
         const res = await fetch(`${API_URL}?action=getNextInvoiceNumber`);
         const data = await res.json();
+
+        // Check again in case Edit Mode loaded while we were fetching
+        if (invInput.value !== "Generating..." && invInput.value !== "") return;
 
         if (data.nextInvoice) {
             invInput.value = data.nextInvoice; 
@@ -1902,7 +1936,132 @@ function saveInvoice() {
         console.error("Auto-pop failed", e);
         invInput.value = ""; 
     }
-})();
+}
+    /* ===== LOAD INVOICE FOR EDITING ===== */
+async function loadInvoiceForEdit(invNum, custName) {
+    // 1. UI Loading State
+    Swal.fire({
+        title: 'Loading Invoice...',
+        text: 'Fetching details from server...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+        // 2. Set Header Info
+        currentInvoiceNumber = invNum;
+        const invoiceInput = document.getElementById("invoice-number");
+        invoiceInput.value = invNum;
+        // Trigger change to generate barcode
+        invoiceInput.dispatchEvent(new Event('change'));
+
+        // 3. Select Customer
+        // Wait a moment for customers to load if this is called immediately
+        if (custName && customers.length > 0) {
+            const customer = customers.find(c => c.name === custName);
+            if (customer) {
+                selectCustomer(customer);
+            } else {
+                console.warn("Customer not found in local list:", custName);
+            }
+        }
+
+        // 4. Fetch Invoice Items from Backend
+        const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`);
+        if (!res.ok) throw new Error("Failed to fetch items");
+        
+        const items = await res.json();
+        
+        if (!items || items.length === 0) {
+            Swal.fire("Empty", "No items found for this invoice.", "info");
+            return;
+        }
+
+        // 5. Clear Default Empty Row
+        const tbody = document.getElementById("product-body");
+        tbody.innerHTML = "";
+        addProductButtonRow = null; // Reset this so addProductRow creates a new button
+
+        // 6. Group Items by Product Name
+        // The sheet returns flat rows, but our UI groups by Product Name
+        const itemsByProduct = {};
+        items.forEach(item => {
+            // normalize keys (backend might return 'Product' or 'product')
+            const pName = item.product || item.Product;
+            if (!pName) return;
+
+            if (!itemsByProduct[pName]) {
+                itemsByProduct[pName] = [];
+            }
+            
+            itemsByProduct[pName].push({
+                type: item.type || item.Type,
+                qty: Number(item.qty || item.quantity || item.Qty || 0),
+                price: Number(item.price || item.Price || 0)
+            });
+        });
+
+        // 7. Rebuild the UI Rows
+        for (const [productName, itemList] of Object.entries(itemsByProduct)) {
+            // A. Add a blank row
+            addProductRow();
+            
+            // Get the row we just added (it's the second to last child, before the button row)
+            const rows = tbody.querySelectorAll("tr");
+            // The structure is: [Product Row], [Product Row], [Add Button Row]
+            // So we want the row before the last one
+            const currentRow = rows[rows.length - 2];
+
+            // B. Select the Product (Populates checkboxes)
+            selectProduct(currentRow, productName);
+
+            // C. Check boxes and set values
+            itemList.forEach(itemData => {
+                const { type, qty, price } = itemData;
+
+                // Find the checkbox for this type (Case, 1/2 Keg, etc)
+                const checkbox = currentRow.querySelector(`input[value="${type}"]`);
+                
+                if (checkbox) {
+                    // Force enable checkbox if it was historically sold but is now out of stock
+                    if (checkbox.disabled) {
+                        checkbox.disabled = false; 
+                        checkbox.parentElement.classList.remove("out-of-stock-grey");
+                    }
+
+                    checkbox.checked = true;
+                    
+                    // Trigger the logic to create input fields
+                    updateQuantities(currentRow, productName);
+
+                    // Now find those created inputs and set values
+                    const qtyInput = currentRow.querySelector(`.qty-group div[data-type="${type}"] input`);
+                    const priceInput = currentRow.querySelector(`.price-cell input[data-type="${type}"]`);
+
+                    if (qtyInput) qtyInput.value = qty;
+                    // Ensure price is formatted correctly
+                    if (priceInput) priceInput.value = price.toFixed(2);
+                }
+            });
+
+            // D. Recalculate the row totals
+            recalcLine(currentRow, productName);
+        }
+
+        // 8. Update UI State
+        const saveBtn = document.getElementById("save-invoice-btn");
+        saveBtn.textContent = "Update Invoice";
+        
+        // Recalc bottom totals
+        recalcInvoiceTotals();
+
+        Swal.close();
+
+    } catch (error) {
+        console.error("Load Error:", error);
+        Swal.fire("Error", "Could not load invoice details.", "error");
+    }
+}
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
   <div style="background:#fff; width:450px; margin:5% auto; padding:25px; border-radius:8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
