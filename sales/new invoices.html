@@ -938,8 +938,6 @@ table.invoice-table {
     const editCustomerName = urlParams.get('customer');
 
     // 3. LOAD DATA (AND WAIT FOR IT)
-    // We use Promise.all to load everything in parallel, but wait until ALL are done
-    // before we try to populate the form.
     await Promise.all([
         loadCustomers(), 
         loadProducts(), 
@@ -948,57 +946,74 @@ table.invoice-table {
 
     // 4. BRANCHING LOGIC: EDIT vs NEW
     if (editInvoiceNum) {
-        // --- EDIT MODE ---
-        // If an invoice number exists in the URL, load that invoice
         await loadInvoiceForEdit(editInvoiceNum, editCustomerName);
     } else {
-        // --- NEW MODE ---
-        // Otherwise, set up a blank form and get the next invoice number
         addProductRow();
         autoPopulateInvoiceNumber();
     }
 
-    // 5. Email Button Logic
-    document.getElementById("email-invoice-btn").addEventListener("click", async () => {
-        if (!window.currentInvoiceFileId) {
-            Swal.fire(" First", "You must  the invoice before emailing the team.", "warning");
-            return;
-        }
+    // 5. SAVE BUTTON LOGIC (Added Safety Check)
+    const saveBtn = document.getElementById("save-invoice-btn");
+    if (saveBtn) {
+        saveBtn.addEventListener("click", saveInvoice);
+    }
 
-        Swal.fire({
-            title: 'Attaching PDF...',
-            text: 'The backend is fetching the file and notifying the team.',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
+    // 6. PRINT BUTTON LOGIC (Added Safety Check)
+    const printBtn = document.getElementById("print-invoice-btn");
+    if (printBtn) {
+        printBtn.addEventListener("click", printInvoice);
+    }
 
-        const payload = {
-            fileId: window.currentInvoiceFileId,
-            invoiceNumber: window.currentInvoiceNumber,
-            customer: selectedCustomer ? selectedCustomer.name : "Internal Order",
-            total: document.getElementById("invoice-total").textContent.replace("$", "")
-        };
-
-        try {
-            const response = await fetch(`${API_URL}?action=emailInvoice&data=${encodeURIComponent(JSON.stringify(payload))}`);
-            const result = await response.json();
-
-            if (result.success) {
-                Swal.fire({
-                    title: "Email Sent!",
-                    text: "The invoice has been sent as a PDF attachment to the team.",
-                    icon: "success",
-                    confirmButtonColor: "#2563eb"
-                });
-            } else {
-                throw new Error(result.error || "Server failed to send email");
+    // 7. EMAIL BUTTON LOGIC (Added Safety Check & kept your logic)
+    const emailBtn = document.getElementById("email-invoice-btn");
+    if (emailBtn) {
+        emailBtn.addEventListener("click", async () => {
+            if (!window.currentInvoiceFileId) {
+                Swal.fire("Save First", "You must save the invoice before emailing the team.", "warning");
+                return;
             }
-        } catch (err) {
-            Swal.fire("Error", "Failed to send email: " + err.message, "error");
-        }
-    });
 
-    // 6. Mobile & Sidebar Logic
+            Swal.fire({
+                title: 'Attaching PDF...',
+                text: 'The backend is fetching the file and notifying the team.',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const payload = {
+                fileId: window.currentInvoiceFileId,
+                invoiceNumber: window.currentInvoiceNumber,
+                customer: selectedCustomer ? selectedCustomer.name : "Internal Order",
+                total: document.getElementById("invoice-total").value.replace("$", "")
+            };
+
+            try {
+                const response = await fetch(`${API_URL}?action=emailInvoice&data=${encodeURIComponent(JSON.stringify(payload))}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire({
+                        title: "Email Sent!",
+                        text: "The invoice has been sent as a PDF attachment to the team.",
+                        icon: "success",
+                        confirmButtonColor: "#2563eb"
+                    });
+                } else {
+                    throw new Error(result.error || "Server failed to send email");
+                }
+            } catch (err) {
+                Swal.fire("Error", "Failed to send email: " + err.message, "error");
+            }
+        });
+    }
+
+    // 🟢 8. KEG RETURN LISTENERS (NEW - MAKES THE MATH WORK)
+    const returnHalf = document.getElementById("return-half-qty");
+    const returnSixth = document.getElementById("return-sixth-qty");
+    if (returnHalf) returnHalf.addEventListener("input", recalcInvoiceTotals);
+    if (returnSixth) returnSixth.addEventListener("input", recalcInvoiceTotals);
+
+    // 9. MOBILE & SIDEBAR LOGIC
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => {
             if (window.innerWidth <= 1024) toggleMobileMenu();
@@ -1014,55 +1029,56 @@ table.invoice-table {
             if (header) header.classList.remove('collapsed');
         }
     }
- // --- TOTAL OVERRIDE LISTENERS ---
-    const totalInput = document.getElementById("invoice-total"); // 🟢 DEFINED HERE
 
-    // 1. Double-click Total to Unlock
-    totalInput.addEventListener("dblclick", async function() {
-        if (this.dataset.overridden === "true") {
-            if (confirm("Reset to calculated total?")) {
-                this.dataset.overridden = "false";
-                this.readOnly = true;
-                this.style.border = "none";
-                this.style.background = "transparent"; // Reset background
-                document.getElementById("total-lock-icon").textContent = "🔒";
-                recalcInvoiceTotals();
+    // 10. TOTAL OVERRIDE LISTENERS
+    const totalInput = document.getElementById("invoice-total"); 
+    if (totalInput) {
+        // Double-click Total to Unlock
+        totalInput.addEventListener("dblclick", async function() {
+            if (this.dataset.overridden === "true") {
+                if (confirm("Reset to calculated total?")) {
+                    this.dataset.overridden = "false";
+                    this.readOnly = true;
+                    this.style.border = "none";
+                    this.style.background = "transparent"; 
+                    document.getElementById("total-lock-icon").textContent = "🔒";
+                    recalcInvoiceTotals();
+                }
+                return;
             }
-            return;
-        }
 
-        const { value: pin } = await Swal.fire({ 
-            title: 'Manager Override', 
-            text: 'Enter PIN to unlock total:',
-            input: 'password', 
-            inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
-            showCancelButton: true 
+            const { value: pin } = await Swal.fire({ 
+                title: 'Manager Override', 
+                text: 'Enter PIN to unlock total:',
+                input: 'password', 
+                inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+                showCancelButton: true 
+            });
+            
+            if (pin === MANAGER_PIN) {
+                this.readOnly = false;
+                this.dataset.overridden = "true";
+                this.style.border = "1px solid #f59e0b";
+                this.style.background = "#fff";
+                this.style.borderRadius = "4px";
+                document.getElementById("total-lock-icon").textContent = "🔓";
+                this.select();
+                overrideLogs.push("Total manually overridden");
+            } else if (pin) {
+                Swal.fire('Error', 'Incorrect PIN', 'error');
+            }
         });
-        
-        if (pin === MANAGER_PIN) {
-            this.readOnly = false;
-            this.dataset.overridden = "true";
-            this.style.border = "1px solid #f59e0b";
-            this.style.background = "#fff";
-            this.style.borderRadius = "4px";
-            document.getElementById("total-lock-icon").textContent = "🔓";
-            this.select();
-            overrideLogs.push("Total manually overridden");
-        } else if (pin) {
-            Swal.fire('Error', 'Incorrect PIN', 'error');
-        }
-    });
 
-    // 2. Format on blur (optional polish)
-    totalInput.addEventListener("blur", function() {
-        if (this.dataset.overridden === "true") {
-            // Remove non-numeric chars except dot and minus
-            let val = parseFloat(this.value.replace(/[^0-9.-]+/g,""));
-            if (!isNaN(val)) {
-                this.value = "$" + val.toFixed(2);
+        // Format on blur
+        totalInput.addEventListener("blur", function() {
+            if (this.dataset.overridden === "true") {
+                let val = parseFloat(this.value.replace(/[^0-9.-]+/g,""));
+                if (!isNaN(val)) {
+                    this.value = "$" + val.toFixed(2);
+                }
             }
-        }
-    });
+        });
+    }
 
 }); // 🟢 CLOSES DOMContentLoaded
     /* ===== LOAD CUSTOMERS FUNCTION ===== */
@@ -1610,8 +1626,7 @@ if (type === "Case") {
       totalCell.dataset.value = rowTotal;
       recalcInvoiceTotals();
     }
-    /* ===== RECALC INVOICE TOTAL FUNCTION (UPDATED) ===== */
-/* ===== RECALC INVOICE TOTAL FUNCTION (UPDATED FOR RETURNS) ===== */
+/* ===== RECALC INVOICE TOTAL FUNCTION (ROBUST & SAFE) ===== */
 function recalcInvoiceTotals() {
     let subtotal = 0;
 
@@ -1623,51 +1638,59 @@ function recalcInvoiceTotals() {
     });
 
     // 2. Case Discount (10% if 10+ cases)
-    const totalCases = getTotalCaseQty();
+    const totalCases = typeof getTotalCaseQty === 'function' ? getTotalCaseQty() : 0;
     let discount = 0;
 
     if (totalCases >= 10) {
         discount = subtotal * 0.10;
-        document.getElementById("discount-row").style.display = "block";
+        const discRow = document.getElementById("discount-row");
+        if(discRow) discRow.style.display = "block";
     } else {
-        document.getElementById("discount-row").style.display = "none";
+        const discRow = document.getElementById("discount-row");
+        if(discRow) discRow.style.display = "none";
     }
-    document.getElementById("invoice-discount").textContent = "-$" + discount.toFixed(2);
+    
+    const discEl = document.getElementById("invoice-discount");
+    if(discEl) discEl.textContent = "-$" + discount.toFixed(2);
 
     const discountedSubtotal = subtotal - discount;
 
     // 3. Keg Deposit (Outgoing)
-    const deposit = recalcKegDeposit();
+    const deposit = typeof recalcKegDeposit === 'function' ? recalcKegDeposit() : 0;
 
     // 4. Sales Tax
     const isRestaurant = selectedCustomer && selectedCustomer.type === "Restaurant";
     const taxRate = 0.06;
     const tax = isRestaurant ? discountedSubtotal * taxRate : 0;
+    
+    const taxEl = document.getElementById("invoice-tax");
+    if(taxEl) taxEl.textContent = "$" + tax.toFixed(2);
 
-    // 🟢 5. KEG RETURNS (Incoming Credit)
-    // Grab values from the new inputs
-    const returnHalf = Number(document.getElementById("return-half-qty").value || 0);
-    const returnSixth = Number(document.getElementById("return-sixth-qty").value || 0);
+    // 🟢 5. KEG RETURNS (SAFE CHECK)
+    const halfInput = document.getElementById("return-half-qty");
+    const sixthInput = document.getElementById("return-sixth-qty");
+    
+    // Only try to read value if the element actually exists
+    const returnHalf = halfInput ? Number(halfInput.value || 0) : 0;
+    const returnSixth = sixthInput ? Number(sixthInput.value || 0) : 0;
     
     // Calculate Credit ($30 per shell)
     const returnCredit = (returnHalf * 30) + (returnSixth * 30);
     
-    // Update the red text display
     const creditDisplay = document.getElementById("invoice-return-credit");
     if (creditDisplay) {
         creditDisplay.textContent = "-$" + returnCredit.toFixed(2);
     }
 
     // 6. Final Total Calculation
-    // (Subtotal - Discount) + Tax + Deposit - Returns
     let total = (discountedSubtotal + tax + deposit) - returnCredit;
     
-    // Optional: Prevent negative totals if returns exceed purchase
+    // Prevent negative totals
     total = Math.max(0, total);
 
     // ----- UPDATE UI -----
-    document.getElementById("invoice-subtotal").textContent = "$" + subtotal.toFixed(2);
-    document.getElementById("invoice-tax").textContent = "$" + tax.toFixed(2);
+    const subEl = document.getElementById("invoice-subtotal");
+    if(subEl) subEl.textContent = "$" + subtotal.toFixed(2);
 
     // 🔴 OVERRIDE CHECK
     const totalInput = document.getElementById("invoice-total");
@@ -1814,7 +1837,6 @@ function recalcInvoiceTotals() {
           focusFirstProductRow();
         });
     }
-    /* ===== BUILD INVOICE PAYLOAD FUNCTION (WITH LOGGING) ===== */
    /* ===== BUILD INVOICE PAYLOAD FUNCTION (UPDATED) ===== */
 function buildInvoicePayload() {
   if (!selectedCustomer) { alert("Select a customer first"); return null; }
@@ -1863,12 +1885,31 @@ function buildInvoicePayload() {
 
   if (items.length === 0) { alert("Add at least one product"); return null; }
 
-  // 2. GATHER TOTALS
-  const subtotal = Number(document.getElementById("invoice-subtotal").textContent.replace("$", ""));
-  const discount = document.getElementById("discount-row").style.display !== "none" ? Number(document.getElementById("invoice-discount").textContent.replace(/[^0-9.-]/g, "")) : 0;
-  const deposit = document.getElementById("deposit-row").style.display !== "none" ? Number(document.getElementById("invoice-deposit").textContent.replace("$", "")) : 0;
-  const tax = document.getElementById("tax-row").style.display !== "none" ? Number(document.getElementById("invoice-tax").textContent.replace("$", "")) : 0;
-  const total = Number(document.getElementById("invoice-total").value.replace("$", ""));
+  // 2. GATHER TOTALS (Using Regex to safely remove $ symbols)
+  const subtotal = Number(document.getElementById("invoice-subtotal").textContent.replace(/[^0-9.-]+/g,""));
+  
+  const discountEl = document.getElementById("invoice-discount");
+  const discount = (discountEl && discountEl.textContent) ? Number(discountEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
+  
+  const depositEl = document.getElementById("invoice-deposit");
+  const deposit = (depositEl && depositEl.textContent) ? Number(depositEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
+  
+  const taxEl = document.getElementById("invoice-tax");
+  const tax = (taxEl && taxEl.textContent) ? Number(taxEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
+
+  // 🟢 2b. GATHER RETURN DATA (New Section)
+  const returnHalfEl = document.getElementById("return-half-qty");
+  const returnSixthEl = document.getElementById("return-sixth-qty");
+  const returnCreditEl = document.getElementById("invoice-return-credit");
+
+  const returnedHalfQty = returnHalfEl ? Number(returnHalfEl.value || 0) : 0;
+  const returnedSixthQty = returnSixthEl ? Number(returnSixthEl.value || 0) : 0;
+  // Extract pure number from string like "-$60.00" -> 60.00
+  const depositReturn = returnCreditEl ? Number(returnCreditEl.textContent.replace(/[^0-9.]/g, "")) : 0;
+
+  // Final Total
+  const total = Number(document.getElementById("invoice-total").value.replace(/[^0-9.-]+/g,""));
+
   // 3. RETURN PAYLOAD
   return {
     invoiceNumber: currentInvoiceNumber,
@@ -1879,13 +1920,19 @@ function buildInvoicePayload() {
     subtotal, 
     discount, 
     tax, 
-    deposit, 
+    deposit,
+    
+    // 🟢 NEW FIELDS FOR BACKEND
+    depositReturn,
+    returnedHalfQty,
+    returnedSixthQty,
+
     total,
     items,
     
     // 🔒 LOGS & EDIT FLAGS
     logs: overrideLogs,
-    forceUpdate: true // <--- Signals backend to overwrite existing invoice
+    forceUpdate: true 
   };
 }
     /* ===============================
