@@ -451,7 +451,7 @@ table.invoice-table {
     @media print {
       @page { margin: 0.25in; } /* Tells printer to use minimal edges */
       body { margin: 0; background: #fff; }
-      .sidebar, .header-bar, #save-invoice-btn, .invoice-action-bar, #menu-toggle, .app-footer { display: none !important; }
+      .sidebar, .header-bar, #-invoice-btn, .invoice-action-bar, #menu-toggle, .app-footer { display: none !important; }
       .main { margin: 0; padding: 0; }
       .invoice-page {
         width: 100% !important;
@@ -833,8 +833,8 @@ table.invoice-table {
 
     </section>
     <div class="invoice-action-bar">
-      <button id="save-invoice-btn" class="invoice-btn primary">
-        Save Invoice
+      <button id="-invoice-btn" class="invoice-btn primary">
+         Invoice
       </button>
       <button id="print-invoice-btn" class="invoice-btn">
         Print
@@ -961,7 +961,7 @@ table.invoice-table {
     // 5. Email Button Logic
     document.getElementById("email-invoice-btn").addEventListener("click", async () => {
         if (!window.currentInvoiceFileId) {
-            Swal.fire("Save First", "You must save the invoice before emailing the team.", "warning");
+            Swal.fire(" First", "You must  the invoice before emailing the team.", "warning");
             return;
         }
 
@@ -1923,7 +1923,14 @@ function saveInvoice() {
       // 2. STORE GLOBALS FOR EMAIL BUTTON
       window.lastSavedPayload = payload; 
       window.lastSavedPdfUrl = res.pdfUrl;
-      window.currentInvoiceFileId = res.fileId || res.pdfUrl.match(/[-\w]{25,}/)[0];
+      // 🟢 SAFETY FIX: Check existence and type before matching
+if (res.fileId) {
+    window.currentInvoiceFileId = res.fileId;
+} else if (res.pdfUrl) {
+    // Force string to prevent crash
+    const match = String(res.pdfUrl).match(/[-\w]{25,}/);
+    window.currentInvoiceFileId = match ? match[0] : null;
+}
       window.currentInvoiceNumber = res.invoiceNumber;
 
       Swal.fire({
