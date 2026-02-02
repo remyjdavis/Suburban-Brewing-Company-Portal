@@ -590,8 +590,13 @@
   }
 
   async function selectInvoice(invNum, btn) {
-    selectedInvoice = invoiceHistory.find(i => i.invoiceNumber === invNum);
-    if (!selectedInvoice) return;
+    // FIX: Convert both to strings for comparison to ensure a match
+    selectedInvoice = invoiceHistory.find(i => String(i.invoiceNumber) === String(invNum));
+    
+    if (!selectedInvoice) {
+        console.error("Invoice not found in history:", invNum);
+        return;
+    }
 
     // Highlight Row
     document.querySelectorAll("#historyBody tr").forEach(r => r.classList.remove("selected"));
