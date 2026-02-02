@@ -807,11 +807,25 @@ table.invoice-table {
         <strong>Sales Tax (6%):</strong>
         <span id="invoice-tax">$0.00</span>
       </div>
-
-      <div style="margin-top:6px; text-align:right; font-size:14px;">
-        <strong>Total:</strong>
-        <span id="invoice-total">$0.00</span>
-      </div>
+      
+      <div id="return-row" style="margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+    <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:4px;">
+        <span style="font-size:11px; color:#64748b;">Returns (Qty):</span>
+        <label style="font-size:11px;">1/2: <input id="return-half-qty" type="number" min="0" style="width:30px; text-align:center; border:1px solid #ccc; padding:2px;"></label>
+        <label style="font-size:11px;">1/6: <input id="return-sixth-qty" type="number" min="0" style="width:30px; text-align:center; border:1px solid #ccc; padding:2px;"></label>
+    </div>
+    <div style="text-align:right; font-size:13px; color:#b91c1c;">
+        <strong>Keg Returns:</strong>
+        <span id="invoice-return-credit">-$0.00</span>
+    </div>
+</div>
+      <div style="margin-top:6px; text-align:right; font-size:14px; display:flex; justify-content:flex-end; align-items:center; gap:5px;">
+    <strong>Total:</strong>
+    <input id="invoice-total" value="$0.00" readonly 
+           style="border:none; text-align:right; font-weight:bold; width:100px; font-size:14px; background:transparent; cursor:pointer;"
+           title="Double-click to override">
+    <span id="total-lock-icon" style="font-size:10px; color:#9ca3af;">🔒</span>
+</div>
       
       <div id="invoice-footer" class="invoice-footer"></div>
       <div style="margin-top:20px; text-align:right;">  
@@ -1000,8 +1014,57 @@ table.invoice-table {
             if (header) header.classList.remove('collapsed');
         }
     }
-});
+ // --- TOTAL OVERRIDE LISTENERS ---
+    const totalInput = document.getElementById("invoice-total"); // 🟢 DEFINED HERE
 
+    // 1. Double-click Total to Unlock
+    totalInput.addEventListener("dblclick", async function() {
+        if (this.dataset.overridden === "true") {
+            if (confirm("Reset to calculated total?")) {
+                this.dataset.overridden = "false";
+                this.readOnly = true;
+                this.style.border = "none";
+                this.style.background = "transparent"; // Reset background
+                document.getElementById("total-lock-icon").textContent = "🔒";
+                recalcInvoiceTotals();
+            }
+            return;
+        }
+
+        const { value: pin } = await Swal.fire({ 
+            title: 'Manager Override', 
+            text: 'Enter PIN to unlock total:',
+            input: 'password', 
+            inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+            showCancelButton: true 
+        });
+        
+        if (pin === MANAGER_PIN) {
+            this.readOnly = false;
+            this.dataset.overridden = "true";
+            this.style.border = "1px solid #f59e0b";
+            this.style.background = "#fff";
+            this.style.borderRadius = "4px";
+            document.getElementById("total-lock-icon").textContent = "🔓";
+            this.select();
+            overrideLogs.push("Total manually overridden");
+        } else if (pin) {
+            Swal.fire('Error', 'Incorrect PIN', 'error');
+        }
+    });
+
+    // 2. Format on blur (optional polish)
+    totalInput.addEventListener("blur", function() {
+        if (this.dataset.overridden === "true") {
+            // Remove non-numeric chars except dot and minus
+            let val = parseFloat(this.value.replace(/[^0-9.-]+/g,""));
+            if (!isNaN(val)) {
+                this.value = "$" + val.toFixed(2);
+            }
+        }
+    });
+
+}); // 🟢 CLOSES DOMContentLoaded
     /* ===== LOAD CUSTOMERS FUNCTION ===== */
     function loadCustomers() {
       fetch(`${API_URL}?action=getCustomers`)
@@ -1547,56 +1610,71 @@ if (type === "Case") {
       totalCell.dataset.value = rowTotal;
       recalcInvoiceTotals();
     }
-    /* ===== RECALC INVOICE TOTAL FUNCTION ===== */
-    function recalcInvoiceTotals() {
-      let subtotal = 0;
+    /* ===== RECALC INVOICE TOTAL FUNCTION (UPDATED) ===== */
+/* ===== RECALC INVOICE TOTAL FUNCTION (UPDATED FOR RETURNS) ===== */
+function recalcInvoiceTotals() {
+    let subtotal = 0;
 
-      // ----- PRODUCT SUBTOTAL -----
-      document.querySelectorAll(".line-total").forEach(cell => {
+    // 1. Product Subtotal
+    document.querySelectorAll(".line-total").forEach(cell => {
         if (cell.dataset.value !== undefined) {
-          subtotal += Number(cell.dataset.value);
+            subtotal += Number(cell.dataset.value);
         }
-      });
+    });
 
-      // ----- CASE DISCOUNT (10%) -----
-      const totalCases = getTotalCaseQty();
-      let discount = 0;
+    // 2. Case Discount (10% if 10+ cases)
+    const totalCases = getTotalCaseQty();
+    let discount = 0;
 
-      if (totalCases >= 10) {
+    if (totalCases >= 10) {
         discount = subtotal * 0.10;
         document.getElementById("discount-row").style.display = "block";
-      } else {
+    } else {
         document.getElementById("discount-row").style.display = "none";
-      }
-
-      document.getElementById("invoice-discount").textContent =
-        "-$" + discount.toFixed(2);
-
-      const discountedSubtotal = subtotal - discount;
-
-      // ----- KEG DEPOSIT -----
-      const deposit = recalcKegDeposit();
-
-      // ----- SALES TAX -----
-      const isRestaurant =
-        selectedCustomer && selectedCustomer.type === "Restaurant";
-
-      const taxRate = 0.06;
-      const tax = isRestaurant ? discountedSubtotal * taxRate : 0;
-
-      // ----- FINAL TOTAL -----
-      const total = discountedSubtotal + tax + deposit;
-
-      // ----- UPDATE UI -----
-      document.getElementById("invoice-subtotal").textContent =
-        "$" + subtotal.toFixed(2);
-
-      document.getElementById("invoice-tax").textContent =
-        "$" + tax.toFixed(2);
-
-      document.getElementById("invoice-total").textContent =
-        "$" + total.toFixed(2);
     }
+    document.getElementById("invoice-discount").textContent = "-$" + discount.toFixed(2);
+
+    const discountedSubtotal = subtotal - discount;
+
+    // 3. Keg Deposit (Outgoing)
+    const deposit = recalcKegDeposit();
+
+    // 4. Sales Tax
+    const isRestaurant = selectedCustomer && selectedCustomer.type === "Restaurant";
+    const taxRate = 0.06;
+    const tax = isRestaurant ? discountedSubtotal * taxRate : 0;
+
+    // 🟢 5. KEG RETURNS (Incoming Credit)
+    // Grab values from the new inputs
+    const returnHalf = Number(document.getElementById("return-half-qty").value || 0);
+    const returnSixth = Number(document.getElementById("return-sixth-qty").value || 0);
+    
+    // Calculate Credit ($30 per shell)
+    const returnCredit = (returnHalf * 30) + (returnSixth * 30);
+    
+    // Update the red text display
+    const creditDisplay = document.getElementById("invoice-return-credit");
+    if (creditDisplay) {
+        creditDisplay.textContent = "-$" + returnCredit.toFixed(2);
+    }
+
+    // 6. Final Total Calculation
+    // (Subtotal - Discount) + Tax + Deposit - Returns
+    let total = (discountedSubtotal + tax + deposit) - returnCredit;
+    
+    // Optional: Prevent negative totals if returns exceed purchase
+    total = Math.max(0, total);
+
+    // ----- UPDATE UI -----
+    document.getElementById("invoice-subtotal").textContent = "$" + subtotal.toFixed(2);
+    document.getElementById("invoice-tax").textContent = "$" + tax.toFixed(2);
+
+    // 🔴 OVERRIDE CHECK
+    const totalInput = document.getElementById("invoice-total");
+    if (totalInput && totalInput.dataset.overridden !== "true") {
+        totalInput.value = "$" + total.toFixed(2);
+    }
+}
 
     /* ===== RECALC KEG DEPOSIT FUNCTION ===== */
     function recalcKegDeposit() {
@@ -1790,8 +1868,7 @@ function buildInvoicePayload() {
   const discount = document.getElementById("discount-row").style.display !== "none" ? Number(document.getElementById("invoice-discount").textContent.replace(/[^0-9.-]/g, "")) : 0;
   const deposit = document.getElementById("deposit-row").style.display !== "none" ? Number(document.getElementById("invoice-deposit").textContent.replace("$", "")) : 0;
   const tax = document.getElementById("tax-row").style.display !== "none" ? Number(document.getElementById("invoice-tax").textContent.replace("$", "")) : 0;
-  const total = Number(document.getElementById("invoice-total").textContent.replace("$", ""));
-
+  const total = Number(document.getElementById("invoice-total").value.replace("$", ""));
   // 3. RETURN PAYLOAD
   return {
     invoiceNumber: currentInvoiceNumber,
