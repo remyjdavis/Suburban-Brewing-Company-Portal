@@ -663,10 +663,14 @@
     }
   }
 
-  function editInvoice() {
+ function editInvoice() {
     if (!selectedInvoice) return alert("Please load an invoice from the list first.");
-    // This sends the user to the New Invoice page with ?invoice=INV-123
-    location.href = `new invoices.html?invoice=${encodeURIComponent(selectedInvoice.invoiceNumber)}`;
+    
+    // Get the currently selected customer name from the dropdown
+    const customerName = document.getElementById("customerSelect").value;
+    
+    // Pass both Invoice Number AND Customer Name in the URL
+    location.href = `new invoices.html?invoice=${encodeURIComponent(selectedInvoice.invoiceNumber)}&customer=${encodeURIComponent(customerName)}`;
   }
 
   function clearSelection() {
