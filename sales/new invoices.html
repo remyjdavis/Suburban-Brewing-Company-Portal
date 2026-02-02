@@ -1349,31 +1349,42 @@ table.invoice-table {
           });
       });
     }
-    /* ===== SELECT PRODUCT FUNCTION ===== */
+   /* ===== SELECT PRODUCT FUNCTION (UPDATED WITH SAFETY CHECK) ===== */
 function selectProduct(row, product) {
-
-    // 1. Helper function (can keep inside or ignore, but keeping to avoid deletion fears)
-    function createLowBadge(stock) {
-        const badge = document.createElement("span");
-        badge.textContent = `LOW (${stock})`;
-        badge.style.background = "#fde68a";
-        badge.style.color = "#92400e";
-        badge.style.fontSize = "10px";
-        badge.style.padding = "1px 4px";
-        badge.style.marginLeft = "6px";
-        badge.style.borderRadius = "4px";
-        return badge;
+    // 🔴 1. SAFETY CHECK: Does this product exist in the system?
+    // If the product was deleted from the sheet, this prevents the crash.
+    if (!groupedProducts || !groupedProducts[product]) {
+        console.warn(`Product not found in system: "${product}"`);
+        
+        // Set the name so you can at least see what it was
+        row.querySelector(".product-input").value = product; 
+        
+        // Visual indicator that it's "broken" or discontinued
+        const errorMsg = document.createElement("div");
+        errorMsg.textContent = "⚠ Product not in system";
+        errorMsg.style.color = "#ef4444"; // Red
+        errorMsg.style.fontSize = "10px";
+        row.querySelector(".type-checkboxes").innerHTML = ""; // Clear cell
+        row.querySelector(".type-checkboxes").appendChild(errorMsg);
+        
+        return; // Stop running to prevent the crash
     }
 
     // 2. PREVENT DUPLICATES
-    if (isProductAlreadySelected(product, row)) {
-        alert(`"${product}" is already on this invoice.\nPlease adjust quantities in the existing row.`);
+    let isDup = false;
+    document.querySelectorAll("#product-body tr").forEach(r => {
+        if (r !== row && r.querySelector(".product-input")?.value === product) {
+            isDup = true;
+        }
+    });
+
+    if (isDup) {
+        alert(`"${product}" is already on this invoice.`);
         row.querySelector(".product-input").value = "";
-        row.querySelector(".product-suggestions").innerHTML = "";
         return;
     }
 
-    // 3. Set Input Value & Clear Cells
+    // 3. UI SETUP
     row.querySelector(".product-input").value = product;
     row.querySelector(".product-suggestions").innerHTML = "";
 
@@ -1387,16 +1398,14 @@ function selectProduct(row, product) {
     barcodeCell.innerHTML = "";
     priceCell.innerHTML = "";
 
-    /* ===== PACKAGE LOOP ===== */
+    // 4. GENERATE CHECKBOXES
     ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
-        // Skip invalid types
-        if (groupedProducts[product][type] === undefined) return;
+        // Skip types that this product doesn't have
+        if (!groupedProducts[product][type]) return;
 
-        // Get Stock
         const stock = inventoryMap[product] && inventoryMap[product][type] !== undefined 
-                      ? Number(inventoryMap[product][type]) : null;
+                      ? Number(inventoryMap[product][type]) : 0;
 
-        // Create Elements
         const label = document.createElement("label");
         label.className = "type-label";
 
@@ -1407,29 +1416,24 @@ function selectProduct(row, product) {
         const statusSpan = document.createElement("span");
         statusSpan.className = "stock-status";
 
-        // --- STOCK LOGIC ---
+        // Stock Logic
         if (stock === 0) {
-            // OUT OF STOCK: Grey out, disable, set hover text
             checkbox.disabled = true;
             label.classList.add("out-of-stock-grey");
             statusSpan.textContent = "Out of Stock";
-
             label.appendChild(checkbox);
             label.append(` ${type}`);
             label.appendChild(statusSpan);
         } else {
-            // IN STOCK: Normal display
             label.appendChild(checkbox);
             label.append(` ${type}`);
-
-            // Low Stock Warning
-            if (stock !== null && stock < 10) {
+            if (stock < 10) {
                 statusSpan.textContent = `Low Stock (${stock})`;
                 label.appendChild(statusSpan);
             }
         }
 
-        // --- LIFECYCLE WARNING ---
+        // Lifecycle Warning
         const lifecycleNote = getLifecycleWarning(product, type);
         if (lifecycleNote) {
             const note = document.createElement("div");
@@ -1439,13 +1443,10 @@ function selectProduct(row, product) {
             label.appendChild(note);
         }
 
-        // --- EVENTS ---
         checkbox.onchange = () => updateQuantities(row, product);
-
-        // Append to Table Cell
         typesCell.appendChild(label);
     });
-} /* <--- THIS CLOSING BRACKET WAS MISSING */
+}
     /* ===== LIFECYLCE WARNING FUNCTION ===== */
     function getLifecycleWarning(product, type) {
       const lifecycle = products.find(
