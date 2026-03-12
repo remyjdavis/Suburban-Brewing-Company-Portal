@@ -1784,6 +1784,7 @@ if (type === "Case") {
       recalcInvoiceTotals();
     }
 /* ===== RECALC INVOICE TOTAL FUNCTION (ROBUST & SAFE) ===== */
+/* ===== RECALC INVOICE TOTAL FUNCTION (ROBUST & SAFE) ===== */
 function recalcInvoiceTotals() {
     let subtotal = 0;
 
@@ -1808,10 +1809,16 @@ function recalcInvoiceTotals() {
         // Use standard 10% case logic
         if (totalCases >= 10) {
             discount = subtotal * 0.10;
-            if (discountRow) discountRow.style.display = "flex";
         } else {
-            if (discountRow) discountRow.style.display = "none";
+            discount = 0;
         }
+        
+        // 🔴 THE FIX: Always show the discount row if there are items on the invoice!
+        // This makes it visible as "-$0.00 🔒" so you can actually double-click it.
+        if (discountRow) {
+            discountRow.style.display = subtotal > 0 ? "flex" : "none";
+        }
+        
         if (discountInput) discountInput.value = "-$" + discount.toFixed(2);
     }
 
