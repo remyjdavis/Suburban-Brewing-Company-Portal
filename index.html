@@ -29,7 +29,7 @@
 
   <script src="/Suburban-Brewing-Company-Portal/portal.js" defer></script>
 
-  <style>
+<style>
     :root {
       --bg: #f8fafc;
       --sidebar: #0f172a;
@@ -499,6 +499,59 @@
     .main { padding: 20px 15px !important; margin-left: 0 !important; }
     .tier-1, .tier-2, .tier-3, .tier-4 { flex-direction: column !important; }
     .card, .ml-card, .tank-card { flex: 1 1 100% !important; width: 100% !important; }
+
+    /* =========================================
+       📱 MOBILE HEADER & DROPDOWN FIX
+       ========================================= */
+    .header-bar {
+        display: flex !important;
+        flex-direction: row !important; /* Forces title and profile on the same line */
+        justify-content: space-between !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important; /* Prevents dropping to the next line */
+        width: 100%;
+        margin-bottom: 20px;
+        gap: 10px;
+    }
+
+    /* Allows the Command Center title to truncate if the screen is tiny */
+    .header-bar h1 {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: clamp(18px, 5vw, 24px) !important;
+        margin: 0;
+    }
+
+    /* Keep the left side from pushing the right side off screen */
+    .header-bar > div:first-child {
+        flex: 1;
+        min-width: 0; 
+    }
+
+    /* Keep the profile container from shrinking */
+    .header-bar > div:last-child {
+        flex-shrink: 0;
+    }
+
+    /* Fix Dropdown position so it anchors to the right */
+    .user-profile {
+        position: relative !important;
+    }
+
+    .user-dropdown-menu {
+        right: 0 !important; /* Anchors it to the right side of the avatar */
+        left: auto !important; /* Prevents it from going off the left side */
+        top: 100% !important; /* Pushes it exactly below the avatar */
+        margin-top: 8px;
+    }
+
+    /* On very small screens, hide the text (Name/Role) and just show the Avatar */
+    @media (max-width: 480px) {
+        .user-info-text {
+            display: none !important;
+        }
+    }
 }
     /* FORCE PROFILE PICTURE SIZE */
 #display-avatar {
