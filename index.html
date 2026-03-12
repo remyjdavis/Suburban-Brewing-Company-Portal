@@ -324,7 +324,21 @@
     /* --- MOBILE DATA GRID TWEAKS --- */
     @media (max-width: 768px) {
       input, select, textarea { font-size: 16px !important; }
-      .header { flex-direction: column !important; align-items: flex-start !important; gap: 10px; }
+      
+      /* 🔴 FIXED: Forces the header into a row and pushes profile to the right */
+      .header, .header-bar { 
+          flex-direction: row !important; 
+          align-items: center !important; 
+          justify-content: space-between !important; 
+          flex-wrap: wrap; /* Allows date to drop down if screen is super narrow */
+      }
+      
+      /* Keep title/date grouped on the left */
+      .header > div:first-child { flex: 1; }
+      
+      /* Push profile block to the right */
+      .header > div:last-child { margin-left: auto; }
+
       #welcome-target { text-align: left !important; width: 100%; justify-content: flex-start !important; }
       
       .tier-1, .tier-2, .tier-3, .tier-4 { flex-direction: column !important; overflow-x: hidden !important; gap: 15px; }
@@ -335,7 +349,7 @@
         display: grid !important; 
         gap: 10px; 
       }
-      .header-bar h1 { font-size: 22px; }
+      .header-bar h1, .header h1 { font-size: 22px; }
     }
 
     /* --- FOOTER STYLES (FORCED SLIM) --- */
