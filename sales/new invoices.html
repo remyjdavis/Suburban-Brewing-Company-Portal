@@ -793,11 +793,7 @@ table.invoice-table {
         <strong>Subtotal:</strong>
         <span id="invoice-subtotal">$0.00</span>
       </div>
-      <div id="discount-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
-        <strong>Discount (10%):</strong>
-        <span id="invoice-discount">$0.00</span>
-      </div>
-
+    
       <div id="deposit-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
         <strong>Keg Deposit:</strong>
         <span id="invoice-deposit">$0.00</span>
@@ -922,7 +918,7 @@ table.invoice-table {
       return found;
     }
 
-    document.addEventListener("DOMContentLoaded", async () => {
+  document.addEventListener("DOMContentLoaded", async () => {
     // 1. Basic UI Setup
     const today = new Date().toLocaleDateString();
     document.getElementById("current-date").textContent = today;
@@ -1076,6 +1072,59 @@ table.invoice-table {
                 if (!isNaN(val)) {
                     this.value = "$" + val.toFixed(2);
                 }
+            }
+        });
+    }
+
+    // 11. DISCOUNT OVERRIDE LISTENERS
+    const discountInput = document.getElementById("invoice-discount-input");
+    if (discountInput) {
+        // Double-click to Unlock
+        discountInput.addEventListener("dblclick", async function() {
+            if (this.dataset.overridden === "true") {
+                if (confirm("Reset to calculated 10% case discount?")) {
+                    this.dataset.overridden = "false";
+                    this.readOnly = true;
+                    this.style.border = "none";
+                    this.style.background = "transparent";
+                    document.getElementById("discount-lock-icon").textContent = "🔒";
+                    recalcInvoiceTotals();
+                }
+                return;
+            }
+
+            const { value: pin } = await Swal.fire({
+                title: 'Manager Override',
+                text: 'Enter PIN to unlock Discount:',
+                input: 'password',
+                inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+                showCancelButton: true
+            });
+
+            if (pin === MANAGER_PIN) {
+                this.readOnly = false;
+                this.dataset.overridden = "true";
+                this.style.border = "1px solid #f59e0b";
+                this.style.background = "#fff";
+                this.style.borderRadius = "4px";
+                document.getElementById("discount-lock-icon").textContent = "🔓";
+                this.focus();
+                this.select();
+                overrideLogs.push("Discount manually overridden");
+            } else if (pin) {
+                Swal.fire('Error', 'Incorrect PIN', 'error');
+            }
+        });
+
+        // Format on blur
+        discountInput.addEventListener("blur", function() {
+            if (this.dataset.overridden === "true") {
+                let val = parseFloat(this.value.replace(/[^0-9.-]+/g, ""));
+                if (!isNaN(val)) {
+                    const absoluteVal = Math.abs(val);
+                    this.value = "-$" + absoluteVal.toFixed(2);
+                }
+                recalcInvoiceTotals();
             }
         });
     }
