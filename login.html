@@ -436,21 +436,23 @@ async function promptBiometricRegistration(user) {
     });
 
     if (isConfirmed) {
+        let credential;
+        
+        // --- PART 1: ASK PHONE TO CREATE PASSKEY ---
         try {
             const challenge = new Uint8Array(32);
             window.crypto.getRandomValues(challenge);
             const userId = new Uint8Array(16);
             window.crypto.getRandomValues(userId);
 
-            // Ask the phone to generate a Passkey
-            const credential = await navigator.credentials.create({
+            credential = await navigator.credentials.create({
                 publicKey: {
                     challenge: challenge,
                     rp: { name: "SBC Portal", id: window.location.hostname },
                     user: { id: userId, name: user, displayName: user },
                     pubKeyCredParams: [
-                        { type: "public-key", alg: -7 }, // ES256
-                        { type: "public-key", alg: -257 } // RS256
+                        { type: "public-key", alg: -7 }, 
+                        { type: "public-key", alg: -257 }
                     ],
                     authenticatorSelection: {
                         authenticatorAttachment: "platform",
@@ -459,25 +461,31 @@ async function promptBiometricRegistration(user) {
                     timeout: 60000
                 }
             });
+        } catch (phoneErr) {
+            console.error("Device Error:", phoneErr);
+            await Swal.fire({ title: 'Canceled', text: 'Face ID scan canceled or failed on device.', icon: 'info', background: '#1e293b', color:'#fff' });
+            return; // Stop here if the phone failed
+        }
 
-            Swal.fire({ title: 'Saving...', background: '#1e293b', color:'#fff', didOpen: () => Swal.showLoading() });
-
-            // Send to Google Apps Script
+        // --- PART 2: SEND TO GOOGLE SHEET ---
+        Swal.fire({ title: 'Linking to your account...', background: '#1e293b', color:'#fff', didOpen: () => Swal.showLoading() });
+        
+        try {
             const res = await fetch(`${MASTER_API_URL}?action=registerBiometric&user=${encodeURIComponent(user)}&id=${encodeURIComponent(credential.id)}`);
             const result = await res.json();
 
             if (result.status === "success") {
                 localStorage.setItem("bio_registered_" + user, "true");
-                await Swal.fire({ title: 'Success!', text: 'Face ID / Touch ID enabled.', icon: 'success', background: '#1e293b', color:'#fff', timer: 1500 });
+                await Swal.fire({ title: 'Success!', text: 'Face ID enabled.', icon: 'success', background: '#1e293b', color:'#fff', timer: 1500 });
             } else {
-                await Swal.fire({ title: 'Error', text: result.message, icon: 'error', background: '#1e293b', color:'#fff' });
+                // If it fails here, the Google Sheet rejected it
+                await Swal.fire({ title: 'Database Error', text: result.message, icon: 'error', background: '#1e293b', color:'#fff' });
             }
-        } catch (e) {
-            console.error(e);
-            await Swal.fire({ title: 'Canceled', text: 'Biometric setup was canceled.', icon: 'info', background: '#1e293b', color:'#fff', timer: 1500 });
+        } catch (backendErr) {
+            console.error("Backend Error:", backendErr);
+            await Swal.fire({ title: 'Network Error', text: 'Failed to reach the database. Try again later.', icon: 'error', background: '#1e293b', color:'#fff' });
         }
     } else {
-        // Mark as skipped so we don't annoy them every time they log in
         localStorage.setItem("bio_registered_" + user, "skipped");
     }
 }
