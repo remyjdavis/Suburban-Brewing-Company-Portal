@@ -819,12 +819,12 @@ table.invoice-table {
         <span id="invoice-return-credit">-$0.00</span>
     </div>
 </div>
-      <div style="margin-top:6px; text-align:right; font-size:14px; display:flex; justify-content:flex-end; align-items:center; gap:5px;">
-    <strong>Total:</strong>
-    <input id="invoice-total" value="$0.00" readonly 
-           style="border:none; text-align:right; font-weight:bold; width:100px; font-size:14px; background:transparent; cursor:pointer;"
-           title="Double-click to override">
-    <span id="total-lock-icon" style="font-size:10px; color:#9ca3af;">🔒</span>
+     <div id="discount-row" style="margin-top:6px; text-align:right; font-size:13px; display:none; align-items:center; justify-content:flex-end; gap:5px;">
+    <strong>Discount:</strong>
+    <input id="invoice-discount-input" value="-$0.00" readonly 
+           style="border:none; text-align:right; width:80px; font-size:13px; background:transparent; cursor:pointer;"
+           title="Double-click to override discount">
+    <span id="discount-lock-icon" style="font-size:10px; color:#9ca3af;">🔒</span>
 </div>
       
       <div id="invoice-footer" class="invoice-footer"></div>
@@ -1638,21 +1638,26 @@ function recalcInvoiceTotals() {
         }
     });
 
-    // 2. Case Discount (10% if 10+ cases)
+    // 2. Case Discount (10% if 10+ cases) OR Manual Override
     const totalCases = typeof getTotalCaseQty === 'function' ? getTotalCaseQty() : 0;
     let discount = 0;
+    const discountRow = document.getElementById("discount-row");
+    const discountInput = document.getElementById("invoice-discount-input");
 
-    if (totalCases >= 10) {
-        discount = subtotal * 0.10;
-        const discRow = document.getElementById("discount-row");
-        if(discRow) discRow.style.display = "block";
+    if (discountInput && discountInput.dataset.overridden === "true") {
+        // Use the manual value
+        discount = Math.abs(parseFloat(discountInput.value.replace(/[^0-9.-]+/g, "")) || 0);
+        if (discountRow) discountRow.style.display = "flex";
     } else {
-        const discRow = document.getElementById("discount-row");
-        if(discRow) discRow.style.display = "none";
+        // Use standard 10% case logic
+        if (totalCases >= 10) {
+            discount = subtotal * 0.10;
+            if (discountRow) discountRow.style.display = "flex";
+        } else {
+            if (discountRow) discountRow.style.display = "none";
+        }
+        if (discountInput) discountInput.value = "-$" + discount.toFixed(2);
     }
-    
-    const discEl = document.getElementById("invoice-discount");
-    if(discEl) discEl.textContent = "-$" + discount.toFixed(2);
 
     const discountedSubtotal = subtotal - discount;
 
@@ -1665,7 +1670,7 @@ function recalcInvoiceTotals() {
     const tax = isRestaurant ? discountedSubtotal * taxRate : 0;
     
     const taxEl = document.getElementById("invoice-tax");
-    if(taxEl) taxEl.textContent = "$" + tax.toFixed(2);
+    if (taxEl) taxEl.textContent = "$" + tax.toFixed(2);
 
     // 🟢 5. KEG RETURNS (SAFE CHECK)
     const halfInput = document.getElementById("return-half-qty");
@@ -1691,7 +1696,7 @@ function recalcInvoiceTotals() {
 
     // ----- UPDATE UI -----
     const subEl = document.getElementById("invoice-subtotal");
-    if(subEl) subEl.textContent = "$" + subtotal.toFixed(2);
+    if (subEl) subEl.textContent = "$" + subtotal.toFixed(2);
 
     // 🔴 OVERRIDE CHECK
     const totalInput = document.getElementById("invoice-total");
@@ -1699,7 +1704,6 @@ function recalcInvoiceTotals() {
         totalInput.value = "$" + total.toFixed(2);
     }
 }
-
     /* ===== RECALC KEG DEPOSIT FUNCTION ===== */
     function recalcKegDeposit() {
       let depositTotal = 0;
