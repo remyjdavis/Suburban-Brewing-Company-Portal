@@ -789,11 +789,19 @@ table.invoice-table {
         <tbody id="product-body"></tbody>
       </table>
       
-      <div style="margin-top:16px; text-align:right; font-size:13px;">
+     <div style="margin-top:16px; text-align:right; font-size:13px;">
         <strong>Subtotal:</strong>
         <span id="invoice-subtotal">$0.00</span>
       </div>
-    
+
+      <div id="discount-row" style="margin-top:6px; text-align:right; font-size:13px; display:none; align-items:center; justify-content:flex-end; gap:5px;">
+        <strong>Discount:</strong>
+        <input id="invoice-discount-input" value="-$0.00" readonly 
+               style="border:none; text-align:right; width:80px; font-size:13px; background:transparent; cursor:pointer;"
+               title="Double-click to override discount">
+        <span id="discount-lock-icon" style="font-size:10px; color:#9ca3af;">🔒</span>
+      </div>
+
       <div id="deposit-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
         <strong>Keg Deposit:</strong>
         <span id="invoice-deposit">$0.00</span>
@@ -805,23 +813,24 @@ table.invoice-table {
       </div>
       
       <div id="return-row" style="margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1;">
-    <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:4px;">
-        <span style="font-size:11px; color:#64748b;">Returns (Qty):</span>
-        <label style="font-size:11px;">1/2: <input id="return-half-qty" type="number" min="0" style="width:30px; text-align:center; border:1px solid #ccc; padding:2px;"></label>
-        <label style="font-size:11px;">1/6: <input id="return-sixth-qty" type="number" min="0" style="width:30px; text-align:center; border:1px solid #ccc; padding:2px;"></label>
-    </div>
-    <div style="text-align:right; font-size:13px; color:#b91c1c;">
-        <strong>Keg Returns:</strong>
-        <span id="invoice-return-credit">-$0.00</span>
-    </div>
-</div>
-     <div id="discount-row" style="margin-top:6px; text-align:right; font-size:13px; display:none; align-items:center; justify-content:flex-end; gap:5px;">
-    <strong>Discount:</strong>
-    <input id="invoice-discount-input" value="-$0.00" readonly 
-           style="border:none; text-align:right; width:80px; font-size:13px; background:transparent; cursor:pointer;"
-           title="Double-click to override discount">
-    <span id="discount-lock-icon" style="font-size:10px; color:#9ca3af;">🔒</span>
-</div>
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:4px;">
+            <span style="font-size:11px; color:#64748b;">Returns (Qty):</span>
+            <label style="font-size:11px;">1/2: <input id="return-half-qty" type="number" min="0" style="width:30px; text-align:center; border:1px solid #ccc; padding:2px;"></label>
+            <label style="font-size:11px;">1/6: <input id="return-sixth-qty" type="number" min="0" style="width:30px; text-align:center; border:1px solid #ccc; padding:2px;"></label>
+        </div>
+        <div style="text-align:right; font-size:13px; color:#b91c1c;">
+            <strong>Keg Returns:</strong>
+            <span id="invoice-return-credit">-$0.00</span>
+        </div>
+      </div>
+
+      <div style="margin-top:6px; text-align:right; font-size:14px; display:flex; justify-content:flex-end; align-items:center; gap:5px;">
+        <strong>Total:</strong>
+        <input id="invoice-total" value="$0.00" readonly 
+               style="border:none; text-align:right; font-weight:bold; width:100px; font-size:14px; background:transparent; cursor:pointer;"
+               title="Double-click to override">
+        <span id="total-lock-icon" style="font-size:10px; color:#9ca3af;">🔒</span>
+      </div>
       
       <div id="invoice-footer" class="invoice-footer"></div>
       <div style="margin-top:20px; text-align:right;">  
