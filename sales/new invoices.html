@@ -5,7 +5,105 @@
     (function() {
         const auth = sessionStorage.getItem("sbc_auth");
         const isLoginPage = window.location.pathname.includes("login.html");
-        if (auth !== "true" && !isLoginPage) {
+        if (auth !== "true" && !isLoginPage) {/* ===== BUILD INVOICE PAYLOAD FUNCTION (UPDATED) ===== */
+function buildInvoicePayload() {
+  if (!selectedCustomer) { alert("Select a customer first"); return null; }
+
+  const items = [];
+  overrideLogs = []; // Reset logs
+
+  // 1. GATHER ITEMS
+  document.querySelectorAll("#product-body tr").forEach(row => {
+    const productInput = row.querySelector(".product-input");
+    if (!productInput || !productInput.value) return;
+
+    const productName = productInput.value;
+
+    row.querySelectorAll(".qty-group div").forEach(div => {
+      const type = div.dataset.type;
+      const qty = Number(div.querySelector("input").value || 0);
+
+      if (qty <= 0) return;
+
+      // GRAB PRICE & CHECK FOR OVERRIDE
+      const priceInput = row.querySelector(`.price-cell input[data-type="${type}"]`);
+      let finalPrice = 0;
+      
+      if(priceInput) {
+          finalPrice = Number(priceInput.value);
+          // Safety check: ensure dataset exists before accessing
+          const originalPrice = priceInput.dataset.original ? Number(priceInput.dataset.original) : finalPrice;
+          
+          // 📝 LOGGING: If price differs from original
+          if(finalPrice !== originalPrice) {
+              const logEntry = `Price Override: ${productName} (${type}) changed from $${originalPrice.toFixed(2)} to $${finalPrice.toFixed(2)}`;
+              overrideLogs.push(logEntry);
+          }
+      }
+
+      items.push({
+        product: productName,
+        type: type,
+        qty: qty,
+        price: finalPrice,
+        sku: groupedProducts[productName] && groupedProducts[productName][type] ? groupedProducts[productName][type].sku : ""
+      });
+    });
+  });
+
+  if (items.length === 0) { alert("Add at least one product"); return null; }
+
+  // 2. GATHER TOTALS (Using Regex to safely remove $ symbols)
+  const subtotal = Number(document.getElementById("invoice-subtotal").textContent.replace(/[^0-9.-]+/g,""));
+  
+  // 🟢 DISCOUNT LOGIC FIX (Now correctly targets the input field)
+  const discountInput = document.getElementById("invoice-discount-input");
+  const discount = discountInput ? Math.abs(Number(discountInput.value.replace(/[^0-9.-]+/g,""))) : 0;
+  
+  const depositEl = document.getElementById("invoice-deposit");
+  const deposit = (depositEl && depositEl.textContent) ? Number(depositEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
+  
+  const taxEl = document.getElementById("invoice-tax");
+  const tax = (taxEl && taxEl.textContent) ? Number(taxEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
+
+  // 🟢 2b. GATHER RETURN DATA
+  const returnHalfEl = document.getElementById("return-half-qty");
+  const returnSixthEl = document.getElementById("return-sixth-qty");
+  const returnCreditEl = document.getElementById("invoice-return-credit");
+
+  const returnedHalfQty = returnHalfEl ? Number(returnHalfEl.value || 0) : 0;
+  const returnedSixthQty = returnSixthEl ? Number(returnSixthEl.value || 0) : 0;
+  // Extract pure number from string like "-$60.00" -> 60.00
+  const depositReturn = returnCreditEl ? Number(returnCreditEl.textContent.replace(/[^0-9.]/g, "")) : 0;
+
+  // Final Total
+  const total = Number(document.getElementById("invoice-total").value.replace(/[^0-9.-]+/g,""));
+
+  // 3. RETURN PAYLOAD
+  return {
+    invoiceNumber: currentInvoiceNumber,
+    customer: selectedCustomer.name,
+    address: selectedCustomer.address,
+    customerType: selectedCustomer.type,
+    paymentMethod: selectedCustomer.paymentMethod,
+    subtotal, 
+    discount, 
+    tax, 
+    deposit,
+    
+    // 🟢 NEW FIELDS FOR BACKEND
+    depositReturn,
+    returnedHalfQty,
+    returnedSixthQty,
+
+    total,
+    items,
+    
+    // 🔒 LOGS & EDIT FLAGS
+    logs: overrideLogs,
+    forceUpdate: true 
+  };
+}
             const repoPath = "/Suburban-Brewing-Company-Portal/";
             window.location.replace(repoPath + "login.html");
         }
@@ -1901,6 +1999,7 @@ function recalcInvoiceTotals() {
         });
     }
    /* ===== BUILD INVOICE PAYLOAD FUNCTION (UPDATED) ===== */
+/* ===== BUILD INVOICE PAYLOAD FUNCTION (UPDATED) ===== */
 function buildInvoicePayload() {
   if (!selectedCustomer) { alert("Select a customer first"); return null; }
 
@@ -1951,8 +2050,9 @@ function buildInvoicePayload() {
   // 2. GATHER TOTALS (Using Regex to safely remove $ symbols)
   const subtotal = Number(document.getElementById("invoice-subtotal").textContent.replace(/[^0-9.-]+/g,""));
   
-  const discountEl = document.getElementById("invoice-discount");
-  const discount = (discountEl && discountEl.textContent) ? Number(discountEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
+  // 🟢 DISCOUNT LOGIC FIX (Now correctly targets the input field)
+  const discountInput = document.getElementById("invoice-discount-input");
+  const discount = discountInput ? Math.abs(Number(discountInput.value.replace(/[^0-9.-]+/g,""))) : 0;
   
   const depositEl = document.getElementById("invoice-deposit");
   const deposit = (depositEl && depositEl.textContent) ? Number(depositEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
@@ -1960,7 +2060,7 @@ function buildInvoicePayload() {
   const taxEl = document.getElementById("invoice-tax");
   const tax = (taxEl && taxEl.textContent) ? Number(taxEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
 
-  // 🟢 2b. GATHER RETURN DATA (New Section)
+  // 🟢 2b. GATHER RETURN DATA
   const returnHalfEl = document.getElementById("return-half-qty");
   const returnSixthEl = document.getElementById("return-sixth-qty");
   const returnCreditEl = document.getElementById("invoice-return-credit");
