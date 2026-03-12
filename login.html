@@ -263,7 +263,6 @@ const MASTER_API_URL = "https://script.google.com/macros/s/AKfycbzzkG7_Def-aiH-c
 document.addEventListener("DOMContentLoaded", async () => {
     if (window.PublicKeyCredential) {
         try {
-            // Check if a passkey/biometric authenticator is available on the device
             const isAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
             if (isAvailable) {
                 document.getElementById('biometricBtn').style.display = "flex";
@@ -301,7 +300,7 @@ async function checkLogin() {
         const result = await response.json();
 
         if (result.status === "success") {
-            await handleSuccessfulLogin(result, user); // Extracted logic to keep code clean
+            await handleSuccessfulLogin(result, user); 
         } else {
             errorMsg.innerText = result.message || "Invalid Credentials";
             errorMsg.style.display = 'block';
@@ -317,29 +316,23 @@ async function checkLogin() {
     }
 }
 
-// --- BIOMETRIC / FACE ID LOGIN ---
+// --- BIOMETRIC / FACE ID LOGIN (VERIFICATION) ---
 async function loginWithBiometrics() {
     const errorMsg = document.getElementById('errorMsg');
     errorMsg.style.display = 'none';
 
     try {
-        // STEP 1: Define the challenge (In a full production app, you fetch a random string from your server here)
-        // We use a mock array here just to trigger the native iOS/Android FaceID prompt
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
 
-        // STEP 2: Call the native Face ID / Touch ID prompt
+        // Call the native Face ID / Touch ID prompt
         const credential = await navigator.credentials.get({
             publicKey: {
                 challenge: challenge,
-                rpId: window.location.hostname, // This ties the biometric to your specific URL
-                userVerification: "required", // Forces the phone to require FaceID or Fingerprint
+                rpId: window.location.hostname, 
+                userVerification: "required",
             }
         });
-
-        // STEP 3: If Face ID passes, send the credential payload to Google Apps Script
-        // NOTE: Your backend will need an action like "?action=verifyBiometric" to handle this!
-        console.log("Biometric signature generated:", credential);
         
         Swal.fire({
             title: 'Verifying Biometrics...',
@@ -348,29 +341,22 @@ async function loginWithBiometrics() {
             didOpen: () => { Swal.showLoading(); }
         });
 
-        /* ==================================================================
-        FRONTEND IS COMPLETE. BACKEND SETUP REQUIRED.
-        To finish this, you must send 'credential.id' to your Google Apps 
-        Script to match it with the user's stored Passkey on the sheet.
-        ==================================================================
-        */
-
-        // Example of how you would send it to your backend:
-        /*
-        const response = await fetch(`${MASTER_API_URL}?action=verifyBiometric&id=${credential.id}`);
+        // Send the signature to your Apps Script Backend
+        const response = await fetch(`${MASTER_API_URL}?action=verifyBiometric&id=${encodeURIComponent(credential.id)}`);
         const result = await response.json();
+        
         if(result.status === 'success') {
+            Swal.close();
             await handleSuccessfulLogin(result, result.username);
+        } else {
+            Swal.fire("Error", result.message, "error");
         }
-        */
-
-       Swal.fire("Note", "Face ID prompt triggered successfully! Backend validation logic is required in your Google Apps Script to complete the login.", "info");
 
     } catch (error) {
         console.error("Biometric Error:", error);
-        // User likely hit "Cancel" or Face ID failed
         errorMsg.innerText = "Biometric authentication failed or was canceled.";
         errorMsg.style.display = 'block';
+        Swal.close();
     }
 }
 
@@ -406,7 +392,10 @@ async function handleSuccessfulLogin(result, user) {
         }
     }
 
-    // 2. SAVE SESSION DATA
+    // 2. PROMPT TO REGISTER BIOMETRICS (If they haven't already on this device)
+    await promptBiometricRegistration(user);
+
+    // 3. SAVE SESSION DATA
     sessionStorage.setItem("sbc_auth", "true");
     sessionStorage.setItem("user_login_id", user);
     sessionStorage.setItem("user_email", result.profile.email || "");
@@ -420,11 +409,77 @@ async function handleSuccessfulLogin(result, user) {
     sessionStorage.setItem("user_title", result.profile.role); 
     sessionStorage.setItem("user_access", result.profile.access);
 
-    // Prompt to register biometric if they haven't already (Optional Enhancement)
-    // Here you could ask: "Would you like to use Face ID next time?"
-
-    // 3. REDIRECT
+    // 4. REDIRECT TO DASHBOARD
     window.location.replace("index.html"); 
+}
+
+// --- BIOMETRIC REGISTRATION PROMPT ---
+async function promptBiometricRegistration(user) {
+    if (!window.PublicKeyCredential) return;
+    
+    // Don't ask again if they already registered or explicitly skipped on this device
+    if (localStorage.getItem("bio_registered_" + user)) return;
+
+    const isAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if (!isAvailable) return;
+
+    const { isConfirmed } = await Swal.fire({
+        title: 'Enable Face ID / Touch ID?',
+        text: 'Log in faster next time without typing your password.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Enable',
+        cancelButtonText: 'Not Now',
+        confirmButtonColor: '#2563eb',
+        background: '#1e293b',
+        color: '#ffffff'
+    });
+
+    if (isConfirmed) {
+        try {
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+            const userId = new Uint8Array(16);
+            window.crypto.getRandomValues(userId);
+
+            // Ask the phone to generate a Passkey
+            const credential = await navigator.credentials.create({
+                publicKey: {
+                    challenge: challenge,
+                    rp: { name: "SBC Portal", id: window.location.hostname },
+                    user: { id: userId, name: user, displayName: user },
+                    pubKeyCredParams: [
+                        { type: "public-key", alg: -7 }, // ES256
+                        { type: "public-key", alg: -257 } // RS256
+                    ],
+                    authenticatorSelection: {
+                        authenticatorAttachment: "platform",
+                        userVerification: "required"
+                    },
+                    timeout: 60000
+                }
+            });
+
+            Swal.fire({ title: 'Saving...', background: '#1e293b', color:'#fff', didOpen: () => Swal.showLoading() });
+
+            // Send to Google Apps Script
+            const res = await fetch(`${MASTER_API_URL}?action=registerBiometric&user=${encodeURIComponent(user)}&id=${encodeURIComponent(credential.id)}`);
+            const result = await res.json();
+
+            if (result.status === "success") {
+                localStorage.setItem("bio_registered_" + user, "true");
+                await Swal.fire({ title: 'Success!', text: 'Face ID / Touch ID enabled.', icon: 'success', background: '#1e293b', color:'#fff', timer: 1500 });
+            } else {
+                await Swal.fire({ title: 'Error', text: result.message, icon: 'error', background: '#1e293b', color:'#fff' });
+            }
+        } catch (e) {
+            console.error(e);
+            await Swal.fire({ title: 'Canceled', text: 'Biometric setup was canceled.', icon: 'info', background: '#1e293b', color:'#fff', timer: 1500 });
+        }
+    } else {
+        // Mark as skipped so we don't annoy them every time they log in
+        localStorage.setItem("bio_registered_" + user, "skipped");
+    }
 }
 
 // --- FORGOT PASSWORD ---
