@@ -64,7 +64,7 @@ function buildInvoicePayload() {
   const deposit = (depositEl && depositEl.textContent) ? Number(depositEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
   
   const taxEl = document.getElementById("invoice-tax");
-  const tax = (taxEl && taxEl.textContent) ? Number(taxEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
+  const tax = (taxEl && (taxEl.value || taxEl.textContent)) ? Number((taxEl.value || taxEl.textContent).replace(/[^0-9.-]+/g,"")) : 0;
 
   // 🟢 2b. GATHER RETURN DATA
   const returnHalfEl = document.getElementById("return-half-qty");
@@ -905,9 +905,12 @@ table.invoice-table {
         <span id="invoice-deposit">$0.00</span>
       </div>
 
-      <div id="tax-row" style="margin-top:6px; text-align:right; font-size:13px; display:none;">
-        <strong>Sales Tax (6%):</strong>
-        <span id="invoice-tax">$0.00</span>
+      <div id="tax-row" style="margin-top:6px; text-align:right; font-size:13px; display:none; align-items:center; justify-content:flex-end; gap:5px;">
+        <strong>Sales Tax:</strong>
+        <input id="invoice-tax" value="$0.00" readonly 
+               style="border:none; text-align:right; width:80px; font-size:13px; background:transparent; cursor:pointer;"
+               title="Double-click to override tax">
+        <span id="tax-lock-icon" style="font-size:10px; color:#9ca3af;">🔒</span>
       </div>
       
       <div id="return-row" style="margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1;">
@@ -1235,7 +1238,57 @@ table.invoice-table {
             }
         });
     }
+// 12. TAX OVERRIDE LISTENERS
+    const taxInput = document.getElementById("invoice-tax");
+    if (taxInput) {
+        // Double-click to Unlock
+        taxInput.addEventListener("dblclick", async function() {
+            if (this.dataset.overridden === "true") {
+                if (confirm("Reset to calculated 6% sales tax?")) {
+                    this.dataset.overridden = "false";
+                    this.readOnly = true;
+                    this.style.border = "none";
+                    this.style.background = "transparent";
+                    document.getElementById("tax-lock-icon").textContent = "🔒";
+                    recalcInvoiceTotals();
+                }
+                return;
+            }
 
+            const { value: pin } = await Swal.fire({
+                title: 'Manager Override',
+                text: 'Enter PIN to unlock Sales Tax:',
+                input: 'password',
+                inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+                showCancelButton: true
+            });
+
+            if (pin === MANAGER_PIN) {
+                this.readOnly = false;
+                this.dataset.overridden = "true";
+                this.style.border = "1px solid #f59e0b";
+                this.style.background = "#fff";
+                this.style.borderRadius = "4px";
+                document.getElementById("tax-lock-icon").textContent = "🔓";
+                this.focus();
+                this.select();
+                overrideLogs.push("Sales Tax manually overridden");
+            } else if (pin) {
+                Swal.fire('Error', 'Incorrect PIN', 'error');
+            }
+        });
+
+        // Format on blur
+        taxInput.addEventListener("blur", function() {
+            if (this.dataset.overridden === "true") {
+                let val = parseFloat(this.value.replace(/[^0-9.-]+/g, ""));
+                if (!isNaN(val)) {
+                    this.value = "$" + Math.abs(val).toFixed(2);
+                }
+                recalcInvoiceTotals();
+            }
+        });
+    }
 }); // 🟢 CLOSES DOMContentLoaded
     /* ===== LOAD CUSTOMERS FUNCTION ===== */
     function loadCustomers() {
@@ -1784,7 +1837,6 @@ if (type === "Case") {
       recalcInvoiceTotals();
     }
 /* ===== RECALC INVOICE TOTAL FUNCTION (ROBUST & SAFE) ===== */
-/* ===== RECALC INVOICE TOTAL FUNCTION (ROBUST & SAFE) ===== */
 function recalcInvoiceTotals() {
     let subtotal = 0;
 
@@ -1830,10 +1882,17 @@ function recalcInvoiceTotals() {
     // 4. Sales Tax
     const isRestaurant = selectedCustomer && selectedCustomer.type === "Restaurant";
     const taxRate = 0.06;
-    const tax = isRestaurant ? discountedSubtotal * taxRate : 0;
-    
+    let tax = 0;
     const taxEl = document.getElementById("invoice-tax");
-    if (taxEl) taxEl.textContent = "$" + tax.toFixed(2);
+
+    if (taxEl && taxEl.dataset.overridden === "true") {
+        // Use the manual value
+        tax = Math.abs(parseFloat(taxEl.value.replace(/[^0-9.-]+/g, "")) || 0);
+    } else {
+        // Use standard 6% logic
+        tax = isRestaurant ? discountedSubtotal * taxRate : 0;
+        if (taxEl) taxEl.value = "$" + tax.toFixed(2);
+    }
 
     // 🟢 5. KEG RETURNS (SAFE CHECK)
     const halfInput = document.getElementById("return-half-qty");
