@@ -466,9 +466,12 @@
         <div id="loading" class="loading">Loading undelivered invoices…</div>
         <div id="empty" class="empty" style="display:none;">No undelivered invoices 🎉</div>
 
-        <table id="deliveryTable" style="display:none;">
+       <table id="deliveryTable" style="display:none;">
           <thead>
             <tr>
+              <th style="width: 50px; text-align: center;">
+                <input type="checkbox" id="selectAll" onclick="toggleAll(this)" style="min-width:auto; cursor:pointer;">
+              </th>
               <th>Invoice #</th>
               <th>Date</th>
               <th>Customer</th>
@@ -513,7 +516,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXl
 const DRIVER_STORAGE_KEY = "sbc_driver_name"; // Key to remember the driver
 
 let deliveries = [];
-let selectedInvoice = null;
+let selectedInvoices = [];
 
 // --- SIDEBAR TOGGLE ---
 function toggleGroup(contentId, headerEl) {
@@ -585,8 +588,15 @@ async function loadOpenDeliveries() {
     const tbody = document.getElementById("deliveryBody");
     document.getElementById("deliveryTable").style.display = "table";
     
+    // Reset selections on reload
+    selectedInvoices = [];
+    document.getElementById('selectAll').checked = false;
+    
     tbody.innerHTML = data.map(inv => `
-      <tr data-invoice="${inv.invoiceNumber}" onclick="selectRow(this, '${inv.invoiceNumber}')">
+      <tr data-invoice="${inv.invoiceNumber}" onclick="toggleRowSelection('${inv.invoiceNumber}')" style="cursor:pointer;">
+        <td data-label="Select" style="text-align: center;">
+            <input type="checkbox" class="row-checkbox" value="${inv.invoiceNumber}" onclick="event.stopPropagation(); toggleRowSelection('${inv.invoiceNumber}')" style="min-width:auto; cursor:pointer;">
+        </td>
         <td data-label="Invoice #">${inv.invoiceNumber}</td>
         <td data-label="Date">${new Date(inv.date).toLocaleDateString()}</td>
         <td data-label="Customer">${inv.customer}</td>
@@ -600,25 +610,109 @@ async function loadOpenDeliveries() {
   }
 }
 
-/* ===== UI LOGIC ===== */
-function selectRow(row, invoiceNumber) {
-  document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
-  row.classList.add("selected");
-  selectedInvoice = invoiceNumber;
+/* ===== UI LOGIC (MULTI-SELECT) ===== */
+function toggleRowSelection(invoiceNumber) {
+    const index = selectedInvoices.indexOf(invoiceNumber);
+    const row = document.querySelector(`tr[data-invoice="${invoiceNumber}"]`);
+    const cb = row.querySelector('.row-checkbox');
+
+    if (index > -1) {
+        // Deselect
+        selectedInvoices.splice(index, 1);
+        row.classList.remove("selected");
+        cb.checked = false;
+    } else {
+        // Select
+        selectedInvoices.push(invoiceNumber);
+        row.classList.add("selected");
+        cb.checked = true;
+    }
+    // Auto-check "Select All" if everything is selected
+    document.getElementById('selectAll').checked = (selectedInvoices.length === deliveries.length && deliveries.length > 0);
 }
 
-/* ===== MANUAL UPDATE ACTION ===== */
+function toggleAll(source) {
+    selectedInvoices = [];
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    
+    checkboxes.forEach(cb => {
+        cb.checked = source.checked;
+        const row = cb.closest('tr');
+        if (source.checked) {
+            selectedInvoices.push(cb.value);
+            row.classList.add("selected");
+        } else {
+            row.classList.remove("selected");
+        }
+    });
+}
+/* ===== MANUAL MULTI-UPDATE ACTION ===== */
 async function markSelectedDelivered() {
   const driver = document.getElementById("driverName").value.trim();
   if (!driver) return Swal.fire("Missing Info", "Please enter Driver Name first", "warning");
-  if (!selectedInvoice) return Swal.fire("Missing Info", "Select an invoice to deliver", "warning");
+  if (selectedInvoices.length === 0) return Swal.fire("Missing Info", "Select at least one invoice to deliver", "warning");
 
-  processDelivery(selectedInvoice, driver);
+  // Confirm bulk action
+  const { isConfirmed } = await Swal.fire({
+      title: 'Confirm Delivery',
+      text: `Mark ${selectedInvoices.length} invoice(s) as delivered?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      confirmButtonText: 'Yes, mark delivered!'
+  });
+
+  if (!isConfirmed) return;
+
+  // Visual Feedback
+  Swal.fire({
+     title: 'Processing...',
+     text: `Updating ${selectedInvoices.length} invoice(s)...`,
+     allowOutsideClick: false,
+     didOpen: () => Swal.showLoading()
+  });
+
+  try {
+     const deliveredAt = new Date().toISOString();
+     
+     // 🚀 Fire off all backend requests concurrently for speed
+     const promises = selectedInvoices.map(invoiceNum => {
+         return fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "markDelivered",
+              invoiceNumber: invoiceNum,
+              driver: driver,
+              deliveredAt: deliveredAt
+            })
+         }).then(res => res.json());
+     });
+
+     const results = await Promise.all(promises);
+     
+     // Check if any failed
+     const failed = results.filter(r => !r.success);
+     if (failed.length > 0) {
+         throw new Error(`${failed.length} deliveries failed to update on the server.`);
+     }
+
+     Swal.fire({
+        title: "Delivered!",
+        text: `Successfully updated ${selectedInvoices.length} invoice(s).`,
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+     }).then(() => {
+        location.reload(); 
+     });
+
+  } catch(err) {
+     Swal.fire("Error", "Could not update all invoices: " + err.message, "error");
+  }
 }
 
-/* ===== CORE DELIVERY PROCESSOR ===== */
+/* ===== CORE SINGLE DELIVERY PROCESSOR (FOR SCANNER) ===== */
 async function processDelivery(invoiceNum, driverName) {
-    // Visual Feedback
     Swal.fire({
        title: 'Processing...',
        text: `Marking Invoice ${invoiceNum} as Delivered...`,
@@ -627,15 +721,13 @@ async function processDelivery(invoiceNum, driverName) {
     });
 
     try {
-       const deliveredAt = new Date().toISOString();
-       
        const response = await fetch(API_URL, {
           method: "POST",
           body: JSON.stringify({
             action: "markDelivered",
             invoiceNumber: invoiceNum,
             driver: driverName,
-            deliveredAt: deliveredAt
+            deliveredAt: new Date().toISOString()
           })
        });
 
