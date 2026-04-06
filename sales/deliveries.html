@@ -461,6 +461,9 @@
           <button class="btn btn-primary" onclick="markSelectedDelivered()">
             Mark As Delivered
           </button>
+          <button class="btn" onclick="deleteSelectedInvoices()" style="background: var(--danger); color: white;">
+            Delete Selected
+          </button>
         </div>
 
         <div id="loading" class="loading">Loading undelivered invoices…</div>
@@ -710,7 +713,65 @@ async function markSelectedDelivered() {
      Swal.fire("Error", "Could not update all invoices: " + err.message, "error");
   }
 }
+/* ===== MANUAL MULTI-DELETE ACTION ===== */
+async function deleteSelectedInvoices() {
+  if (selectedInvoices.length === 0) return Swal.fire("Missing Info", "Select at least one invoice to delete", "warning");
 
+  // 1. Double-Check Warning (Danger Zone!)
+  const { isConfirmed } = await Swal.fire({
+      title: 'Are you absolutely sure?',
+      text: `This will permanently delete ${selectedInvoices.length} invoice(s) from the system. You cannot undo this!`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444', // Red confirm button
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, delete them!'
+  });
+
+  if (!isConfirmed) return;
+
+  // 2. Visual Feedback
+  Swal.fire({
+     title: 'Deleting...',
+     text: `Removing ${selectedInvoices.length} invoice(s)...`,
+     allowOutsideClick: false,
+     didOpen: () => Swal.showLoading()
+  });
+
+  try {
+     // 3. Fire off all backend requests concurrently
+     const promises = selectedInvoices.map(invoiceNum => {
+         return fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "deleteInvoice", // <-- Requires this endpoint in your Apps Script!
+              invoiceNumber: invoiceNum
+            })
+         }).then(res => res.json());
+     });
+
+     const results = await Promise.all(promises);
+     
+     // 4. Check if any failed
+     const failed = results.filter(r => !r.success);
+     if (failed.length > 0) {
+         throw new Error(`${failed.length} invoices failed to delete on the server.`);
+     }
+
+     Swal.fire({
+        title: "Deleted!",
+        text: `Successfully deleted ${selectedInvoices.length} invoice(s).`,
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+     }).then(() => {
+        location.reload(); 
+     });
+
+  } catch(err) {
+     Swal.fire("Error", "Could not delete all invoices: " + err.message, "error");
+  }
+}
 /* ===== CORE SINGLE DELIVERY PROCESSOR (FOR SCANNER) ===== */
 async function processDelivery(invoiceNum, driverName) {
     Swal.fire({
