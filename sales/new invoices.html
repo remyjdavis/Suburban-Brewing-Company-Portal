@@ -924,7 +924,13 @@ table.invoice-table {
             <span id="invoice-return-credit">-$0.00</span>
         </div>
       </div>
-
+<div id="deposit-credit-row" style="margin-top:6px; text-align:right; font-size:13px; display:flex; align-items:center; justify-content:flex-end; gap:5px;">
+        <strong>Deposit Paid:</strong>
+        <input id="invoice-deposit-credit-input" value="-$0.00" readonly 
+               style="border:none; text-align:right; width:80px; font-size:13px; background:transparent; cursor:pointer;"
+               title="Double-click to apply a paid deposit">
+        <span id="deposit-credit-lock-icon" style="font-size:10px; color:#9ca3af;">🔒</span>
+      </div>
       <div style="margin-top:6px; text-align:right; font-size:14px; display:flex; justify-content:flex-end; align-items:center; gap:5px;">
         <strong id="total-label">Total:</strong>
         <input id="invoice-total" value="$0.00" readonly
@@ -1284,6 +1290,53 @@ table.invoice-table {
                 let val = parseFloat(this.value.replace(/[^0-9.-]+/g, ""));
                 if (!isNaN(val)) {
                     this.value = "$" + Math.abs(val).toFixed(2);
+                }
+                recalcInvoiceTotals();
+            }
+        });
+    }
+    // 13. DEPOSIT PAID OVERRIDE LISTENERS
+    const depositCreditInput = document.getElementById("invoice-deposit-credit-input");
+    if (depositCreditInput) {
+        depositCreditInput.addEventListener("dblclick", async function() {
+            if (this.dataset.overridden === "true") {
+                if (confirm("Remove paid deposit?")) {
+                    this.dataset.overridden = "false";
+                    this.readOnly = true;
+                    this.style.border = "none";
+                    this.style.background = "transparent";
+                    document.getElementById("deposit-credit-lock-icon").textContent = "🔒";
+                    this.value = "-$0.00";
+                    recalcInvoiceTotals();
+                }
+                return;
+            }
+
+            const { value: pin } = await Swal.fire({
+                title: 'Manager Override',
+                text: 'Enter PIN to apply Deposit Paid:',
+                input: 'password',
+                showCancelButton: true
+            });
+
+            if (pin === MANAGER_PIN) {
+                this.readOnly = false;
+                this.dataset.overridden = "true";
+                this.style.border = "1px solid #f59e0b";
+                this.style.background = "#fff";
+                document.getElementById("deposit-credit-lock-icon").textContent = "🔓";
+                this.focus();
+                this.select();
+            } else if (pin) {
+                Swal.fire('Error', 'Incorrect PIN', 'error');
+            }
+        });
+
+        depositCreditInput.addEventListener("blur", function() {
+            if (this.dataset.overridden === "true") {
+                let val = parseFloat(this.value.replace(/[^0-9.-]+/g, ""));
+                if (!isNaN(val)) {
+                    this.value = "-$" + Math.abs(val).toFixed(2);
                 }
                 recalcInvoiceTotals();
             }
@@ -1911,7 +1964,14 @@ function recalcInvoiceTotals() {
     }
 
     // 6. Final Total Calculation
-    let total = (discountedSubtotal + tax + deposit) - returnCredit;
+const depositCreditInputEl = document.getElementById("invoice-deposit-credit-input");
+    const depositCredit = depositCreditInputEl ? Math.abs(parseFloat(depositCreditInputEl.value.replace(/[^0-9.-]+/g, "")) || 0) : 0;
+    
+    // Also grab manual credit if you ended up adding it, otherwise it safely defaults to 0
+    const creditInputEl = document.getElementById("invoice-credit-input");
+    const manualCredit = creditInputEl ? Math.abs(parseFloat(creditInputEl.value.replace(/[^0-9.-]+/g, "")) || 0) : 0;
+
+    let total = (discountedSubtotal + tax + deposit) - returnCredit - manualCredit - depositCredit;
 
     // ----- UPDATE UI -----
     const subEl = document.getElementById("invoice-subtotal");
@@ -2147,7 +2207,9 @@ function buildInvoicePayload() {
 
   // Final Total
   const total = Number(document.getElementById("invoice-total").value.replace(/[^0-9.-]+/g,""));
-
+const depositCreditInputForPayload = document.getElementById("invoice-deposit-credit-input");
+  const depositCredit = depositCreditInputForPayload ? Math.abs(Number(depositCreditInputForPayload.value.replace(/[^0-9.-]+/g,""))) : 0;
+  
   // 3. RETURN PAYLOAD
   return {
     invoiceNumber: currentInvoiceNumber,
@@ -2164,7 +2226,7 @@ function buildInvoicePayload() {
     depositReturn,
     returnedHalfQty,
     returnedSixthQty,
-
+    depositCredit,
     total,
     items,
     
