@@ -926,8 +926,8 @@ table.invoice-table {
       </div>
 
       <div style="margin-top:6px; text-align:right; font-size:14px; display:flex; justify-content:flex-end; align-items:center; gap:5px;">
-        <strong id="total-label">Total:</strong>
-        <input id="invoice-total" value="$0.00" readonly
+        <strong>Total:</strong>
+        <input id="invoice-total" value="$0.00" readonly 
                style="border:none; text-align:right; font-weight:bold; width:100px; font-size:14px; background:transparent; cursor:pointer;"
                title="Double-click to override">
         <span id="total-lock-icon" style="font-size:10px; color:#9ca3af;">🔒</span>
@@ -1910,30 +1910,22 @@ function recalcInvoiceTotals() {
         creditDisplay.textContent = "-$" + returnCredit.toFixed(2);
     }
 
-    // 6. Final Total Calculation (UPDATED FOR CREDIT BALANCE)
-    let rawTotal = (discountedSubtotal + tax + deposit) - returnCredit;
+    // 6. Final Total Calculation
+    let total = (discountedSubtotal + tax + deposit) - returnCredit;
+    
+    // Prevent negative totals
+    total = Math.max(0, total);
 
     // ----- UPDATE UI -----
     const subEl = document.getElementById("invoice-subtotal");
     if (subEl) subEl.textContent = "$" + subtotal.toFixed(2);
 
-    // 🔴 OVERRIDE CHECK & LABEL SWAP
+    // 🔴 OVERRIDE CHECK
     const totalInput = document.getElementById("invoice-total");
-    const totalLabel = document.getElementById("total-label");
-
     if (totalInput && totalInput.dataset.overridden !== "true") {
-        if (rawTotal < 0) {
-            // It's a credit balance! Change label and make number positive
-            if (totalLabel) totalLabel.textContent = "Total Credit:";
-            totalInput.value = "$" + Math.abs(rawTotal).toFixed(2);
-            totalInput.style.color = "#10b981"; // Makes the text green so it stands out
-        } else {
-            // Normal balance! Keep standard label
-            if (totalLabel) totalLabel.textContent = "Total:";
-            totalInput.value = "$" + rawTotal.toFixed(2);
-            totalInput.style.color = ""; // Resets color to default
-        }
+        totalInput.value = "$" + total.toFixed(2);
     }
+}
     /* ===== RECALC KEG DEPOSIT FUNCTION ===== */
     function recalcKegDeposit() {
       let depositTotal = 0;
