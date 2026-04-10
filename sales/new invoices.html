@@ -1945,11 +1945,22 @@ if (type === "Case") {
 /* ===== RECALC INVOICE TOTAL FUNCTION (ROBUST & SAFE) ===== */
 function recalcInvoiceTotals() {
     let subtotal = 0;
+    let taxableSubtotal = 0; // 🟢 NEW: Tracks only items that get taxed
 
     // 1. Product Subtotal
-    document.querySelectorAll(".line-total").forEach(cell => {
-        if (cell.dataset.value !== undefined) {
-            subtotal += Number(cell.dataset.value);
+    document.querySelectorAll("#product-body tr").forEach(row => {
+        const lineTotalCell = row.querySelector(".line-total");
+        const productInput = row.querySelector(".product-input");
+        
+        if (lineTotalCell && lineTotalCell.dataset.value !== undefined) {
+            const lineVal = Number(lineTotalCell.dataset.value);
+            subtotal += lineVal;
+            
+            // 🟢 If the product does NOT contain "deposit", add it to the taxable amount
+            const isDeposit = productInput && productInput.value.toLowerCase().trim().includes("deposit");
+            if (!isDeposit) {
+                taxableSubtotal += lineVal;
+            }
         }
     });
 
@@ -1995,11 +2006,12 @@ function recalcInvoiceTotals() {
         // Use the manual value
         tax = Math.abs(parseFloat(taxEl.value.replace(/[^0-9.-]+/g, "")) || 0);
     } else {
-        // Use standard 6% logic
-        tax = isRestaurant ? discountedSubtotal * taxRate : 0;
+        // 🟢 Use standard 6% logic ON THE TAXABLE SUBTOTAL ONLY
+        const amountToTax = Math.max(0, taxableSubtotal - discount);
+        tax = isRestaurant ? amountToTax * taxRate : 0;
         if (taxEl) taxEl.value = "$" + tax.toFixed(2);
     }
-
+  
     // 🟢 5. KEG RETURNS (SAFE CHECK)
     const halfInput = document.getElementById("return-half-qty");
     const sixthInput = document.getElementById("return-sixth-qty");
