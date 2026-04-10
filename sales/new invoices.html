@@ -2411,7 +2411,7 @@ async function loadInvoiceForEdit(invNum, custName) {
             }
         }
 
-        // 4. Fetch Invoice Items from Backend
+        // 4a. Fetch Invoice Items from Backend
         const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`);
         if (!res.ok) throw new Error("Failed to fetch items");
         
@@ -2421,7 +2421,46 @@ async function loadInvoiceForEdit(invNum, custName) {
             Swal.fire("Empty", "No items found for this invoice.", "info");
             return;
         }
+      // 🟢 4b. Fetch Header info to catch Discounts & Credits
+        const headerRes = await fetch(`${API_URL}?action=getInvoiceHeader&invoiceNumber=${encodeURIComponent(invNum)}`);
+        if (headerRes.ok) {
+            const headerData = await headerRes.json();
+            
+            // Set Discount
+            if (headerData.discount) {
+                const discInput = document.getElementById("invoice-discount-input");
+                if (discInput) {
+                    discInput.value = "-$" + Math.abs(headerData.discount).toFixed(2);
+                    discInput.dataset.overridden = "true";
+                    document.getElementById("discount-row").style.display = "flex";
+                }
+            }
 
+            // Set Keg Returns (Translates the raw dollar amount back into $30 shells)
+            if (headerData.depositReturn) {
+                const shells = Math.floor(Math.abs(headerData.depositReturn) / 30);
+                document.getElementById("return-half-qty").value = shells;
+                document.getElementById("return-sixth-qty").value = 0; // Puts all shells in the 1/2 box for simplicity
+            }
+
+            // Set Manual Credit
+            if (headerData.manualCredit) {
+                const credInput = document.getElementById("invoice-credit-input");
+                if (credInput) {
+                    credInput.value = "-$" + Math.abs(headerData.manualCredit).toFixed(2);
+                    credInput.dataset.overridden = "true";
+                }
+            }
+
+            // Set Deposit Paid
+            if (headerData.depositCredit) {
+                const depCredInput = document.getElementById("invoice-deposit-credit-input");
+                if (depCredInput) {
+                    depCredInput.value = "-$" + Math.abs(headerData.depositCredit).toFixed(2);
+                    depCredInput.dataset.overridden = "true";
+                }
+            }
+        }
         // 5. Clear Default Empty Row
         const tbody = document.getElementById("product-body");
         tbody.innerHTML = "";
