@@ -1696,11 +1696,11 @@ function selectProduct(row, product) {
     barcodeCell.innerHTML = "";
     priceCell.innerHTML = "";
 
-    // 4. GENERATE CHECKBOXES
-    ["Case", "1/2 Keg", "1/6 Keg"].forEach(type => {
+    // 4. GENERATE CHECKBOXES (Dynamically accepts any type from the spreadsheet)
+    Object.keys(groupedProducts[product]).forEach(type => {
         // Skip types that this product doesn't have
         if (!groupedProducts[product][type]) return;
-
+      
         const stock = inventoryMap[product] && inventoryMap[product][type] !== undefined 
                       ? Number(inventoryMap[product][type]) : 0;
 
