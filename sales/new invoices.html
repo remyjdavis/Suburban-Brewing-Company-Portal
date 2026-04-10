@@ -1345,7 +1345,8 @@ table.invoice-table {
 }); // 🟢 CLOSES DOMContentLoaded
     /* ===== LOAD CUSTOMERS FUNCTION ===== */
     function loadCustomers() {
-      fetch(`${API_URL}?action=getCustomers`)
+      // 🟢 Added 'return'
+      return fetch(`${API_URL}?action=getCustomers`)
         .then(r => r.json())
         .then(d => customers = d || []);
     }
@@ -1503,9 +1504,10 @@ table.invoice-table {
       });
     });
 
-    /* ===== LOAD PRODUCTS FUNCTION ===== */
+   /* ===== LOAD PRODUCTS FUNCTION ===== */
     function loadProducts() {
-      fetch(`${API_URL}?action=getProducts`)
+      // 🟢 Added 'return'
+      return fetch(`${API_URL}?action=getProducts`)
         .then(r => r.json())
         .then(data => {
           products = data || [];
@@ -1528,7 +1530,8 @@ table.invoice-table {
     let inventoryMap = {};
 
     function loadInventory() {
-      fetch(`${API_URL}?action=getBreweryInventory`)
+      // 🟢 Added 'return'
+      return fetch(`${API_URL}?action=getBreweryInventory`)
         .then(r => r.json())
         .then(data => {
           inventoryMap = {};
