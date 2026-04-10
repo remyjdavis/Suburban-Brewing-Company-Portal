@@ -1795,13 +1795,16 @@ function selectProduct(row, product) {
           
           qtyInput.oninput = () => {
             const max = inventoryMap[product]?.[type];
-            if (max !== undefined && Number(qtyInput.value) > max) {
+            const isDepositItem = product.toLowerCase().trim().includes("deposit");
+            
+            // 🟢 UPGRADED: Bypasses the max inventory check for deposits
+            if (!isDepositItem && max !== undefined && Number(qtyInput.value) > max) {
               qtyInput.value = max;
               alert(`Only ${max} units of ${product} (${type}) available`);
             }
             recalcLine(row, product);
           };
-
+          
           qtyWrap.appendChild(qtyLabel);
           qtyWrap.appendChild(qtyInput);
           qtyCell.appendChild(qtyWrap);
