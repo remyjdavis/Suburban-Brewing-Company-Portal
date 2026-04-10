@@ -1814,42 +1814,52 @@ function selectProduct(row, product) {
           const priceInput = document.createElement("input");
           priceInput.type = "number";
           priceInput.step = "0.01";
-          priceInput.className = "price-edit-input"; // Default: Locked
+          priceInput.className = "price-edit-input"; 
           priceInput.value = defaultPrice.toFixed(2);
-          priceInput.readOnly = true; // Start Locked
           
           // Store original for logging purposes later
           priceInput.dataset.original = defaultPrice;
           priceInput.dataset.type = type;
 
-          // 🔒 DOUBLE CLICK TO UNLOCK
-          priceInput.ondblclick = async () => {
-              if(!priceInput.readOnly) return; // Already unlocked
+          // 🟢 NEW LOGIC: Auto-unlock if the product is "Deposit"
+          if (product.toLowerCase() === "deposit") {
+              priceInput.readOnly = false; // Start UNLOCKED
+              priceInput.classList.add("unlocked");
+              priceInput.style.background = "#ffffff";
+              priceInput.style.borderColor = "#2563eb"; // Blue border to show it's ready to type
+              priceInput.title = "Enter custom deposit amount";
+          } else {
+              // 🔒 NORMAL LOCK FOR REGULAR PRODUCTS
+              priceInput.readOnly = true; // Start LOCKED
+              
+              priceInput.ondblclick = async () => {
+                  if(!priceInput.readOnly) return; // Already unlocked
 
-              const { value: pin } = await Swal.fire({
-                  title: 'Manager Override',
-                  text: 'Enter PIN to unlock price:',
-                  input: 'password',
-                  inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
-                  showCancelButton: true,
-                  confirmButtonColor: '#2563eb',
-                  confirmButtonText: 'Unlock'
-              });
-
-              if (pin === MANAGER_PIN) {
-                  priceInput.readOnly = false;
-                  priceInput.classList.add("unlocked");
-                  priceInput.focus();
-                  priceInput.select();
-                  
-                  const Toast = Swal.mixin({
-                      toast: true, position: 'top-end', showConfirmButton: false, timer: 3000
+                  const { value: pin } = await Swal.fire({
+                      title: 'Manager Override',
+                      text: 'Enter PIN to unlock price:',
+                      input: 'password',
+                      inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+                      showCancelButton: true,
+                      confirmButtonColor: '#2563eb',
+                      confirmButtonText: 'Unlock'
                   });
-                  Toast.fire({ icon: 'warning', title: 'Price Unlocked. Change will be logged.' });
-              } else if (pin) {
-                  Swal.fire('Error', 'Incorrect PIN', 'error');
-              }
-          };
+
+                  if (pin === MANAGER_PIN) {
+                      priceInput.readOnly = false;
+                      priceInput.classList.add("unlocked");
+                      priceInput.focus();
+                      priceInput.select();
+                      
+                      const Toast = Swal.mixin({
+                          toast: true, position: 'top-end', showConfirmButton: false, timer: 3000
+                      });
+                      Toast.fire({ icon: 'warning', title: 'Price Unlocked. Change will be logged.' });
+                  } else if (pin) {
+                      Swal.fire('Error', 'Incorrect PIN', 'error');
+                  }
+              };
+          }
 
           // Recalculate invoice when price changes
           priceInput.oninput = () => {
