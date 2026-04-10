@@ -2133,8 +2133,7 @@ const depositCreditInputEl = document.getElementById("invoice-deposit-credit-inp
           focusFirstProductRow();
         });
     }
-   /* ===== BUILD INVOICE PAYLOAD FUNCTION (UPDATED) ===== */
-/* ===== BUILD INVOICE PAYLOAD FUNCTION (UPDATED) ===== */
+  /* ===== BUILD INVOICE PAYLOAD FUNCTION (UPDATED) ===== */
 function buildInvoicePayload() {
   if (!selectedCustomer) { alert("Select a customer first"); return null; }
 
@@ -2160,10 +2159,8 @@ function buildInvoicePayload() {
       
       if(priceInput) {
           finalPrice = Number(priceInput.value);
-          // Safety check: ensure dataset exists before accessing
           const originalPrice = priceInput.dataset.original ? Number(priceInput.dataset.original) : finalPrice;
           
-          // 📝 LOGGING: If price differs from original
           if(finalPrice !== originalPrice) {
               const logEntry = `Price Override: ${productName} (${type}) changed from $${originalPrice.toFixed(2)} to $${finalPrice.toFixed(2)}`;
               overrideLogs.push(logEntry);
@@ -2185,31 +2182,34 @@ function buildInvoicePayload() {
   // 2. GATHER TOTALS (Using Regex to safely remove $ symbols)
   const subtotal = Number(document.getElementById("invoice-subtotal").textContent.replace(/[^0-9.-]+/g,""));
   
-  // 🟢 DISCOUNT LOGIC FIX (Now correctly targets the input field)
   const discountInput = document.getElementById("invoice-discount-input");
   const discount = discountInput ? Math.abs(Number(discountInput.value.replace(/[^0-9.-]+/g,""))) : 0;
   
   const depositEl = document.getElementById("invoice-deposit");
   const deposit = (depositEl && depositEl.textContent) ? Number(depositEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
   
+  // 🟢 THIS IS THE LINE THAT WAS BROKEN. It now correctly grabs .value
   const taxEl = document.getElementById("invoice-tax");
-  const tax = (taxEl && taxEl.textContent) ? Number(taxEl.textContent.replace(/[^0-9.-]+/g,"")) : 0;
+  const tax = (taxEl && taxEl.value) ? Number(taxEl.value.replace(/[^0-9.-]+/g,"")) : 0;
 
-  // 🟢 2b. GATHER RETURN DATA
+  // 🟢 GATHER RETURN DATA
   const returnHalfEl = document.getElementById("return-half-qty");
   const returnSixthEl = document.getElementById("return-sixth-qty");
   const returnCreditEl = document.getElementById("invoice-return-credit");
 
   const returnedHalfQty = returnHalfEl ? Number(returnHalfEl.value || 0) : 0;
   const returnedSixthQty = returnSixthEl ? Number(returnSixthEl.value || 0) : 0;
-  // Extract pure number from string like "-$60.00" -> 60.00
   const depositReturn = returnCreditEl ? Number(returnCreditEl.textContent.replace(/[^0-9.]/g, "")) : 0;
 
-  // Final Total
-  const total = Number(document.getElementById("invoice-total").value.replace(/[^0-9.-]+/g,""));
-const depositCreditInputForPayload = document.getElementById("invoice-deposit-credit-input");
+  // 🟢 GATHER NEW CREDITS & FINAL TOTAL
+  const creditInputForPayload = document.getElementById("invoice-credit-input");
+  const manualCredit = creditInputForPayload ? Math.abs(Number(creditInputForPayload.value.replace(/[^0-9.-]+/g,""))) : 0;
+
+  const depositCreditInputForPayload = document.getElementById("invoice-deposit-credit-input");
   const depositCredit = depositCreditInputForPayload ? Math.abs(Number(depositCreditInputForPayload.value.replace(/[^0-9.-]+/g,""))) : 0;
-  
+
+  const total = Number(document.getElementById("invoice-total").value.replace(/[^0-9.-]+/g,""));
+
   // 3. RETURN PAYLOAD
   return {
     invoiceNumber: currentInvoiceNumber,
@@ -2222,15 +2222,17 @@ const depositCreditInputForPayload = document.getElementById("invoice-deposit-cr
     tax, 
     deposit,
     
-    // 🟢 NEW FIELDS FOR BACKEND
+    // NEW FIELDS FOR BACKEND
     depositReturn,
     returnedHalfQty,
     returnedSixthQty,
+    manualCredit,
     depositCredit,
+
     total,
     items,
     
-    // 🔒 LOGS & EDIT FLAGS
+    // LOGS & EDIT FLAGS
     logs: overrideLogs,
     forceUpdate: true 
   };
