@@ -1417,6 +1417,30 @@ table.invoice-table {
 
     selectedCustomer.paymentMethod = c.Payment || c.payment || c.paymentMethod || "";
 
+    // --- 🟢 NEW: DEPOSIT BALANCE CHECK & AUTO-FILL ---
+    if (c.depositBalance > 0) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'info',
+            title: `Client has $${c.depositBalance.toFixed(2)} deposit credit available.`,
+            showConfirmButton: false,
+            timer: 4000
+        });
+        
+        // Auto-populate the Deposit Paid field
+        const depInput = document.getElementById("invoice-deposit-credit-input");
+        if (depInput) {
+            depInput.value = "-$" + c.depositBalance.toFixed(2);
+            depInput.dataset.overridden = "true";
+            
+            // Show the row so you can see it applied
+            const row = document.getElementById("deposit-credit-row");
+            if (row) row.style.display = "flex";
+        }
+    }
+    // -------------------------------------------------
+
     updateInvoiceFooter();
 
     document.querySelectorAll(".suggestion").forEach(e => e.remove());
