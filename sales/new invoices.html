@@ -1714,8 +1714,10 @@ function selectProduct(row, product) {
         const statusSpan = document.createElement("span");
         statusSpan.className = "stock-status";
 
-        // Stock Logic
-        if (stock === 0) {
+        const isDepositItem = product.toLowerCase().trim().includes("deposit");
+
+        // 🟢 UPGRADED STOCK LOGIC: Bypasses the "0 stock" rule if it's a Deposit
+        if (stock === 0 && !isDepositItem) {
             checkbox.disabled = true;
             label.classList.add("out-of-stock-grey");
             statusSpan.textContent = "Out of Stock";
@@ -1725,7 +1727,7 @@ function selectProduct(row, product) {
         } else {
             label.appendChild(checkbox);
             label.append(` ${type}`);
-            if (stock < 10) {
+            if (stock < 10 && !isDepositItem) {
                 statusSpan.textContent = `Low Stock (${stock})`;
                 label.appendChild(statusSpan);
             }
