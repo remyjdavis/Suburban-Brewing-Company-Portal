@@ -13,7 +13,7 @@ function buildInvoicePayload() {
   overrideLogs = []; // Reset logs
 
   // 1. GATHER ITEMS
-  document.querySelectorAll("#product-body tr").forEach(row => {
+  document.querySelectorAll("#product-body tr").forEach(row => { 
     const productInput = row.querySelector(".product-input");
     if (!productInput || !productInput.value) return;
 
@@ -1821,12 +1821,14 @@ function selectProduct(row, product) {
           priceInput.dataset.original = defaultPrice;
           priceInput.dataset.type = type;
 
-          // 🟢 NEW LOGIC: Auto-unlock if the product is "Deposit"
-          if (product.toLowerCase() === "deposit") {
+          // 🟢 UPGRADED LOGIC: Auto-unlock if the product has "deposit" ANYWHERE in the name
+          if (product.toLowerCase().trim().includes("deposit")) {
               priceInput.readOnly = false; // Start UNLOCKED
               priceInput.classList.add("unlocked");
               priceInput.style.background = "#ffffff";
-              priceInput.style.borderColor = "#2563eb"; // Blue border to show it's ready to type
+              priceInput.style.borderColor = "#2563eb"; // Blue border to show it's ready
+              priceInput.style.color = "#000000"; // Dark text so you can see it
+              priceInput.style.cursor = "text"; // Forces the mouse pointer to let you click
               priceInput.title = "Enter custom deposit amount";
           } else {
               // 🔒 NORMAL LOCK FOR REGULAR PRODUCTS
