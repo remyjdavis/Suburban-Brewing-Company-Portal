@@ -860,7 +860,35 @@ table.invoice-table {
             <div id="customer-address" class="customer-address"></div>
           </div>
         </div>
-
+<div id="manual-customer-container" style="margin-top: 8px;">
+        <a href="#" onclick="toggleManualCustomer(); return false;" style="font-size: 13px; color: #2563eb; text-decoration: underline; cursor: pointer;">+ Enter customer manually</a>
+        
+        <div id="manual-customer-form" style="display: none; margin-top: 12px; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #334155;">Manual Customer Entry</h4>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <input type="text" id="manual-cust-name" placeholder="Business Name" autocomplete="off" style="padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;">
+            <textarea id="manual-cust-address" placeholder="Street Address&#10;City, State Zip" rows="2" style="padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; resize: none; font-size: 13px;"></textarea>
+            
+            <div style="display: flex; gap: 10px;">
+              <select id="manual-cust-type" style="padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; font-size: 13px;">
+                <option value="Restaurant">Restaurant (Taxable)</option>
+                <option value="Wholesale">Wholesale (Tax Exempt)</option>
+              </select>
+              <select id="manual-cust-payment" style="padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; font-size: 13px;">
+                <option value="Check">Check</option>
+                <option value="Cash">Cash</option>
+                <option value="Fintech">Fintech</option>
+                <option value="Terms">Terms</option>
+              </select>
+            </div>
+            
+            <button type="button" onclick="applyManualCustomer()" style="padding: 8px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 5px; font-size: 13px;">
+              Use Manual Customer
+            </button>
+          </div>
+        </div>
+      </div>
+        
         <div class="invoice-meta">
           <div class="meta-line">
             <strong>Date:</strong>
@@ -2597,6 +2625,46 @@ async function loadInvoiceForEdit(invNum, custName) {
         console.error("Load Error:", error);
         Swal.fire("Error", "Could not load invoice details.", "error");
     }
+}
+    /* ===== MANUAL CUSTOMER ENTRY LOGIC ===== */
+
+// 1. Shows/Hides the manual entry box
+function toggleManualCustomer() {
+    const form = document.getElementById("manual-customer-form");
+    form.style.display = form.style.display === "none" ? "block" : "none";
+}
+
+// 2. Grabs the typed info and tricks the system into thinking it's a real database customer
+function applyManualCustomer() {
+    const name = document.getElementById("manual-cust-name").value.trim();
+    const address = document.getElementById("manual-cust-address").value.trim();
+    const type = document.getElementById("manual-cust-type").value;
+    const payment = document.getElementById("manual-cust-payment").value;
+
+    if (!name) {
+        Swal.fire("Required", "Please enter a business name.", "warning");
+        return;
+    }
+
+    // Create a "synthetic" customer object formatted exactly like your database
+    const manualCustomer = {
+        name: name,
+        address: address,
+        type: type,
+        Payment: payment, // selectCustomer function looks for this exact spelling
+        depositBalance: 0   // Manual clients start with 0 credit
+    };
+
+    // Feed it to your existing selectCustomer function
+    selectCustomer(manualCustomer);
+
+    // Clean up the UI
+    document.getElementById("manual-customer-container").style.display = "none";
+    document.getElementById("customer-search").style.display = "none";
+    
+    // Clear the form in case you need it later
+    document.getElementById("manual-cust-name").value = "";
+    document.getElementById("manual-cust-address").value = "";
 }
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
