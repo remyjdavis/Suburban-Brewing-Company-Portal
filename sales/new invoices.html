@@ -2634,8 +2634,8 @@ function toggleManualCustomer() {
     form.style.display = form.style.display === "none" ? "block" : "none";
 }
 
-// 2. Grabs the typed info and tricks the system into thinking it's a real database customer
-function applyManualCustomer() {
+// 2. Grabs the typed info, saves it to the database, and loads the invoice
+async function applyManualCustomer() {
     const name = document.getElementById("manual-cust-name").value.trim();
     const address = document.getElementById("manual-cust-address").value.trim();
     const type = document.getElementById("manual-cust-type").value;
@@ -2646,25 +2646,61 @@ function applyManualCustomer() {
         return;
     }
 
-    // Create a "synthetic" customer object formatted exactly like your database
+    // Create a customer object formatted exactly like your database
     const manualCustomer = {
         name: name,
         address: address,
         type: type,
-        Payment: payment, // selectCustomer function looks for this exact spelling
+        Payment: payment,
         depositBalance: 0   // Manual clients start with 0 credit
     };
 
-    // Feed it to your existing selectCustomer function
-    selectCustomer(manualCustomer);
+    // 🟢 Show a loading spinner so you know it's saving to Google Sheets
+    Swal.fire({
+        title: 'Saving to Database...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
 
-    // Clean up the UI
-    document.getElementById("manual-customer-container").style.display = "none";
-    document.getElementById("customer-search").style.display = "none";
-    
-    // Clear the form in case you need it later
-    document.getElementById("manual-cust-name").value = "";
-    document.getElementById("manual-cust-address").value = "";
+    try {
+        // 🟢 SEND TO BACKEND TO SAVE PERMANENTLY
+        const res = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "addCustomer",
+                customer: manualCustomer
+            })
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+            Swal.close();
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'success', 
+                title: 'Client permanently saved!', showConfirmButton: false, timer: 3000
+            });
+
+            // Add to the local list so the search bar works immediately without refreshing the page
+            if (typeof customers !== "undefined") customers.push(manualCustomer);
+
+            // Feed it to your existing selectCustomer function
+            selectCustomer(manualCustomer);
+
+            // Clean up the UI
+            document.getElementById("manual-customer-container").style.display = "none";
+            document.getElementById("customer-search").style.display = "none";
+            
+            // Clear the form
+            document.getElementById("manual-cust-name").value = "";
+            document.getElementById("manual-cust-address").value = "";
+        } else {
+            Swal.fire("Error", "Failed to save client to Google Sheet.", "error");
+        }
+    } catch (err) {
+        console.error(err);
+        Swal.fire("Error", "Network error while saving.", "error");
+    }
 }
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
