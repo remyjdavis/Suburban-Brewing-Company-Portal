@@ -542,37 +542,47 @@
     }
 
     async function addUserModal() {
-        const { value: formValues } = await Swal.fire({
-            title: 'Add New User',
-            html: `
-                <input id="swal-name" class="swal2-input" placeholder="Full Name">
-                <input id="swal-email" class="swal2-input" placeholder="Email Address">
-                <input id="swal-role" class="swal2-input" placeholder="Job Title (e.g. Sales Rep)">
-                <select id="swal-access" class="swal2-input">
-                    <option value="Staff">Staff Access</option>
-                    <option value="Admin">Admin Access</option>
-                </select>
-            `,
-            preConfirm: () => {
-                return {
-                    name: document.getElementById('swal-name').value,
-                    email: document.getElementById('swal-email').value,
-                    role: document.getElementById('swal-role').value,
-                    access: document.getElementById('swal-access').value
-                }
+    const { value: formValues } = await Swal.fire({
+        title: 'Add New User',
+        html: `
+            <input id="swal-name" class="swal2-input" placeholder="Full Name">
+            <input id="swal-email" class="swal2-input" placeholder="Email Address">
+            <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:12px; font-weight:700; color:#64748b;">JOB TITLE</label>
+            <select id="swal-role" class="swal2-input">
+                <option value="Brewer">Brewer</option>
+                <option value="Sales Rep">Sales Rep</option>
+                <option value="Marketing Rep">Marketing Rep</option>
+                <option value="Administrator">Administrator</option>
+                <option value="Owner">Owner</option>
+            </select>
+            <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:12px; font-weight:700; color:#64748b;">ACCESS LEVEL</label>
+            <select id="swal-access" class="swal2-input">
+                <option value="Staff">Staff Access</option>
+                <option value="Admin">Admin Access</option>
+            </select>
+        `,
+        preConfirm: () => {
+            return {
+                name: document.getElementById('swal-name').value,
+                email: document.getElementById('swal-email').value,
+                role: document.getElementById('swal-role').value,
+                access: document.getElementById('swal-access').value
             }
-        });
-
-        if (formValues) {
-            Swal.fire({ title: 'Creating...', didOpen: () => Swal.showLoading() });
-            await fetch(MASTER_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'adminAddUser', data: formValues })
-            });
-            loadUsers();
-            Swal.fire('Success', 'User added.', 'success');
         }
+    });
+
+    if (formValues) {
+        if (!formValues.name || !formValues.email) return Swal.fire('Error', 'Name and Email are required', 'error');
+        
+        Swal.fire({ title: 'Creating...', didOpen: () => Swal.showLoading() });
+        await fetch(MASTER_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'adminAddUser', data: formValues })
+        });
+        loadUsers();
+        Swal.fire('Success', 'User added.', 'success');
     }
+}
 
     function deleteUser(username) {
         Swal.fire({
@@ -707,30 +717,39 @@
 async function editJobTitle(username, currentRole) {
     const { value: newRole } = await Swal.fire({
         title: 'Update Job Title',
-        input: 'text',
-        inputLabel: 'New title for ' + username,
+        input: 'select',
+        inputOptions: {
+            'Brewer': 'Brewer',
+            'Sales Rep': 'Sales Rep',
+            'Marketing Rep': 'Marketing Rep',
+            'Administrator': 'Administrator',
+            'Owner': 'Owner'
+        },
+        inputPlaceholder: 'Select a role',
         inputValue: currentRole,
-        showCancelButton: true
+        showCancelButton: true,
+        inputValidator: (value) => {
+            if (!value) return 'You must select a role!';
+        }
     });
 
     if (newRole && newRole !== currentRole) {
         Swal.fire({ title: 'Updating...', didOpen: () => Swal.showLoading() });
         
-        // 🟢 Using URLSearchParams is more reliable for Google Scripts to prevent CORS errors
         const url = `${MASTER_API_URL}?action=adminUpdateUserRole&username=${encodeURIComponent(username)}&newRole=${encodeURIComponent(newRole)}`;
         
         try {
-            const response = await fetch(url, { method: 'GET' }); // Switch to GET for simplicity
+            const response = await fetch(url, { method: 'GET' });
             const result = await response.json();
             
             if (result.status === "success") {
-                Swal.fire('Updated', 'Job title saved to database.', 'success');
+                Swal.fire('Updated', `Title changed to ${newRole}`, 'success');
                 loadUsers(); 
             } else {
-                throw new Error(result.message || 'Access Denied');
+                throw new Error(result.message || 'Update failed');
             }
         } catch (e) {
-            Swal.fire('Failed', 'Check your GAS Deployment or Sheet Permissions.', 'error');
+            Swal.fire('Error', 'Communication with server failed.', 'error');
         }
     }
 }
