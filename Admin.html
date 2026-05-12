@@ -545,22 +545,42 @@
     const { value: formValues } = await Swal.fire({
         title: 'Add New User',
         html: `
-            <input id="swal-name" class="swal2-input" placeholder="Full Name">
-            <input id="swal-email" class="swal2-input" placeholder="Email Address">
-            <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:12px; font-weight:700; color:#64748b;">JOB TITLE</label>
-            <select id="swal-role" class="swal2-input">
-                <option value="Brewer">Brewer</option>
-                <option value="Sales Rep">Sales Rep</option>
-                <option value="Marketing Rep">Marketing Rep</option>
-                <option value="Administrator">Administrator</option>
-                <option value="Owner">Owner</option>
-            </select>
-            <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:12px; font-weight:700; color:#64748b;">ACCESS LEVEL</label>
-            <select id="swal-access" class="swal2-input">
-                <option value="Staff">Staff Access</option>
-                <option value="Admin">Admin Access</option>
-            </select>
-        `,
+           // Inside your addUserModal() function
+html: `
+    <input id="swal-name" class="swal2-input" placeholder="Full Name">
+    <input id="swal-email" class="swal2-input" placeholder="Email Address">
+    
+    <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#64748b;">JOB TITLE</label>
+    <select id="swal-role" class="swal2-input" onchange="toggleTerritory('swal-role', 'territory-wrap')">
+        <option value="Brewer">Brewer</option>
+        <option value="Sales Rep">Sales Rep</option>
+        <option value="Marketing Rep">Marketing Rep</option>
+        <option value="Administrator">Administrator</option>
+        <option value="Owner">Owner</option>
+    </select>
+
+    <div id="territory-wrap" style="display:none;">
+        <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#2563eb;">PA TERRITORY (COUNTY)</label>
+        <select id="swal-territory" class="swal2-input">
+            <option value="Berks">Berks</option>
+            <option value="Chester">Chester</option>
+            <option value="Lancaster">Lancaster</option>
+            <option value="Montgomery">Montgomery</option>
+            <option value="Delaware">Delaware</option>
+            <option value="Philadelphia">Philadelphia</option>
+            <option value="Lehigh">Lehigh</option>
+            <option value="Bucks">Bucks</option>
+            <option value="York">York</option>
+            <option value="Other">Other PA County</option>
+        </select>
+    </div>
+
+    <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#64748b;">ACCESS LEVEL</label>
+    <select id="swal-access" class="swal2-input">
+        <option value="Staff">Staff Access</option>
+        <option value="Admin">Admin Access</option>
+    </select>
+`,
         preConfirm: () => {
             return {
                 name: document.getElementById('swal-name').value,
@@ -715,28 +735,41 @@
         } catch(e) { tbody.innerHTML = "<tr><td>Error loading logs</td></tr>"; }
     }
 async function editJobTitle(username, currentRole) {
-    const { value: newRole } = await Swal.fire({
+    const { value: formValues } = await Swal.fire({
         title: 'Update Job Title',
-        input: 'select',
-        inputOptions: {
-            'Brewer': 'Brewer',
-            'Sales Rep': 'Sales Rep',
-            'Marketing Rep': 'Marketing Rep',
-            'Administrator': 'Administrator',
-            'Owner': 'Owner'
-        },
-        inputPlaceholder: 'Select a role',
-        inputValue: currentRole,
-        showCancelButton: true,
-        inputValidator: (value) => {
-            if (!value) return 'You must select a role!';
+        html: `
+            <select id="edit-role" class="swal2-input" onchange="toggleTerritory('edit-role', 'edit-territory-wrap')">
+                <option value="Brewer" ${currentRole === 'Brewer' ? 'selected' : ''}>Brewer</option>
+                <option value="Sales Rep" ${currentRole === 'Sales Rep' ? 'selected' : ''}>Sales Rep</option>
+                <option value="Marketing Rep" ${currentRole === 'Marketing Rep' ? 'selected' : ''}>Marketing Rep</option>
+                <option value="Administrator" ${currentRole === 'Administrator' ? 'selected' : ''}>Administrator</option>
+                <option value="Owner" ${currentRole === 'Owner' ? 'selected' : ''}>Owner</option>
+            </select>
+            <div id="edit-territory-wrap" style="${currentRole === 'Sales Rep' ? 'display:block;' : 'display:none;'}">
+                <select id="edit-territory" class="swal2-input">
+                    <option value="Berks">Berks</option>
+                    <option value="Chester">Chester</option>
+                    <option value="Lancaster">Lancaster</option>
+                    <option value="Montgomery">Montgomery</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        `,
+        preConfirm: () => {
+            const role = document.getElementById('edit-role').value;
+            const territory = document.getElementById('edit-territory').value;
+            return { role: role, territory: (role === "Sales Rep" ? territory : "") };
         }
     });
 
-    if (newRole && newRole !== currentRole) {
-        Swal.fire({ title: 'Updating...', didOpen: () => Swal.showLoading() });
+    if (formValues) {
+        // Updated logic to save both Role and Territory to the backend
+        // We can append the territory to the role name (e.g., "Sales Rep - Berks") 
+        // to keep the database structure simple.
+        const finalRole = formValues.territory ? `${formValues.role} (${formValues.territory})` : formValues.role;
         
-        const url = `${MASTER_API_URL}?action=adminUpdateUserRole&username=${encodeURIComponent(username)}&newRole=${encodeURIComponent(newRole)}`;
+        const url = `${MASTER_API_URL}?action=adminUpdateUserRole&username=${encodeURIComponent(username)}&newRole=${encodeURIComponent(finalRole)}`;
+        // ... (rest of your fetch logic)
         
         try {
             const response = await fetch(url, { method: 'GET' });
@@ -752,6 +785,11 @@ async function editJobTitle(username, currentRole) {
             Swal.fire('Error', 'Communication with server failed.', 'error');
         }
     }
+}
+function toggleTerritory(roleId, wrapId) {
+    const role = document.getElementById(roleId).value;
+    const wrap = document.getElementById(wrapId);
+    wrap.style.display = (role === "Sales Rep") ? "block" : "none";
 }
     // =========================================================
     // 5. UI UTILS (Mobile Menu)
