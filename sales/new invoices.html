@@ -1483,21 +1483,17 @@ forceHeaderUpdate(); // Run it immediately on load
     selectedCustomer.paymentMethod = c.Payment || c.payment || c.paymentMethod || "";
 
     // --- 🟢 FUZZY REP SEARCH ---
-let rep = null;
+let rep = employees.find(e => {
+    // 1. Clean the role string (removes spaces/underscores)
+    const cleanRole = e.role ? e.role.toLowerCase().replace(/[^a-z]/g, "") : "";
+    
+    // 2. Look for Sales Rep that isn't you
+    return cleanRole === "salesrep" && e.name !== "Remy Davis";
+});
 
-if (Array.isArray(employees) && employees.length > 0) {
-    // 1. Try to find the person with the "Sales Rep" role
-    rep = employees.find(e => {
-        if (!e.role || !e.name) return false;
-        const role = e.role.toLowerCase().replace(/[^a-z]/g, ""); // "sales_rep" -> "salesrep"
-        // Skip you, find the new person
-        return role === "salesrep" && e.name !== "Remy Davis";
-    });
-
-    // 2. If no Rep, find Eric Yost
-    if (!rep) {
-        rep = employees.find(e => e.name && e.name.toLowerCase().includes("eric"));
-    }
+// Fallback to Eric if no new rep is found
+if (!rep) {
+    rep = employees.find(e => e.name && e.name.toLowerCase().includes("eric"));
 }
 
 // 3. Fallback if everything fails
