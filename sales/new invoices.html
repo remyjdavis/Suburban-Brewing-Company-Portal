@@ -1071,42 +1071,28 @@ table.invoice-table {
     document.getElementById("invoice-date").textContent = today;
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
-    if (typeof setupUserProfile === 'function') setupUserProfile();
-    if (typeof checkUnreadCount === 'function') checkUnreadCount();
+    // 2. Load all data FIRST
+    try {
+        await Promise.all([
+            loadCustomers(), 
+            loadProducts(), 
+            loadInventory(), 
+            loadEmployees()
+        ]);
+        console.log("All data loaded successfully");
+    } catch (err) {
+        console.error("Data loading failed", err);
+    }
 
-    // 2. CHECK URL FOR EDIT PARAMETERS
+    // 3. Now run logic that depends on that data
     const urlParams = new URLSearchParams(window.location.search);
     const editInvoiceNum = urlParams.get('invoice');
-    const editCustomerName = urlParams.get('customer');
 
-    // 3. LOAD DATA (AND WAIT FOR IT)
-    await Promise.all([
-    loadCustomers(), 
-    loadProducts(), 
-    loadInventory(),
-    loadEmployees()
-]);
-// --- 🟢 NEW: FORCE HEADER TO UPDATE THE SECOND THE PAGE LOADS ---
-    let initialRep = employees.find(e => e.role.toLowerCase() === "sales rep");
-    if (!initialRep) { initialRep = employees.find(e => e.role.toLowerCase() === "owner"); }
-    if (!initialRep) { initialRep = { name: "Suburban Brewing", role: "Owner", phone: "", email: "" }; }
-    
-    const uiName = document.getElementById("ui-rep-name");
-    const uiRole = document.getElementById("ui-rep-role");
-    const uiPhone = document.getElementById("ui-rep-phone");
-    const uiEmail = document.getElementById("ui-rep-email");
-    
-    if (uiName) uiName.textContent = initialRep.name;
-    if (uiRole) uiRole.textContent = initialRep.role;
-    if (uiPhone) uiPhone.textContent = initialRep.phone;
-    if (uiEmail) uiEmail.textContent = initialRep.email;
-    // ----------------------------------------------------------------
-    // 4. BRANCHING LOGIC: EDIT vs NEW
     if (editInvoiceNum) {
-        await loadInvoiceForEdit(editInvoiceNum, editCustomerName);
+        await loadInvoiceForEdit(editInvoiceNum, urlParams.get('customer'));
     } else {
         addProductRow();
-        autoPopulateInvoiceNumber();
+        autoPopulateInvoiceNumber(); // Now safe to run
     }
 
     // 5. SAVE BUTTON LOGIC (Added Safety Check)
@@ -1398,23 +1384,39 @@ table.invoice-table {
 
     let searchTimeout;
     document.getElementById("customer-search").addEventListener("input", function() {
-        const resultsBox = document.getElementById("search-results");
-        const val = this.value.trim();
+    const resultsBox = document.getElementById("search-results");
+    const val = this.value.trim();
 
-        resultsBox.innerHTML = "";
-        resultsBox.style.display = val ? "block" : "none";
-        
-        if (!val) return;
+    resultsBox.innerHTML = "";
+    
+    // If customers haven't loaded yet, show a tiny loading message
+    if (customers.length === 0 && val) {
+        resultsBox.style.display = "block";
+        resultsBox.innerHTML = "<div style='padding:10px; font-size:12px; color:#64748b;'>Loading customer list...</div>";
+        return;
+    }
 
-        // 1. Local Customer Match
-        const matches = customers.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
-        matches.forEach(c => {
-            const div = document.createElement("div");
-            div.style.padding = "10px"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #eee";
-            div.innerHTML = `👤 <strong>${c.name}</strong> <small style="color:blue">(In Sheet)</small>`;
-            div.onclick = () => { resultsBox.innerHTML = ""; selectCustomer(c); };
-            resultsBox.appendChild(div);
-        });
+    resultsBox.style.display = val ? "block" : "none";
+    if (!val) return;
+
+    // Filter customers
+    const matches = customers.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
+    
+    if (matches.length === 0) {
+        resultsBox.innerHTML = "<div style='padding:10px; font-size:12px; color:#64748b;'>No local matches. Searching map...</div>";
+    }
+
+    matches.forEach(c => {
+        const div = document.createElement("div");
+        div.style.padding = "10px"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #eee";
+        div.innerHTML = `👤 <strong>${c.name}</strong> <small style="color:blue">(In Sheet)</small>`;
+        div.onclick = () => { 
+            resultsBox.innerHTML = ""; 
+            resultsBox.style.display = "none";
+            selectCustomer(c); 
+        };
+        resultsBox.appendChild(div);
+    });
 
         // 2. Global Address Search (OSM)
         clearTimeout(searchTimeout);
@@ -2472,25 +2474,27 @@ if (res.fileId) {
     const invInput = document.getElementById("invoice-number");
     if (!invInput) return;
 
-    // 🔴 NEW GUARD: If the box already has a number (from Edit Mode), STOP.
-    if (invInput.value && invInput.value !== "Generating...") {
-        return;
+    // Only generate if the field is truly empty or says 'Generating...'
+    if (invInput.value !== "" && invInput.value !== "Generating...") {
+        return; 
     }
 
     invInput.value = "Generating..."; 
 
     try {
-        const res = await fetch(`${API_URL}?action=getNextInvoiceNumber`);
+        // Force a timestamp to avoid browser caching the old number
+        const res = await fetch(`${API_URL}?action=getNextInvoiceNumber&t=${Date.now()}`);
         const data = await res.json();
-
-        // Check again in case Edit Mode loaded while we were fetching
-        if (invInput.value !== "Generating..." && invInput.value !== "") return;
 
         if (data.nextInvoice) {
             invInput.value = data.nextInvoice; 
+            currentInvoiceNumber = data.nextInvoice; // Update global variable
             
-            // 🟢 FORCE THE BARCODE TO GENERATE
-            invInput.dispatchEvent(new Event('change')); 
+            // Generate the barcode immediately
+            JsBarcode("#barcode", data.nextInvoice, {
+                height: 30,
+                displayValue: false
+            });
         } else {
             invInput.value = ""; 
         }
