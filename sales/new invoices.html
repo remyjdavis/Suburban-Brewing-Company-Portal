@@ -1039,6 +1039,8 @@ table.invoice-table {
     let invoiceNumberValue = "";
     let addProductButtonRow = null;
     let customers = [];
+    let employees = [];
+    let currentRep = {};
     let selectedCustomer = null;
     let products = [];
     let groupedProducts = {};
@@ -1079,10 +1081,11 @@ table.invoice-table {
 
     // 3. LOAD DATA (AND WAIT FOR IT)
     await Promise.all([
-        loadCustomers(), 
-        loadProducts(), 
-        loadInventory()
-    ]);
+    loadCustomers(), 
+    loadProducts(), 
+    loadInventory(),
+    loadEmployees()
+]);
 
     // 4. BRANCHING LOGIC: EDIT vs NEW
     if (editInvoiceNum) {
