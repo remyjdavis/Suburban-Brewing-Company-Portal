@@ -545,62 +545,63 @@
     const { value: formValues } = await Swal.fire({
         title: 'Add New User',
         html: `
-           // Inside your addUserModal() function
-html: `
-    <input id="swal-name" class="swal2-input" placeholder="Full Name">
-    <input id="swal-email" class="swal2-input" placeholder="Email Address">
-    
-    <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#64748b;">JOB TITLE</label>
-    <select id="swal-role" class="swal2-input" onchange="toggleTerritory('swal-role', 'territory-wrap')">
-        <option value="Brewer">Brewer</option>
-        <option value="Sales Rep">Sales Rep</option>
-        <option value="Marketing Rep">Marketing Rep</option>
-        <option value="Administrator">Administrator</option>
-        <option value="Owner">Owner</option>
-    </select>
+            <input id="swal-name" class="swal2-input" placeholder="Full Name">
+            <input id="swal-email" class="swal2-input" placeholder="Email Address">
+            
+            <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#64748b;">JOB TITLE</label>
+            <select id="swal-role" class="swal2-input" onchange="toggleTerritory('swal-role', 'territory-wrap')">
+                <option value="Brewer">Brewer</option>
+                <option value="Sales Rep">Sales Rep</option>
+                <option value="Marketing Rep">Marketing Rep</option>
+                <option value="Administrator">Administrator</option>
+                <option value="Owner">Owner</option>
+            </select>
 
-    <div id="territory-wrap" style="display:none;">
-        <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#2563eb;">PA TERRITORY (COUNTY)</label>
-        <select id="swal-territory" class="swal2-input">
-            <option value="Berks">Berks</option>
-            <option value="Chester">Chester</option>
-            <option value="Lancaster">Lancaster</option>
-            <option value="Montgomery">Montgomery</option>
-            <option value="Delaware">Delaware</option>
-            <option value="Philadelphia">Philadelphia</option>
-            <option value="Lehigh">Lehigh</option>
-            <option value="Bucks">Bucks</option>
-            <option value="York">York</option>
-            <option value="Other">Other PA County</option>
-        </select>
-    </div>
+            <div id="territory-wrap" style="display:none;">
+                <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#2563eb;">PA SALES TERRITORY</label>
+                <select id="swal-territory" class="swal2-input">
+                    <option value="Berks">Berks (Reading/Topton)</option>
+                    <option value="Lehigh">Lehigh (Allentown/Emmaus)</option>
+                    <option value="Northampton">Northampton (Bethlehem/Easton)</option>
+                    <option value="Lancaster">Lancaster (Lititz/City)</option>
+                    <option value="Chester">Chester (West Chester/Kennett Sq)</option>
+                    <option value="Montgomery">Montgomery (Pottstown/KOP)</option>
+                    <option value="Delaware">Delaware (Media/Delco)</option>
+                    <option value="Philadelphia">Philadelphia (Metro)</option>
+                    <option value="Bucks">Bucks (Doylestown/Quakertown)</option>
+                </select>
+            </div>
 
-    <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#64748b;">ACCESS LEVEL</label>
-    <select id="swal-access" class="swal2-input">
-        <option value="Staff">Staff Access</option>
-        <option value="Admin">Admin Access</option>
-    </select>
-`,
+            <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#64748b;">ACCESS LEVEL</label>
+            <select id="swal-access" class="swal2-input">
+                <option value="Staff">Staff Access</option>
+                <option value="Admin">Admin Access</option>
+            </select>
+        `,
         preConfirm: () => {
             return {
                 name: document.getElementById('swal-name').value,
                 email: document.getElementById('swal-email').value,
                 role: document.getElementById('swal-role').value,
-                access: document.getElementById('swal-access').value
-            }
+                territory: document.getElementById('swal-territory').value, // 🟢 Fixed Comma
+                access: document.getElementById('swal-access').value        // 🟢 Fixed Comma
+            };
         }
     });
 
     if (formValues) {
-        if (!formValues.name || !formValues.email) return Swal.fire('Error', 'Name and Email are required', 'error');
-        
         Swal.fire({ title: 'Creating...', didOpen: () => Swal.showLoading() });
+        
         await fetch(MASTER_API_URL, {
             method: 'POST',
-            body: JSON.stringify({ action: 'adminAddUser', data: formValues })
+            body: JSON.stringify({ 
+                action: 'adminAddUser', 
+                data: formValues // 🟢 This object is now clean
+            })
         });
+        
         loadUsers();
-        Swal.fire('Success', 'User added.', 'success');
+        Swal.fire('Success', 'User added to database.', 'success');
     }
 }
 
