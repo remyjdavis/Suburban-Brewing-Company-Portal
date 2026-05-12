@@ -1514,6 +1514,7 @@ forceHeaderUpdate(); // Run it immediately on load
     return "General";
 };
     const customerTerritory = detectTerritory(c.address);
+     console.log("System detected territory: " + customerTerritory + " from address: " + c.address);
 
     // --- 🟢 FUZZY REP SEARCH ---
     let rep = employees.find(e => {
@@ -1522,15 +1523,6 @@ forceHeaderUpdate(); // Run it immediately on load
         
         return sheetTerritory !== "" && sheetTerritory === detectedTerritory;
     });
-
-    // 🟢 ADDED: If territory match failed, try the original fuzzy sales rep search
-    if (!rep) {
-        rep = employees.find(e => {
-            const cleanRole = e.role ? e.role.toLowerCase().replace(/[^a-z]/g, "") : "";
-           return cleanRole === "salesrep";
-        });
-    }
-
     // Fallback to Eric if no new rep is found
     if (!rep) {
         rep = employees.find(e => e.name && e.name.toLowerCase().includes("eric"));
