@@ -2365,13 +2365,19 @@ function buildInvoicePayload() {
 
   const total = Number(document.getElementById("invoice-total").value.replace(/[^0-9.-]+/g,""));
 
-  // 3. RETURN PAYLOAD
+ // 3. RETURN PAYLOAD
   return {
     invoiceNumber: currentInvoiceNumber,
     customer: selectedCustomer.name,
     address: selectedCustomer.address,
     customerType: selectedCustomer.type,
     paymentMethod: selectedCustomer.paymentMethod,
+
+    // 🟢 ADDED: DYNAMIC REP INFO FOR PDF GENERATION
+    repName: document.getElementById("ui-rep-name").textContent,
+    repPhone: document.getElementById("ui-rep-phone").textContent,
+    repRole: document.getElementById("ui-rep-role").textContent,
+
     subtotal, 
     discount, 
     tax, 
@@ -2391,7 +2397,6 @@ function buildInvoicePayload() {
     logs: overrideLogs,
     forceUpdate: true 
   };
-}
     /* ===============================
        BUTTON STATE CONTROL
        =============================== */
