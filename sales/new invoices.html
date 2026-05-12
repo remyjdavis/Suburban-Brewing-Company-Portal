@@ -1086,7 +1086,21 @@ table.invoice-table {
     loadInventory(),
     loadEmployees()
 ]);
-
+// --- 🟢 NEW: FORCE HEADER TO UPDATE THE SECOND THE PAGE LOADS ---
+    let initialRep = employees.find(e => e.role.toLowerCase() === "sales rep");
+    if (!initialRep) { initialRep = employees.find(e => e.role.toLowerCase() === "owner"); }
+    if (!initialRep) { initialRep = { name: "Suburban Brewing", role: "Owner", phone: "", email: "" }; }
+    
+    const uiName = document.getElementById("ui-rep-name");
+    const uiRole = document.getElementById("ui-rep-role");
+    const uiPhone = document.getElementById("ui-rep-phone");
+    const uiEmail = document.getElementById("ui-rep-email");
+    
+    if (uiName) uiName.textContent = initialRep.name;
+    if (uiRole) uiRole.textContent = initialRep.role;
+    if (uiPhone) uiPhone.textContent = initialRep.phone;
+    if (uiEmail) uiEmail.textContent = initialRep.email;
+    // ----------------------------------------------------------------
     // 4. BRANCHING LOGIC: EDIT vs NEW
     if (editInvoiceNum) {
         await loadInvoiceForEdit(editInvoiceNum, editCustomerName);
