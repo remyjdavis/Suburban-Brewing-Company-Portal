@@ -2721,6 +2721,14 @@ async function applyManualCustomer() {
         Swal.fire("Error", "Network error while saving.", "error");
     }
 }
+    /* ===== LOAD EMPLOYEES FUNCTION ===== */
+    function loadEmployees() {
+      // The ?t= math forces the browser to pull fresh data every single time
+      return fetch(`${API_URL}?action=getEmployees&t=${new Date().getTime()}`)
+        .then(r => r.json())
+        .then(d => employees = d || []);
+    }
+   Promise.all([loadCustomers(), loadProducts(), loadInventory(), loadEmployees()])
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
   <div style="background:#fff; width:450px; margin:5% auto; padding:25px; border-radius:8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
