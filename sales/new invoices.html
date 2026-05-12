@@ -2777,16 +2777,16 @@ async function applyManualCustomer() {
 }
     /* ===== LOAD EMPLOYEES FUNCTION ===== */
    function loadEmployees() {
-  return fetch(`${API_URL}?action=getEmployees&t=${new Date().getTime()}`)
+  // 🟢 We add a random 'v' (version) number to the URL. 
+  // This tricks Google into thinking it's a brand new request every time.
+  const cacheBuster = "&v=" + Math.random(); 
+  
+  return fetch(`${API_URL}?action=getEmployees${cacheBuster}`)
     .then(r => r.json())
     .then(d => {
-        // Ensure we are saving an array even if the API returns a single object or null
         employees = Array.isArray(d) ? d : [];
+        console.log("Fresh employee data loaded:", employees);
         return employees;
-    })
-    .catch(err => {
-        console.error("Employee load failed:", err);
-        employees = []; // Keep it as an array to prevent .find errors
     });
 }
    Promise.all([loadCustomers(), loadProducts(), loadInventory(), loadEmployees()])
