@@ -1484,18 +1484,35 @@ forceHeaderUpdate(); // Run it immediately on load
 
     // 🟢 ADDED: TERRITORY DETECTION LOGIC
     const detectTerritory = (addr) => {
-        if (!addr) return "General";
-        const a = addr.toLowerCase();
-        if (a.includes("philadelphia") || a.includes("philly")) return "Philadelphia";
-        if (a.includes("reading") || a.includes("berks")) return "Berks";
-        if (a.includes("allentown") || a.includes("lehigh")) return "Lehigh";
-        if (a.includes("lancaster")) return "Lancaster";
-        if (a.includes("west chester") || a.includes("kennett") || a.includes("chester")) return "Chester";
-        if (a.includes("pottstown") || a.includes("montgomery")) return "Montgomery";
-        if (a.includes("media") || a.includes("delaware")) return "Delaware";
-        if (a.includes("doylestown") || a.includes("bucks")) return "Bucks";
-        return "General";
-    };
+    if (!addr) return "General";
+    const a = addr.toLowerCase();
+
+    // 🟢 CHESTER COUNTY (Add your home turf towns)
+    if (a.includes("chester") || a.includes("west chester") || a.includes("kennett") || 
+        a.includes("honey brook") || a.includes("downingtown") || a.includes("exton") || 
+        a.includes("paoli") || a.includes("phoenixville")) return "Chester";
+
+    // 🟢 BERKS COUNTY
+    if (a.includes("berks") || a.includes("reading") || a.includes("wyomissing") || 
+        a.includes("kutztown") || a.includes("boyertown") || a.includes("topton")) return "Berks";
+
+    // 🟢 LANCASTER COUNTY
+    if (a.includes("lancaster") || a.includes("lititz") || a.includes("ephrata") || 
+        a.includes("gap") || a.includes("elizabeth")) return "Lancaster";
+
+    // 🟢 MONTGOMERY COUNTY
+    if (a.includes("montgomery") || a.includes("pottstown") || a.includes("kop") || 
+        a.includes("king of prussia") || a.includes("norristown") || a.includes("lansdale")) return "Montgomery";
+
+    // 🟢 DELCO
+    if (a.includes("delaware county") || a.includes("media") || a.includes("havertown") || 
+        a.includes("upper darby")) return "Delaware";
+
+    // 🟢 PHILLY
+    if (a.includes("philadelphia") || a.includes("philly") || a.includes("manayunk")) return "Philadelphia";
+
+    return "General";
+};
     const customerTerritory = detectTerritory(c.address);
 
     // --- 🟢 FUZZY REP SEARCH ---
