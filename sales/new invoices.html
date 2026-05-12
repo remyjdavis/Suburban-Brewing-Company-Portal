@@ -1482,29 +1482,64 @@ forceHeaderUpdate(); // Run it immediately on load
 
     selectedCustomer.paymentMethod = c.Payment || c.payment || c.paymentMethod || "";
 
-    // --- 🟢 FUZZY REP SEARCH ---
-let rep = employees.find(e => {
-    // 1. Clean the role string (removes spaces/underscores)
-    const cleanRole = e.role ? e.role.toLowerCase().replace(/[^a-z]/g, "") : "";
-    
-    // 2. Look for Sales Rep that isn't you
-    return cleanRole === "salesrep" && e.name !== "Remy Davis";
-});
-
-// Fallback to Eric if no new rep is found
-if (!rep) {
-    rep = employees.find(e => e.name && e.name.toLowerCase().includes("eric"));
-}
-
-// 3. Fallback if everything fails
-if (!rep || !rep.name) {
-    rep = { 
-        name: "Eric Yost", 
-        role: "Owner", 
-        phone: "(484) 354-0400", 
-        email: "eric@suburbanbg.com" 
+    // 🟢 ADDED: TERRITORY DETECTION LOGIC
+    const detectTerritory = (addr) => {
+        if (!addr) return "General";
+        const a = addr.toLowerCase();
+        if (a.includes("philadelphia") || a.includes("philly")) return "Philadelphia";
+        if (a.includes("reading") || a.includes("berks")) return "Berks";
+        if (a.includes("allentown") || a.includes("lehigh")) return "Lehigh";
+        if (a.includes("lancaster")) return "Lancaster";
+        if (a.includes("west chester") || a.includes("kennett") || a.includes("chester")) return "Chester";
+        if (a.includes("pottstown") || a.includes("montgomery")) return "Montgomery";
+        if (a.includes("media") || a.includes("delaware")) return "Delaware";
+        if (a.includes("doylestown") || a.includes("bucks")) return "Bucks";
+        return "General";
     };
-}
+    const customerTerritory = detectTerritory(c.address);
+
+    // --- 🟢 FUZZY REP SEARCH ---
+    let rep = employees.find(e => {
+        // 1. Clean the role string (removes spaces/underscores)
+        const cleanRole = e.role ? e.role.toLowerCase().replace(/[^a-z]/g, "") : "";
+        
+        // 🟢 ADDED: Check territory match first, otherwise keep original fuzzy logic
+        const isSalesRep = cleanRole === "salesrep" && e.name !== "Remy Davis";
+        return isSalesRep && e.territory === customerTerritory;
+    });
+
+    // 🟢 ADDED: If territory match failed, try the original fuzzy sales rep search
+    if (!rep) {
+        rep = employees.find(e => {
+            const cleanRole = e.role ? e.role.toLowerCase().replace(/[^a-z]/g, "") : "";
+            return cleanRole === "salesrep" && e.name !== "Remy Davis";
+        });
+    }
+
+    // Fallback to Eric if no new rep is found
+    if (!rep) {
+        rep = employees.find(e => e.name && e.name.toLowerCase().includes("eric"));
+    }
+
+    // 3. Fallback if everything fails
+    if (!rep || !rep.name) {
+        rep = { 
+            name: "Eric Yost", 
+            role: "Owner", 
+            phone: "(484) 354-0400", 
+            email: "eric@suburbanbg.com",
+            territory: "Main Office" // 🟢 Added for payload consistency
+        };
+    }
+
+    // 🟢 ADDED: Update UI with the found Rep (whether by territory or fallback)
+    document.getElementById("ui-rep-role").textContent = rep.role || "Sales Rep";
+    document.getElementById("ui-rep-name").textContent = rep.name;
+    document.getElementById("ui-rep-phone").textContent = rep.phone;
+    document.getElementById("ui-rep-email").textContent = rep.email;
+    // Store territory in dataset for the buildInvoicePayload function
+    document.getElementById("ui-rep-name").dataset.territory = rep.territory || customerTerritory;
+
     // --------------------------------------------------------------
 
     // --- 🟢 NEW: DEPOSIT BALANCE CHECK & AUTO-FILL ---
@@ -2373,11 +2408,12 @@ function buildInvoicePayload() {
     customerType: selectedCustomer.type,
     paymentMethod: selectedCustomer.paymentMethod,
 
-    // 🟢 ADDED: DYNAMIC REP INFO FOR PDF GENERATION
+    // 🟢 GRAB CURRENTLY DISPLAYED REP INFO
     repName: document.getElementById("ui-rep-name").textContent,
     repPhone: document.getElementById("ui-rep-phone").textContent,
     repRole: document.getElementById("ui-rep-role").textContent,
-
+    // Add territory from the dataset we set in Step 2
+    territory: document.getElementById("ui-rep-role").dataset.territory || "General",
     subtotal, 
     discount, 
     tax, 
@@ -2785,6 +2821,52 @@ async function applyManualCustomer() {
     .catch(err => console.error("Employee fetch error:", err));
 }
    Promise.all([loadCustomers(), loadProducts(), loadInventory(), loadEmployees()])
+  
+  /**
+ * Detects the PA County from a raw address string.
+ */
+function detectTerritoryFromAddress(address) {
+    if (!address) return "General";
+    const addr = address.toLowerCase();
+    
+    // The "Sales Ring" Mapping
+    if (addr.includes("philadelphia") || addr.includes("philly")) return "Philadelphia";
+    if (addr.includes("reading") || addr.includes("berks")) return "Berks";
+    if (addr.includes("allentown") || addr.includes("lehigh")) return "Lehigh";
+    if (addr.includes("lancaster")) return "Lancaster";
+    if (addr.includes("west chester") || addr.includes("kennett") || addr.includes("chester")) return "Chester";
+    if (addr.includes("pottstown") || addr.includes("montgomery")) return "Montgomery";
+    if (addr.includes("media") || addr.includes("delaware county")) return "Delaware";
+    if (addr.includes("doylestown") || addr.includes("bucks")) return "Bucks";
+    
+    return "General"; // Fallback for Honey Brook/Main Office
+}
+    /**
+ * Swaps the header info based on the detected territory.
+ */
+function updateInvoiceBranding(county) {
+    // Find the Sales Rep assigned to this county in Column N (Index 13)
+    const assignedRep = employees.find(emp => 
+        emp.role && emp.role.toLowerCase().includes("sales rep") && 
+        emp.territory === county
+    );
+
+    if (assignedRep) {
+        document.getElementById("ui-rep-name").textContent = assignedRep.name;
+        document.getElementById("ui-rep-phone").textContent = assignedRep.phone || "(484)354-0400";
+        document.getElementById("ui-rep-email").textContent = assignedRep.email;
+        document.getElementById("ui-rep-role").textContent = "Sales Rep";
+        // Store the territory in a hidden data attribute or log it
+        document.getElementById("ui-rep-role").dataset.territory = assignedRep.territory;
+    } else {
+        // Fallback to Eric/Main Office if no specific rep is found for that county
+        document.getElementById("ui-rep-name").textContent = "Eric Yost";
+        document.getElementById("ui-rep-phone").textContent = "(484)354-0400";
+        document.getElementById("ui-rep-email").textContent = "eric@suburbanbg.com";
+        document.getElementById("ui-rep-role").textContent = "Owner";
+        document.getElementById("ui-rep-role").dataset.territory = "Main Office";
+    }
+}
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
   <div style="background:#fff; width:450px; margin:5% auto; padding:25px; border-radius:8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
