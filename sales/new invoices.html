@@ -1439,11 +1439,30 @@ table.invoice-table {
         }
     });
     /* ===== SELECT CUSTOMERS FUNCTION ===== */
-    function selectCustomer(c) {
+   function selectCustomer(c) {
     selectedCustomer = c;
     selectedCustomer.name = c.name; // <--- ADD THIS LINE to ensure the email payload has the name
 
     selectedCustomer.paymentMethod = c.Payment || c.payment || c.paymentMethod || "";
+
+    // --- 🟢 NEW: FIND THE COMPANY SALES REP OR DEFAULT TO OWNER ---
+    let rep = employees.find(e => e.role.toLowerCase() === "sales rep");
+    if (!rep) { rep = employees.find(e => e.role.toLowerCase() === "owner"); }
+    if (!rep) { rep = { name: "Suburban Brewing", role: "Owner", phone: "", email: "" }; }
+    
+    currentRep = rep;
+
+    // Update the UI in the header
+    const uiName = document.getElementById("ui-rep-name");
+    const uiRole = document.getElementById("ui-rep-role");
+    const uiPhone = document.getElementById("ui-rep-phone");
+    const uiEmail = document.getElementById("ui-rep-email");
+    
+    if (uiName) uiName.textContent = currentRep.name;
+    if (uiRole) uiRole.textContent = currentRep.role;
+    if (uiPhone) uiPhone.textContent = currentRep.phone;
+    if (uiEmail) uiEmail.textContent = currentRep.email;
+    // --------------------------------------------------------------
 
     // --- 🟢 NEW: DEPOSIT BALANCE CHECK & AUTO-FILL ---
     if (c.depositBalance > 0) {
