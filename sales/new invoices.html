@@ -1464,34 +1464,38 @@ table.invoice-table {
 
     selectedCustomer.paymentMethod = c.Payment || c.payment || c.paymentMethod || "";
 
-    // --- 🟢 UPDATED: SAFE REP SEARCH ---
-let rep = null;
+    // --- 🟢 DYNAMIC REP & OWNER HIERARCHY ---
+    let rep = null;
 
-// Only try to .find() if employees is actually an array
-if (Array.isArray(employees)) {
-    rep = employees.find(e => e.role && e.role.toLowerCase() === "sales rep");
-    if (!rep) { 
-        rep = employees.find(e => e.role && e.role.toLowerCase() === "owner"); 
+    if (Array.isArray(employees) && employees.length > 0) {
+        // 1. Priority: Find ANYONE (other than you) who is currently listed as 'Sales Rep'
+        // If Eric adds a new hire to the sheet, this will find them automatically.
+        rep = employees.find(e => 
+            e.role && e.role.toLowerCase() === "sales rep" && e.name && e.name !== "Remy Davis"
+        );
+
+        // 2. Secondary: If no new Sales Rep is found, look specifically for Eric Yost (The Owner)
+        if (!rep) {
+            rep = employees.find(e => 
+                e.role && e.role.toLowerCase() === "owner" && e.name && e.name.includes("Eric")
+            );
+        }
+
+        // 3. Last Resort: Just find any Owner if Eric's name isn't found exactly
+        if (!rep) {
+            rep = employees.find(e => e.role && e.role.toLowerCase() === "owner");
+        }
     }
-}
 
-// Fallback if the list is empty or the fetch failed
-if (!rep) { 
-    rep = { name: "Suburban Brewing", role: "Owner", phone: "908-642-1019", email: "Remyjdavis90@gmail.com" }; 
-}
-    
-currentRep = rep;
-
-// Update the UI in the header
-const uiName = document.getElementById("ui-rep-name");
-const uiRole = document.getElementById("ui-rep-role");
-const uiPhone = document.getElementById("ui-rep-phone");
-const uiEmail = document.getElementById("ui-rep-email");
-
-if (uiName) uiName.textContent = currentRep.name;
-if (uiRole) uiRole.textContent = currentRep.role;
-if (uiPhone) uiPhone.textContent = currentRep.phone;
-if (uiEmail) uiEmail.textContent = currentRep.email;
+    // Fallback: Hard-coded defaults for Eric Yost (The Emergency Backup)
+    if (!rep || !rep.name) { 
+        rep = { 
+            name: "Eric Yost", 
+            role: "Owner", 
+            phone: "(484)354-0400", 
+            email: "suburbanbrewingco@gmail.com" 
+        }; 
+    }
     // --------------------------------------------------------------
 
     // --- 🟢 NEW: DEPOSIT BALANCE CHECK & AUTO-FILL ---
