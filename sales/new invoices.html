@@ -1086,7 +1086,7 @@ table.invoice-table {
 await loadEmployees();
 
 function forceHeaderUpdate() {
-    let rep = employees.find(e => e.role && e.role.toLowerCase() === "sales rep" && e.name !== "Remy Davis");
+    let rep = employees.find(e => e.role && e.role.toLowerCase() === "sales rep");
     if (!rep) rep = employees.find(e => e.role && e.role.toLowerCase() === "owner");
     if (!rep) rep = { name: "Eric Yost", role: "Owner", phone: "(484)354-0400", email: "eric@suburbanbg.com" };
 
@@ -1517,19 +1517,17 @@ forceHeaderUpdate(); // Run it immediately on load
 
     // --- 🟢 FUZZY REP SEARCH ---
     let rep = employees.find(e => {
-        // 1. Clean the role string (removes spaces/underscores)
-        const cleanRole = e.role ? e.role.toLowerCase().replace(/[^a-z]/g, "") : "";
+        const sheetTerritory = String(e.territory || "").toLowerCase().trim();
+        const detectedTerritory = customerTerritory.toLowerCase().trim();
         
-        // 🟢 ADDED: Check territory match first, otherwise keep original fuzzy logic
-        const isSalesRep = cleanRole === "salesrep" && e.name !== "Remy Davis";
-        return isSalesRep && e.territory === customerTerritory;
+        return sheetTerritory !== "" && sheetTerritory === detectedTerritory;
     });
 
     // 🟢 ADDED: If territory match failed, try the original fuzzy sales rep search
     if (!rep) {
         rep = employees.find(e => {
             const cleanRole = e.role ? e.role.toLowerCase().replace(/[^a-z]/g, "") : "";
-            return cleanRole === "salesrep" && e.name !== "Remy Davis";
+           return cleanRole === "salesrep";
         });
     }
 
