@@ -1088,7 +1088,7 @@ await loadEmployees();
 function forceHeaderUpdate() {
     let rep = employees.find(e => e.role && e.role.toLowerCase() === "sales rep" && e.name !== "Remy Davis");
     if (!rep) rep = employees.find(e => e.role && e.role.toLowerCase() === "owner");
-    if (!rep) rep = { name: "Eric Yost", role: "Owner", phone: "484)354-0400", email: "eric@suburbanbg.com" };
+    if (!rep) rep = { name: "Eric Yost", role: "Owner", phone: "(484)354-0400", email: "eric@suburbanbg.com" };
 
     document.getElementById("ui-rep-role").textContent = rep.role;
     document.getElementById("ui-rep-name").textContent = rep.name;
@@ -1482,38 +1482,33 @@ forceHeaderUpdate(); // Run it immediately on load
 
     selectedCustomer.paymentMethod = c.Payment || c.payment || c.paymentMethod || "";
 
-    // --- 🟢 DYNAMIC REP & OWNER HIERARCHY ---
-    let rep = null;
+    // --- 🟢 FUZZY REP SEARCH ---
+let rep = null;
 
-    if (Array.isArray(employees) && employees.length > 0) {
-        // 1. Priority: Find ANYONE (other than you) who is currently listed as 'Sales Rep'
-        // If Eric adds a new hire to the sheet, this will find them automatically.
-        rep = employees.find(e => 
-            e.role && e.role.toLowerCase() === "sales rep" && e.name && e.name !== "Remy Davis"
-        );
+if (Array.isArray(employees) && employees.length > 0) {
+    // 1. Try to find the person with the "Sales Rep" role
+    rep = employees.find(e => {
+        if (!e.role || !e.name) return false;
+        const role = e.role.toLowerCase().replace(/[^a-z]/g, ""); // "sales_rep" -> "salesrep"
+        // Skip you, find the new person
+        return role === "salesrep" && e.name !== "Remy Davis";
+    });
 
-        // 2. Secondary: If no new Sales Rep is found, look specifically for Eric Yost (The Owner)
-        if (!rep) {
-            rep = employees.find(e => 
-                e.role && e.role.toLowerCase() === "owner" && e.name && e.name.includes("Eric")
-            );
-        }
-
-        // 3. Last Resort: Just find any Owner if Eric's name isn't found exactly
-        if (!rep) {
-            rep = employees.find(e => e.role && e.role.toLowerCase() === "owner");
-        }
+    // 2. If no Rep, find Eric Yost
+    if (!rep) {
+        rep = employees.find(e => e.name && e.name.toLowerCase().includes("eric"));
     }
+}
 
-    // Fallback: Hard-coded defaults for Eric Yost (The Emergency Backup)
-    if (!rep || !rep.name) { 
-        rep = { 
-            name: "Eric Yost", 
-            role: "Owner", 
-            phone: "(484)354-0400", 
-            email: "eric@suburbanbg.com" 
-        }; 
-    }
+// 3. Fallback if everything fails
+if (!rep || !rep.name) {
+    rep = { 
+        name: "Eric Yost", 
+        role: "Owner", 
+        phone: "(484) 354-0400", 
+        email: "eric@suburbanbg.com" 
+    };
+}
     // --------------------------------------------------------------
 
     // --- 🟢 NEW: DEPOSIT BALANCE CHECK & AUTO-FILL ---
@@ -2777,17 +2772,15 @@ async function applyManualCustomer() {
 }
     /* ===== LOAD EMPLOYEES FUNCTION ===== */
    function loadEmployees() {
-  // 🟢 We add a random 'v' (version) number to the URL. 
-  // This tricks Google into thinking it's a brand new request every time.
-  const cacheBuster = "&v=" + Math.random(); 
-  
-  return fetch(`${API_URL}?action=getEmployees${cacheBuster}`)
+  return fetch(`${API_URL}?action=getEmployees&t=${Date.now()}`)
     .then(r => r.json())
     .then(d => {
         employees = Array.isArray(d) ? d : [];
-        console.log("Fresh employee data loaded:", employees);
+        // 🔴 CHECK YOUR CONSOLE: This will show us the exact names/roles in the system
+        console.log("DEBUG: Employees from Sheet:", employees);
         return employees;
-    });
+    })
+    .catch(err => console.error("Employee fetch error:", err));
 }
    Promise.all([loadCustomers(), loadProducts(), loadInventory(), loadEmployees()])
   </script>
