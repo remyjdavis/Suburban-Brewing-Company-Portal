@@ -1375,7 +1375,7 @@ forceHeaderUpdate(); // Run it immediately on load
                 this.style.background = "#fff";
                 document.getElementById("deposit-credit-lock-icon").textContent = "🔓";
                 this.focus();
-                this.();
+                this.select();
             } else if (pin) {
                 Swal.fire('Error', 'Incorrect PIN', 'error');
             }
@@ -1431,7 +1431,7 @@ forceHeaderUpdate(); // Run it immediately on load
         div.onclick = () => { 
             resultsBox.innerHTML = ""; 
             resultsBox.style.display = "none";
-            Customer(c); 
+            selectCustomer(c); 
         };
         resultsBox.appendChild(div);
     });
@@ -1482,41 +1482,60 @@ forceHeaderUpdate(); // Run it immediately on load
 
     selectedCustomer.paymentMethod = c.Payment || c.payment || c.paymentMethod || "";
 
-    // 1. Detect Territory based on broad keywords and Zip prefixes
+    // 🟢 ADDED: TERRITORY DETECTION LOGIC
     const detectTerritory = (addr) => {
-        if (!addr) return "General";
-        const a = addr.toLowerCase();
-        // Chester (Zip 193)
-        if (a.includes("chester") || a.includes("west chester") || a.includes("kennett") || a.includes("honey brook") || a.includes("downingtown") || /193\d{2}/.test(a)) return "Chester";
-        // Berks (Zip 195/196)
-        if (a.includes("berks") || a.includes("reading") || a.includes("wyomissing") || a.includes("kutztown") || /19[56]\d{2}/.test(a)) return "Berks";
-        // Philly (Zip 191)
-        if (a.includes("philadelphia") || a.includes("philly") || a.includes("manayunk") || /191\d{2}/.test(a)) return "Philadelphia";
-        // Lancaster (Zip 175/176)
-        if (a.includes("lancaster") || a.includes("lititz") || a.includes("ephrata") || /17[56]\d{2}/.test(a)) return "Lancaster";
-        // Montgomery (Zip 194)
-        if (a.includes("montgomery") || a.includes("pottstown") || a.includes("norristown") || a.includes("king of prussia") || /194\d{2}/.test(a)) return "Montgomery";
-        // Delco (Zip 190 parts)
-        if (a.includes("delaware county") || a.includes("media") || a.includes("havertown") || a.includes("delco")) return "Delaware";
-        
-        return "General";
-    };
+    if (!addr) return "General";
+    const a = addr.toLowerCase();
 
+    // 🟢 CHESTER COUNTY (Add your home turf towns)
+    if (a.includes("chester") || a.includes("west chester") || a.includes("kennett") || 
+        a.includes("honey brook") || a.includes("downingtown") || a.includes("exton") || 
+        a.includes("paoli") || a.includes("phoenixville")) return "Chester";
+
+    // 🟢 BERKS COUNTY
+    if (a.includes("berks") || a.includes("reading") || a.includes("wyomissing") || 
+        a.includes("kutztown") || a.includes("boyertown") || a.includes("topton")) return "Berks";
+
+    // 🟢 LANCASTER COUNTY
+    if (a.includes("lancaster") || a.includes("lititz") || a.includes("ephrata") || 
+        a.includes("gap") || a.includes("elizabeth")) return "Lancaster";
+
+    // 🟢 MONTGOMERY COUNTY
+    if (a.includes("montgomery") || a.includes("pottstown") || a.includes("kop") || 
+        a.includes("king of prussia") || a.includes("norristown") || a.includes("lansdale")) return "Montgomery";
+
+    // 🟢 DELCO
+    if (a.includes("delaware county") || a.includes("media") || a.includes("havertown") || 
+        a.includes("upper darby")) return "Delaware";
+
+    // 🟢 PHILLY
+    if (a.includes("philadelphia") || a.includes("philly") || a.includes("manayunk")) return "Philadelphia";
+
+    return "General";
+};
     const customerTerritory = detectTerritory(c.address);
 
-    // 2. Find Rep (Match strictly on Territory, ignoring specific Job Titles)
+    // --- 🟢 FUZZY REP SEARCH ---
     let rep = employees.find(e => {
-        const sheetTerritory = String(e.territory || "").toLowerCase().trim();
-        const detectedTerritory = customerTerritory.toLowerCase().trim();
+        // 1. Clean the role string (removes spaces/underscores)
+        const cleanRole = e.role ? e.role.toLowerCase().replace(/[^a-z]/g, "") : "";
         
-        // 🟢 If the territory matches, this is our person!
-        return sheetTerritory !== "" && sheetTerritory === detectedTerritory;
+        // 🟢 ADDED: Check territory match first, otherwise keep original fuzzy logic
+        const isSalesRep = cleanRole === "salesrep" && e.name !== "Remy Davis";
+        return isSalesRep && e.territory === customerTerritory;
     });
 
-    // 3. Fallback to Eric if no regional match
+    // 🟢 ADDED: If territory match failed, try the original fuzzy sales rep search
     if (!rep) {
-        rep = employees.find(e => String(e.name).toLowerCase().includes("eric")) || 
-              { name: "Eric Yost", role: "Owner", phone: "(484) 354-0400", email: "eric@suburbanbg.com", territory: "Main Office" };
+        rep = employees.find(e => {
+            const cleanRole = e.role ? e.role.toLowerCase().replace(/[^a-z]/g, "") : "";
+            return cleanRole === "salesrep" && e.name !== "Remy Davis";
+        });
+    }
+
+    // Fallback to Eric if no new rep is found
+    if (!rep) {
+        rep = employees.find(e => e.name && e.name.toLowerCase().includes("eric"));
     }
 
     // 3. Fallback if everything fails
