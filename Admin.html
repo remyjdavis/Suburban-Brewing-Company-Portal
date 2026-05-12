@@ -512,7 +512,7 @@
         } catch (e) { console.error(e); }
     }
 
-    function renderTable(users) {
+   function renderTable(users) {
         const tbody = document.getElementById('userTableBody');
         tbody.innerHTML = "";
 
@@ -522,7 +522,14 @@
                 <tr>
                     <td style="font-weight:600;">${user.name || 'Unknown'}</td>
                     <td>${user.email || ''}</td>
-                    <td style="color:#64748b;">${user.role || ''}</td>
+                    <td>
+                        <span class="editable-title" 
+                              style="cursor:pointer; border-bottom: 1px dashed #cbd5e1; padding-bottom: 2px;"
+                              onclick="editJobTitle('${user.username}', '${user.role || ''}')"
+                              title="Click to change title">
+                            ${user.role || 'Set Title'} ✏️
+                        </span>
+                    </td>
                     <td><span class="role-badge ${accessClass}">${user.access || 'Staff'}</span></td>
                     <td><span style="color:var(--success);">●</span> ${user.status || 'Active'}</td>
                     <td style="text-align:right;">
@@ -697,7 +704,46 @@
             });
         } catch(e) { tbody.innerHTML = "<tr><td>Error loading logs</td></tr>"; }
     }
+async function editJobTitle(username, currentRole) {
+        const { value: newRole } = await Swal.fire({
+            title: 'Update Job Title',
+            input: 'text',
+            inputLabel: 'Enter new title for ' + username,
+            inputValue: currentRole,
+            showCancelButton: true,
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Title cannot be empty!'
+                }
+            }
+        });
 
+        if (newRole && newRole !== currentRole) {
+            Swal.fire({ title: 'Updating...', didOpen: () => Swal.showLoading() });
+            
+            try {
+                const response = await fetch(MASTER_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        action: 'adminUpdateUserRole', // 🟢 Ensure your backend handles this action
+                        username: username, 
+                        newRole: newRole 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    Swal.fire('Updated', 'Job title has been changed.', 'success');
+                    loadUsers(); // Refresh the table
+                } else {
+                    throw new Error(result.message || 'Update failed');
+                }
+            } catch (e) {
+                Swal.fire('Error', e.message, 'error');
+            }
+        }
+    }
     // =========================================================
     // 5. UI UTILS (Mobile Menu)
     // =========================================================
