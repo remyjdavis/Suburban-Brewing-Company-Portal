@@ -1464,23 +1464,34 @@ table.invoice-table {
 
     selectedCustomer.paymentMethod = c.Payment || c.payment || c.paymentMethod || "";
 
-    // --- 🟢 NEW: FIND THE COMPANY SALES REP OR DEFAULT TO OWNER ---
-    let rep = employees.find(e => e.role.toLowerCase() === "sales rep");
-    if (!rep) { rep = employees.find(e => e.role.toLowerCase() === "owner"); }
-    if (!rep) { rep = { name: "Suburban Brewing", role: "Owner", phone: "", email: "" }; }
-    
-    currentRep = rep;
+    // --- 🟢 UPDATED: SAFE REP SEARCH ---
+let rep = null;
 
-    // Update the UI in the header
-    const uiName = document.getElementById("ui-rep-name");
-    const uiRole = document.getElementById("ui-rep-role");
-    const uiPhone = document.getElementById("ui-rep-phone");
-    const uiEmail = document.getElementById("ui-rep-email");
+// Only try to .find() if employees is actually an array
+if (Array.isArray(employees)) {
+    rep = employees.find(e => e.role && e.role.toLowerCase() === "sales rep");
+    if (!rep) { 
+        rep = employees.find(e => e.role && e.role.toLowerCase() === "owner"); 
+    }
+}
+
+// Fallback if the list is empty or the fetch failed
+if (!rep) { 
+    rep = { name: "Suburban Brewing", role: "Owner", phone: "908-642-1019", email: "Remyjdavis90@gmail.com" }; 
+}
     
-    if (uiName) uiName.textContent = currentRep.name;
-    if (uiRole) uiRole.textContent = currentRep.role;
-    if (uiPhone) uiPhone.textContent = currentRep.phone;
-    if (uiEmail) uiEmail.textContent = currentRep.email;
+currentRep = rep;
+
+// Update the UI in the header
+const uiName = document.getElementById("ui-rep-name");
+const uiRole = document.getElementById("ui-rep-role");
+const uiPhone = document.getElementById("ui-rep-phone");
+const uiEmail = document.getElementById("ui-rep-email");
+
+if (uiName) uiName.textContent = currentRep.name;
+if (uiRole) uiRole.textContent = currentRep.role;
+if (uiPhone) uiPhone.textContent = currentRep.phone;
+if (uiEmail) uiEmail.textContent = currentRep.email;
     // --------------------------------------------------------------
 
     // --- 🟢 NEW: DEPOSIT BALANCE CHECK & AUTO-FILL ---
@@ -2743,12 +2754,19 @@ async function applyManualCustomer() {
     }
 }
     /* ===== LOAD EMPLOYEES FUNCTION ===== */
-    function loadEmployees() {
-      // The ?t= math forces the browser to pull fresh data every single time
-      return fetch(`${API_URL}?action=getEmployees&t=${new Date().getTime()}`)
-        .then(r => r.json())
-        .then(d => employees = d || []);
-    }
+   function loadEmployees() {
+  return fetch(`${API_URL}?action=getEmployees&t=${new Date().getTime()}`)
+    .then(r => r.json())
+    .then(d => {
+        // Ensure we are saving an array even if the API returns a single object or null
+        employees = Array.isArray(d) ? d : [];
+        return employees;
+    })
+    .catch(err => {
+        console.error("Employee load failed:", err);
+        employees = []; // Keep it as an array to prevent .find errors
+    });
+}
    Promise.all([loadCustomers(), loadProducts(), loadInventory(), loadEmployees()])
   </script>
   <div id="new-customer-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
