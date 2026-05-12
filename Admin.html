@@ -736,10 +736,11 @@
             });
         } catch(e) { tbody.innerHTML = "<tr><td>Error loading logs</td></tr>"; }
     }
-async function editJobTitle(username, currentRole) {
+async function editJobTitle(username, currentRole, currentTerritory) {
     const { value: formValues } = await Swal.fire({
-        title: 'Update Job Title',
+        title: 'Update Sales Profile',
         html: `
+            <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#64748b;">JOB TITLE</label>
             <select id="edit-role" class="swal2-input" onchange="toggleTerritory('edit-role', 'edit-territory-wrap')">
                 <option value="Brewer" ${currentRole === 'Brewer' ? 'selected' : ''}>Brewer</option>
                 <option value="Sales Rep" ${currentRole === 'Sales Rep' ? 'selected' : ''}>Sales Rep</option>
@@ -747,44 +748,48 @@ async function editJobTitle(username, currentRole) {
                 <option value="Administrator" ${currentRole === 'Administrator' ? 'selected' : ''}>Administrator</option>
                 <option value="Owner" ${currentRole === 'Owner' ? 'selected' : ''}>Owner</option>
             </select>
+
             <div id="edit-territory-wrap" style="${currentRole === 'Sales Rep' ? 'display:block;' : 'display:none;'}">
+                <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#2563eb;">PA SALES TERRITORY</label>
                 <select id="edit-territory" class="swal2-input">
-                    <option value="Berks">Berks</option>
-                    <option value="Chester">Chester</option>
-                    <option value="Lancaster">Lancaster</option>
-                    <option value="Montgomery">Montgomery</option>
-                    <option value="Other">Other</option>
+                    <option value="Berks" ${currentTerritory === 'Berks' ? 'selected' : ''}>Berks (Reading/Topton)</option>
+                    <option value="Lehigh" ${currentTerritory === 'Lehigh' ? 'selected' : ''}>Lehigh (Allentown/Emmaus)</option>
+                    <option value="Northampton" ${currentTerritory === 'Northampton' ? 'selected' : ''}>Northampton (Bethlehem/Easton)</option>
+                    <option value="Lancaster" ${currentTerritory === 'Lancaster' ? 'selected' : ''}>Lancaster (Lititz/City)</option>
+                    <option value="Chester" ${currentTerritory === 'Chester' ? 'selected' : ''}>Chester (West Chester/Kennett Sq)</option>
+                    <option value="Montgomery" ${currentTerritory === 'Montgomery' ? 'selected' : ''}>Montgomery (Pottstown/KOP)</option>
+                    <option value="Delaware" ${currentTerritory === 'Delaware' ? 'selected' : ''}>Delaware (Media/Delco)</option>
+                    <option value="Philadelphia" ${currentTerritory === 'Philadelphia' ? 'selected' : ''}>Philadelphia (Metro)</option>
+                    <option value="Bucks" ${currentTerritory === 'Bucks' ? 'selected' : ''}>Bucks (Doylestown/Quakertown)</option>
                 </select>
             </div>
         `,
         preConfirm: () => {
-            const role = document.getElementById('edit-role').value;
-            const territory = document.getElementById('edit-territory').value;
-            return { role: role, territory: (role === "Sales Rep" ? territory : "") };
+            return {
+                role: document.getElementById('edit-role').value,
+                territory: document.getElementById('edit-territory').value
+            };
         }
     });
 
     if (formValues) {
-        // Updated logic to save both Role and Territory to the backend
-        // We can append the territory to the role name (e.g., "Sales Rep - Berks") 
-        // to keep the database structure simple.
-        const finalRole = formValues.territory ? `${formValues.role} (${formValues.territory})` : formValues.role;
+        Swal.fire({ title: 'Updating...', didOpen: () => Swal.showLoading() });
         
-        const url = `${MASTER_API_URL}?action=adminUpdateUserRole&username=${encodeURIComponent(username)}&newRole=${encodeURIComponent(finalRole)}`;
-        // ... (rest of your fetch logic)
+        // 🟢 Sending both Role and Territory to the backend
+        const url = `${MASTER_API_URL}?action=adminUpdateUserRole&username=${encodeURIComponent(username)}&newRole=${encodeURIComponent(formValues.role)}&territory=${encodeURIComponent(formValues.territory)}`;
         
         try {
             const response = await fetch(url, { method: 'GET' });
             const result = await response.json();
             
             if (result.status === "success") {
-                Swal.fire('Updated', `Title changed to ${newRole}`, 'success');
+                Swal.fire('Updated', 'Sales territory has been saved.', 'success');
                 loadUsers(); 
             } else {
-                throw new Error(result.message || 'Update failed');
+                throw new Error(result.message);
             }
         } catch (e) {
-            Swal.fire('Error', 'Communication with server failed.', 'error');
+            Swal.fire('Error', 'Could not update territory.', 'error');
         }
     }
 }
