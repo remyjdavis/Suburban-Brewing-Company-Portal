@@ -705,45 +705,35 @@
         } catch(e) { tbody.innerHTML = "<tr><td>Error loading logs</td></tr>"; }
     }
 async function editJobTitle(username, currentRole) {
-        const { value: newRole } = await Swal.fire({
-            title: 'Update Job Title',
-            input: 'text',
-            inputLabel: 'Enter new title for ' + username,
-            inputValue: currentRole,
-            showCancelButton: true,
-            inputValidator: (value) => {
-                if (!value) {
-                    return 'Title cannot be empty!'
-                }
-            }
-        });
+    const { value: newRole } = await Swal.fire({
+        title: 'Update Job Title',
+        input: 'text',
+        inputLabel: 'New title for ' + username,
+        inputValue: currentRole,
+        showCancelButton: true
+    });
 
-        if (newRole && newRole !== currentRole) {
-            Swal.fire({ title: 'Updating...', didOpen: () => Swal.showLoading() });
+    if (newRole && newRole !== currentRole) {
+        Swal.fire({ title: 'Updating...', didOpen: () => Swal.showLoading() });
+        
+        // 🟢 Using URLSearchParams is more reliable for Google Scripts to prevent CORS errors
+        const url = `${MASTER_API_URL}?action=adminUpdateUserRole&username=${encodeURIComponent(username)}&newRole=${encodeURIComponent(newRole)}`;
+        
+        try {
+            const response = await fetch(url, { method: 'GET' }); // Switch to GET for simplicity
+            const result = await response.json();
             
-            try {
-                const response = await fetch(MASTER_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ 
-                        action: 'adminUpdateUserRole', // 🟢 Ensure your backend handles this action
-                        username: username, 
-                        newRole: newRole 
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.status === "success") {
-                    Swal.fire('Updated', 'Job title has been changed.', 'success');
-                    loadUsers(); // Refresh the table
-                } else {
-                    throw new Error(result.message || 'Update failed');
-                }
-            } catch (e) {
-                Swal.fire('Error', e.message, 'error');
+            if (result.status === "success") {
+                Swal.fire('Updated', 'Job title saved to database.', 'success');
+                loadUsers(); 
+            } else {
+                throw new Error(result.message || 'Access Denied');
             }
+        } catch (e) {
+            Swal.fire('Failed', 'Check your GAS Deployment or Sheet Permissions.', 'error');
         }
     }
+}
     // =========================================================
     // 5. UI UTILS (Mobile Menu)
     // =========================================================
