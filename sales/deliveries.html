@@ -861,7 +861,7 @@ async function printManifest() {
             
             Swal.close();
             
-            // 5. 🟢 OPEN IN A CUSTOM UI WRAPPER FOR DRIVERS 🟢
+            // 5. OPEN IN A CUSTOM UI WRAPPER FOR DRIVERS 
             const printWindow = window.open("", "_blank");
             if (!printWindow) {
                 Swal.fire("Popup Blocked", "Please allow popups to view the manifest.", "warning");
@@ -903,7 +903,7 @@ async function printManifest() {
                        frame.contentWindow.print();
                     }
                   });
-                </script>
+                <\\/script> 
               </body>
               </html>
             `);
@@ -915,71 +915,6 @@ async function printManifest() {
     } catch (err) {
         Swal.fire("Error", err.message, "error");
     }
-}
-/* ===== QUAGGA BARCODE SCANNER (AUTO-FIRE) ===== */
-function startScanner() {
-  // 1. Check Driver Name BEFORE opening camera
-  const driver = document.getElementById("driverName").value.trim();
-  if (!driver) {
-     Swal.fire("Driver Name Required", "Please enter your name before scanning.", "warning");
-     // Highlight the input box
-     document.getElementById("driverName").focus();
-     document.getElementById("driverName").style.borderColor = "red";
-     return;
-  }
-  document.getElementById("driverName").style.borderColor = "#d1d5db"; // Reset border
-
-  const target = document.getElementById("scanner");
-  target.innerHTML = ""; 
-
-  Quagga.init({
-    inputStream: {
-      name: "Live",
-      type: "LiveStream",
-      target: target,
-      constraints: {
-        facingMode: "environment",
-        width: 640,
-        height: 480,
-        aspectRatio: { min: 1, max: 2 }
-      }
-    },
-    decoder: { readers: ["code_128_reader"] },
-    locate: true
-  }, function(err) {
-    if (err) {
-      console.error(err);
-      return Swal.fire("Camera Error", "Could not access camera. Ensure you are on HTTPS.", "error");
-    }
-    Quagga.start();
-    target.style.border = "3px solid #10b981"; // Green border = Active
-  });
-
-  Quagga.onDetected(async (data) => {
-    Quagga.stop();
-    target.innerHTML = ""; // Clear video
-    target.style.border = "1px solid #ddd";
-
-    const code = data.codeResult.code;
-    
-    // Check if this invoice is actually in our list
-    const exists = deliveries.find(d => d.invoiceNumber === code);
-    
-    if (exists) {
-        // Highlight Row
-        const row = document.querySelector(`tr[data-invoice="${code}"]`);
-        if(row) selectRow(row, code);
-        
-        // AUTO-DELIVER
-        processDelivery(code, driver);
-    } else {
-        Swal.fire({
-            title: "Unknown Invoice",
-            text: `Scanned ${code}, but it is not in the Open Deliveries list.`,
-            icon: "warning"
-        });
-    }
-  });
 }
 
 /* ===== NAVIGATION ===== */
