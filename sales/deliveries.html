@@ -816,14 +816,18 @@ async function processDelivery(invoiceNum, driverName) {
        Swal.fire("Error", "Could not update invoice: " + err.message, "error");
     }
 }
-/* ===== PRINT DELIVERY MANIFEST ===== */
+/* ===== PRINT DELIVERY MANIFEST (WITH DRIVER UI WRAPPER) ===== */
 async function printManifest() {
+    // 1. Get all checked invoice numbers
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    const selectedInvoices = Array.from(checkboxes).map(cb => cb.value);
+
     if (selectedInvoices.length === 0) {
         Swal.fire("Select Invoices", "Please check at least one delivery to print.", "warning");
         return;
     }
 
-    // 1. Show Loading Spinner
+    // 2. Show Loading Spinner
     Swal.fire({
         title: 'Generating Manifest...',
         text: 'Building load sheet and compiling invoices...',
@@ -832,18 +836,20 @@ async function printManifest() {
     });
 
     try {
-        // 2. Request the PDF from the backend
+        // 3. Request the PDF from the backend
         const payload = { action: "generateManifest", invoiceNumbers: selectedInvoices };
         
         const response = await fetch(API_URL, {
             method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            redirect: "follow",
             body: JSON.stringify(payload)
         });
         
         const result = await response.json();
         
         if (result.success && result.base64) {
-            // 3. Decode the Base64 string back into a PDF file in the browser
+            // 4. Decode the Base64 string back into a PDF file
             const byteCharacters = atob(result.base64);
             const byteNumbers = new Array(byteCharacters.length);
             for (let i = 0; i < byteCharacters.length; i++) {
@@ -851,15 +857,58 @@ async function printManifest() {
             }
             const byteArray = new Uint8Array(byteNumbers);
             const blob = new Blob([byteArray], { type: 'application/pdf' });
-            
-            // 4. Open the Print Window
             const blobURL = URL.createObjectURL(blob);
+            
             Swal.close();
             
-            const printWindow = window.open(blobURL, "_blank");
+            // 5. 🟢 OPEN IN A CUSTOM UI WRAPPER FOR DRIVERS 🟢
+            const printWindow = window.open("", "_blank");
             if (!printWindow) {
-                Swal.fire("Popup Blocked", "Please allow popups to view the printable manifest.", "warning");
+                Swal.fire("Popup Blocked", "Please allow popups to view the manifest.", "warning");
+                return;
             }
+
+            // Write a custom interface into the new tab
+            printWindow.document.write(`
+              <!DOCTYPE html>
+              <html lang="en">
+              <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                <title>Delivery Manifest</title>
+                <style>
+                  body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #525659; overflow: hidden; }
+                  .top-bar { display: flex; gap: 12px; padding: 15px; background: #0f172a; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 100; flex-shrink: 0; }
+                  button { flex: 1; padding: 18px; font-size: 16px; font-weight: 800; border: none; border-radius: 8px; color: white; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
+                  .btn-return { background: #64748b; }
+                  .btn-print { background: #2563eb; }
+                  .btn-return:active { background: #475569; }
+                  .btn-print:active { background: #1d4ed8; }
+                  iframe { flex-grow: 1; width: 100%; border: none; background: white; }
+                </style>
+              </head>
+              <body>
+                <div class="top-bar">
+                  <button class="btn-return" onclick="window.close()">🔙 Return</button>
+                  <button class="btn-print" id="triggerPrint">🖨️ Print</button>
+                </div>
+                
+                <iframe id="pdfFrame" src="${blobURL}"></iframe>
+                
+                <script>
+                  // Force the print dialog to open directly targeting the PDF frame
+                  document.getElementById('triggerPrint').addEventListener('click', () => {
+                    const frame = document.getElementById('pdfFrame');
+                    if (frame.contentWindow) {
+                       frame.contentWindow.focus();
+                       frame.contentWindow.print();
+                    }
+                  });
+                </script>
+              </body>
+              </html>
+            `);
+            printWindow.document.close();
+
         } else {
             throw new Error(result.error || "Failed to generate document.");
         }
