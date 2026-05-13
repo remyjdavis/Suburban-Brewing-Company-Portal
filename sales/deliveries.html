@@ -869,6 +869,7 @@ async function printManifest() {
             }
 
             // Write a custom interface into the new tab
+            // Write a custom interface into the new tab
             printWindow.document.write(`
               <!DOCTYPE html>
               <html lang="en">
@@ -884,6 +885,13 @@ async function printManifest() {
                   .btn-return:active { background: #475569; }
                   .btn-print:active { background: #1d4ed8; }
                   iframe { flex-grow: 1; width: 100%; border: none; background: white; }
+                  
+                  /* 🟢 NEW: Hides the top bar automatically if they use native printing */
+                  @media print {
+                    .top-bar { display: none !important; }
+                    body { display: block; }
+                    iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+                  }
                 </style>
               </head>
               <body>
@@ -895,15 +903,18 @@ async function printManifest() {
                 <iframe id="pdfFrame" src="${blobURL}"></iframe>
                 
                 <script>
-                  // Force the print dialog to open directly targeting the PDF frame
                   document.getElementById('triggerPrint').addEventListener('click', () => {
                     const frame = document.getElementById('pdfFrame');
-                    if (frame.contentWindow) {
-                       frame.contentWindow.focus();
-                       frame.contentWindow.print();
+                    try {
+                        // Desktop & modern browser print target
+                        frame.contentWindow.focus();
+                        frame.contentWindow.print();
+                    } catch(e) {
+                        // iPad / Mobile Safari Fallback
+                        window.print();
                     }
                   });
-                <\\/script> 
+                ${'<'}/script>
               </body>
               </html>
             `);
