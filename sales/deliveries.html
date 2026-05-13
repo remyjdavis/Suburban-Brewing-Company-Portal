@@ -461,6 +461,11 @@
           <button class="btn btn-primary" onclick="markSelectedDelivered()">
             Mark As Delivered
           </button>
+          
+          <button class="btn" onclick="printManifest()" style="background: #2563eb; color: white;">
+            🖨️ Print Load Sheet & Invoices
+          </button>
+
           <button class="btn" onclick="deleteSelectedInvoices()" style="background: var(--danger); color: white;">
             Delete Selected
           </button>
@@ -811,7 +816,57 @@ async function processDelivery(invoiceNum, driverName) {
        Swal.fire("Error", "Could not update invoice: " + err.message, "error");
     }
 }
+/* ===== PRINT DELIVERY MANIFEST ===== */
+async function printManifest() {
+    if (selectedInvoices.length === 0) {
+        Swal.fire("Select Invoices", "Please check at least one delivery to print.", "warning");
+        return;
+    }
 
+    // 1. Show Loading Spinner
+    Swal.fire({
+        title: 'Generating Manifest...',
+        text: 'Building load sheet and compiling invoices...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        // 2. Request the PDF from the backend
+        const payload = { action: "generateManifest", invoiceNumbers: selectedInvoices };
+        
+        const response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.base64) {
+            // 3. Decode the Base64 string back into a PDF file in the browser
+            const byteCharacters = atob(result.base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            
+            // 4. Open the Print Window
+            const blobURL = URL.createObjectURL(blob);
+            Swal.close();
+            
+            const printWindow = window.open(blobURL, "_blank");
+            if (!printWindow) {
+                Swal.fire("Popup Blocked", "Please allow popups to view the printable manifest.", "warning");
+            }
+        } else {
+            throw new Error(result.error || "Failed to generate document.");
+        }
+    } catch (err) {
+        Swal.fire("Error", err.message, "error");
+    }
+}
 /* ===== QUAGGA BARCODE SCANNER (AUTO-FIRE) ===== */
 function startScanner() {
   // 1. Check Driver Name BEFORE opening camera
