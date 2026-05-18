@@ -654,16 +654,17 @@
           // Build Package Rows
           const rows = item.packages.map(pkg => {
             const isLow = Number(pkg.qty) <= 5; 
-            
-            // 🟢 NEW: Determine if we show the SKU or an Add button
             const displaySku = pkg.sku ? `UPC: ${pkg.sku}` : "+ Add UPC";
+            
+            // 🟢 Formatting for the dynamic price display
+            const displayPrice = pkg.price ? `$${Number(pkg.price).toFixed(2)}` : "$0.00";
             
             return `
               <div class="inv-row">
                 <div style="display:flex; flex-direction:column; gap:3px;">
                     <div class="pkg-name">
                       <span class="status-dot ${isLow ? 'status-low' : 'status-ok'}"></span>
-                      ${pkg.type}
+                      ${pkg.type} — <span style="font-weight:normal; color:#2563eb; cursor:pointer; text-decoration:underline;" onclick="editPrice('${item.product}', '${pkg.type}', '${pkg.price}')">${displayPrice}</span>
                     </div>
                     <div style="font-size: 9px; color: #64748b; margin-left: 12px; cursor: pointer; text-decoration: underline;" 
                          onclick="editSku('${item.product}', '${pkg.type}', '${pkg.sku}')">
@@ -725,6 +726,39 @@
               loadInventory(); // Refresh the grid to show changes instantly
           } else {
               // Surfaced error message from backend
+              Swal.fire("Save Failed", result.error, "error");
+          }
+      } catch (e) {
+          Swal.fire("Network Error", "Could not reach server: " + e.message, "error");
+      }
+    }
+    // ===== UPDATE PRODUCT PRICE VIA CARD CLICK =====
+    async function editPrice(product, type, currentPrice) {
+      const newPrice = prompt(`Update wholesale price for ${product} (${type}):`, currentPrice || "0.00");
+      if (newPrice === null || isNaN(newPrice) || newPrice.trim() === "") return;
+      
+      Swal.fire({ title: 'Updating Price...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      
+      try {
+          const response = await fetch(API_URL, { 
+              method: "POST", 
+              headers: { "Content-Type": "text/plain" },
+              redirect: "follow",
+              body: JSON.stringify({ 
+                  action: "updateProductPrice", 
+                  product: product, 
+                  type: type, 
+                  newPrice: newPrice.trim() 
+              }) 
+          });
+          
+          const result = await response.json();
+          Swal.close();
+          
+          if (result.success) {
+              Swal.fire({ icon: 'success', title: 'Price Updated!', timer: 1000, showConfirmButton: false });
+              loadInventory(); // Instantly reloads view with the new price
+          } else {
               Swal.fire("Save Failed", result.error, "error");
           }
       } catch (e) {
