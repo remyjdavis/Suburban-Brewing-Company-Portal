@@ -641,7 +641,7 @@
         // 1. FILTER & SORT LOGIC
         const products = inventory
             .filter(i => String(i.lifecycle).toLowerCase() === lc.toLowerCase())
-            .sort((a, b) => a.product.localeCompare(b.product)); // <--- Sorts A-Z alphabetically
+            .sort((a, b) => a.product.localeCompare(b.product)); // Sorts A-Z
         
         // 2. EMPTY STATE
         if (products.length === 0) {
@@ -654,11 +654,21 @@
           // Build Package Rows
           const rows = item.packages.map(pkg => {
             const isLow = Number(pkg.qty) <= 5; 
+            
+            // 🟢 NEW: Determine if we show the SKU or an Add button
+            const displaySku = pkg.sku ? `UPC: ${pkg.sku}` : "+ Add UPC";
+            
             return `
               <div class="inv-row">
-                <div class="pkg-name">
-                  <span class="status-dot ${isLow ? 'status-low' : 'status-ok'}"></span>
-                  ${pkg.type}
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                    <div class="pkg-name">
+                      <span class="status-dot ${isLow ? 'status-low' : 'status-ok'}"></span>
+                      ${pkg.type}
+                    </div>
+                    <div style="font-size: 9px; color: #64748b; margin-left: 12px; cursor: pointer; text-decoration: underline;" 
+                         onclick="editSku('${item.product}', '${pkg.type}', '${pkg.sku}')">
+                      ${displaySku}
+                    </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px;">
                    <span class="qty-badge">${pkg.qty}</span>
@@ -687,7 +697,31 @@
     }
     function openProductModal() { document.getElementById("productModal").style.display = "flex"; }
     function closeProductModal() { document.getElementById("productModal").style.display = "none"; }
-
+// 🟢 NEW: Function to prompt for and save a new SKU/UPC
+    async function editSku(product, type, currentSku) {
+      const newSku = prompt(`Update UPC/SKU for ${product} (${type}):`, currentSku || "");
+      if (newSku === null) return; // User clicked Cancel
+      
+      Swal.fire({ title: 'Updating UPC...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      
+      try {
+          await fetch(API_URL, { 
+              method: "POST", 
+              headers: { "Content-Type": "text/plain" },
+              redirect: "follow",
+              body: JSON.stringify({ 
+                  action: "updateProductSku", 
+                  product: product, 
+                  type: type, 
+                  newSku: newSku.trim() 
+              }) 
+          });
+          Swal.close();
+          loadInventory(); // Refresh the grid to show the new UPC instantly
+      } catch (e) {
+          Swal.fire("Error", "Could not update UPC: " + e.message, "error");
+      }
+    }
     async function adjustQty(product, type, currentQty) {
       const newQty = prompt(`Update ${product} (${type}):`, currentQty);
       if (newQty === null || isNaN(newQty)) return;
