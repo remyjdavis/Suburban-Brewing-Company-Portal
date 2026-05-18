@@ -697,7 +697,7 @@
     }
     function openProductModal() { document.getElementById("productModal").style.display = "flex"; }
     function closeProductModal() { document.getElementById("productModal").style.display = "none"; }
-// 🟢 NEW: Function to prompt for and save a new SKU/UPC
+// ===== UPDATE UPC / SKU WITH ERROR HANDLING =====
     async function editSku(product, type, currentSku) {
       const newSku = prompt(`Update UPC/SKU for ${product} (${type}):`, currentSku || "");
       if (newSku === null) return; // User clicked Cancel
@@ -705,7 +705,7 @@
       Swal.fire({ title: 'Updating UPC...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       
       try {
-          await fetch(API_URL, { 
+          const response = await fetch(API_URL, { 
               method: "POST", 
               headers: { "Content-Type": "text/plain" },
               redirect: "follow",
@@ -716,10 +716,19 @@
                   newSku: newSku.trim() 
               }) 
           });
+          
+          const result = await response.json();
           Swal.close();
-          loadInventory(); // Refresh the grid to show the new UPC instantly
+          
+          if (result.success) {
+              Swal.fire({ icon: 'success', title: 'UPC Saved!', timer: 1000, showConfirmButton: false });
+              loadInventory(); // Refresh the grid to show changes instantly
+          } else {
+              // Surfaced error message from backend
+              Swal.fire("Save Failed", result.error, "error");
+          }
       } catch (e) {
-          Swal.fire("Error", "Could not update UPC: " + e.message, "error");
+          Swal.fire("Network Error", "Could not reach server: " + e.message, "error");
       }
     }
     async function adjustQty(product, type, currentQty) {
