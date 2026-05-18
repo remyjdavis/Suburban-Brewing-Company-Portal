@@ -563,7 +563,7 @@
       headerEl.classList.toggle('collapsed');
     }
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbzWSIh-msRqg_tqU3l2jGXlxRIgxZKE-tcVNYadAGb9jKtDV_VZuLS-6hxkMkqdaJoj/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyUJ3N2GZhRrTN8q6EeJ6_guVaeZFHEFszWDKSRNQ-zma62D52F51EH4o6BMX6YDOV7/exec";
     let inventory = [];
 
     // --- MOBILE DRAWER TOGGLE ---
@@ -691,12 +691,24 @@
     async function adjustQty(product, type, currentQty) {
       const newQty = prompt(`Update ${product} (${type}):`, currentQty);
       if (newQty === null || isNaN(newQty)) return;
-      await fetch(API_URL, { method: "POST", body: new URLSearchParams({ action: "updateInventoryQty", product, type, newQty }) });
+      
+      // 🟢 FIX: Added CORS Armor & Switched to JSON
+      await fetch(API_URL, { 
+          method: "POST", 
+          headers: { "Content-Type": "text/plain" }, // Bypasses security blocks
+          redirect: "follow",                        // Critical for Google Apps Script
+          body: JSON.stringify({ 
+              action: "updateInventoryQty", 
+              product: product, 
+              type: type, 
+              newQty: newQty 
+          }) 
+      });
+      
       loadInventory();
     }
 
     async function saveProduct() {
-      // 🔴 FIX: Added the missing Price and SKU fields to the payload object
       const payload = {
         action: "addBreweryProduct",
         product: document.getElementById("prodName").value,
@@ -704,21 +716,23 @@
         
         halfKegQty: document.getElementById("halfQty").value,
         halfKegPrice: document.getElementById("halfPrice").value,
-        halfSku: document.getElementById("halfSku").value, // <--- SKU
+        halfSku: document.getElementById("halfSku").value, 
 
         sixthKegQty: document.getElementById("sixthQty").value,
         sixthKegPrice: document.getElementById("sixthPrice").value,
-        sixthSku: document.getElementById("sixthSku").value, // <--- SKU
+        sixthSku: document.getElementById("sixthSku").value, 
 
         caseQty: document.getElementById("caseQty").value,
         casePrice: document.getElementById("casePrice").value,
-        caseSku: document.getElementById("caseSku").value // <--- SKU
+        caseSku: document.getElementById("caseSku").value 
       };
       
-      // JSON POST method (more reliable than URLSearchParams for large data)
+      // 🟢 FIX: Added CORS Armor to the Add Product fetch as well!
       await fetch(API_URL, { 
           method: "POST", 
-          body: JSON.stringify(payload) // Send as JSON string
+          headers: { "Content-Type": "text/plain" },
+          redirect: "follow",
+          body: JSON.stringify(payload) 
       });
       
       closeProductModal(); 
