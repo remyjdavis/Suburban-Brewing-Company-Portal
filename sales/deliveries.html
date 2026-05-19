@@ -544,40 +544,60 @@ function toggleMobileMenu() {
 }
 
 /* ===== INITIALIZE ===== */
-document.addEventListener("DOMContentLoaded", () => {
- // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
+document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
     if (typeof setupUserProfile === 'function') setupUserProfile();
     if (typeof checkUnreadCount === 'function') checkUnreadCount();
 
     // 2. Set Footer Year
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
-  // 1. Sidebar Logic
-  const activeLink = document.querySelector('.nav-link.active');
-  if (activeLink) {
-    const parentGroup = activeLink.closest('.collapsible-content');
-    if (parentGroup) {
-      parentGroup.classList.remove('collapsed');
-      const header = parentGroup.previousElementSibling;
-      if (header) header.classList.remove('collapsed');
+    // 1. Sidebar Logic
+    const activeLink = document.querySelector('.nav-link.active');
+    if (activeLink) {
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) {
+            parentGroup.classList.remove('collapsed');
+            const header = parentGroup.previousElementSibling;
+            if (header) header.classList.remove('collapsed');
+        }
     }
-  }
 
-  // 2. AUTO-POPULATE DRIVER NAME
-  // Check if phone remembers the driver
-  const savedDriver = localStorage.getItem(DRIVER_STORAGE_KEY);
-  if (savedDriver) {
-      document.getElementById("driverName").value = savedDriver;
-  }
+    // 2. AUTO-POPULATE DRIVER NAME
+    const driverInput = document.getElementById("driverName");
+    const savedDriver = localStorage.getItem(DRIVER_STORAGE_KEY);
 
-  // 3. LISTEN FOR NAME CHANGES
-  // If they change the name, remember the new one
-  document.getElementById("driverName").addEventListener("input", (e) => {
-      localStorage.setItem(DRIVER_STORAGE_KEY, e.target.value.trim());
-  });
+    if (savedDriver) {
+        driverInput.value = savedDriver;
+    } else {
+        // --- ADDED: Dynamic Driver Lookup ---
+        try {
+            const res = await fetch(`${API_URL}?action=getEmployees`);
+            const employees = await res.json();
+            
+            // Look for the delivery driver
+            const driver = employees.find(e => 
+                String(e.role).toLowerCase().includes("delivery driver") || 
+                String(e.role).toLowerCase() === "driver"
+            );
+            
+            // Set to driver name or fallback to Eric Yost
+            driverInput.value = driver ? driver.name : "Eric Yost";
+            localStorage.setItem(DRIVER_STORAGE_KEY, driverInput.value);
+        } catch (e) {
+            console.warn("Driver lookup failed, defaulting to Eric Yost.");
+            driverInput.value = "Eric Yost";
+        }
+    }
 
-  // 4. Load Deliveries
-  loadOpenDeliveries();
+    // 3. LISTEN FOR NAME CHANGES
+    // If they change the name, remember the new one
+    driverInput.addEventListener("input", (e) => {
+        localStorage.setItem(DRIVER_STORAGE_KEY, e.target.value.trim());
+    });
+
+    // 4. Load Deliveries
+    loadOpenDeliveries();
 });
 
 /* ===== DATA LOADING ===== */
