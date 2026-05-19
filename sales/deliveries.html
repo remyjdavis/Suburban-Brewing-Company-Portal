@@ -666,18 +666,14 @@ async function markSelectedDelivered() {
   Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
   try {
-     const promises = selectedInvoices.map(invoiceNum => {
-         return fetch(API_URL, {
-            method: "POST",
-            // 🟢 THIS IS THE FIX. text/plain skips the 405 OPTIONS check.
-            headers: { "Content-Type": "text/plain" }, 
-            body: JSON.stringify({
-              action: "markDelivered",
-              invoiceNumber: invoiceNum,
-              driver: driver
-            })
-         }).then(res => res.json());
-     });
+     // REPLACE your fetch block in markSelectedDelivered() with this:
+const promises = selectedInvoices.map(invoiceNum => {
+    // Build the URL with parameters
+    const url = `${API_URL}?action=markDelivered&invoiceNumber=${encodeURIComponent(invoiceNum)}&driver=${encodeURIComponent(driver)}`;
+    
+    // GET requests never trigger the 405/pre-flight error
+    return fetch(url, { method: "GET" }).then(res => res.json());
+});
 
      await Promise.all(promises);
      Swal.fire({ title: "Delivered!", icon: "success", timer: 1500 });
