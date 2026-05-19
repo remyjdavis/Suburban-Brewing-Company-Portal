@@ -176,13 +176,15 @@ function updateBadgeUI(count) {
 }
 
 window.openInbox = async function(folder = 'inbox') {
+    const user = localStorage.getItem("user_name");
     const d = document.getElementById("userDropdown");
     if(d) d.classList.remove("show");
     
     Swal.fire({ title: 'Loading...', didOpen: () => Swal.showLoading() });
     
     try {
-        const res = await fetch(`${MASTER_API_URL}?action=getInbox&type=${folder}`);
+        const url = `${MASTER_API_URL}?action=getInbox&type=${folder}&user=${encodeURIComponent(user)}`;
+        const res = await fetch(url);
         const messages = await res.json();
         
         let html = `
@@ -196,7 +198,7 @@ window.openInbox = async function(folder = 'inbox') {
             messages.forEach(m => {
                 html += `
                 <div style="background:${m.status === "Unread" ? "#f0f9ff" : "#fff"}; padding:10px; border-bottom:1px solid #eee; cursor:pointer;" 
-                     onclick="readMessage('${m.id}', '${m.user}', '${m.email}', '${m.topic}', \`${m.text.replace(/`/g, "'")}\`)">
+                     onclick="readMessage('${m.id}', '${m.user}', '${m.recipient}', '${m.topic}', \`${m.text.replace(/`/g, "'")}\`)">
                     <div style="display:flex; justify-content:space-between; font-size:11px; color:#64748b;">
                         <span>${new Date(m.date).toLocaleDateString()}</span>
                         <span style="color:${m.status === 'Read' ? '#10b981' : '#f59e0b'}">${m.status}</span>
@@ -210,8 +212,14 @@ window.openInbox = async function(folder = 'inbox') {
         }
         html += '</div>';
         
+        // 🟢 THE MISSING BUTTON IS ADDED HERE
+        html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:15px; background-color:#10b981;">+ New Message</button>`;
+        
         Swal.fire({ title: 'Messages', width: '600px', html: html, showConfirmButton: false, showCloseButton: true });
-    } catch(e) { Swal.fire('Error', 'Could not load messages.', 'error'); }
+    } catch(e) { 
+        Swal.fire('Error', 'Could not load messages.', 'error'); 
+        console.error(e); 
+    }
 }
 
 window.readMessage = async function(id, user, email, topic, text) {
