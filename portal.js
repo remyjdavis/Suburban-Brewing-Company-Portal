@@ -247,34 +247,66 @@ window.openComposeModal = async function(to="", subj="") {
         users = json.users || [];
     } catch(e) { console.warn("User list failed."); }
     
+    // Generate Dropdown OR Input Box
     let recipientHTML = users.length > 0 
-        ? `<select id="swal-to" class="swal2-input">${users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('')}</select>`
+        ? `<select id="swal-to" class="swal2-input">
+            ${users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('')}
+           </select>`
         : `<input id="swal-to" class="swal2-input" placeholder="To: (Type Name)" value="${to}">`;
     
-    const {value:f} = await Swal.fire({ 
+    const {value:formValues} = await Swal.fire({ 
         title: 'New Message', 
-        html: `${recipientHTML}<input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}"><textarea id="swal-body" class="swal2-textarea" placeholder="Message..." style="height:150px;"></textarea>`, 
-        focusConfirm: false, showCancelButton: true, confirmButtonText: 'Send 🚀',
-        preConfirm: () => ({ to: document.getElementById('swal-to').value, sub: document.getElementById('swal-sub').value, body: document.getElementById('swal-body').value }) 
+        html: `
+            ${recipientHTML}
+            <input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}">
+            <textarea id="swal-body" class="swal2-textarea" placeholder="Message..." style="height:150px;"></textarea>
+        `, 
+        focusConfirm: false, 
+        showCancelButton: true, 
+        confirmButtonText: 'Send 🚀',
+        preConfirm: () => {
+            const r = document.getElementById('swal-to').value;
+            const s = document.getElementById('swal-sub').value;
+            const b = document.getElementById('swal-body').value;
+            
+            if (!r || !b) {
+                Swal.showValidationMessage('Recipient and Message are required');
+                return false;
+            }
+            
+            return { to: r, sub: s, body: b };
+        } 
     });
     
-    if(f && f.to) {
+    if (formValues && formValues.to) {
         Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
+        
         try {
-            await fetch(MASTER_API_URL, { 
+            // 🔴 CRITICAL: Removed mode: 'no-cors' so we can actually read the response
+            const response = await fetch(MASTER_API_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ 
                     action: 'sendMessage', 
                     data: { 
                         sender: localStorage.getItem("user_name"), 
-                        recipient: f.to, 
-                        subject: f.sub, 
-                        body: f.body 
+                        recipient: formValues.to, 
+                        subject: formValues.sub, 
+                        body: formValues.body 
                     } 
                 }) 
             });
-            Swal.fire('Sent!', 'Message delivered.', 'success');
-        } catch(e) { Swal.fire('Error', 'Failed to send.', 'error'); }
+            
+            const result = await response.json();
+            
+            if (result.status === "success") {
+                Swal.fire('Sent!', 'Message delivered.', 'success');
+            } else {
+                Swal.fire('Error', result.message || 'Failed to send.', 'error');
+            }
+        } catch(e) { 
+            console.error(e);
+            Swal.fire('Error', 'Network error. Could not connect to server.', 'error'); 
+        }
     }
 }
 
