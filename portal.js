@@ -183,52 +183,6 @@ function updateBadgeUI(count) {
     } 
 }
 
-window.openInbox = async function(folder = 'inbox') {
-    const user = localStorage.getItem("user_name");
-    const d = document.getElementById("userDropdown");
-    if(d) d.classList.remove("show");
-    
-    Swal.fire({ title: 'Loading...', didOpen: () => Swal.showLoading() });
-    
-    try {
-        const url = `${MASTER_API_URL}?action=getInbox&type=${folder}&user=${encodeURIComponent(user)}`;
-        const res = await fetch(url);
-        const messages = await res.json();
-        
-        let html = `
-            <div style="margin-bottom:10px;">
-                <button onclick="openInbox('inbox')" class="swal2-styled" style="background:${folder==='inbox'?'#2563eb':'#cbd5e1'}">📥 Inbox</button>
-                <button onclick="openInbox('sent')" class="swal2-styled" style="background:${folder==='sent'?'#2563eb':'#cbd5e1'}">📤 Sent</button>
-            </div>
-            <div style="max-height:350px; overflow-y:auto; border:1px solid #eee; border-radius:8px; text-align:left;">`;
-        
-        if (Array.isArray(messages) && messages.length > 0) {
-            messages.forEach(m => {
-                html += `
-                <div style="background:${m.status === "Unread" ? "#f0f9ff" : "#fff"}; padding:10px; border-bottom:1px solid #eee; cursor:pointer;" 
-                     onclick="readMessage('${m.id}', '${m.user}', '${m.recipient}', '${m.topic}', \`${m.text.replace(/`/g, "'")}\`)">
-                    <div style="display:flex; justify-content:space-between; font-size:11px; color:#64748b;">
-                        <span>${new Date(m.date).toLocaleDateString()}</span>
-                        <span style="color:${m.status === 'Read' ? '#10b981' : '#f59e0b'}">${m.status}</span>
-                    </div>
-                    <div style="font-weight:600;">${folder === 'inbox' ? 'From: ' + m.user : 'To: ' + m.user}</div>
-                    <div style="font-size:12px;">${m.topic}</div>
-                </div>`;
-            });
-        } else {
-            html += '<div style="padding:20px; text-align:center;">Folder is empty.</div>';
-        }
-        html += '</div>';
-        
-        // 🟢 THE MISSING BUTTON IS ADDED HERE
-        html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:15px; background-color:#10b981;">+ New Message</button>`;
-        
-        Swal.fire({ title: 'Messages', width: '600px', html: html, showConfirmButton: false, showCloseButton: true });
-    } catch(e) { 
-        Swal.fire('Error', 'Could not load messages.', 'error'); 
-        console.error(e); 
-    }
-}
 
 window.readMessage = async function(id, user, email, topic, text) {
     // 1. Mark as Read and get the result
@@ -255,8 +209,9 @@ window.readMessage = async function(id, user, email, topic, text) {
 }
 
 // --- 4. MESSAGING SYSTEM (ENHANCED) ---
+// --- THE ONLY VERSION OF openInbox YOU NEED ---
 window.openInbox = async function(folder = 'inbox') {
-    // 🟢 THE FIX: Find your name no matter where the browser saved it
+    // 1. Get identity (Bulletproof)
     const activeUser = localStorage.getItem("user_name") || 
                        sessionStorage.getItem("user_name") || 
                        document.getElementById("display-username")?.innerText || 
@@ -268,12 +223,11 @@ window.openInbox = async function(folder = 'inbox') {
     Swal.fire({ title: 'Loading...', didOpen: () => Swal.showLoading() });
     
     try {
-        // Added a timestamp (&t=...) to bust the browser cache so it always gets fresh mail
         const url = `${MASTER_API_URL}?action=getInbox&type=${folder}&user=${encodeURIComponent(activeUser)}&t=${new Date().getTime()}`;
         const res = await fetch(url);
         const responseData = await res.json();
         
-        // Safely extract the array
+        // Ensure messages is an array
         const msgArray = Array.isArray(responseData) ? responseData : (responseData.messages || []);
         
         let html = `
@@ -305,6 +259,7 @@ window.openInbox = async function(folder = 'inbox') {
         }
         html += '</div>';
         
+        // Button that now calls your fixed openComposeModal
         html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:15px; background-color:#10b981;">+ New Message</button>`;
         
         Swal.fire({ title: 'Messages', width: '600px', html: html, showConfirmButton: false, showCloseButton: true });
@@ -313,7 +268,6 @@ window.openInbox = async function(folder = 'inbox') {
         console.error(e); 
     }
 }
-
 // --- 5. UI UTILITIES ---
 function setupUserProfile() {
     const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
