@@ -185,27 +185,44 @@ function updateBadgeUI(count) {
 
 
 window.readMessage = async function(id, user, email, topic, text) {
-    // 1. Mark as Read and get the result
-    const res = await fetch(MASTER_API_URL, {
+    // 1. Mark as Read
+    await fetch(MASTER_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: 'markRead', id: id })
     });
-    const result = await res.json();
-    
-    // 2. Fetch the updated message to get the Read Timestamp
-    // (Optional: You can add a 'getSingleMessage' function to fetch the timestamp specifically)
 
+    // 2. Show Message with Delete Option
     Swal.fire({
         title: `Message from ${user}`,
         html: `<div style="text-align:left; font-size:14px;">
                 <p><strong>Subject:</strong> ${topic}</p>
                 <div style="background:#f8fafc; padding:10px; border-radius:5px;">${text}</div>
-                <p style="font-size:11px; color:#64748b; margin-top:10px;">
-                   Read on: ${new Date().toLocaleString()}
-                </p>
                </div>`,
-        confirmButtonText: "Close"
-    }).then(() => openInbox()); 
+        showDenyButton: true,
+        denyButtonText: '🗑️ Delete',
+        confirmButtonText: 'Close',
+        denyButtonColor: '#ef4444'
+    }).then(async (result) => {
+        if (result.isDenied) {
+            // Trigger Delete
+            Swal.fire({title:'Deleting...', didOpen:()=>Swal.showLoading()});
+            
+            const res = await fetch(MASTER_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'deleteMessage', id: id })
+            });
+            const delRes = await res.json();
+            
+            if (delRes.status === "success") {
+                Swal.fire('Deleted', 'Message removed.', 'success');
+                openInbox(); // Refresh folder
+            } else {
+                Swal.fire('Error', 'Could not delete.', 'error');
+            }
+        } else {
+            openInbox(); // Just refresh folder to update "Read" status
+        }
+    });
 }
 
 // --- 4. MESSAGING SYSTEM (ENHANCED) ---
