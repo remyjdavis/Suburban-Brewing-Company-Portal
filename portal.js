@@ -205,23 +205,22 @@ window.openInbox = async function(folder = 'inbox') {
     } catch(e) { Swal.fire('Error', 'Could not load messages.', 'error'); }
 }
 
-window.readMessage = function(id, user, email, topic, text) {
+window.readMessage = async function(id, user, email, topic, text) {
+    // 1. Mark as Read in Backend
+    await fetch(MASTER_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'markRead', id: id })
+    });
+
+    // 2. Show Message
     Swal.fire({
         title: `Message from ${user}`,
-        html: `<div style="text-align:left; font-size:14px; line-height:1.5;">
-                <p><strong>Topic:</strong> ${topic}</p>
-                <p><strong>Email:</strong> ${email}</p>
-                <hr>
-                <div style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">${text}</div>
+        html: `<div style="text-align:left;">
+                <p><strong>Subject:</strong> ${topic}</p>
+                <div style="background:#f8fafc; padding:10px;">${text}</div>
                </div>`,
-        showCancelButton: true,
-        confirmButtonText: "✉️ Reply",
-        cancelButtonText: "Close",
-        confirmButtonColor: "#2563eb"
-    }).then((result) => {
-        if (result.isConfirmed) openReplyModal(id, user, email, topic);
-        else openInbox();
-    });
+        confirmButtonText: "Close"
+    }).then(() => openInbox()); // Re-open to refresh the status to "Read"
 }
 
 // --- 4. MESSAGING SYSTEM (ENHANCED) ---
