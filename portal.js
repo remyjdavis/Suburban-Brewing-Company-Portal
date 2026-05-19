@@ -268,6 +268,45 @@ window.openInbox = async function(folder = 'inbox') {
         console.error(e); 
     }
 }
+window.openComposeModal = async function(to="", subj="") {
+    let users = [];
+    try {
+        const res = await fetch(`${MASTER_API_URL}?action=getUsers`);
+        const json = await res.json();
+        users = json.users || [];
+    } catch(e) { console.warn("User list failed."); }
+    
+    let recipientHTML = users.length > 0 
+        ? `<select id="swal-to" class="swal2-input">${users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('')}</select>`
+        : `<input id="swal-to" class="swal2-input" placeholder="To: (Type Name)" value="${to}">`;
+    
+    const {value:formValues} = await Swal.fire({ 
+        title: 'New Message', 
+        html: `${recipientHTML}<input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}"><textarea id="swal-body" class="swal2-textarea" placeholder="Message..." style="height:150px;"></textarea>`, 
+        focusConfirm: false, showCancelButton: true, confirmButtonText: 'Send 🚀',
+        preConfirm: () => {
+            const r = document.getElementById('swal-to').value;
+            const s = document.getElementById('swal-sub').value;
+            const b = document.getElementById('swal-body').value;
+            if (!r || !b) { Swal.showValidationMessage('Recipient and Message are required'); return false; }
+            return { to: r, sub: s, body: b };
+        } 
+    });
+    
+    if (formValues && formValues.to) {
+        Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
+        try {
+            const activeUser = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || document.getElementById("display-username")?.innerText || "Unknown Sender";
+            const response = await fetch(MASTER_API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'sendMessage', data: { sender: activeUser, recipient: formValues.to, subject: formValues.sub, body: formValues.body } }) 
+            });
+            const result = await response.json();
+            if (result.status === "success") { Swal.fire('Sent!', 'Message delivered.', 'success'); } 
+            else { Swal.fire('Error', result.message || 'Failed to send.', 'error'); }
+        } catch(e) { Swal.fire('Error', 'Network error.', 'error'); }
+    }
+}
 // --- 5. UI UTILITIES ---
 function setupUserProfile() {
     const name = localStorage.getItem("user_name") || sessionStorage.getItem("user_name") || "User";
