@@ -657,26 +657,83 @@ function toggleAll(source) {
 /* ===== MANUAL MULTI-UPDATE ACTION ===== */
 async function markSelectedDelivered() {
   const driver = document.getElementById("driverName").value.trim();
-  if (!driver) return Swal.fire("Missing Info", "Enter Driver Name", "warning");
-  if (selectedInvoices.length === 0) return Swal.fire("Missing Info", "Select an invoice", "warning");
 
-  const { isConfirmed } = await Swal.fire({ title: 'Confirm Delivery', icon: 'question', showCancelButton: true });
+  if (!driver) {
+    return Swal.fire("Missing Info", "Enter Driver Name", "warning");
+  }
+
+  if (selectedInvoices.length === 0) {
+    return Swal.fire("Missing Info", "Select an invoice", "warning");
+  }
+
+  const { isConfirmed } = await Swal.fire({
+    title: "Confirm Delivery",
+    text: `Mark ${selectedInvoices.length} invoice(s) as delivered?`,
+    icon: "question",
+    showCancelButton: true
+  });
+
   if (!isConfirmed) return;
 
-  Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  Swal.fire({
+    title: "Processing...",
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
 
   try {
-     // 🟢 SEND AS GET QUERY STRING
-     const promises = selectedInvoices.map(invoiceNum => {
-         const url = `${API_URL}?action=markDelivered&invoiceNumber=${encodeURIComponent(invoiceNum)}&driver=${encodeURIComponent(driver)}`;
-         return fetch(url, { method: "GET" }).then(res => res.json());
-     });
 
-     await Promise.all(promises);
-     Swal.fire({ title: "Delivered!", icon: "success", timer: 1500 });
-     setTimeout(() => location.reload(), 1500);
-  } catch(err) {
-     Swal.fire("Error", "Update failed: " + err.message, "error");
+    const promises = selectedInvoices.map(invoiceNum => {
+
+      const url =
+        `${API_URL}?action=markDelivered` +
+        `&invoiceNumber=${encodeURIComponent(invoiceNum)}` +
+        `&driver=${encodeURIComponent(driver)}`;
+
+      return fetch(url, {
+        method: "GET",
+        mode: "cors",
+        redirect: "follow"
+      })
+      .then(async res => {
+        const text = await res.text();
+
+        try {
+          return JSON.parse(text);
+        } catch {
+          throw new Error(`Invalid JSON response for invoice ${invoiceNum}`);
+        }
+      });
+
+    });
+
+    const results = await Promise.all(promises);
+
+    const failed = results.filter(r => !r.success);
+
+    if (failed.length > 0) {
+      throw new Error(`${failed.length} invoices failed`);
+    }
+
+    Swal.fire({
+      title: "Delivered!",
+      text: `${selectedInvoices.length} invoice(s) updated.`,
+      icon: "success",
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    setTimeout(() => location.reload(), 1500);
+
+  } catch (err) {
+
+    console.error(err);
+
+    Swal.fire(
+      "Error",
+      err.message || "Delivery update failed",
+      "error"
+    );
   }
 }
 /* ===== MANUAL MULTI-DELETE ACTION ===== */
