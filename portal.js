@@ -121,40 +121,48 @@ async function checkBusinessActivity() {
 }
 
 // --- 4. MESSAGING SYSTEM (Enhanced) ---
+// 🟢 ALSO FIX THE UNREAD BADGE COUNTER
 async function checkUnreadCount() { 
     try { 
-        const res = await fetch(`${MASTER_API_URL}?action=getInbox`); 
-        const messages = await res.json(); 
+        // Must use the exact same username check!
+        const activeUser = localStorage.getItem("user_name") || 
+                           sessionStorage.getItem("user_name") || 
+                           document.getElementById("display-username")?.innerText || 
+                           "Unknown User";
+
+        const url = `${MASTER_API_URL}?action=getInbox&type=inbox&user=${encodeURIComponent(activeUser)}&t=${new Date().getTime()}`;
         
-        if (Array.isArray(messages)) { 
-            // 1. Filter: Only count 'Inbound' and 'Unread'
-            const unreadMessages = messages.filter(m => 
-                m.direction === 'Inbound' && 
+        const res = await fetch(url); 
+        const responseData = await res.json(); 
+        
+        const msgArray = Array.isArray(responseData) ? responseData : (responseData.messages || []);
+        
+        if (msgArray.length > 0) { 
+            const unreadMessages = msgArray.filter(m => 
+                (m.direction === 'Inbound' || !String(m.id).startsWith("SENT-")) && 
                 m.status === 'Unread'
             ); 
             
             updateBadgeUI(unreadMessages.length); 
 
-            // 2. Notification Logic
             if (unreadMessages.length > 0) {
-                // Sort by date descending (newest first) to ensure index [0] is definitely the newest
                 unreadMessages.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
                 const newestMsg = unreadMessages[0]; 
                 const lastMsgId = localStorage.getItem("last_msg_alert");
 
-                // 3. Only notify if this is truly a NEW ID
                 if (newestMsg.id !== lastMsgId) {
                     localStorage.setItem("last_msg_alert", newestMsg.id);
                     
-                    const bodyText = newestMsg.text.length > 60 
-                        ? newestMsg.text.substring(0, 60) + "..." 
-                        : newestMsg.text;
-
-                    sendPortalNotification(`New Message from ${newestMsg.user}`, bodyText);
+                    const textContent = newestMsg.text || newestMsg.body || "";
+                    const bodyText = textContent.length > 60 ? textContent.substring(0, 60) + "..." : textContent;
+                    const sender = newestMsg.user || newestMsg.from || "Someone";
+                    
+                    sendPortalNotification(`New Message from ${sender}`, bodyText);
                 }
             }
-        } 
+        } else {
+            updateBadgeUI(0);
+        }
     } catch(e) { 
         console.error("Inbox sync error:", e); 
     } 
@@ -247,82 +255,62 @@ window.readMessage = async function(id, user, email, topic, text) {
 }
 
 // --- 4. MESSAGING SYSTEM (ENHANCED) ---
-window.openComposeModal = async function(to="", subj="") {
-    // 1. Instantly show a loading screen
-    Swal.fire({ title: 'Loading Directory...', didOpen: () => Swal.showLoading() });
+window.openInbox = async function(folder = 'inbox') {
+    // 🟢 THE FIX: Find your name no matter where the browser saved it
+    const activeUser = localStorage.getItem("user_name") || 
+                       sessionStorage.getItem("user_name") || 
+                       document.getElementById("display-username")?.innerText || 
+                       "Unknown User";
 
-    let users = [];
+    const d = document.getElementById("userDropdown");
+    if(d) d.classList.remove("show");
+    
+    Swal.fire({ title: 'Loading...', didOpen: () => Swal.showLoading() });
+    
     try {
-        const res = await fetch(`${MASTER_API_URL}?action=getUsers`);
-        const json = await res.json();
-        users = json.users || [];
-    } catch(e) { console.warn("User list failed."); }
-    
-    // Generate Dropdown OR Input Box
-    let recipientHTML = users.length > 0 
-        ? `<select id="swal-to" class="swal2-input">
-            ${users.map(u => `<option value="${u.name}" ${u.name===to?'selected':''}>${u.name}</option>`).join('')}
-           </select>`
-        : `<input id="swal-to" class="swal2-input" placeholder="To: (Type Name)" value="${to}">`;
-    
-    const {value:formValues} = await Swal.fire({ 
-        title: 'New Message', 
-        html: `
-            ${recipientHTML}
-            <input id="swal-sub" class="swal2-input" placeholder="Subject" value="${subj}">
-            <textarea id="swal-body" class="swal2-textarea" placeholder="Message..." style="height:150px;"></textarea>
-        `, 
-        focusConfirm: false, 
-        showCancelButton: true, 
-        confirmButtonText: 'Send 🚀',
-        preConfirm: () => {
-            const r = document.getElementById('swal-to').value;
-            const s = document.getElementById('swal-sub').value;
-            const b = document.getElementById('swal-body').value;
-            
-            if (!r || !b) {
-                Swal.showValidationMessage('Recipient and Message are required');
-                return false;
-            }
-            
-            return { to: r, sub: s, body: b };
-        } 
-    });
-    
-    if (formValues && formValues.to) {
-        Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
+        // Added a timestamp (&t=...) to bust the browser cache so it always gets fresh mail
+        const url = `${MASTER_API_URL}?action=getInbox&type=${folder}&user=${encodeURIComponent(activeUser)}&t=${new Date().getTime()}`;
+        const res = await fetch(url);
+        const responseData = await res.json();
         
-        try {
-            // 🟢 THE FIX: Checks LocalStorage, then SessionStorage, then the UI badge
-            const activeUser = localStorage.getItem("user_name") || 
-                               sessionStorage.getItem("user_name") || 
-                               document.getElementById("display-username")?.innerText || 
-                               "System Admin";
+        // Safely extract the array
+        const msgArray = Array.isArray(responseData) ? responseData : (responseData.messages || []);
+        
+        let html = `
+            <div style="margin-bottom:10px;">
+                <button onclick="openInbox('inbox')" class="swal2-styled" style="background:${folder==='inbox'?'#2563eb':'#cbd5e1'}">📥 Inbox</button>
+                <button onclick="openInbox('sent')" class="swal2-styled" style="background:${folder==='sent'?'#2563eb':'#cbd5e1'}">📤 Sent</button>
+            </div>
+            <div style="max-height:350px; overflow-y:auto; border:1px solid #eee; border-radius:8px; text-align:left;">`;
+        
+        if (msgArray.length > 0) {
+            msgArray.forEach(m => {
+                const displayUser = folder === 'inbox' ? (m.user || m.from || 'Unknown') : (m.recipient || m.to || m.user || 'Unknown');
+                const displayTopic = m.topic || m.subject || 'No Subject';
+                const displayText = m.text || m.body || '';
 
-            const response = await fetch(MASTER_API_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    action: 'sendMessage', 
-                    data: { 
-                        sender: activeUser, // 🟢 Uses the bulletproof name grabber
-                        recipient: formValues.to, 
-                        subject: formValues.sub, 
-                        body: formValues.body 
-                    } 
-                }) 
+                html += `
+                <div style="background:${m.status === "Unread" ? "#f0f9ff" : "#fff"}; padding:10px; border-bottom:1px solid #eee; cursor:pointer;" 
+                     onclick="readMessage('${m.id}', '${displayUser}', '${displayUser}', '${displayTopic}', \`${displayText.replace(/`/g, "'")}\`)">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; color:#64748b;">
+                        <span>${new Date(m.date).toLocaleDateString()}</span>
+                        <span style="color:${m.status === 'Read' ? '#10b981' : '#f59e0b'}">${m.status}</span>
+                    </div>
+                    <div style="font-weight:600;">${folder === 'inbox' ? 'From: ' : 'To: '} ${displayUser}</div>
+                    <div style="font-size:12px;">${displayTopic}</div>
+                </div>`;
             });
-            
-            const result = await response.json();
-            
-            if (result.status === "success") {
-                Swal.fire('Sent!', 'Message delivered.', 'success');
-            } else {
-                Swal.fire('Error', result.message || 'Failed to send.', 'error');
-            }
-        } catch(e) { 
-            console.error(e);
-            Swal.fire('Error', 'Network error. Could not connect to server.', 'error'); 
+        } else {
+            html += '<div style="padding:20px; text-align:center;">Folder is empty.</div>';
         }
+        html += '</div>';
+        
+        html += `<button onclick="openComposeModal()" class="swal2-confirm swal2-styled" style="width:100%; margin-top:15px; background-color:#10b981;">+ New Message</button>`;
+        
+        Swal.fire({ title: 'Messages', width: '600px', html: html, showConfirmButton: false, showCloseButton: true });
+    } catch(e) { 
+        Swal.fire('Error', 'Could not load messages.', 'error'); 
+        console.error(e); 
     }
 }
 
