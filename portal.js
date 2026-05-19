@@ -206,21 +206,27 @@ window.openInbox = async function(folder = 'inbox') {
 }
 
 window.readMessage = async function(id, user, email, topic, text) {
-    // 1. Mark as Read in Backend
-    await fetch(MASTER_API_URL, {
+    // 1. Mark as Read and get the result
+    const res = await fetch(MASTER_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: 'markRead', id: id })
     });
+    const result = await res.json();
+    
+    // 2. Fetch the updated message to get the Read Timestamp
+    // (Optional: You can add a 'getSingleMessage' function to fetch the timestamp specifically)
 
-    // 2. Show Message
     Swal.fire({
         title: `Message from ${user}`,
-        html: `<div style="text-align:left;">
+        html: `<div style="text-align:left; font-size:14px;">
                 <p><strong>Subject:</strong> ${topic}</p>
-                <div style="background:#f8fafc; padding:10px;">${text}</div>
+                <div style="background:#f8fafc; padding:10px; border-radius:5px;">${text}</div>
+                <p style="font-size:11px; color:#64748b; margin-top:10px;">
+                   Read on: ${new Date().toLocaleString()}
+                </p>
                </div>`,
         confirmButtonText: "Close"
-    }).then(() => openInbox()); // Re-open to refresh the status to "Read"
+    }).then(() => openInbox()); 
 }
 
 // --- 4. MESSAGING SYSTEM (ENHANCED) ---
