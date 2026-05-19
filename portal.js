@@ -127,18 +127,26 @@ async function checkUnreadCount() {
         const messages = await res.json(); 
         
         if (Array.isArray(messages)) { 
-            const unreadMessages = messages.filter(m => m.direction === 'Inbound' && m.status === 'Unread');
+            // 1. Filter: Only count 'Inbound' and 'Unread'
+            const unreadMessages = messages.filter(m => 
+                m.direction === 'Inbound' && 
+                m.status === 'Unread'
+            ); 
+            
             updateBadgeUI(unreadMessages.length); 
 
-            // 🟢 NOTIFICATION LOGIC
+            // 2. Notification Logic
             if (unreadMessages.length > 0) {
-                const newestMsg = unreadMessages[0]; // Assumes API returns sorted by newest
+                // Sort by date descending (newest first) to ensure index [0] is definitely the newest
+                unreadMessages.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                const newestMsg = unreadMessages[0]; 
                 const lastMsgId = localStorage.getItem("last_msg_alert");
 
+                // 3. Only notify if this is truly a NEW ID
                 if (newestMsg.id !== lastMsgId) {
                     localStorage.setItem("last_msg_alert", newestMsg.id);
                     
-                    // Logic: Summary vs Full Text
                     const bodyText = newestMsg.text.length > 60 
                         ? newestMsg.text.substring(0, 60) + "..." 
                         : newestMsg.text;
@@ -147,9 +155,10 @@ async function checkUnreadCount() {
                 }
             }
         } 
-    } catch(e) {} 
+    } catch(e) { 
+        console.error("Inbox sync error:", e); 
+    } 
 }
-
 function updateBadgeUI(count) { 
     const dO = document.getElementById('msg-badge'); 
     const dI = document.getElementById('dropdown-badge'); 
