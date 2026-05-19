@@ -798,10 +798,21 @@ async function editJobTitle(username, currentRole, currentTerritory) {
         }
     }
 }
-function toggleTerritory(roleId, wrapId) {
+function toggleTerritory(roleId, wrapId, deliveryWrapId) {
     const role = document.getElementById(roleId).value;
-    const wrap = document.getElementById(wrapId);
-    wrap.style.display = (role === "Sales Rep") ? "block" : "none";
+    const salesWrap = document.getElementById(wrapId);
+    const deliveryWrap = document.getElementById(deliveryWrapId);
+
+    // Hide both by default
+    if(salesWrap) salesWrap.style.display = "none";
+    if(deliveryWrap) deliveryWrap.style.display = "none";
+
+    // Show appropriate wrapper
+    if (role === "Sales Rep" || role === "General") {
+        salesWrap.style.display = "block";
+    } else if (role === "Delivery Driver") {
+        deliveryWrap.style.display = "block";
+    }
 }
     // =========================================================
     // 5. UI UTILS (Mobile Menu)
