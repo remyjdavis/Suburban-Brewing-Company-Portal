@@ -248,6 +248,9 @@ window.readMessage = async function(id, user, email, topic, text) {
 
 // --- 4. MESSAGING SYSTEM (ENHANCED) ---
 window.openComposeModal = async function(to="", subj="") {
+    // 1. Instantly show a loading screen
+    Swal.fire({ title: 'Loading Directory...', didOpen: () => Swal.showLoading() });
+
     let users = [];
     try {
         const res = await fetch(`${MASTER_API_URL}?action=getUsers`);
@@ -290,13 +293,18 @@ window.openComposeModal = async function(to="", subj="") {
         Swal.fire({title:'Sending...', didOpen:()=>Swal.showLoading()});
         
         try {
-            // 🔴 CRITICAL: Removed mode: 'no-cors' so we can actually read the response
+            // 🟢 THE FIX: Checks LocalStorage, then SessionStorage, then the UI badge
+            const activeUser = localStorage.getItem("user_name") || 
+                               sessionStorage.getItem("user_name") || 
+                               document.getElementById("display-username")?.innerText || 
+                               "System Admin";
+
             const response = await fetch(MASTER_API_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ 
                     action: 'sendMessage', 
                     data: { 
-                        sender: localStorage.getItem("user_name"), 
+                        sender: activeUser, // 🟢 Uses the bulletproof name grabber
                         recipient: formValues.to, 
                         subject: formValues.sub, 
                         body: formValues.body 
