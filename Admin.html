@@ -549,32 +549,34 @@
             <input id="swal-email" class="swal2-input" placeholder="Email Address">
             
             <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#64748b;">JOB TITLE</label>
-            <select id="swal-role" class="swal2-input" onchange="toggleTerritory('swal-role', 'territory-wrap')">
+            <select id="swal-role" class="swal2-input" onchange="toggleSmartTerritory()">
                 <option value="Brewer">Brewer</option>
                 <option value="Sales Rep">Sales Rep</option>
                 <option value="Marketing Rep">Marketing Rep</option>
+                <option value="Delivery Driver">Delivery Driver</option>
                 <option value="Administrator">Administrator</option>
                 <option value="Owner">Owner</option>
-                <option value="Delivery Driver">Delivery Driver</option>
             </select>
 
             <div id="territory-wrap" style="display:none; margin-top: 15px; border: 1px solid #2563eb; padding: 10px; border-radius: 8px; background: #eff6ff;">
-    <label style="display:block; text-align:left; margin: 0 0 5px 5px; font-size:11px; font-weight:700; color:#2563eb;">PA SALES TERRITORY (THE RING)</label>
-    <select id="swal-territory" class="swal2-input" style="margin-top:0;">
-       <option value="General">General (Statewide)</option>
-        <option value="Berks">Berks (Reading/Topton)</option>
-        <option value="Lehigh">Lehigh (Allentown/Emmaus)</option>
-        <option value="Northampton">Northampton (Bethlehem/Easton)</option>
-        <option value="Lancaster">Lancaster (Lititz/City)</option>
-        <option value="Chester">Chester (West Chester/Kennett Sq)</option>
-        <option value="Montgomery">Montgomery (Pottstown/KOP)</option>
-        <option value="Delaware">Delaware (Media/Delco)</option>
-        <option value="Philadelphia">Philadelphia (Metro)</option>
-        <option value="Bucks">Bucks (Doylestown/Quakertown)</option>
-        <option value="Other">Other / Out of State</option>
-        
-    </select>
-</div>
+                <label style="display:block; text-align:left; font-size:11px; font-weight:700; color:#2563eb;">PA SALES TERRITORY</label>
+                <select id="swal-territory" class="swal2-input" style="margin-top:0;">
+                    <option value="General">General (Statewide)</option>
+                    <option value="Berks">Berks</option>
+                    <option value="Chester">Chester</option>
+                    <option value="Montgomery">Montgomery</option>
+                    <option value="Lancaster">Lancaster</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div id="delivery-wrap" style="display:none; margin-top: 15px; border: 1px solid #10b981; padding: 10px; border-radius: 8px; background: #ecfdf5;">
+                <label style="display:block; text-align:left; font-size:11px; font-weight:700; color:#10b981;">DELIVERY REGION</label>
+                <select id="swal-delivery-region" class="swal2-input" style="margin-top:0;">
+                    <option value="North-Route">North Route</option>
+                    <option value="South-Route">South Route</option>
+                </select>
+            </div>
 
             <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#64748b;">ACCESS LEVEL</label>
             <select id="swal-access" class="swal2-input">
@@ -587,25 +589,22 @@
                 name: document.getElementById('swal-name').value,
                 email: document.getElementById('swal-email').value,
                 role: document.getElementById('swal-role').value,
-                territory: document.getElementById('swal-territory').value, // 🟢 Fixed Comma
-                access: document.getElementById('swal-access').value        // 🟢 Fixed Comma
+                // Capture whichever value is active based on the role
+                territory: document.getElementById('swal-role').value === 'Delivery Driver' 
+                           ? document.getElementById('swal-delivery-region').value 
+                           : document.getElementById('swal-territory').value,
+                access: document.getElementById('swal-access').value
             };
         }
     });
 
     if (formValues) {
-        Swal.fire({ title: 'Creating...', didOpen: () => Swal.showLoading() });
-        
         await fetch(MASTER_API_URL, {
             method: 'POST',
-            body: JSON.stringify({ 
-                action: 'adminAddUser', 
-                data: formValues // 🟢 This object is now clean
-            })
+            body: JSON.stringify({ action: 'adminAddUser', data: formValues })
         });
-        
         loadUsers();
-        Swal.fire('Success', 'User added to database.', 'success');
+        Swal.fire('Success', 'User added.', 'success');
     }
 }
 
@@ -740,62 +739,54 @@
         } catch(e) { tbody.innerHTML = "<tr><td>Error loading logs</td></tr>"; }
     }
 async function editJobTitle(username, currentRole, currentTerritory) {
+    // Determine if we should show delivery or sales based on the role
+    const isDelivery = currentRole === 'Delivery Driver';
+    
     const { value: formValues } = await Swal.fire({
-        title: 'Update Sales Profile',
+        title: 'Update Profile',
         html: `
             <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#64748b;">JOB TITLE</label>
-            <select id="edit-role" class="swal2-input" onchange="toggleTerritory('edit-role', 'edit-territory-wrap')">
+            <select id="edit-role" class="swal2-input" onchange="toggleTerritory('edit-role', 'edit-territory-wrap', 'edit-delivery-wrap')">
                 <option value="Brewer" ${currentRole === 'Brewer' ? 'selected' : ''}>Brewer</option>
                 <option value="Sales Rep" ${currentRole === 'Sales Rep' ? 'selected' : ''}>Sales Rep</option>
-                <option value="Marketing Rep" ${currentRole === 'Marketing Rep' ? 'selected' : ''}>Marketing Rep</option>
-                <option value="Administrator" ${currentRole === 'Administrator' ? 'selected' : ''}>Administrator</option>
-                <option value="Owner" ${currentRole === 'Owner' ? 'selected' : ''}>Owner</option>
+                <Option value="Marketing Rep" ${currentRole=== 'Marketing Rep' ? 'selected' : ''}> Marketing Rep</option>
                 <option value="Delivery Driver" ${currentRole === 'Delivery Driver' ? 'selected' : ''}>Delivery Driver</option>
+                <option value="Administrator" ${currentRole === 'Administrator' ? 'selected' : ''}>Administrator</option>
             </select>
 
-            <div id="edit-territory-wrap" style="${currentRole === 'Sales Rep' ? 'display:block;' : 'display:none;'}">
-                <label style="display:block; text-align:left; margin: 10px 30px 0; font-size:11px; font-weight:700; color:#2563eb;">PA SALES TERRITORY</label>
+            <div id="edit-territory-wrap" style="${(currentRole === 'Sales Rep' || currentRole === 'General') ? 'display:block;' : 'display:none;'} margin-top: 15px; border: 1px solid #2563eb; padding: 10px; border-radius: 8px; background: #eff6ff;">
+                <label style="display:block; text-align:left; font-size:11px; font-weight:700; color:#2563eb;">PA SALES TERRITORY</label>
                 <select id="edit-territory" class="swal2-input">
-                <option value="General">General (Statewide)</option>
-                    <option value="Berks" ${currentTerritory === 'Berks' ? 'selected' : ''}>Berks (Reading/Topton)</option>
-                    <option value="Lehigh" ${currentTerritory === 'Lehigh' ? 'selected' : ''}>Lehigh (Allentown/Emmaus)</option>
-                    <option value="Northampton" ${currentTerritory === 'Northampton' ? 'selected' : ''}>Northampton (Bethlehem/Easton)</option>
-                    <option value="Lancaster" ${currentTerritory === 'Lancaster' ? 'selected' : ''}>Lancaster (Lititz/City)</option>
-                    <option value="Chester" ${currentTerritory === 'Chester' ? 'selected' : ''}>Chester (West Chester/Kennett Sq)</option>
-                    <option value="Montgomery" ${currentTerritory === 'Montgomery' ? 'selected' : ''}>Montgomery (Pottstown/KOP)</option>
-                    <option value="Delaware" ${currentTerritory === 'Delaware' ? 'selected' : ''}>Delaware (Media/Delco)</option>
-                    <option value="Philadelphia" ${currentTerritory === 'Philadelphia' ? 'selected' : ''}>Philadelphia (Metro)</option>
-                    <option value="Bucks" ${currentTerritory === 'Bucks' ? 'selected' : ''}>Bucks (Doylestown/Quakertown)</option>
+                    <option value="General" ${currentTerritory === 'General' ? 'selected' : ''}>General (Statewide)</option>
+                    <option value="Berks" ${currentTerritory === 'Berks' ? 'selected' : ''}>Berks</option>
+                    <option value="Chester" ${currentTerritory === 'Chester' ? 'selected' : ''}>Chester</option>
+                    <option value="Montgomery" ${currentTerritory === 'Montgomery' ? 'selected' : ''}>Montgomery</option>
+                </select>
+            </div>
+
+            <div id="edit-delivery-wrap" style="${isDelivery ? 'display:block;' : 'display:none;'} margin-top: 15px; border: 1px solid #10b981; padding: 10px; border-radius: 8px; background: #ecfdf5;">
+                <label style="display:block; text-align:left; font-size:11px; font-weight:700; color:#10b981;">DELIVERY REGION</label>
+                <select id="edit-delivery-region" class="swal2-input">
+                    <option value="North-Route" ${currentTerritory === 'North-Route' ? 'selected' : ''}>North Route</option>
+                    <option value="South-Route" ${currentTerritory === 'South-Route' ? 'selected' : ''}>South Route</option>
                 </select>
             </div>
         `,
         preConfirm: () => {
+            const role = document.getElementById('edit-role').value;
             return {
-                role: document.getElementById('edit-role').value,
-                territory: document.getElementById('edit-territory').value
+                role: role,
+                territory: (role === 'Delivery Driver') 
+                           ? document.getElementById('edit-delivery-region').value 
+                           : document.getElementById('edit-territory').value
             };
         }
     });
 
     if (formValues) {
-        Swal.fire({ title: 'Updating...', didOpen: () => Swal.showLoading() });
-        
-        // 🟢 Sending both Role and Territory to the backend
-        const url = `${MASTER_API_URL}?action=adminUpdateUserRole&username=${encodeURIComponent(username)}&newRole=${encodeURIComponent(formValues.role)}&territory=${encodeURIComponent(formValues.territory)}`;
-        
-        try {
-            const response = await fetch(url, { method: 'GET' });
-            const result = await response.json();
-            
-            if (result.status === "success") {
-                Swal.fire('Updated', 'Sales territory has been saved.', 'success');
-                loadUsers(); 
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (e) {
-            Swal.fire('Error', 'Could not update territory.', 'error');
-        }
+        await fetch(`${MASTER_API_URL}?action=adminUpdateUserRole&username=${encodeURIComponent(username)}&newRole=${encodeURIComponent(formValues.role)}&territory=${encodeURIComponent(formValues.territory)}`);
+        loadUsers();
+        Swal.fire('Updated', 'Profile updated successfully.', 'success');
     }
 }
 function toggleTerritory(roleId, wrapId, deliveryWrapId) {
@@ -822,6 +813,14 @@ function toggleTerritory(roleId, wrapId, deliveryWrapId) {
         document.getElementById(contentId).classList.toggle('collapsed');
         headerEl.classList.toggle('collapsed');
     }
+  function toggleSmartTerritory() {
+    const role = document.getElementById('swal-role').value;
+    const salesWrap = document.getElementById('territory-wrap');
+    const deliveryWrap = document.getElementById('delivery-wrap');
+    
+    salesWrap.style.display = (role === "Sales Rep" || role === "General") ? "block" : "none";
+    deliveryWrap.style.display = (role === "Delivery Driver") ? "block" : "none";
+}
 </script>
 </body>
 </html>
