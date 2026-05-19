@@ -658,7 +658,7 @@ function toggleAll(source) {
 async function markSelectedDelivered() {
   const driver = document.getElementById("driverName").value.trim();
   if (!driver) return Swal.fire("Missing Info", "Enter Driver Name", "warning");
-  if (selectedInvoices.length === 0) return Swal.fire("Select Invoices", "Select an invoice", "warning");
+  if (selectedInvoices.length === 0) return Swal.fire("Missing Info", "Select an invoice", "warning");
 
   const { isConfirmed } = await Swal.fire({ title: 'Confirm Delivery', icon: 'question', showCancelButton: true });
   if (!isConfirmed) return;
@@ -666,14 +666,11 @@ async function markSelectedDelivered() {
   Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
   try {
-     // REPLACE your fetch block in markSelectedDelivered() with this:
-const promises = selectedInvoices.map(invoiceNum => {
-    // Build the URL with parameters
-    const url = `${API_URL}?action=markDelivered&invoiceNumber=${encodeURIComponent(invoiceNum)}&driver=${encodeURIComponent(driver)}`;
-    
-    // GET requests never trigger the 405/pre-flight error
-    return fetch(url, { method: "GET" }).then(res => res.json());
-});
+     // 🟢 SEND AS GET QUERY STRING
+     const promises = selectedInvoices.map(invoiceNum => {
+         const url = `${API_URL}?action=markDelivered&invoiceNumber=${encodeURIComponent(invoiceNum)}&driver=${encodeURIComponent(driver)}`;
+         return fetch(url, { method: "GET" }).then(res => res.json());
+     });
 
      await Promise.all(promises);
      Swal.fire({ title: "Delivered!", icon: "success", timer: 1500 });
