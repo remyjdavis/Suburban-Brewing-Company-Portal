@@ -575,7 +575,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("driverName").addEventListener("input", (e) => {
       localStorage.setItem(DRIVER_STORAGE_KEY, e.target.value.trim());
   });
-
+document.getElementById("driverName").addEventListener("change", () => {
+    loadOpenDeliveries(); // Automatically refresh the table when driver name is entered/changed
+});
   // 4. Load Deliveries
   loadOpenDeliveries();
 });
