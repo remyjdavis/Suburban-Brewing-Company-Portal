@@ -655,44 +655,67 @@ function toggleAll(source) {
     });
 }
 /* ===== MANUAL MULTI-UPDATE ACTION ===== */
-/* ===== MANUAL MULTI-UPDATE ACTION ===== */
 async function markSelectedDelivered() {
   const driver = document.getElementById("driverName").value.trim();
-  if (!driver) return Swal.fire("Missing Info", "Enter Driver Name", "warning");
-  if (selectedInvoices.length === 0) return Swal.fire("Missing Info", "Select an invoice", "warning");
+  if (!driver) return Swal.fire("Missing Info", "Please enter Driver Name first", "warning");
+  if (selectedInvoices.length === 0) return Swal.fire("Missing Info", "Select at least one invoice to deliver", "warning");
 
+  // Confirm bulk action
   const { isConfirmed } = await Swal.fire({
-    title: "Confirm Delivery",
-    text: `Mark ${selectedInvoices.length} invoice(s) as delivered?`,
-    icon: "question",
-    showCancelButton: true
+      title: 'Confirm Delivery',
+      text: `Mark ${selectedInvoices.length} invoice(s) as delivered?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      confirmButtonText: 'Yes, mark delivered!'
   });
 
   if (!isConfirmed) return;
 
-  Swal.fire({ title: "Processing...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  // Visual Feedback
+  Swal.fire({
+     title: 'Processing...',
+     text: `Updating ${selectedInvoices.length} invoice(s)...`,
+     allowOutsideClick: false,
+     didOpen: () => Swal.showLoading()
+  });
 
   try {
-    const promises = selectedInvoices.map(invoiceNum => {
-      // 🟢 Standard POST with text/plain
-      return fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" }, 
-        body: JSON.stringify({
-          action: "markDelivered",
-          invoiceNumber: invoiceNum,
-          driver: driver
-        })
-      }).then(res => res.json());
-    });
+     const deliveredAt = new Date().toISOString();
+     
+     // 🚀 Fire off all backend requests concurrently for speed
+     const promises = selectedInvoices.map(invoiceNum => {
+         return fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "markDelivered",
+              invoiceNumber: invoiceNum,
+              driver: driver,
+              deliveredAt: deliveredAt
+            })
+         }).then(res => res.json());
+     });
 
-    await Promise.all(promises);
-    Swal.fire({ title: "Delivered!", text: `${selectedInvoices.length} invoice(s) updated.`, icon: "success", timer: 1500, showConfirmButton: false });
-    setTimeout(() => location.reload(), 1500);
+     const results = await Promise.all(promises);
+     
+     // Check if any failed
+     const failed = results.filter(r => !r.success);
+     if (failed.length > 0) {
+         throw new Error(`${failed.length} deliveries failed to update on the server.`);
+     }
 
-  } catch (err) {
-    console.error(err);
-    Swal.fire("Error", err.message || "Delivery update failed", "error");
+     Swal.fire({
+        title: "Delivered!",
+        text: `Successfully updated ${selectedInvoices.length} invoice(s).`,
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+     }).then(() => {
+        location.reload(); 
+     });
+
+  } catch(err) {
+     Swal.fire("Error", "Could not update all invoices: " + err.message, "error");
   }
 }
 /* ===== MANUAL MULTI-DELETE ACTION ===== */
@@ -721,18 +744,16 @@ async function deleteSelectedInvoices() {
   });
 
   try {
-     // Replace the fetch block inside deleteSelectedInvoices()
-const promises = selectedInvoices.map(invoiceNum => {
-    return fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-            action: "deleteInvoice", // 🟢 Fixed action
-            invoiceNumber: invoiceNum
-            // 🟢 Removed 'driver' so the app stops crashing
-        })
-    }).then(res => res.json());
-});
+     // 3. Fire off all backend requests concurrently
+     const promises = selectedInvoices.map(invoiceNum => {
+         return fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "deleteInvoice", // <-- Requires this endpoint in your Apps Script!
+              invoiceNumber: invoiceNum
+            })
+         }).then(res => res.json());
+     });
 
      const results = await Promise.all(promises);
      
@@ -758,12 +779,16 @@ const promises = selectedInvoices.map(invoiceNum => {
 }
 /* ===== CORE SINGLE DELIVERY PROCESSOR (FOR SCANNER) ===== */
 async function processDelivery(invoiceNum, driverName) {
-    Swal.fire({ title: 'Processing...', text: `Marking Invoice ${invoiceNum} as Delivered...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    Swal.fire({
+       title: 'Processing...',
+       text: `Marking Invoice ${invoiceNum} as Delivered...`,
+       allowOutsideClick: false,
+       didOpen: () => Swal.showLoading()
+    });
 
     try {
        const response = await fetch(API_URL, {
           method: "POST",
-          headers: { "Content-Type": "text/plain" }, // 🟢 Added missing header for the scanner
           body: JSON.stringify({
             action: "markDelivered",
             invoiceNumber: invoiceNum,
@@ -775,7 +800,13 @@ async function processDelivery(invoiceNum, driverName) {
        const result = await response.json();
 
        if(result.success) {
-          Swal.fire({ title: "Delivered!", text: `Invoice ${invoiceNum} updated successfully.`, icon: "success", timer: 1500, showConfirmButton: false }).then(() => {
+          Swal.fire({
+             title: "Delivered!",
+             text: `Invoice ${invoiceNum} updated successfully.`,
+             icon: "success",
+             timer: 1500,
+             showConfirmButton: false
+          }).then(() => {
              location.reload(); 
           });
        } else {
