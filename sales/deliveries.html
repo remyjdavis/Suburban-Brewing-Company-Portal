@@ -912,21 +912,20 @@ function goBack() {
   window.location.href = "new invoices.html";
 }
   async function populateDrivers() {
-    try {
-        const res = await fetch(`${API_URL}?action=getEmployees`);
-        const employees = await res.json();
-        const select = document.getElementById("driverSelect");
-        
-        employees.forEach(emp => {
-            const option = document.createElement("option");
-            // 🟢 We store the route in a data attribute
-            option.value = emp.name + " " + emp.route; 
-            option.text = emp.name + " (" + emp.route + ")";
-            select.appendChild(option);
-        });
-    } catch (err) {
-        console.error("Failed to load drivers", err);
-    }
+    const res = await fetch(`${API_URL}?action=getEmployees`);
+    const employees = await res.json();
+    
+    console.log("Employees data received:", employees); // 🟢 See exactly what the frontend got
+
+    const select = document.getElementById("driverSelect");
+    select.innerHTML = '<option value="">Select Driver...</option>'; 
+    
+    employees.forEach(emp => {
+        const option = document.createElement("option");
+        option.value = emp.name + " " + emp.territory; 
+        option.text = emp.name + " (" + emp.territory + ")";
+        select.appendChild(option);
+    });
 }
 </script>
 
