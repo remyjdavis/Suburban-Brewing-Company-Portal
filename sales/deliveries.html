@@ -685,65 +685,143 @@ async function markSelectedDelivered() {
   if (!isConfirmed) return;
 
   Swal.fire({
-    title: "Processing...",
+    title: "Processing Deliveries...",
+    html: "Sending updates to server...",
     allowOutsideClick: false,
     didOpen: () => Swal.showLoading()
   });
 
   try {
 
-    const promises = selectedInvoices.map(async (invoiceNum) => {
+    const debugResults = [];
 
-      const url =
-        `${API_URL}?action=markDelivered` +
-        `&invoiceNumber=${encodeURIComponent(invoiceNum)}` +
-        `&driver=${encodeURIComponent(driver)}`;
+    for (const invoiceNum of selectedInvoices) {
 
-      const response = await fetch(url, {
-        method: "GET",
-        redirect: "follow"
+      try {
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain"
+          },
+          body: JSON.stringify({
+            action: "markDelivered",
+            invoiceNumber: invoiceNum,
+            driver: driver,
+            deliveredAt: new Date().toISOString()
+          })
+        });
+
+        const rawText = await response.text();
+
+        console.log("========== DELIVERY DEBUG ==========");
+        console.log("Invoice:", invoiceNum);
+        console.log("HTTP Status:", response.status);
+        console.log("Raw Response:", rawText);
+
+        let parsed;
+
+        try {
+          parsed = JSON.parse(rawText);
+        } catch (jsonErr) {
+
+          throw new Error(
+            `JSON Parse Failed\n\n` +
+            `Invoice: ${invoiceNum}\n` +
+            `HTTP: ${response.status}\n\n` +
+            `Server Response:\n${rawText}`
+          );
+        }
+
+        if (!parsed.success) {
+
+          throw new Error(
+            `Server rejected invoice ${invoiceNum}\n\n` +
+            `${parsed.error || "Unknown server error"}`
+          );
+        }
+
+        debugResults.push({
+          invoice: invoiceNum,
+          success: true
+        });
+
+      } catch (invoiceErr) {
+
+        console.error(invoiceErr);
+
+        debugResults.push({
+          invoice: invoiceNum,
+          success: false,
+          error: invoiceErr.message
+        });
+      }
+    }
+
+    const failed = debugResults.filter(r => !r.success);
+
+    if (failed.length > 0) {
+
+      const errorHtml = failed.map(f => `
+        <div style="text-align:left;margin-bottom:15px;">
+          <b>Invoice ${f.invoice}</b><br>
+          <pre style="
+            white-space:pre-wrap;
+            font-size:11px;
+            background:#111;
+            color:#0f0;
+            padding:10px;
+            border-radius:6px;
+            overflow:auto;
+          ">${f.error}</pre>
+        </div>
+      `).join("");
+
+      return Swal.fire({
+        title: "Delivery Errors Detected",
+        html: `
+          <div style="max-height:400px;overflow:auto;">
+            ${errorHtml}
+          </div>
+        `,
+        width: 800,
+        icon: "error"
       });
-
-      if (!response.ok) {
-        throw new Error(
-          `HTTP Error ${response.status}`
-        );
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(
-          result.error || `Invoice ${invoiceNum} failed`
-        );
-      }
-
-      return result;
-    });
-
-    await Promise.all(promises);
+    }
 
     Swal.fire({
       title: "Delivered!",
-      text: `${selectedInvoices.length} invoice(s) updated.`,
+      text: `${selectedInvoices.length} invoice(s) updated successfully.`,
       icon: "success",
-      timer: 1500,
+      timer: 2000,
       showConfirmButton: false
     });
 
     setTimeout(() => {
       location.reload();
-    }, 1500);
+    }, 2000);
 
   } catch (err) {
 
-    console.error(err);
+    console.error("GLOBAL DELIVERY ERROR:", err);
 
-    Swal.fire(
-      "Error",
-      err.message || "Delivery update failed",
-      "error"
-    );
+    Swal.fire({
+      title: "Fatal Delivery Error",
+      html: `
+        <pre style="
+          text-align:left;
+          white-space:pre-wrap;
+          background:#111;
+          color:#0f0;
+          padding:15px;
+          border-radius:8px;
+          overflow:auto;
+          max-height:400px;
+        ">${err.message}</pre>
+      `,
+      width: 800,
+      icon: "error"
+    });
   }
 }
 /* ===== MANUAL MULTI-DELETE ACTION ===== */
