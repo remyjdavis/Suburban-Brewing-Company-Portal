@@ -589,51 +589,50 @@ document.addEventListener("DOMContentLoaded", async () => {
 /* ===== DATA LOADING ===== */
 async function loadOpenDeliveries() {
   const driverSelect = document.getElementById("driverSelect");
-  const driverName = driverSelect.value; // Gets the full "Name + Route" string
+  const driverName = driverSelect.value;
+  
+  // 1. Clear the table immediately to show "loading" state
+  const tbody = document.getElementById("deliveryBody");
+  const table = document.getElementById("deliveryTable");
+  const emptyMsg = document.getElementById("empty");
   
   if (!driverName) {
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("deliveryTable").style.display = "none";
+    table.style.display = "none";
     return;
   }
 
   try {
-    // Pass the selected driver name/route to the backend
+    // 2. Fetch the new data
     const url = `${API_URL}?action=getOpenDeliveries&driver=${encodeURIComponent(driverName)}`;
     const res = await fetch(url);
     const data = await res.json();
     
-    deliveries = data; 
-    document.getElementById("loading").style.display = "none";
+    // 3. Clear existing rows
+    tbody.innerHTML = ""; 
 
     if (!data || data.length === 0) {
-      document.getElementById("empty").style.display = "block";
-      document.getElementById("deliveryTable").style.display = "none";
+      table.style.display = "none";
+      emptyMsg.style.display = "block";
       return;
     }
 
-    document.getElementById("empty").style.display = "none";
-    const tbody = document.getElementById("deliveryBody");
-    document.getElementById("deliveryTable").style.display = "table";
-    
-    selectedInvoices = [];
-    document.getElementById('selectAll').checked = false;
+    // 4. Populate with new data
+    emptyMsg.style.display = "none";
+    table.style.display = "table";
     
     tbody.innerHTML = data.map(inv => `
       <tr data-invoice="${inv.invoiceNumber}" onclick="toggleRowSelection('${inv.invoiceNumber}')" style="cursor:pointer;">
-        <td data-label="Select" style="text-align: center;">
-            <input type="checkbox" class="row-checkbox" value="${inv.invoiceNumber}" onclick="event.stopPropagation(); toggleRowSelection('${inv.invoiceNumber}')" style="min-width:auto; cursor:pointer;">
-        </td>
-        <td data-label="Invoice #">${inv.invoiceNumber}</td>
-        <td data-label="Date">${new Date(inv.date).toLocaleDateString()}</td>
-        <td data-label="Customer">${inv.customer}</td>
-        <td data-label="Total">$${Number(inv.total).toFixed(2)}</td>
-        <td data-label="Status" class="status">${inv.status}</td>
+        <td><input type="checkbox" class="row-checkbox" value="${inv.invoiceNumber}"></td>
+        <td>${inv.invoiceNumber}</td>
+        <td>${new Date(inv.date).toLocaleDateString()}</td>
+        <td>${inv.customer}</td>
+        <td>$${Number(inv.total).toFixed(2)}</td>
+        <td class="status">${inv.status}</td>
       </tr>
     `).join('');
+    
   } catch (err) {
-    console.error(err);
-    document.getElementById("loading").textContent = "Error loading data.";
+    console.error("Load failed:", err);
   }
 }
 
