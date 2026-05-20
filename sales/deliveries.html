@@ -582,21 +582,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ===== DATA LOADING ===== */
 async function loadOpenDeliveries() {
+  // 🟢 Grab the driver name from the input field
+  const driverName = document.getElementById("driverName").value.trim();
+  
   try {
-    const res = await fetch(`${API_URL}?action=getOpenDeliveries`);
+    // 🟢 Send the driver name in the URL string
+    const url = `${API_URL}?action=getOpenDeliveries&driver=${encodeURIComponent(driverName)}`;
+    const res = await fetch(url);
     const data = await res.json();
-    deliveries = data; // Store globally for lookups
+    
+    deliveries = data; 
     document.getElementById("loading").style.display = "none";
 
-    if (!data.length) {
+    if (!data || data.length === 0) {
       document.getElementById("empty").style.display = "block";
+      document.getElementById("deliveryTable").style.display = "none";
       return;
     }
 
+    document.getElementById("empty").style.display = "none";
     const tbody = document.getElementById("deliveryBody");
     document.getElementById("deliveryTable").style.display = "table";
     
-    // Reset selections on reload
     selectedInvoices = [];
     document.getElementById('selectAll').checked = false;
     
