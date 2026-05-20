@@ -546,43 +546,44 @@ function toggleMobileMenu() {
 }
 
 /* ===== INITIALIZE ===== */
-document.addEventListener("DOMContentLoaded", () => {
-  populateDrivers();
- // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
+document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Kickstart Global Portal UI
     if (typeof setupUserProfile === 'function') setupUserProfile();
     if (typeof checkUnreadCount === 'function') checkUnreadCount();
 
     // 2. Set Footer Year
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
-  // 1. Sidebar Logic
-  const activeLink = document.querySelector('.nav-link.active');
-  if (activeLink) {
-    const parentGroup = activeLink.closest('.collapsible-content');
-    if (parentGroup) {
-      parentGroup.classList.remove('collapsed');
-      const header = parentGroup.previousElementSibling;
-      if (header) header.classList.remove('collapsed');
+    // 3. Populate Driver List
+    await populateDrivers();
+
+    // 4. Sidebar Logic
+    const activeLink = document.querySelector('.nav-link.active');
+    if (activeLink) {
+        const parentGroup = activeLink.closest('.collapsible-content');
+        if (parentGroup) {
+            parentGroup.classList.remove('collapsed');
+            const header = parentGroup.previousElementSibling;
+            if (header) header.classList.remove('collapsed');
+        }
     }
-  }
 
-  // 2. AUTO-POPULATE DRIVER NAME
-  // Check if phone remembers the driver
-  const savedDriver = localStorage.getItem(DRIVER_STORAGE_KEY);
-  if (savedDriver) {
-      document.getElementById("driverName").value = savedDriver;
-  }
+    // 5. AUTO-POPULATE DRIVER SELECT (Referencing the new ID)
+    const savedDriver = localStorage.getItem(DRIVER_STORAGE_KEY);
+    const select = document.getElementById("driverSelect");
+    
+    if (savedDriver && select) {
+        select.value = savedDriver;
+    }
 
-  // 3. LISTEN FOR NAME CHANGES
-  // If they change the name, remember the new one
-  document.getElementById("driverName").addEventListener("input", (e) => {
-      localStorage.setItem(DRIVER_STORAGE_KEY, e.target.value.trim());
-  });
-document.getElementById("driverName").addEventListener("change", () => {
-    loadOpenDeliveries(); // Automatically refresh the table when driver name is entered/changed
-});
-  // 4. Load Deliveries
-  loadOpenDeliveries();
+    // 6. LISTEN FOR SELECTION CHANGES
+    select.addEventListener("change", (e) => {
+        localStorage.setItem(DRIVER_STORAGE_KEY, e.target.value.trim());
+        loadOpenDeliveries(); // Automatically refresh when selection changes
+    });
+
+    // 7. Load Deliveries
+    loadOpenDeliveries();
 });
 
 /* ===== DATA LOADING ===== */
