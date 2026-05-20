@@ -593,8 +593,10 @@ async function loadOpenDeliveries() {
   }
 
   try {
-    // 2. Fetch the new data
-    const url = `${API_URL}?action=getOpenDeliveries&driver=${encodeURIComponent(driverName)}`;
+    // 2. Fetch the new data with a cache-buster timestamp
+    const timestamp = new Date().getTime(); // 🟢 Current time in milliseconds
+    const url = `${API_URL}?action=getOpenDeliveries&driver=${encodeURIComponent(driverName)}&t=${timestamp}`;
+    
     const res = await fetch(url);
     const data = await res.json();
     
