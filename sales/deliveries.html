@@ -446,7 +446,9 @@
         <h2>Delivery Scan</h2>
 
         <div class="action-bar">
-          <input id="driverName" placeholder="Driver Name (required)" />
+          <select id="driverSelect" onchange="loadOpenDeliveries()">
+    <option value="">Select Driver...</option>
+</select>
           <button class="btn btn-primary" onclick="startScanner()">Scan Barcode</button>
           <button class="btn btn-secondary" onclick="goBack()">← Back to Invoices</button>
         </div>
@@ -545,6 +547,7 @@ function toggleMobileMenu() {
 
 /* ===== INITIALIZE ===== */
 document.addEventListener("DOMContentLoaded", () => {
+  populateDrivers();
  // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
     if (typeof setupUserProfile === 'function') setupUserProfile();
     if (typeof checkUnreadCount === 'function') checkUnreadCount();
@@ -584,11 +587,17 @@ document.getElementById("driverName").addEventListener("change", () => {
 
 /* ===== DATA LOADING ===== */
 async function loadOpenDeliveries() {
-  // 🟢 Grab the driver name from the input field
-  const driverName = document.getElementById("driverName").value.trim();
+  const driverSelect = document.getElementById("driverSelect");
+  const driverName = driverSelect.value; // Gets the full "Name + Route" string
   
+  if (!driverName) {
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("deliveryTable").style.display = "none";
+    return;
+  }
+
   try {
-    // 🟢 Send the driver name in the URL string
+    // Pass the selected driver name/route to the backend
     const url = `${API_URL}?action=getOpenDeliveries&driver=${encodeURIComponent(driverName)}`;
     const res = await fetch(url);
     const data = await res.json();
@@ -900,6 +909,23 @@ async function printManifest() {
 /* ===== NAVIGATION ===== */
 function goBack() {
   window.location.href = "new invoices.html";
+}
+  async function populateDrivers() {
+    try {
+        const res = await fetch(`${API_URL}?action=getEmployees`);
+        const employees = await res.json();
+        const select = document.getElementById("driverSelect");
+        
+        employees.forEach(emp => {
+            const option = document.createElement("option");
+            // 🟢 We store the route in a data attribute
+            option.value = emp.name + " " + emp.route; 
+            option.text = emp.name + " (" + emp.route + ")";
+            select.appendChild(option);
+        });
+    } catch (err) {
+        console.error("Failed to load drivers", err);
+    }
 }
 </script>
 
