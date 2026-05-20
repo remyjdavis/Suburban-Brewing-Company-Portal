@@ -446,9 +446,9 @@
         <h2>Delivery Scan</h2>
 
         <div class="action-bar">
-          <select id="driverSelect" onchange="loadOpenDeliveries()">
+          <select id="driverSelect">
     <option value="">Select Driver...</option>
-</select>
+    </select>
           <button class="btn btn-primary" onclick="startScanner()">Scan Barcode</button>
           <button class="btn btn-secondary" onclick="goBack()">← Back to Invoices</button>
         </div>
@@ -545,45 +545,34 @@ function toggleMobileMenu() {
     btn.innerText = isOpen ? '✕' : '☰';
 }
 
-/* ===== INITIALIZE ===== */
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Kickstart Global Portal UI
+    // 1. Kickstart UI
     if (typeof setupUserProfile === 'function') setupUserProfile();
     if (typeof checkUnreadCount === 'function') checkUnreadCount();
-
-    // 2. Set Footer Year
     document.getElementById('copyright-year').innerText = new Date().getFullYear();
 
-    // 3. Populate Driver List
+    // 2. Populate Driver List
     await populateDrivers();
 
-    // 4. Sidebar Logic
-    const activeLink = document.querySelector('.nav-link.active');
-    if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-            parentGroup.classList.remove('collapsed');
-            const header = parentGroup.previousElementSibling;
-            if (header) header.classList.remove('collapsed');
-        }
-    }
-
-    // 5. AUTO-POPULATE DRIVER SELECT (Referencing the new ID)
-    const savedDriver = localStorage.getItem(DRIVER_STORAGE_KEY);
+    // 3. Setup Logic
     const select = document.getElementById("driverSelect");
+    const savedDriver = localStorage.getItem(DRIVER_STORAGE_KEY);
     
-    if (savedDriver && select) {
-        select.value = savedDriver;
+    if (select) {
+        // Set value if saved
+        if (savedDriver) {
+            select.value = savedDriver;
+        }
+
+        // 4. Attach Listener
+        select.addEventListener("change", (e) => {
+            localStorage.setItem(DRIVER_STORAGE_KEY, e.target.value.trim());
+            loadOpenDeliveries();
+        });
+
+        // 5. Load ONLY AFTER everything is set up
+        loadOpenDeliveries();
     }
-
-    // 6. LISTEN FOR SELECTION CHANGES
-    select.addEventListener("change", (e) => {
-        localStorage.setItem(DRIVER_STORAGE_KEY, e.target.value.trim());
-        loadOpenDeliveries(); // Automatically refresh when selection changes
-    });
-
-    // 7. Load Deliveries
-    loadOpenDeliveries();
 });
 
 /* ===== DATA LOADING ===== */
