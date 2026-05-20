@@ -656,14 +656,23 @@ function toggleAll(source) {
 }
 /* ===== MANUAL MULTI-UPDATE ACTION ===== */
 async function markSelectedDelivered() {
+
   const driver = document.getElementById("driverName").value.trim();
 
   if (!driver) {
-    return Swal.fire("Missing Info", "Enter Driver Name", "warning");
+    return Swal.fire(
+      "Missing Info",
+      "Enter Driver Name",
+      "warning"
+    );
   }
 
   if (selectedInvoices.length === 0) {
-    return Swal.fire("Missing Info", "Select an invoice", "warning");
+    return Swal.fire(
+      "Missing Info",
+      "Select an invoice",
+      "warning"
+    );
   }
 
   const { isConfirmed } = await Swal.fire({
@@ -683,37 +692,36 @@ async function markSelectedDelivered() {
 
   try {
 
-    const promises = selectedInvoices.map(invoiceNum => {
+    const promises = selectedInvoices.map(async (invoiceNum) => {
 
       const url =
         `${API_URL}?action=markDelivered` +
         `&invoiceNumber=${encodeURIComponent(invoiceNum)}` +
         `&driver=${encodeURIComponent(driver)}`;
 
-      return fetch(url, {
+      const response = await fetch(url, {
         method: "GET",
-        mode: "cors",
         redirect: "follow"
-      })
-      .then(async res => {
-        const text = await res.text();
-
-        try {
-          return JSON.parse(text);
-        } catch {
-          throw new Error(`Invalid JSON response for invoice ${invoiceNum}`);
-        }
       });
 
+      if (!response.ok) {
+        throw new Error(
+          `HTTP Error ${response.status}`
+        );
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(
+          result.error || `Invoice ${invoiceNum} failed`
+        );
+      }
+
+      return result;
     });
 
-    const results = await Promise.all(promises);
-
-    const failed = results.filter(r => !r.success);
-
-    if (failed.length > 0) {
-      throw new Error(`${failed.length} invoices failed`);
-    }
+    await Promise.all(promises);
 
     Swal.fire({
       title: "Delivered!",
@@ -723,7 +731,9 @@ async function markSelectedDelivered() {
       showConfirmButton: false
     });
 
-    setTimeout(() => location.reload(), 1500);
+    setTimeout(() => {
+      location.reload();
+    }, 1500);
 
   } catch (err) {
 
