@@ -527,47 +527,7 @@
     }
 
     // --- 🟢 NEW: ICS CALENDAR GENERATOR FUNCTION ---
-    function generateCalendarInvite(customer, dateStr, timeStr, notes) {
-        try {
-            // Parse the date and time provided
-            const startDt = new Date(`${dateStr}T${timeStr}`);
-            // Let's assume a sampling event is 2 hours long
-            const endDt = new Date(startDt.getTime() + (2 * 60 * 60 * 1000));
-
-            // Format to standard YYYYMMDDTHHMMSSZ (UTC)
-            const formatICSDate = (dt) => {
-                return dt.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-            };
-
-            const startICS = formatICSDate(startDt);
-            const endICS = formatICSDate(endDt);
-
-            // Structure the .ics file data
-            const icsData = `BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-URL:https://remyjdavis.github.io/Suburban-Brewing-Company-Portal/
-DTSTART:${startICS}
-DTEND:${endICS}
-SUMMARY:Sampling at ${customer}
-DESCRIPTION:${notes ? notes + '\\n\\n' : ''}Suburban Brewing Co. Sampling Event.
-LOCATION:${customer}
-END:VEVENT
-END:VCALENDAR`;
-
-            // Create a temporary link to download the file
-            const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            // Replace spaces with underscores for a clean filename
-            link.setAttribute('download', `Sampling_${customer.replace(/[^a-z0-9]/gi, '_')}.ics`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (e) {
-            console.error("Calendar Invite Error:", e);
-        }
-    }
+    
 
     async function submitSchedule() {
       const btn = document.getElementById('submitBtn');
@@ -586,22 +546,30 @@ END:VCALENDAR`;
       btn.innerText = "Syncing with Database...";
 
       const payload = { customer, date, time, items: selectedItems.join(', '), notes };
+      
+      // 🟢 GET THE LOGGED-IN USER
+      const activeUser = sessionStorage.getItem("user_login_id");
 
       try {
-        const params = new URLSearchParams({ action: "saveSamplingEvent", data: JSON.stringify(payload) });
-        // ⚠️ ADDED REDIRECT FOLLOW HERE TOO
+        // 🟢 ADD 'user' TO THE URL PARAMETERS
+        const params = new URLSearchParams({ 
+            action: "saveSamplingEvent", 
+            user: activeUser, 
+            data: JSON.stringify(payload) 
+        });
+        
+        // ⚠️ Consider using MASTER_API_URL here if it is defined in portal.js
         const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
         const result = await response.json();
 
         if (result.success) {
           
-          // 🟢 TRIGGER CALENDAR DOWNLOAD HERE
-          generateCalendarInvite(customer, date, time, notes);
+          // 🔴 REMOVED generateCalendarInvite() to prevent duplicate calendar events.
+          // The backend now handles adding it to their linked Google Calendar automatically.
 
-          // Give the download a second to trigger, and show a nice popup instead of an alert
           Swal.fire({
               title: 'Scheduled!',
-              text: 'The sampling has been saved and your calendar invite is ready.',
+              text: 'The sampling has been saved to your Google Calendar.',
               icon: 'success',
               timer: 2500,
               showConfirmButton: false
