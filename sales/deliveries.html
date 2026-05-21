@@ -665,9 +665,11 @@ function toggleAll(source) {
 }
 /* ===== MANUAL MULTI-UPDATE ACTION ===== */
 async function markSelectedDelivered() {
-  const driver = document.getElementById("driverName").value.trim();
-  if (!driver) return Swal.fire("Missing Info", "Enter Driver Name", "warning");
-  if (selectedInvoices.length === 0) return Swal.fire("Missing Info", "Select an invoice", "warning");
+  // 🟢 Fixed: Changed "driverName" to "driverSelect"
+  const driverSelect = document.getElementById("driverSelect");
+  const driver = driverSelect ? driverSelect.value.trim() : "";
+  
+  if (!driver) return Swal.fire("Missing Info", "Please select a driver first", "warning");
 
   const { isConfirmed } = await Swal.fire({ title: "Confirm", icon: "question", showCancelButton: true });
   if (!isConfirmed) return;
