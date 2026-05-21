@@ -1475,8 +1475,8 @@ forceHeaderUpdate(); // Run it immediately on load
             }, 500); // <--- CLOSE SET-TIMEOUT
         }
     });
-    /* ===== SELECT CUSTOMERS FUNCTION ===== */
-   function selectCustomer(c) {
+   /* ===== SELECT CUSTOMERS FUNCTION ===== */
+function selectCustomer(c) {
     selectedCustomer = c;
     selectedCustomer.name = c.name; // <--- ADD THIS LINE to ensure the email payload has the name
 
@@ -1484,37 +1484,38 @@ forceHeaderUpdate(); // Run it immediately on load
 
     // 🟢 ADDED: TERRITORY DETECTION LOGIC
     const detectTerritory = (addr) => {
-    if (!addr) return "General";
-    const a = addr.toLowerCase();
+        if (!addr) return "General";
+        const a = addr.toLowerCase();
 
-    // 🟢 CHESTER COUNTY (Add your home turf towns)
-    if (a.includes("chester") || a.includes("west chester") || a.includes("kennett") || 
-        a.includes("honey brook") || a.includes("downingtown") || a.includes("exton") || 
-        a.includes("paoli") || a.includes("phoenixville")) return "Chester";
+        // 🟢 CHESTER COUNTY
+        if (a.includes("chester") || a.includes("west chester") || a.includes("kennett") || 
+            a.includes("honey brook") || a.includes("downingtown") || a.includes("exton") || 
+            a.includes("paoli") || a.includes("phoenixville")) return "Chester";
 
-    // 🟢 BERKS COUNTY
-    if (a.includes("berks") || a.includes("reading") || a.includes("wyomissing") || 
-        a.includes("kutztown") || a.includes("boyertown") || a.includes("topton")) return "Berks";
+        // 🟢 BERKS COUNTY
+        if (a.includes("berks") || a.includes("reading") || a.includes("wyomissing") || 
+            a.includes("kutztown") || a.includes("boyertown") || a.includes("topton")) return "Berks";
 
-    // 🟢 LANCASTER COUNTY
-    if (a.includes("lancaster") || a.includes("lititz") || a.includes("ephrata") || 
-        a.includes("gap") || a.includes("elizabeth")) return "Lancaster";
+        // 🟢 LANCASTER COUNTY
+        if (a.includes("lancaster") || a.includes("lititz") || a.includes("ephrata") || 
+            a.includes("gap") || a.includes("elizabeth")) return "Lancaster";
 
-    // 🟢 MONTGOMERY COUNTY
-    if (a.includes("montgomery") || a.includes("pottstown") || a.includes("kop") || 
-        a.includes("king of prussia") || a.includes("norristown") || a.includes("lansdale")) return "Montgomery";
+        // 🟢 MONTGOMERY COUNTY
+        if (a.includes("montgomery") || a.includes("pottstown") || a.includes("kop") || 
+            a.includes("king of prussia") || a.includes("norristown") || a.includes("lansdale")) return "Montgomery";
 
-    // 🟢 DELCO
-    if (a.includes("delaware county") || a.includes("media") || a.includes("havertown") || 
-        a.includes("upper darby")) return "Delaware";
+        // 🟢 DELCO
+        if (a.includes("delaware county") || a.includes("media") || a.includes("havertown") || 
+            a.includes("upper darby")) return "Delaware";
 
-    // 🟢 PHILLY
-    if (a.includes("philadelphia") || a.includes("philly") || a.includes("manayunk")) return "Philadelphia";
+        // 🟢 PHILLY
+        if (a.includes("philadelphia") || a.includes("philly") || a.includes("manayunk")) return "Philadelphia";
 
-    return "General";
-};
+        return "General";
+    };
+
     const customerTerritory = detectTerritory(c.address);
-     console.log("System detected territory: " + customerTerritory + " from address: " + c.address);
+    console.log("System detected territory: " + customerTerritory + " from address: " + c.address);
 
     // --- 🟢 FUZZY REP SEARCH ---
     let rep = employees.find(e => {
@@ -1523,9 +1524,10 @@ forceHeaderUpdate(); // Run it immediately on load
         
         return sheetTerritory !== "" && sheetTerritory === detectedTerritory;
     });
-    // Fallback to Eric if no new rep is found
+
+    // 🟢 THE FIX: Fallback to the General Sales Rep instead of Eric
     if (!rep) {
-        rep = employees.find(e => e.name && e.name.toLowerCase().includes("eric"));
+        rep = employees.find(e => e.role && e.role.toLowerCase().includes("sales rep"));
     }
 
     // 3. Fallback if everything fails
@@ -1535,16 +1537,15 @@ forceHeaderUpdate(); // Run it immediately on load
             role: "Owner", 
             phone: "(484) 354-0400", 
             email: "eric@suburbanbg.com",
-            territory: "Main Office" // 🟢 Added for payload consistency
+            territory: "Main Office" 
         };
     }
 
-    // 🟢 ADDED: Update UI with the found Rep (whether by territory or fallback)
+    // 🟢 ADDED: Update UI with the found Rep
     document.getElementById("ui-rep-role").textContent = rep.role || "Sales Rep";
     document.getElementById("ui-rep-name").textContent = rep.name;
     document.getElementById("ui-rep-phone").textContent = rep.phone;
     document.getElementById("ui-rep-email").textContent = rep.email;
-    // Store territory in dataset for the buildInvoicePayload function
     document.getElementById("ui-rep-name").dataset.territory = rep.territory || customerTerritory;
 
     // --------------------------------------------------------------
@@ -1600,8 +1601,7 @@ forceHeaderUpdate(); // Run it immediately on load
         return true;
     });
 
-    document.getElementById("customer-address").innerHTML =
-        cleanLines.join("<br>");
+    document.getElementById("customer-address").innerHTML = cleanLines.join("<br>");
         
     // Toggle sales tax visibility
     const taxRow = document.getElementById("tax-row");
