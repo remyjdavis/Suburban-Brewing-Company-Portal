@@ -408,16 +408,10 @@
     <div class="commission-header">
       <div style="text-transform: uppercase; font-size: 11px; letter-spacing: 2px; opacity: 0.8;">Month-to-Date Commission</div>
       <div id="commissionValue" class="sales-val">$0.00</div>
-      <div id="currentRate" style="font-size: 18px; font-weight: 700; color: var(--success);">Current Rate: 9%</div>
+      <div id="currentRate" style="font-size: 18px; font-weight: 700; color: var(--success);">Commission Rate: 5%</div>
       
-      <div class="tier-container">
-        <div class="progress-track">
-          <div id="progressFill" class="progress-fill"></div>
-        </div>
-        <div class="tier-labels">
-          <span id="currentTierLabel">Tier: 9%</span>
-          <span id="nextTierLabel">Goal: $100,000 (10%)</span>
-        </div>
+      <div class="tier-container" style="max-width: 620px;">
+        <div style="font-size: 13px; opacity: 0.85;">Flat 5% rate on commissionable net beer sales. No tier or monthly goal calculation.</div>
       </div>
     </div>
 
@@ -572,11 +566,7 @@
 
         document.getElementById('grossSales').innerText = formatMoney(data.totalSales);
         document.getElementById('commissionValue').innerText = formatMoney(data.commission);
-        document.getElementById('currentRate').innerText = `Current Rate: ${data.rate}`;
-        
-        const currentSales = Number(data.totalSales) || 0;
-        const progressPercent = ((currentSales % 100000) / 100000) * 100;
-        document.getElementById('progressFill').style.width = progressPercent + '%';
+        document.getElementById('currentRate').innerText = `Commission Rate: ${data.rate}`;
 
         const list = document.getElementById('invoiceList');
         const invoices = Array.isArray(data.invoices) ? data.invoices : [];
@@ -675,7 +665,7 @@
 
     function generateCommissionPDF() {
       const comm = document.getElementById('commissionValue').innerText;
-      const rate = document.getElementById('currentRate').innerText;
+      const rate = document.getElementById('currentRate').innerText.replace('Commission Rate:', '').trim();
       const sales = document.getElementById('grossSales').innerText;
       const note = document.getElementById('reportFilterNote').innerText;
       
