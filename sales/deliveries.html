@@ -419,6 +419,35 @@
   justify-content: flex-end;
   margin-top: 18px;
 }
+    .delivery-terms-box {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #7c2d12;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 14px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.delivery-terms-box p {
+  margin: 6px 0 10px;
+}
+
+.terms-check-row {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  margin: 0 !important;
+  font-weight: 700;
+  color: #111827;
+}
+
+.terms-check-row input {
+  width: auto !important;
+  min-width: auto !important;
+  flex: 0 0 auto;
+}
   </style>
 </head>
 <body>
@@ -602,10 +631,23 @@
     </div>
 
     <label for="recipientNameInput">Recipient Name</label>
-    <input id="recipientNameInput" type="text" placeholder="Who received the order?">
+<input id="recipientNameInput" type="text" placeholder="Who received the order?">
 
-    <div class="signature-section">
-      <label>Driver Signature</label>
+<div class="delivery-terms-box">
+  <strong>Delivery Acceptance Terms</strong>
+  <p>
+    By signing below, you confirm that you accept this delivery as-is.
+    There will be no returns. Exchanges only may be approved by Suburban Brewing Company.
+  </p>
+
+  <label class="terms-check-row">
+    <input id="deliveryTermsAccepted" type="checkbox">
+    <span>I have read and accept these delivery terms.</span>
+  </label>
+</div>
+
+<div class="signature-section">
+  <label>Driver Signature</label>
       <canvas id="driverSignatureCanvas" width="600" height="200"></canvas>
       <button type="button" class="btn btn-secondary" onclick="clearSignatureCanvas('driver')">
         Clear Driver Signature
@@ -663,6 +705,7 @@ function openDeliverySignatureModal(invoiceNumber, driverName) {
   document.getElementById("sigInvoiceNumber").value = invoiceNumber;
   document.getElementById("sigInvoiceLabel").innerText = invoiceNumber;
   document.getElementById("recipientNameInput").value = "";
+document.getElementById("deliveryTermsAccepted").checked = false;
 
   document.getElementById("deliverySignatureModal").classList.remove("hidden");
 
@@ -758,6 +801,7 @@ function clearSignatureCanvas(which) {
 async function submitDeliveryWithSignatures() {
   const invoiceNumber = document.getElementById("sigInvoiceNumber").value;
   const recipientName = document.getElementById("recipientNameInput").value.trim();
+  const deliveryTermsAccepted = document.getElementById("deliveryTermsAccepted").checked;
 
   const driverCanvas = document.getElementById("driverSignatureCanvas");
   const recipientCanvas = document.getElementById("recipientSignatureCanvas");
@@ -774,7 +818,14 @@ async function submitDeliveryWithSignatures() {
     Swal.fire("Missing Recipient", "Recipient name is required.", "warning");
     return;
   }
-
+if (!deliveryTermsAccepted) {
+  Swal.fire(
+    "Terms Required",
+    "The recipient must accept the delivery terms before signing.",
+    "warning"
+  );
+  return;
+}
   if (!deliverySignatureState.driverSigned) {
     Swal.fire("Missing Signature", "Driver signature is required.", "warning");
     return;
@@ -784,17 +835,17 @@ async function submitDeliveryWithSignatures() {
     Swal.fire("Missing Signature", "Recipient signature is required.", "warning");
     return;
   }
-
-  const payload = {
-    action: "markDelivered",
-    invoiceNumber: invoiceNumber,
-    driver: driver,
-    recipientName: recipientName,
-    driverSignatureDataUrl: driverCanvas.toDataURL("image/png"),
-    recipientSignatureDataUrl: recipientCanvas.toDataURL("image/png"),
-    deliveredAt: new Date().toISOString()
-  };
-
+const payload = {
+  action: "markDelivered",
+  invoiceNumber: invoiceNumber,
+  driver: driver,
+  recipientName: recipientName,
+  deliveryTermsAccepted: deliveryTermsAccepted,
+  deliveryTermsText: "By signing below, you confirm that you accept this delivery as-is. There will be no returns. Exchanges only may be approved by Suburban Brewing Company.",
+  driverSignatureDataUrl: driverCanvas.toDataURL("image/png"),
+  recipientSignatureDataUrl: recipientCanvas.toDataURL("image/png"),
+  deliveredAt: new Date().toISOString()
+};
   submitBtn.disabled = true;
   submitBtn.textContent = "Saving...";
 
