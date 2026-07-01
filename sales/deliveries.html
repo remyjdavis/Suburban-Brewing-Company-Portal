@@ -345,6 +345,80 @@
         transition: background 0.2s;
     }
     .user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
+    /* ===== DELIVERY SIGNATURE MODAL ===== */
+.signature-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.signature-modal.hidden {
+  display: none;
+}
+
+.signature-card {
+  background: #ffffff;
+  width: min(720px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+
+.signature-card h2 {
+  margin-top: 0;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.signature-invoice-label {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.signature-card label {
+  display: block;
+  font-weight: 700;
+  margin: 14px 0 6px;
+}
+
+.signature-card input {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.signature-section canvas {
+  width: 100%;
+  height: 150px;
+  border: 2px solid #111827;
+  border-radius: 8px;
+  background: #ffffff;
+  touch-action: none;
+  display: block;
+}
+
+.signature-section button {
+  margin-top: 8px;
+}
+
+.signature-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
   </style>
 </head>
 <body>
@@ -517,7 +591,46 @@
         </div>
     </footer>
   </div>
+<div id="deliverySignatureModal" class="signature-modal hidden">
+  <div class="signature-card">
+    <h2>Complete Delivery</h2>
 
+    <input type="hidden" id="sigInvoiceNumber">
+
+    <div class="signature-invoice-label">
+      Invoice #: <strong id="sigInvoiceLabel"></strong>
+    </div>
+
+    <label for="recipientNameInput">Recipient Name</label>
+    <input id="recipientNameInput" type="text" placeholder="Who received the order?">
+
+    <div class="signature-section">
+      <label>Driver Signature</label>
+      <canvas id="driverSignatureCanvas" width="600" height="200"></canvas>
+      <button type="button" class="btn btn-secondary" onclick="clearSignatureCanvas('driver')">
+        Clear Driver Signature
+      </button>
+    </div>
+
+    <div class="signature-section">
+      <label>Recipient Signature</label>
+      <canvas id="recipientSignatureCanvas" width="600" height="200"></canvas>
+      <button type="button" class="btn btn-secondary" onclick="clearSignatureCanvas('recipient')">
+        Clear Recipient Signature
+      </button>
+    </div>
+
+    <div class="signature-actions">
+      <button type="button" class="btn btn-secondary" onclick="closeDeliverySignatureModal()">
+        Cancel
+      </button>
+
+      <button id="submitDeliverySignatureBtn" type="button" class="btn btn-primary" onclick="submitDeliveryWithSignatures()">
+        Mark Delivered
+      </button>
+    </div>
+  </div>
+</div>
 <script src="https://unpkg.com/@ericblade/quagga2/dist/quagga.min.js"></script>
 
 <script>
@@ -527,7 +640,202 @@ const DRIVER_STORAGE_KEY = "sbc_driver_name"; // Key to remember the driver
 
 let deliveries = [];
 let selectedInvoices = [];
+let deliverySignatureState = {
+  invoiceNumber: "",
+  driver: "",
+  driverSigned: false,
+  recipientSigned: false
+};
 
+function getCurrentDriverName_() {
+  const driverSelect = document.getElementById("driverSelect");
+  return driverSelect && driverSelect.value
+    ? driverSelect.value.trim()
+    : localStorage.getItem(DRIVER_STORAGE_KEY) || "";
+}
+
+function openDeliverySignatureModal(invoiceNumber, driverName) {
+  deliverySignatureState.invoiceNumber = invoiceNumber;
+  deliverySignatureState.driver = driverName || getCurrentDriverName_();
+  deliverySignatureState.driverSigned = false;
+  deliverySignatureState.recipientSigned = false;
+
+  document.getElementById("sigInvoiceNumber").value = invoiceNumber;
+  document.getElementById("sigInvoiceLabel").innerText = invoiceNumber;
+  document.getElementById("recipientNameInput").value = "";
+
+  document.getElementById("deliverySignatureModal").classList.remove("hidden");
+
+  setupSignatureCanvas_("driverSignatureCanvas", "driver");
+  setupSignatureCanvas_("recipientSignatureCanvas", "recipient");
+
+  clearSignatureCanvas("driver");
+  clearSignatureCanvas("recipient");
+}
+
+function closeDeliverySignatureModal() {
+  document.getElementById("deliverySignatureModal").classList.add("hidden");
+}
+
+function setupSignatureCanvas_(canvasId, which) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext("2d");
+
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "#111827";
+
+  if (canvas.dataset.signatureBound === "true") return;
+  canvas.dataset.signatureBound = "true";
+
+  let drawing = false;
+
+  function getPoint(e) {
+    const rect = canvas.getBoundingClientRect();
+
+    return {
+      x: (e.clientX - rect.left) * (canvas.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
+
+  function startDrawing(e) {
+    e.preventDefault();
+    drawing = true;
+
+    const point = getPoint(e);
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+  }
+
+  function draw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+
+    const point = getPoint(e);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+
+    if (which === "driver") deliverySignatureState.driverSigned = true;
+    if (which === "recipient") deliverySignatureState.recipientSigned = true;
+  }
+
+  function stopDrawing(e) {
+    if (e) e.preventDefault();
+    drawing = false;
+  }
+
+  canvas.addEventListener("pointerdown", startDrawing);
+  canvas.addEventListener("pointermove", draw);
+  canvas.addEventListener("pointerup", stopDrawing);
+  canvas.addEventListener("pointerleave", stopDrawing);
+  canvas.addEventListener("pointercancel", stopDrawing);
+}
+
+function clearSignatureCanvas(which) {
+  const canvasId = which === "driver"
+    ? "driverSignatureCanvas"
+    : "recipientSignatureCanvas";
+
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "#111827";
+
+  if (which === "driver") deliverySignatureState.driverSigned = false;
+  if (which === "recipient") deliverySignatureState.recipientSigned = false;
+}
+
+async function submitDeliveryWithSignatures() {
+  const invoiceNumber = document.getElementById("sigInvoiceNumber").value;
+  const recipientName = document.getElementById("recipientNameInput").value.trim();
+
+  const driverCanvas = document.getElementById("driverSignatureCanvas");
+  const recipientCanvas = document.getElementById("recipientSignatureCanvas");
+  const submitBtn = document.getElementById("submitDeliverySignatureBtn");
+
+  const driver = deliverySignatureState.driver || getCurrentDriverName_();
+
+  if (!driver) {
+    Swal.fire("Missing Driver", "Please select a driver first.", "warning");
+    return;
+  }
+
+  if (!recipientName) {
+    Swal.fire("Missing Recipient", "Recipient name is required.", "warning");
+    return;
+  }
+
+  if (!deliverySignatureState.driverSigned) {
+    Swal.fire("Missing Signature", "Driver signature is required.", "warning");
+    return;
+  }
+
+  if (!deliverySignatureState.recipientSigned) {
+    Swal.fire("Missing Signature", "Recipient signature is required.", "warning");
+    return;
+  }
+
+  const payload = {
+    action: "markDelivered",
+    invoiceNumber: invoiceNumber,
+    driver: driver,
+    recipientName: recipientName,
+    driverSignatureDataUrl: driverCanvas.toDataURL("image/png"),
+    recipientSignatureDataUrl: recipientCanvas.toDataURL("image/png"),
+    deliveredAt: new Date().toISOString()
+  };
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Saving...";
+
+  Swal.fire({
+    title: "Saving delivery...",
+    text: "Uploading signatures and marking invoice delivered.",
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || "Delivery failed.");
+    }
+
+    closeDeliverySignatureModal();
+
+    Swal.fire({
+      title: "Delivered!",
+      text: `Invoice ${invoiceNumber} was completed with signatures.`,
+      icon: "success",
+      timer: 1600,
+      showConfirmButton: false
+    }).then(() => {
+      location.reload();
+    });
+
+  } catch (err) {
+    Swal.fire("Error", err.message || "Delivery failed.", "error");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Mark Delivered";
+  }
+}
 // --- SIDEBAR TOGGLE ---
 function toggleGroup(contentId, headerEl) {
   const content = document.getElementById(contentId);
@@ -597,7 +905,10 @@ async function loadOpenDeliveries() {
     const url = `${API_URL}?action=getOpenDeliveries&driver=${encodeURIComponent(driverName)}`;
     const res = await fetch(url);
     const data = await res.json();
-    
+
+    deliveries = data || [];
+selectedInvoices = [];
+document.getElementById("selectAll").checked = false;
     // 3. Clear existing rows
     tbody.innerHTML = ""; 
 
@@ -665,31 +976,25 @@ function toggleAll(source) {
 }
 /* ===== MANUAL MULTI-UPDATE ACTION ===== */
 async function markSelectedDelivered() {
-  // 🟢 Fixed: Changed "driverName" to "driverSelect"
-  const driverSelect = document.getElementById("driverSelect");
-  const driver = driverSelect ? driverSelect.value.trim() : "";
-  
-  if (!driver) return Swal.fire("Missing Info", "Please select a driver first", "warning");
+  const driver = getCurrentDriverName_();
 
-  const { isConfirmed } = await Swal.fire({ title: "Confirm", icon: "question", showCancelButton: true });
-  if (!isConfirmed) return;
-
-  Swal.fire({ title: "Processing...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-  try {
-    for (const invoiceNum of selectedInvoices) {
-      // 🟢 GET request bypasses the CORS pre-flight/Access-Control-Allow-Origin block entirely
-      const url = `${API_URL}?action=markDelivered&invoiceNumber=${encodeURIComponent(invoiceNum)}&driver=${encodeURIComponent(driver)}`;
-      const res = await fetch(url);
-      const result = await res.json();
-      if (!result.success) throw new Error(result.error);
-    }
-
-    Swal.fire({ title: "Delivered!", icon: "success", timer: 1500 });
-    setTimeout(() => location.reload(), 1500);
-  } catch (err) {
-    Swal.fire("Error", err.message, "error");
+  if (!driver) {
+    return Swal.fire("Missing Info", "Please select a driver first", "warning");
   }
+
+  if (selectedInvoices.length === 0) {
+    return Swal.fire("Missing Info", "Select one invoice to mark delivered", "warning");
+  }
+
+  if (selectedInvoices.length > 1) {
+    return Swal.fire(
+      "One At A Time",
+      "Because each delivery needs a recipient signature, please select only one invoice at a time.",
+      "warning"
+    );
+  }
+
+  openDeliverySignatureModal(selectedInvoices[0], driver);
 }
 /* ===== MANUAL MULTI-DELETE ACTION ===== */
 async function deleteSelectedInvoices() {
@@ -752,42 +1057,13 @@ async function deleteSelectedInvoices() {
 }
 /* ===== CORE SINGLE DELIVERY PROCESSOR (FOR SCANNER) ===== */
 async function processDelivery(invoiceNum, driverName) {
-    Swal.fire({
-       title: 'Processing...',
-       text: `Marking Invoice ${invoiceNum} as Delivered...`,
-       allowOutsideClick: false,
-       didOpen: () => Swal.showLoading()
-    });
+  const driver = driverName || getCurrentDriverName_();
 
-    try {
-       const response = await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "markDelivered",
-            invoiceNumber: invoiceNum,
-            driver: driverName,
-            deliveredAt: new Date().toISOString()
-          })
-       });
+  if (!driver) {
+    return Swal.fire("Missing Driver", "Please select a driver first.", "warning");
+  }
 
-       const result = await response.json();
-
-       if(result.success) {
-          Swal.fire({
-             title: "Delivered!",
-             text: `Invoice ${invoiceNum} updated successfully.`,
-             icon: "success",
-             timer: 1500,
-             showConfirmButton: false
-          }).then(() => {
-             location.reload(); 
-          });
-       } else {
-          throw new Error(result.error || "Unknown error");
-       }
-    } catch(err) {
-       Swal.fire("Error", "Could not update invoice: " + err.message, "error");
-    }
+  openDeliverySignatureModal(invoiceNum, driver);
 }
 /* ===== PRINT DELIVERY MANIFEST (WITH DRIVER UI WRAPPER) ===== */
 async function printManifest() {
