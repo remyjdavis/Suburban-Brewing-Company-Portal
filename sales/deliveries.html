@@ -448,6 +448,51 @@
   min-width: auto !important;
   flex: 0 0 auto;
 }
+    .delivery-terms-box {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #7c2d12;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 8px 0 10px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.delivery-terms-box p {
+  margin: 6px 0 10px;
+}
+
+.terms-check-row {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  margin: 0 !important;
+  font-weight: 700;
+  color: #111827;
+}
+
+.terms-check-row input {
+  width: auto !important;
+  min-width: auto !important;
+  flex: 0 0 auto;
+}
+
+.signature-lock-message {
+  background: #f1f5f9;
+  border: 1px dashed #94a3b8;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.signature-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
   </style>
 </head>
 <body>
@@ -654,14 +699,32 @@
       </button>
     </div>
 
-    <div class="signature-section">
-      <label>Recipient Signature</label>
-      <canvas id="recipientSignatureCanvas" width="600" height="200"></canvas>
-      <button type="button" class="btn btn-secondary" onclick="clearSignatureCanvas('recipient')">
-        Clear Recipient Signature
-      </button>
-    </div>
+    <div class="signature-section recipient-signature-section">
+  <label>Recipient Signature</label>
 
+  <div class="delivery-terms-box">
+    <strong>Delivery Acceptance Terms</strong>
+    <p>
+      By checking this box and signing below, you confirm that you accept this delivery as-is.
+      There will be no returns. Exchanges only may be approved by Suburban Brewing Company.
+    </p>
+
+    <label class="terms-check-row">
+      <input id="deliveryTermsAccepted" type="checkbox" onchange="toggleRecipientSignatureEnabled()">
+      <span>I have read and accept these delivery terms.</span>
+    </label>
+  </div>
+
+  <div id="recipientSignatureLockMessage" class="signature-lock-message">
+    Accept the delivery terms above before signing.
+  </div>
+
+  <canvas id="recipientSignatureCanvas" class="signature-disabled" width="600" height="200"></canvas>
+
+  <button type="button" class="btn btn-secondary" onclick="clearSignatureCanvas('recipient')">
+    Clear Recipient Signature
+  </button>
+</div>
     <div class="signature-actions">
       <button type="button" class="btn btn-secondary" onclick="closeDeliverySignatureModal()">
         Cancel
@@ -704,9 +767,9 @@ function openDeliverySignatureModal(invoiceNumber, driverName) {
 
   document.getElementById("sigInvoiceNumber").value = invoiceNumber;
   document.getElementById("sigInvoiceLabel").innerText = invoiceNumber;
-  document.getElementById("recipientNameInput").value = "";
-document.getElementById("deliveryTermsAccepted").checked = false;
-
+  document.getElementById("deliveryTermsAccepted").checked = false;
+toggleRecipientSignatureEnabled();
+  
   document.getElementById("deliverySignatureModal").classList.remove("hidden");
 
   setupSignatureCanvas_("driverSignatureCanvas", "driver");
@@ -1225,7 +1288,20 @@ async function printManifest() {
         Swal.fire("Error", err.message, "error");
     }
 }
+function toggleRecipientSignatureEnabled() {
+  const accepted = document.getElementById("deliveryTermsAccepted").checked;
+  const canvas = document.getElementById("recipientSignatureCanvas");
+  const lockMessage = document.getElementById("recipientSignatureLockMessage");
 
+  if (accepted) {
+    canvas.classList.remove("signature-disabled");
+    lockMessage.style.display = "none";
+  } else {
+    canvas.classList.add("signature-disabled");
+    lockMessage.style.display = "block";
+    clearSignatureCanvas("recipient");
+  }
+}
 /* ===== NAVIGATION ===== */
 function goBack() {
   window.location.href = "new invoices.html";
