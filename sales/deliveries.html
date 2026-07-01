@@ -818,11 +818,6 @@ async function submitDeliveryWithSignatures() {
     Swal.fire("Missing Recipient", "Recipient name is required.", "warning");
     return;
   }
-}
-  if (!deliverySignatureState.driverSigned) {
-    Swal.fire("Missing Signature", "Driver signature is required.", "warning");
-    return;
-  }
 if (!deliveryTermsAccepted) {
   Swal.fire(
     "Terms Required",
@@ -830,7 +825,12 @@ if (!deliveryTermsAccepted) {
     "warning"
   );
   return;
-  
+}
+  if (!deliverySignatureState.driverSigned) {
+    Swal.fire("Missing Signature", "Driver signature is required.", "warning");
+    return;
+  }
+
   if (!deliverySignatureState.recipientSigned) {
     Swal.fire("Missing Signature", "Recipient signature is required.", "warning");
     return;
