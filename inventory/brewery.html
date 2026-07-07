@@ -687,7 +687,7 @@
                    <button class="small secondary" style="padding:4px 8px;" onclick="adjustQty('${item.product}','${pkg.type}',${pkg.qty})">Adj</button>
                    <button
                      class="small icon-danger"
-                     title="Delete only this product type"
+                     title="Delete only this one product-type line"
                      aria-label="Delete ${pkg.type} from ${item.product}"
                      onclick="requestProductDeletion(decodeURIComponent('${encodeURIComponent(item.product)}'), decodeURIComponent('${encodeURIComponent(pkg.type)}'))"
                    >✕</button>
@@ -725,7 +725,7 @@
       const deletingType = Boolean(type);
       const targetLabel = deletingType ? `${product} (${type})` : product;
       const warningText = deletingType
-        ? `This permanently removes only the ${type} row from Products and Brewery Inventory.`
+        ? `This removes only one matching ${type} line. Any duplicate ${type} lines will remain and can be deleted individually.`
         : `This permanently removes every package type for ${product} from Products and Brewery Inventory.`;
 
       const confirmation = await Swal.fire({
@@ -747,7 +747,7 @@
           spellcheck: 'false'
         },
         showCancelButton: true,
-        confirmButtonText: deletingType ? 'Delete Type' : 'Delete Product',
+        confirmButtonText: deletingType ? 'Delete One Line' : 'Delete Product',
         confirmButtonColor: '#dc2626',
         reverseButtons: true,
         focusCancel: true,
