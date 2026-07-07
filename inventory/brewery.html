@@ -167,6 +167,17 @@
     button.secondary { background: #e5e7eb; color: #374151; }
     /* Smaller button for adjustment */
     button.small { padding: 4px 10px; font-size: 11px; border-radius: 4px; }
+    button.danger { background: #dc2626; color: #fff; }
+    button.danger:hover { background: #b91c1c; }
+    button.icon-danger {
+      background: transparent;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      padding: 4px 7px;
+      font-size: 11px;
+      line-height: 1;
+    }
+    button.icon-danger:hover { background: #fef2f2; border-color: #dc2626; }
     
     input, select { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; }
 
@@ -671,9 +682,15 @@
                       ${displaySku}
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:10px;">
+                <div style="display:flex; align-items:center; gap:6px;">
                    <span class="qty-badge">${pkg.qty}</span>
                    <button class="small secondary" style="padding:4px 8px;" onclick="adjustQty('${item.product}','${pkg.type}',${pkg.qty})">Adj</button>
+                   <button
+                     class="small icon-danger"
+                     title="Delete only this product type"
+                     aria-label="Delete ${pkg.type} from ${item.product}"
+                     onclick="requestProductDeletion(decodeURIComponent('${encodeURIComponent(item.product)}'), decodeURIComponent('${encodeURIComponent(pkg.type)}'))"
+                   >✕</button>
                 </div>
               </div>
             `;
@@ -685,7 +702,15 @@
           card.innerHTML = `
             <div class="inv-card-header">
               <span class="inv-card-title">${item.product}</span>
-              <span class="lifecycle-badge">${item.lifecycle}</span>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="lifecycle-badge">${item.lifecycle}</span>
+                <button
+                  class="small icon-danger"
+                  title="Delete this entire product"
+                  aria-label="Delete entire product ${item.product}"
+                  onclick="requestProductDeletion(decodeURIComponent('${encodeURIComponent(item.product)}'), null)"
+                >🗑</button>
+              </div>
             </div>
             <div class="inv-card-body">
               ${rows}
@@ -696,6 +721,101 @@
         });
       });
     }
+    async function requestProductDeletion(product, type) {
+      const deletingType = Boolean(type);
+      const targetLabel = deletingType ? `${product} (${type})` : product;
+      const warningText = deletingType
+        ? `This permanently removes only the ${type} row from Products and Brewery Inventory.`
+        : `This permanently removes every package type for ${product} from Products and Brewery Inventory.`;
+
+      const confirmation = await Swal.fire({
+        icon: 'warning',
+        title: deletingType ? 'Delete Product Type?' : 'Delete Entire Product?',
+        html: `
+          <div style="text-align:left; font-size:14px;">
+            <p><strong>${escapeDeleteHtml_(targetLabel)}</strong></p>
+            <p>${escapeDeleteHtml_(warningText)}</p>
+            <p style="color:#64748b; font-size:12px;">Historical invoice records will not be deleted.</p>
+          </div>
+        `,
+        input: 'password',
+        inputLabel: 'Brewer deletion password',
+        inputPlaceholder: 'Enter password',
+        inputAttributes: {
+          autocapitalize: 'off',
+          autocomplete: 'current-password',
+          spellcheck: 'false'
+        },
+        showCancelButton: true,
+        confirmButtonText: deletingType ? 'Delete Type' : 'Delete Product',
+        confirmButtonColor: '#dc2626',
+        reverseButtons: true,
+        focusCancel: true,
+        preConfirm: password => {
+          if (!password) {
+            Swal.showValidationMessage('The deletion password is required.');
+            return false;
+          }
+          return password;
+        }
+      });
+
+      if (!confirmation.isConfirmed) return;
+
+      Swal.fire({
+        title: 'Deleting...',
+        text: targetLabel,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          redirect: 'follow',
+          body: JSON.stringify({
+            action: 'deleteBreweryProduct',
+            deleteMode: deletingType ? 'type' : 'product',
+            product,
+            type: type || '',
+            password: confirmation.value,
+            deletedBy: document.getElementById('display-username')?.textContent?.trim() || 'Brewer Portal'
+          })
+        });
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.error || 'The product could not be deleted.');
+        }
+
+        const historyNote = Number(result.historicalInvoiceReferences || 0) > 0
+          ? `<br><small>${result.historicalInvoiceReferences} historical invoice line(s) were preserved.</small>`
+          : '';
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Deleted',
+          html: `${escapeDeleteHtml_(result.message || `${targetLabel} was deleted.`)}${historyNote}`,
+          confirmButtonText: 'OK'
+        });
+
+        await loadInventory();
+      } catch (error) {
+        Swal.fire('Delete Failed', error.message || String(error), 'error');
+      }
+    }
+
+    function escapeDeleteHtml_(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function openProductModal() { document.getElementById("productModal").style.display = "flex"; }
     function closeProductModal() { document.getElementById("productModal").style.display = "none"; }
 // ===== UPDATE UPC / SKU WITH ERROR HANDLING =====
