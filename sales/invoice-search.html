@@ -393,26 +393,72 @@
 
     <section class="content">
       <div class="section">
-        <h3>Find Customer Invoices</h3>
+        <h3>Find Invoices</h3>
         <div class="form-grid">
           <div>
-            <label>Select Customer</label>
-            <select id="customerSelect" onchange="loadInvoices(this.value)">
-                <option value="" disabled selected>Loading Customers...</option>
+            <label>Customer</label>
+            <select id="customerSelect" onchange="searchInvoices()">
+                <option value="">All Customers</option>
             </select>
           </div>
           <div>
-            <label>Invoice #</label>
+            <label>Month</label>
+            <select id="filterMonth">
+              <option value="">All Months</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+          <div>
+            <label>Year</label>
+            <input id="filterYear" type="number" min="2000" max="2100" placeholder="All Years">
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="filterStatus">
+              <option value="">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Paid">Paid</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div>
+            <label>Search Invoice / Customer</label>
+            <input id="filterSearch" placeholder="Invoice # or customer name">
+          </div>
+          <div>
+            <label>Start Date</label>
+            <input id="filterStartDate" type="date">
+          </div>
+          <div>
+            <label>End Date</label>
+            <input id="filterEndDate" type="date">
+          </div>
+          <div>
+            <label>Loaded Invoice #</label>
             <input id="invoiceNumber" disabled placeholder="---">
           </div>
           <div>
-            <label>Date</label>
+            <label>Loaded Date</label>
             <input id="invoiceDate" disabled placeholder="---">
           </div>
         </div>
 
-        <div style="margin-top:20px; display:flex; gap:10px;">
-          <button class="secondary" onclick="clearSelection()">Clear Selection</button>
+        <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button onclick="searchInvoices()">Search Invoices</button>
+          <button class="secondary" onclick="setCurrentMonthFilter()">Current Month</button>
+          <button class="secondary" onclick="clearSelection()">Clear Filters</button>
           <button onclick="editInvoice()">Edit Loaded Invoice</button>
         </div>
       </div>
@@ -425,13 +471,14 @@
               <tr>
                 <th>Invoice #</th>
                 <th>Date</th>
+                <th>Customer</th>
                 <th>Total</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="historyBody">
-              <tr><td colspan="5" style="text-align:center; padding:20px; color:#9ca3af;">Select a customer above to view history.</td></tr>
+              <tr><td colspan="6" style="text-align:center; padding:20px; color:#9ca3af;">Use the filters above to search invoice history.</td></tr>
             </tbody>
           </table>
         </div>
@@ -496,6 +543,12 @@
   const invoiceDate = document.getElementById("invoiceDate");
   const previewPanel = document.getElementById("previewPanel");
   const previewContent = document.getElementById("previewContent");
+  const filterMonth = document.getElementById("filterMonth");
+  const filterYear = document.getElementById("filterYear");
+  const filterStatus = document.getElementById("filterStatus");
+  const filterSearch = document.getElementById("filterSearch");
+  const filterStartDate = document.getElementById("filterStartDate");
+  const filterEndDate = document.getElementById("filterEndDate");
 
   document.addEventListener("DOMContentLoaded", () => {
     // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
@@ -524,8 +577,17 @@
         });
     });
 
-    // 2. Fetch Customers
-    fetchCustomers();
+    [filterMonth, filterYear, filterStatus, filterStartDate, filterEndDate].forEach(el => {
+        if (el) el.addEventListener('change', searchInvoices);
+    });
+    if (filterSearch) {
+        filterSearch.addEventListener('keydown', e => {
+            if (e.key === 'Enter') searchInvoices();
+        });
+    }
+
+    // 2. Fetch Customers, then load invoice history.
+    fetchCustomers().then(() => searchInvoices());
   });
 
   // --- API FUNCTIONS ---
@@ -533,10 +595,10 @@
     try {
         const response = await fetch(`${API_URL}?action=getCustomers`);
         const data = await response.json();
-        
-        customerSelect.innerHTML = '<option value="" disabled selected>Select a Customer</option>';
+
+        customerSelect.innerHTML = '<option value="">All Customers</option>';
         data.sort((a, b) => a.name.localeCompare(b.name));
-        
+
         data.forEach(cust => {
             const opt = document.createElement("option");
             opt.value = cust.name; 
@@ -545,48 +607,112 @@
         });
     } catch (error) {
         console.error('Error fetching customers:', error);
-        customerSelect.innerHTML = '<option>Error loading customers</option>';
+        customerSelect.innerHTML = '<option value="">All Customers</option><option disabled>Error loading customers</option>';
     }
   }
 
+  // Backwards-compatible wrapper if any old dropdown code still calls loadInvoices().
   async function loadInvoices(customerNameValue) {
+    if (typeof customerNameValue !== "undefined") customerSelect.value = customerNameValue || "";
+    return searchInvoices();
+  }
+
+  async function searchInvoices() {
     if (!historyBody) return;
-    historyBody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>Searching...</td></tr>";
+
+    selectedInvoice = null;
+    invoiceNumber.value = "";
+    invoiceDate.value = "";
+    previewPanel.style.display = "none";
+    previewContent.innerHTML = "";
+    historyBody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px;'>Searching invoices...</td></tr>";
 
     try {
-        const url = `${API_URL}?action=getInvoicesByCustomer&customer=${encodeURIComponent(customerNameValue)}`;
-        const res = await fetch(url);
+        const params = new URLSearchParams({ action: "searchInvoices" });
+
+        if (customerSelect.value) params.set("customer", customerSelect.value);
+        if (filterMonth.value) params.set("month", filterMonth.value);
+        if (filterYear.value.trim()) params.set("year", filterYear.value.trim());
+        if (filterStatus.value) params.set("status", filterStatus.value);
+        if (filterSearch.value.trim()) params.set("search", filterSearch.value.trim());
+        if (filterStartDate.value) params.set("startDate", filterStartDate.value);
+        if (filterEndDate.value) params.set("endDate", filterEndDate.value);
+
+        const res = await fetch(`${API_URL}?${params.toString()}`);
         const data = await res.json();
-        invoiceHistory = data || []; 
-        
-        historyBody.innerHTML = ""; 
-        if (invoiceHistory.length === 0) {
-            historyBody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>No invoices found for this customer.</td></tr>";
-            return;
+
+        if (data && data.success === false) {
+          throw new Error(data.error || "Invoice search failed.");
         }
 
-        invoiceHistory.forEach(inv => {
-            let dateDisplay = inv.date;
-            try { dateDisplay = new Date(inv.date).toLocaleDateString(); } catch(e){}
-            const isDelivered = String(inv.status).toLowerCase() === 'delivered';
-            
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td data-label="Invoice #"><strong>${inv.invoiceNumber}</strong></td>
-                <td data-label="Date">${dateDisplay}</td>
-                <td data-label="Total">$${Number(inv.total || 0).toFixed(2)}</td>
-                <td data-label="Status"><span style="color:${isDelivered ? '#15803d' : '#b45309'}; font-weight:700; font-size:12px;">${inv.status || 'Pending'}</span></td>
-                <td data-label="Action">
-                    <button class="small secondary" style="padding:6px 12px;" onclick="selectInvoice('${inv.invoiceNumber}', this)">Load</button>
-                    ${inv.pdfLink ? `<a href="${inv.pdfLink}" target="_blank" style="margin-left:8px; text-decoration:underline; font-size:12px; color:#2563eb;">PDF</a>` : ''}
-                </td>
-            `;
-            historyBody.appendChild(tr);
-        });
+        invoiceHistory = Array.isArray(data) ? data : [];
+        renderInvoiceRows(invoiceHistory);
     } catch (err) {
-        console.error("Fetch Error:", err);
-        historyBody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>Error loading invoices.</td></tr>";
+        console.error("Invoice search error:", err);
+        historyBody.innerHTML = `<tr><td colspan='6' style='text-align:center; color:red; padding:20px;'>Error loading invoices: ${escapeHtml(err.message || err)}</td></tr>`;
     }
+  }
+
+  function renderInvoiceRows(invoices) {
+    historyBody.innerHTML = ""; 
+
+    if (!invoices.length) {
+        historyBody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px;'>No invoices matched those filters.</td></tr>";
+        return;
+    }
+
+    invoices.forEach(inv => {
+        let dateDisplay = inv.date;
+        try {
+          const parsedDate = new Date(inv.date);
+          if (!isNaN(parsedDate)) dateDisplay = parsedDate.toLocaleDateString();
+        } catch(e){}
+
+        const isDelivered = String(inv.status || "").toLowerCase() === 'delivered';
+        const invoiceNumberSafe = escapeJs(String(inv.invoiceNumber || ""));
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td data-label="Invoice #"><strong>${escapeHtml(inv.invoiceNumber)}</strong></td>
+            <td data-label="Date">${escapeHtml(dateDisplay || "")}</td>
+            <td data-label="Customer">${escapeHtml(inv.customer || "")}</td>
+            <td data-label="Total">$${Number(inv.total || 0).toFixed(2)}</td>
+            <td data-label="Status"><span style="color:${isDelivered ? '#15803d' : '#b45309'}; font-weight:700; font-size:12px;">${escapeHtml(inv.status || 'Pending')}</span></td>
+            <td data-label="Action">
+                <button class="small secondary" style="padding:6px 12px;" onclick="selectInvoice('${invoiceNumberSafe}', this)">Load</button>
+                ${inv.pdfLink ? `<a href="${escapeAttr(inv.pdfLink)}" target="_blank" style="margin-left:8px; text-decoration:underline; font-size:12px; color:#2563eb;">PDF</a>` : ''}
+            </td>
+        `;
+        historyBody.appendChild(tr);
+    });
+  }
+
+  function setCurrentMonthFilter() {
+    const now = new Date();
+    filterMonth.value = String(now.getMonth() + 1);
+    filterYear.value = String(now.getFullYear());
+    searchInvoices();
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function escapeAttr(value) {
+    return escapeHtml(value).replace(/`/g, "&#096;");
+  }
+
+  function escapeJs(value) {
+    return String(value ?? "")
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'")
+      .replace(/\n/g, "\\n")
+      .replace(/\r/g, "\\r");
   }
 
   async function selectInvoice(invNum, btn) {
@@ -665,10 +791,10 @@
 
  function editInvoice() {
     if (!selectedInvoice) return alert("Please load an invoice from the list first.");
-    
-    // Get the currently selected customer name from the dropdown
-    const customerName = document.getElementById("customerSelect").value;
-    
+
+    // Use the selected invoice customer so editing works even when searching All Customers.
+    const customerName = selectedInvoice.customer || document.getElementById("customerSelect").value || "";
+
     // Pass both Invoice Number AND Customer Name in the URL
     location.href = `new invoices.html?invoice=${encodeURIComponent(selectedInvoice.invoiceNumber)}&customer=${encodeURIComponent(customerName)}`;
   }
@@ -678,9 +804,15 @@
     invoiceNumber.value = "";
     invoiceDate.value = "";
     customerSelect.value = "";
+    filterMonth.value = "";
+    filterYear.value = "";
+    filterStatus.value = "";
+    filterSearch.value = "";
+    filterStartDate.value = "";
+    filterEndDate.value = "";
     previewPanel.style.display = "none";
     previewContent.innerHTML = "";
-    historyBody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px; color:#9ca3af;'>Select a customer to view history.</td></tr>";
+    historyBody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px; color:#9ca3af;'>Use the filters above to search invoice history.</td></tr>";
   }
 </script>
 </body>
