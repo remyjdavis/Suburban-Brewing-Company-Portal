@@ -1016,6 +1016,36 @@ table.invoice-table {
     const MANAGER_PIN = "19344"; // 🔒 CHANGE THIS TO YOUR DESIRED PIN
     let overrideLogs = []; // Stores records of who changed what
     const API_URL = "https://script.google.com/macros/s/AKfycbxaWt6lA_tFkzsFcqmuEgcZuLJN5u_xrA6vVzdvHJPrlipkWkkc8lxW6AjkwKHaYxHP/exec";
+
+    // Google Apps Script ContentService does not provide CORS response headers.
+    // Use its JSONP output for READ operations from GitHub Pages.
+    let invoiceReadSequence = 0;
+    function invoiceApiGet(action, params = {}) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'sbcInvoiceRead_' + (++invoiceReadSequence) + '_' + Date.now();
+        const query = new URLSearchParams({action, ...params, callback: callbackName, t: String(Date.now())});
+        const script = document.createElement('script');
+        let complete = false;
+        const timer = setTimeout(() => {
+          finish(new Error('Timed out loading ' + action + '. Check the Apps Script deployment.'));
+        }, 30000);
+        function finish(error, data) {
+          if (complete) return;
+          complete = true;
+          clearTimeout(timer);
+          script.remove();
+          delete window[callbackName];
+          if (error) reject(error);
+          else if (data && data.success === false) reject(new Error(data.error || action + ' failed'));
+          else resolve(data);
+        }
+        window[callbackName] = data => finish(null, data);
+        script.onerror = () => finish(new Error('Cannot load ' + action + '. Verify the Apps Script /exec URL and access settings.'));
+        script.src = API_URL + '?' + query.toString();
+        document.head.appendChild(script);
+      });
+    }
+
     
     // --- SIDEBAR TOGGLE LOGIC ---
     function toggleGroup(contentId, headerEl) {
@@ -1082,8 +1112,6 @@ table.invoice-table {
             loadInventory(), 
             loadEmployees()
         ]);
-      // --- 🟢 ADD THIS INSIDE DOMContentLoaded AFTER loadEmployees() ---
-await loadEmployees();
 
 function forceHeaderUpdate() {
     let rep = employees.find(e => e.role && e.role.toLowerCase() === "sales rep");
@@ -1394,10 +1422,11 @@ forceHeaderUpdate(); // Run it immediately on load
 }); // 🟢 CLOSES DOMContentLoaded
     /* ===== LOAD CUSTOMERS FUNCTION ===== */
     function loadCustomers() {
-      // 🟢 Added 'return'
-      return fetch(`${API_URL}?action=getCustomers`)
-        .then(r => r.json())
-        .then(d => customers = d || []);
+      return invoiceApiGet('getCustomers').then(d => {
+        if (!Array.isArray(d)) throw new Error('Customer response was not an array.');
+        customers = d;
+        return customers;
+      });
     }
 
     let searchTimeout;
@@ -1662,48 +1691,37 @@ function selectCustomer(c) {
 
    /* ===== LOAD PRODUCTS FUNCTION ===== */
     function loadProducts() {
-      // 🟢 Added 'return'
-      return fetch(`${API_URL}?action=getProducts`)
-        .then(r => r.json())
-        .then(data => {
-          products = data || [];
-          groupedProducts = {};
-
-          products.forEach(p => {
-            if (!groupedProducts[p.name]) {
-              groupedProducts[p.name] = {};
-            }
-
-            groupedProducts[p.name][p.package] = {
-              price: p.price,
-              sku: p.sku || ""
-            };
-          });
+      return invoiceApiGet('getProducts').then(data => {
+        if (!Array.isArray(data)) throw new Error('Product response was not an array.');
+        products = data;
+        groupedProducts = {};
+        products.forEach(p => {
+          if (!groupedProducts[p.name]) groupedProducts[p.name] = {};
+          groupedProducts[p.name][p.package] = {
+            price: Number(p.price) || 0,
+            sku: p.sku || ''
+          };
         });
+        return products;
+      });
     }
 
     /* ===== LOAD INVENTORY FUNCTION ===== */
     let inventoryMap = {};
 
     function loadInventory() {
-      // 🟢 Added 'return'
-      return fetch(`${API_URL}?action=getBreweryInventory`)
-        .then(r => r.json())
-        .then(data => {
-          inventoryMap = {};
-
-          data.forEach(product => {
-            const name = product.product;
-
-            if (!inventoryMap[name]) inventoryMap[name] = {};
-
-            product.packages.forEach(pkg => {
-              inventoryMap[name][pkg.type] = Number(pkg.qty) || 0;
-            });
+      return invoiceApiGet('getBreweryInventory').then(data => {
+        if (!Array.isArray(data)) throw new Error('Inventory response was not an array.');
+        inventoryMap = {};
+        data.forEach(product => {
+          const name = product.product;
+          if (!inventoryMap[name]) inventoryMap[name] = {};
+          (product.packages || []).forEach(pkg => {
+            inventoryMap[name][pkg.type] = Number(pkg.qty) || 0;
           });
-
-          console.log("INVENTORY MAP READY:", inventoryMap);
         });
+        return inventoryMap;
+      });
     }
 
     /* ===== ADD PRODUCT ROW FUNCTION ===== */
@@ -2558,8 +2576,7 @@ if (res.fileId) {
 
     try {
         // Force a timestamp to avoid browser caching the old number
-        const res = await fetch(`${API_URL}?action=getNextInvoiceNumber&t=${Date.now()}`);
-        const data = await res.json();
+        const data = await invoiceApiGet('getNextInvoiceNumber');
 
         if (data.nextInvoice) {
             invInput.value = data.nextInvoice; 
@@ -2580,166 +2597,141 @@ if (res.fileId) {
 }
     /* ===== LOAD INVOICE FOR EDITING ===== */
 async function loadInvoiceForEdit(invNum, custName) {
-    // 1. UI Loading State
-    Swal.fire({
-        title: 'Loading Invoice...',
-        text: 'Fetching details from server...',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
+  Swal.fire({
+    title: 'Loading Invoice...',
+    text: 'Retrieving saved invoice and line items',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
 
-    try {
-        // 2. Set Header Info
-        currentInvoiceNumber = invNum;
-        const invoiceInput = document.getElementById("invoice-number");
-        invoiceInput.value = invNum;
-        // Trigger change to generate barcode
-        invoiceInput.dispatchEvent(new Event('change'));
+  try {
+    const invoiceNumber = String(invNum || '').trim();
+    if (!invoiceNumber) throw new Error('The invoice number is missing from the URL.');
 
-        // 3. Select Customer
-        // Wait a moment for customers to load if this is called immediately
-        if (custName && customers.length > 0) {
-            const customer = customers.find(c => c.name === custName);
-            if (customer) {
-                selectCustomer(customer);
-            } else {
-                console.warn("Customer not found in local list:", custName);
-            }
-        }
+    // Both requests are independent. JSONP works even when hosted on GitHub Pages.
+    const [header, items] = await Promise.all([
+      invoiceApiGet('getInvoiceHeader', {invoiceNumber}),
+      invoiceApiGet('getInvoiceItems', {invoiceNumber})
+    ]);
+    if (!header || header.error) throw new Error(header?.error || 'Invoice header not found.');
+    if (!Array.isArray(items)) throw new Error('The invoice items response is not a list.');
+    if (!items.length) throw new Error('No saved line items were found for invoice #' + invoiceNumber);
 
-        // 4a. Fetch Invoice Items from Backend
-        const res = await fetch(`${API_URL}?action=getInvoiceItems&invoiceNumber=${encodeURIComponent(invNum)}`);
-        if (!res.ok) throw new Error("Failed to fetch items");
-        
-        const items = await res.json();
-        
-        if (!items || items.length === 0) {
-            Swal.fire("Empty", "No items found for this invoice.", "info");
-            return;
-        }
-      // 🟢 4b. Fetch Header info to catch Discounts & Credits
-        const headerRes = await fetch(`${API_URL}?action=getInvoiceHeader&invoiceNumber=${encodeURIComponent(invNum)}`);
-        if (headerRes.ok) {
-            const headerData = await headerRes.json();
-            
-            // Set Discount
-            if (headerData.discount) {
-                const discInput = document.getElementById("invoice-discount-input");
-                if (discInput) {
-                    discInput.value = "-$" + Math.abs(headerData.discount).toFixed(2);
-                    discInput.dataset.overridden = "true";
-                    document.getElementById("discount-row").style.display = "flex";
-                }
-            }
-
-            // Set Keg Returns (Translates the raw dollar amount back into $30 shells)
-            if (headerData.depositReturn) {
-                const shells = Math.floor(Math.abs(headerData.depositReturn) / 30);
-                document.getElementById("return-half-qty").value = shells;
-                document.getElementById("return-sixth-qty").value = 0; // Puts all shells in the 1/2 box for simplicity
-            }
-
-            // Set Manual Credit
-            if (headerData.manualCredit) {
-                const credInput = document.getElementById("invoice-credit-input");
-                if (credInput) {
-                    credInput.value = "-$" + Math.abs(headerData.manualCredit).toFixed(2);
-                    credInput.dataset.overridden = "true";
-                }
-            }
-
-            // Set Deposit Paid
-            if (headerData.depositCredit) {
-                const depCredInput = document.getElementById("invoice-deposit-credit-input");
-                if (depCredInput) {
-                    depCredInput.value = "-$" + Math.abs(headerData.depositCredit).toFixed(2);
-                    depCredInput.dataset.overridden = "true";
-                }
-            }
-        }
-        // 5. Clear Default Empty Row
-        const tbody = document.getElementById("product-body");
-        tbody.innerHTML = "";
-        addProductButtonRow = null; // Reset this so addProductRow creates a new button
-
-        // 6. Group Items by Product Name
-        // The sheet returns flat rows, but our UI groups by Product Name
-        const itemsByProduct = {};
-        items.forEach(item => {
-            // normalize keys (backend might return 'Product' or 'product')
-            const pName = item.product || item.Product;
-            if (!pName) return;
-
-            if (!itemsByProduct[pName]) {
-                itemsByProduct[pName] = [];
-            }
-            
-            itemsByProduct[pName].push({
-                type: item.type || item.Type,
-                qty: Number(item.qty || item.quantity || item.Qty || 0),
-                price: Number(item.price || item.Price || 0)
-            });
-        });
-
-        // 7. Rebuild the UI Rows
-        for (const [productName, itemList] of Object.entries(itemsByProduct)) {
-            // A. Add a blank row
-            addProductRow();
-            
-            // Get the row we just added (it's the second to last child, before the button row)
-            const rows = tbody.querySelectorAll("tr");
-            // The structure is: [Product Row], [Product Row], [Add Button Row]
-            // So we want the row before the last one
-            const currentRow = rows[rows.length - 2];
-
-            // B. Select the Product (Populates checkboxes)
-            selectProduct(currentRow, productName);
-
-            // C. Check boxes and set values
-            itemList.forEach(itemData => {
-                const { type, qty, price } = itemData;
-
-                // Find the checkbox for this type (Case, 1/2 Keg, etc)
-                const checkbox = currentRow.querySelector(`input[value="${type}"]`);
-                
-                if (checkbox) {
-                    // Force enable checkbox if it was historically sold but is now out of stock
-                    if (checkbox.disabled) {
-                        checkbox.disabled = false; 
-                        checkbox.parentElement.classList.remove("out-of-stock-grey");
-                    }
-
-                    checkbox.checked = true;
-                    
-                    // Trigger the logic to create input fields
-                    updateQuantities(currentRow, productName);
-
-                    // Now find those created inputs and set values
-                    const qtyInput = currentRow.querySelector(`.qty-group div[data-type="${type}"] input`);
-                    const priceInput = currentRow.querySelector(`.price-cell input[data-type="${type}"]`);
-
-                    if (qtyInput) qtyInput.value = qty;
-                    // Ensure price is formatted correctly
-                    if (priceInput) priceInput.value = price.toFixed(2);
-                }
-            });
-
-            // D. Recalculate the row totals
-            recalcLine(currentRow, productName);
-        }
-
-        // 8. Update UI State
-        const saveBtn = document.getElementById("save-invoice-btn");
-        
-        // Recalc bottom totals
-        recalcInvoiceTotals();
-
-        Swal.close();
-
-    } catch (error) {
-        console.error("Load Error:", error);
-        Swal.fire("Error", "Could not load invoice details.", "error");
+    currentInvoiceNumber = invoiceNumber;
+    window.currentInvoiceNumber = invoiceNumber;
+    const invoiceInput = document.getElementById('invoice-number');
+    if (invoiceInput) {
+      invoiceInput.value = invoiceNumber;
+      invoiceInput.dispatchEvent(new Event('change'));
     }
+
+    // A URL from Invoice Search may omit ?customer=. The header is authoritative.
+    const wantedName = String(header.customerName || custName || '').trim();
+    let customer = customers.find(c =>
+      String(c.name || '').trim().toLowerCase() === wantedName.toLowerCase());
+    if (!customer && wantedName) {
+      customer = {
+        name: wantedName,
+        address: header.address || '',
+        type: header.customerType || '',
+        payment: header.paymentMethod || '',
+        depositBalance: 0
+      };
+    }
+    if (customer) selectCustomer({...customer, depositBalance: Number(customer.depositBalance) || 0});
+
+    const tbody = document.getElementById('product-body');
+    tbody.innerHTML = '';
+    addProductButtonRow = null;
+    const groups = new Map();
+    for (const raw of items) {
+      const product = String(raw.product ?? raw.Product ?? '').trim();
+      const type = String(raw.type ?? raw.Type ?? '').trim();
+      if (!product || !type) continue;
+      const detail = {
+        type,
+        qty: Number(raw.qty ?? raw.quantity ?? raw.Qty ?? 0),
+        price: Number(raw.price ?? raw.Price ?? 0),
+        sku: String(raw.sku ?? raw.SKU ?? '')
+      };
+
+      // Existing invoices must not disappear when products/packages are archived,
+      // deleted, inactive, or currently out of stock.
+      if (!groupedProducts[product]) groupedProducts[product] = {};
+      if (!groupedProducts[product][type]) {
+        groupedProducts[product][type] = {price: detail.price, sku: detail.sku};
+      }
+      if (!groups.has(product)) groups.set(product, []);
+      groups.get(product).push(detail);
+    }
+    if (!groups.size) throw new Error('Invoice lines are missing product names or types.');
+
+    for (const [productName, details] of groups.entries()) {
+      addProductRow();
+      const rows = tbody.querySelectorAll('tr');
+      const row = rows[rows.length - 2];
+      if (!row) throw new Error('Unable to create row for ' + productName);
+      selectProduct(row, productName);
+
+      for (const detail of details) {
+        const checkbox = Array.from(row.querySelectorAll('.type-checkboxes input[type="checkbox"]'))
+          .find(cb => cb.value === detail.type);
+        if (!checkbox) throw new Error('Cannot create package ' + detail.type + ' for ' + productName);
+        checkbox.disabled = false;  // Historical lines may now have zero inventory.
+        checkbox.closest('label')?.classList.remove('out-of-stock-grey');
+        checkbox.checked = true;
+        updateQuantities(row, productName);
+        const qtyGroup = Array.from(row.querySelectorAll('.qty-group [data-type]'))
+          .find(el => el.dataset.type === detail.type);
+        const qtyInput = qtyGroup?.querySelector('input');
+        const priceInput = Array.from(row.querySelectorAll('.price-cell input'))
+          .find(el => el.dataset.type === detail.type);
+        if (qtyInput) qtyInput.value = String(detail.qty);
+        if (priceInput) {
+          priceInput.value = detail.price.toFixed(2);
+          priceInput.dataset.original = String(detail.price);
+        }
+      }
+      recalcLine(row, productName);
+    }
+
+    // SelectCustomer may have auto-applied today's deposit balance. An older
+    // invoice must instead show its own stored credits, even when zero.
+    const setMoney = (id, amount, prefix = '-$') => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const value = Math.abs(Number(amount) || 0);
+      el.value = prefix + value.toFixed(2);
+      el.dataset.overridden = value > 0 ? 'true' : 'false';
+    };
+    setMoney('invoice-discount-input', header.discount);
+    setMoney('invoice-credit-input', header.manualCredit);
+    setMoney('invoice-deposit-credit-input', header.depositCredit);
+    const discountRow = document.getElementById('discount-row');
+    if (discountRow && Number(header.discount)) discountRow.style.display = 'flex';
+    const halfReturn = document.getElementById('return-half-qty');
+    const sixthReturn = document.getElementById('return-sixth-qty');
+    if (halfReturn) halfReturn.value = String(Math.floor(Math.abs(Number(header.depositReturn) || 0) / 30));
+    if (sixthReturn) sixthReturn.value = '0';
+    recalcInvoiceTotals();
+
+    if (header.date) {
+      const parsedDate = new Date(header.date);
+      if (!isNaN(parsedDate.getTime())) {
+        document.getElementById('invoice-date').textContent = parsedDate.toLocaleDateString();
+      }
+    }
+
+    // Make an existing, saved PDF printable without requiring another save.
+    const pdfMatch = String(header.pdfLink || '').match(/[-\w]{25,}/);
+    window.currentInvoiceFileId = pdfMatch ? pdfMatch[0] : null;
+    document.getElementById('print-invoice-btn').disabled = !window.currentInvoiceFileId;
+    document.getElementById('email-invoice-btn').disabled = !window.currentInvoiceFileId;
+    Swal.close();
+  } catch (error) {
+    console.error('Invoice loading failed:', error);
+    Swal.fire('Invoice Could Not Load', error.message || String(error), 'error');
+  }
 }
     /* ===== MANUAL CUSTOMER ENTRY LOGIC ===== */
 
@@ -2819,17 +2811,12 @@ async function applyManualCustomer() {
 }
     /* ===== LOAD EMPLOYEES FUNCTION ===== */
    function loadEmployees() {
-  return fetch(`${API_URL}?action=getEmployees&t=${Date.now()}`)
-    .then(r => r.json())
-    .then(d => {
-        employees = Array.isArray(d) ? d : [];
-        // 🔴 CHECK YOUR CONSOLE: This will show us the exact names/roles in the system
-        console.log("DEBUG: Employees from Sheet:", employees);
-        return employees;
-    })
-    .catch(err => console.error("Employee fetch error:", err));
-}
-   Promise.all([loadCustomers(), loadProducts(), loadInventory(), loadEmployees()])
+     return invoiceApiGet('getEmployees').then(d => {
+       if (!Array.isArray(d)) throw new Error('Employee response was not an array.');
+       employees = d;
+       return employees;
+     });
+   }
   
   /**
  * Detects the PA County from a raw address string.
