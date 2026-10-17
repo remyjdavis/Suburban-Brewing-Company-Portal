@@ -1,651 +1,132 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <script>
-    (function() {
-        const auth = sessionStorage.getItem("sbc_auth");
-        const isLoginPage = window.location.pathname.includes("login.html");
-        if (auth !== "true" && !isLoginPage) {
-            const repoPath = "/Suburban-Brewing-Company-Portal/";
-            window.location.replace(repoPath + "login.html");
-        }
-    })();
-  </script>
- 
-  <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Suburban Brewing">
-  
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0f172a">
-  
-   <link rel="icon" type="image/png" href="../logo.png">
-<link rel="apple-touch-icon" href="../logo.png">
-  <link rel="manifest" href="../manifest.json">
-  <title>Sales Activity | Suburban Brewing Co.</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="/Suburban-Brewing-Company-Portal/portal.js"></script>
-  <style>
-    /* --- SHARED THEME VARIABLES (EXACT MATCH TO INDEX) --- */
-    :root {
-      --bg: #f3f4f6;
-      --sidebar: #0f172a; /* Dark Navy */
-      --accent: #2563eb;
-      --text-main: #1f293b;
-      --text-muted: #6b7280;
-      --card-bg: #ffffff;
-      --ready: #10b981;
-    }
-
-    /* --- GLOBAL RESET & LAYOUT --- */
-    * { box-sizing: border-box; font-family: 'Inter', -apple-system, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-    
-    body { 
-      margin: 0; 
-      background: var(--bg); 
-      color: var(--text-main); 
-      display: flex; 
-      min-height: 100vh; 
-    }
-
-    /* =========================================
-       SIDEBAR STYLES (COPIED FROM INDEX.HTML)
-       ========================================= */
-    .sidebar { 
-      width: 260px; 
-      background: var(--sidebar); 
-      color: #fff; 
-      padding: 24px 0; 
-      flex-shrink: 0; 
-      position: fixed; 
-      height: 100vh; 
-      overflow-y: auto; 
-      z-index: 1000;
-      transition: all 0.3s ease;
-    }
-    
-    .sidebar h2 { 
-      margin: 0 24px 32px; 
-      font-size: 20px; 
-      font-weight: 800; 
-      color: #fff; 
-      white-space: nowrap; /* Forces one line */
-    }
-
-    /* COLLAPSIBLE HEADERS */
-    .nav-section-header {
-      font-size: 11px; 
-      text-transform: uppercase; 
-      color: #94a3b8; 
-      margin: 18px 24px 8px; 
-      font-weight: 700; 
-      letter-spacing: 1px; 
-      cursor: pointer; 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center;
-      user-select: none;
-    }
-    .nav-section-header:hover { color: #fff; }
-
-    .chevron { transition: transform 0.3s ease; font-size: 10px; }
-    .collapsed .chevron { transform: rotate(-90deg); }
-
-    .collapsible-content {
-      max-height: 800px; 
-      overflow: hidden;
-      transition: max-height 0.4s ease, opacity 0.4s ease;
-      opacity: 1;
-    }
-    .collapsible-content.collapsed { max-height: 0; opacity: 0; }
-
-    /* LINKS */
-    .nav-link { 
-      display: flex; 
-      align-items: center; 
-      padding: 10px 24px; 
-      color: #64748b; 
-      text-decoration: none; 
-      font-size: 14px; 
-      transition: 0.2s; 
-      border-left: 4px solid transparent;
-    }
-    .nav-link:hover, .nav-link.active { color: #fff; background: #1e293b; }
-    .nav-link.active { border-left-color: var(--accent); color: #fff; }
-
-    /* LOGOUT LINK STYLE */
-    .logout-link { 
-      margin-top: 20px; 
-      color: #f87171 !important; 
-      border-left: 4px solid transparent; 
-      transition: all 0.2s ease; 
-      cursor: pointer; 
-    }
-    .logout-link:hover { 
-      background: #450a0a !important; 
-      color: #fee2e2 !important; 
-      border-left-color: #ef4444; 
-    }
-    .logout-link span.icon { margin-right: 12px; font-size: 16px; }
-
-    /* --- MAIN CONTENT --- */
-    .main-content { 
-        margin-left: 260px; 
-        flex-grow: 1; 
-        min-height: 100vh; 
-        transition: all 0.3s ease; 
-        
-        /* 🟢 FIX: Use auto. This fills the remaining space automatically. */
-        width: auto;
-        
-        display: flex;
-        flex-direction: column; 
-    }
-    
-    .header { 
-        background: white; 
-        padding: 15px 30px; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        border-bottom: 1px solid #e5e7eb; 
-        position: sticky; 
-        top: 0; 
-        z-index: 10;
-        
-        /* 🟢 FIX: Force header to span the full width */
-        width: 100%;
-        box-sizing: border-box;
-    }
-    .container { padding: 30px; max-width: 800px; margin: 0 auto; width: 100%; }
-
-    /* Form Card */
-    .form-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-    h2 { margin-top: 0; font-size: 1.5rem; color: #111827; }
-    label { display: block; font-weight: 700; margin: 15px 0 5px; font-size: 11px; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; }
-    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-    
-    .toggle-group { display: flex; gap: 10px; margin-bottom: 15px; }
-    .toggle-btn { flex: 1; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; text-align: center; font-size: 14px; transition: 0.2s; }
-    .toggle-btn.active { background: #111827; color: white; border-color: #111827; }
-
-    .btn-submit { width: 100%; padding: 18px; background: #111827; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 25px; font-size: 16px; transition: background 0.2s; }
-    .btn-submit:hover { background: #000; }
-
-    .row { display: flex; gap: 15px; }
-    .col { flex: 1; }
-
-    /* --- FOOTER STYLES (MATCHES INDEX) --- */
-    .app-footer {
-        margin-top: auto;
-        padding: 10px 30px; 
-        border-top: 1px solid #e2e8f0;
-        display: flex;
-        justify-content: space-between; 
-        align-items: center;
-        color: #94a3b8; 
-        font-size: 11px;
-        font-weight: 500;
-        margin-bottom: 10px;
-        background: #f3f4f6; 
-        
-        /* 🟢 FIX: Ensure width includes padding */
-        width: 100%;
-        box-sizing: border-box;
-    }
-    .footer-links a {
-        color: #94a3b8;
-        text-decoration: none;
-        margin-left: 20px;
-        transition: color 0.2s ease;
-    }
-
-    .footer-links a:hover {
-        color: var(--accent);
-        text-decoration: underline;
-    }
-
-    .system-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-left: 15px;
-        padding-left: 15px;
-        border-left: 1px solid #cbd5e1;
-    }
-
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        background-color: var(--ready); /* Green */
-        border-radius: 50%;
-        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-        70% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-    }
-
-    /* ============================================================
-       MOBILE DRAWER LOGIC 
-       ============================================================ */
-    #menu-toggle { display: none; }
-    .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
-
-    @media (max-width: 1024px) {
-      .sidebar { left: -260px; z-index: 2000; }
-      .sidebar.open { left: 0; }
-      .main-content { margin-left: 0 !important; }
-      .menu-overlay.active { display: block; }
-      
-      #menu-toggle {
-        display: flex; position: fixed; bottom: 25px; right: 25px;
-        width: 65px; height: 65px; background: var(--accent); color: white;
-        border-radius: 50%; justify-content: center; align-items: center;
-        font-size: 28px; z-index: 2100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none;
-      }
-
-      .header { padding: 10px 20px; }
-      .container { padding: 15px; }
-      .row { flex-direction: column; gap: 0; }
-      .form-card { padding: 20px; }
-      .toggle-group { flex-direction: column; }
-      
-      /* Footer Stack */
-      .app-footer { flex-direction: column; gap: 15px; text-align: center; }
-      .footer-links a { margin: 0 10px; }
-      .system-status { border-left: none; padding-left: 0; margin-left: 0; margin-top: 5px; }
-    }
-    /* --- USER PROFILE STYLES --- */
-    .user-profile {
-        position: relative;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        cursor: pointer;
-        padding: 5px 10px;
-        border-radius: 8px;
-        transition: background 0.2s;
-    }
-    .user-profile:hover { background: #f3f4f6; }
-    
-    .user-avatar {
-        width: 38px; height: 38px; border-radius: 50%;
-        background-color: #e5e7eb; object-fit: cover; border: 2px solid var(--accent);
-    }
-    
-    .user-info-text { 
-        display: flex; flex-direction: column; line-height: 1.1; text-align: right; 
-    }
-    .user-name { font-weight: 700; font-size: 0.9rem; color: var(--primary-dark); }
-    .user-role { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    
-    @media (max-width: 600px) { .user-info-text { display: none; } }
-
-    .user-dropdown-menu {
-        display: none; position: absolute; top: 55px; right: 0;
-        background-color: white; min-width: 180px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-radius: 8px;
-        z-index: 2000; overflow: hidden; border: 1px solid #e5e7eb;
-    }
-    .user-dropdown-menu.show { display: block; }
-    
-    .user-dropdown-menu a {
-        color: #374151; padding: 12px 16px; text-decoration: none;
-        display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
-        transition: background 0.2s;
-    }
-    .user-dropdown-menu a:hover { background-color: #f3f4f6; color: var(--accent); }
-  
-  </style>
-</head>
-<body>
-  <button id="menu-toggle" onclick="toggleMobileMenu()">☰</button>
-  <div id="menu-overlay" class="menu-overlay" onclick="toggleMobileMenu()"></div>
-
-  <aside class="sidebar">
-    <h2>SUBURBAN BREWING</h2>
-
-      <a href="../index.html" class="nav-link"><span>Command Center</span></a>
-    <div id="admin-nav-link" style="display:none; margin-top: 10px; border-top: 1px solid #1e293b; padding-top:10px;">
-    <a href="../Admin.html" class="nav-link" style="color: #ef4444;">
-        <span>🔒 Admin Console</span>
-    </a>
-</div>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-sample', this)"><span>Samplings</span><span class="chevron">▼</span></div>
-    <div id="grp-sample" class="collapsible-content">
-      <a href="../Samplings/Schedule-Sampling.html" class="nav-link"><span>Schedule Sampling</span></a>
-      <a href="../Samplings/sampling-calendar.html" class="nav-link"><span>Sampling Calendar</span></a>
-      <a href="../Samplings/sampling-report.html" class="nav-link"><span>Log Sampling Report</span></a>
-    </div>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-sales', this)"><span>Sales</span><span class="chevron">▼</span></div>
-    <div id="grp-sales" class="collapsible-content">
-      <a href="Marketing.html" class="nav-link"><span>Marketing Hub</span></a>
-      <a href="sales-opportunities.html" class="nav-link"><span>Sales Opportunities</span></a>
-      <a href="leads.html" class="nav-link active"><span>AI Sales Leads</span></a>
-      <a href="invoice-search.html" class="nav-link"><span>Invoice Search</span></a>
-      <a href="deliveries.html" class="nav-link"><span>Delivery Tracking</span></a>
-      <a href="new invoices.html" class="nav-link"><span>New Invoice</span></a>
-    </div>
-
-    <div class="nav-section-header" onclick="toggleGroup('grp-inv', this)"><span>Inventory</span><span class="chevron">▼</span></div>
-    <div id="grp-inv" class="collapsible-content">
-      <a href="../inventory/Ingredient-inventory.html" class="nav-link"><span>Ingredient Inventory</span></a>
-      <a href="../inventory/brewery.html" class="nav-link"><span>Packaged Inventory</span></a>
-      <a href="../inventory/wholesaler-inventory.html" class="nav-link"><span>Wholesaler Inventory</span></a>
-      <a href="../inventory/restaurant-inventory.html" class="nav-link"><span>Restaurant Inventory</span></a>
-    </div>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-brew', this)"><span>Brewing</span><span class="chevron">▼</span></div>
-    <div id="grp-brew" class="collapsible-content">
-      <a href="../Brewing/brew-calendar.html" class="nav-link"><span>Brewing Calendar</span></a>
-      <a href="../Brewing/Recipe-management.html" class="nav-link"><span>Recipe Management</span></a>
-      <a href="../Brewing/Brew-Log.html" class="nav-link"><span>New Brew Log</span></a>
-      <a href="../Brewing/cellar.html" class="nav-link"><span>Cellar Management</span></a>
-      <a href="../Brewing/qc-dashboard.html" class="nav-link"><span>QC Dashboard</span></a>
-      <a href="../Brewing/packaging.html" class="nav-link"><span>Packaging log</span></a>
-      <a href="../Brewing/sensory-admin.html" class="nav-link"><span>Sensory Admin</span></a>
-    </div>
-    
-    <div class="nav-section-header" onclick="toggleGroup('grp-rep', this)"><span>Reporting & Analytics</span><span class="chevron">▼</span></div>
-    <div id="grp-rep" class="collapsible-content">
-      <a href="../Reports/Monthly-sales.html" class="nav-link"><span>Monthly Sales Report</span></a>
-      <a href="../Reports/ProfitAnalysis.html" class="nav-link"><span>Profit Analysis Report</span></a>
-      <a href="../Reports/Route.html" class="nav-link"><span>Sales Route Opt.</span></a>
-    </div>
-  </aside>
-
-  <div class="main-content">
-    <div class="header">
-      <h1 style="margin:0; font-size:20px;">Sales Leads</h1>
-      
-      <div style="display:flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-          <div class="user-profile" onclick="toggleUserMenu(event)" style="cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 0;">
-              <div id="msg-badge" class="notification-badge">0</div>
-              <div class="user-info-text" style="text-align:right; margin-right:5px;">
-                  <span class="user-name" id="display-username" style="font-weight:700; font-size:0.9rem; display:block;">Brewer</span>
-                  <span class="user-role" id="display-role" style="font-size:0.75rem; color:#64748b;">Staff</span>
-              </div>
-              <img src="../logo.png" class="user-avatar" id="display-avatar" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid #2563eb;">
-              <div id="userDropdown" class="user-dropdown-menu"></div>
-          </div>
-      </div>
-
-    </div>
-    <div class="container">
-      <div class="form-card">
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin: 0; font-size: 1.5rem; color: #111827;">Log Activity</h2>
-            <div id="dateDisplay" style="font-size: 0.9rem; color: #9ca3af;"></div>
-        </div>
-
-        <form id="salesForm">
-          <label>Visit Type</label>
-          <div class="toggle-group">
-            <div id="btnInitial" class="toggle-btn active" onclick="setVisitType('Initial')">Initial Visit</div>
-            <div id="btnFollow" class="toggle-btn" onclick="setVisitType('Follow-up')">Follow-up Visit</div>
-          </div>
-          <input type="hidden" id="visitType" value="Initial">
-          
-          <label>Account Category</label>
-          <div class="toggle-group">
-            <div id="btnRest" class="toggle-btn active" onclick="setAccountType('Restaurant')">Restaurant</div>
-            <div id="btnWhole" class="toggle-btn" onclick="setAccountType('Wholesaler')">Wholesaler</div>
-          </div>
-          <input type="hidden" id="accountType" value="Restaurant">
-          
-          <label>Account Name</label>
-          <input list="customers" id="name" placeholder="Search accounts..." onblur="checkExisting()" required>
-          <datalist id="customers"></datalist>
-
-          <label>Manager / Contact Name</label>
-          <input type="text" id="manager" placeholder="TBD">
-
-          <div class="row">
-            <div class="col">
-              <label>Street Address</label>
-              <input type="text" id="address">
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col">
-              <label>Phone</label>
-              <input type="tel" id="phone">
-            </div>
-            <div class="col">
-              <label>Email</label>
-              <input type="email" id="email">
-            </div>
-          </div>
-
-          <label>Outcome</label>
-          <select id="outcome" required>
-            <option value="">-- Select Result --</option>
-            <option value="Sale">Sale (Write Invoice)</option>
-            <option value="Warm">Warm (Interested / Follow-up)</option>
-            <option value="Cold">Cold (Long-term Prospect)</option>
-            <option value="Not Interested">Not Interested</option>
-          </select>
-
-          <label>Notes (AI Analysis)</label>
-          <textarea id="notes" rows="4" placeholder="Manager back on Tuesday..."></textarea>
-
-          <button type="submit" id="submitBtn" class="btn-submit">Save Activity & Analyze</button>
-        </form>
-      </div>
-    </div>
-    
-    <div style="flex-grow:1;"></div>
-    <footer class="app-footer">
-        <div class="footer-left">
-            <span>&copy; <span id="copyright-year">2026</span> Suburban Brewing Co.</span>
-            <span class="system-status">
-                <span class="status-dot"></span>
-                System Operational
-            </span>
-        </div>
-        <div class="footer-links">
-            <span>Portal v2.5</span>
-            <a href="https://github.com/remyjdavis/Suburban-Brewing-Company-Portal" target="_blank">Repo</a>
-            <a href="#" onclick="Swal.fire({
-                title: 'App Support', 
-                html: '<b>Remy Davis</b><br>remyjdavis90@gmail.com', 
-                icon: 'info',
-                confirmButtonColor: 'var(--accent)'
-            })">Support</a>
-            <a href="#" onclick="location.reload()">Refresh Data</a>
-        </div>
-    </footer>
-  </div>
-
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec";
-    
-    // --- SIDEBAR TOGGLE LOGIC ---
-    function toggleGroup(contentId, headerEl) {
-      const content = document.getElementById(contentId);
-      content.classList.toggle('collapsed');
-      headerEl.classList.toggle('collapsed');
-    }
-
-    // --- MOBILE DRAWER TOGGLE ---
-    function toggleMobileMenu() {
-        const sidebar = document.querySelector('.sidebar');
-        const overlay = document.getElementById('menu-overlay');
-        const btn = document.getElementById('menu-toggle');
-        
-        const isOpen = sidebar.classList.toggle('open');
-        overlay.classList.toggle('active');
-        
-        document.body.style.overflow = isOpen ? 'hidden' : '';
-        btn.innerText = isOpen ? '✕' : '☰';
-    }
-
-    // --- INITIAL LOAD ---
-    window.onload = async () => {
-      // 1. Kickstart Global Portal UI (Fixes Avatar, Role, Name, and Inbox)
-    if (typeof setupUserProfile === 'function') setupUserProfile();
-    if (typeof checkUnreadCount === 'function') checkUnreadCount();
-
-    // 2. Set Footer Year
-    document.getElementById('copyright-year').innerText = new Date().getFullYear();
-      
-      document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-      // Sidebar Active State
-      const activeLink = document.querySelector('.nav-link.active');
-      if (activeLink) {
-        const parentGroup = activeLink.closest('.collapsible-content');
-        if (parentGroup) {
-          parentGroup.classList.remove('collapsed');
-          const header = parentGroup.previousElementSibling;
-          if (header) header.classList.remove('collapsed');
-        }
-      }
-
-      // Mobile Link Auto-close
-      document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            if (window.innerWidth <= 1024) {
-                const sidebar = document.querySelector('.sidebar');
-                if (sidebar.classList.contains('open')) toggleMobileMenu();
-            }
-        });
-      });
-
-      // 4. Load Customers
-      try {
-        const resp = await fetch(`${API_URL}?action=getWholesalerInventory`, { redirect: "follow" });
-        const json = await resp.json();
-        
-        const data = Array.isArray(json) ? json : (json.data || []);
-
-        const dl = document.getElementById('customers');
-        if (data.length > 0) {
-            const uniqueNames = [...new Set(data.map(item => item.name))];
-            uniqueNames.forEach(n => { 
-                let o = document.createElement('option'); 
-                o.value = n; 
-                dl.appendChild(o); 
-            });
-        }
-      } catch (e) { console.error("Customer Load Error:", e); }
-    };
-
-    // --- FORM TOGGLE LOGIC ---
-    function setVisitType(type) {
-      document.getElementById('visitType').value = type;
-      document.getElementById('btnInitial').classList.toggle('active', type === 'Initial');
-      document.getElementById('btnFollow').classList.toggle('active', type === 'Follow-up');
-    }
-
-    function setAccountType(type) {
-      document.getElementById('accountType').value = type;
-      document.getElementById('btnRest').classList.toggle('active', type === 'Restaurant');
-      document.getElementById('btnWhole').classList.toggle('active', type === 'Wholesaler');
-      checkExisting(); 
-    }
-
-    // --- AUTO-FILL LOGIC ---
-    async function checkExisting() {
-        const nameInput = document.getElementById("name").value.trim();
-        if (!nameInput) return;
-
-        try {
-            const response = await fetch(`${API_URL}?action=getSalesLeads`); 
-            const json = await response.json();
-            
-            let leads = [];
-            if (Array.isArray(json)) {
-                leads = json;
-            } else if (json.data && Array.isArray(json.data)) {
-                leads = json.data;
-            } else {
-                return;
-            }
-
-            const match = leads.find(l => l.name && l.name.toLowerCase() === nameInput.toLowerCase());
-
-            if (match) {
-                document.getElementById("manager").value = match.manager || "";
-                document.getElementById("address").value = match.address || "";
-                document.getElementById("phone").value = match.phone || "";
-                document.getElementById("email").value = match.email || "";
-                document.getElementById("name").style.borderColor = "#34c759";
-                setVisitType('Follow-up');
-                
-                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
-                Toast.fire({ icon: 'success', title: 'Account Found: Info Auto-filled' });
-            } else {
-                document.getElementById("name").style.borderColor = "#d1d5db";
-            }
-        } catch (err) {
-            console.error("CheckExisting Error:", err);
-        }
-    }
-
-    // --- SUBMIT LOGIC ---
-    document.getElementById('salesForm').onsubmit = async function(e) {
-      e.preventDefault();
-      const btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.innerText = "Processing with Gemini AI...";
-
-      const payload = {
-        visitType: document.getElementById('visitType').value,
-        name: document.getElementById('name').value,
-        type: document.getElementById('accountType').value,
-        manager: document.getElementById('manager').value,
-        address: document.getElementById('address').value,
-        phone: document.getElementById('phone').value,
-        email: document.getElementById('email').value,
-        outcome: document.getElementById('outcome').value,
-        notes: document.getElementById('notes').value
-      };
-
-      try {
-        const params = new URLSearchParams({ action: "submitSalesActivity", data: JSON.stringify(payload) });
-        const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: "follow" });
-        const res = await response.json();
-
-        if (res.success) {
-          await Swal.fire({
-            title: 'Activity Saved',
-            // SHOW THE AI REASON HERE
-            text: res.nextDate ? `AI Suggested: ${res.nextDate}\nReason: ${res.aiReason}` : 'Activity Logged Successfully',
-            icon: 'success',
-            confirmButtonColor: '#111827'
-          });
-
-          if (res.redirect) {
-            window.location.href = "new%20invoices.html?customer=" + encodeURIComponent(payload.name);
-          } else {
-            location.reload();
-          }
-        } else {
-            throw new Error(res.message || "Unknown error occurred");
-        }
-      } catch (err) {
-        Swal.fire('Sync Error', err.toString(), 'error');
-        btn.disabled = false;
-        btn.innerText = "Save Activity & Analyze";
-      }
-    };
-  </script>
-</body>
-</html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Sales Leads & Follow-Ups | Suburban Brewing Co.</title>
+<link rel="icon" href="../logo.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><script src="/Suburban-Brewing-Company-Portal/portal.js"></script>
+<script>if(sessionStorage.getItem('sbc_auth')!=='true') location.replace('/Suburban-Brewing-Company-Portal/login.html');</script>
+<style>
+:root{--navy:#0c1e39;--blue:#2364e8;--ink:#1c2940;--muted:#71809a;--light:#f3f6fb;--line:#e2e8f0;--white:#fff;--green:#039669;--red:#d92d45;--amber:#ba760e}*{box-sizing:border-box}body{margin:0;background:var(--light);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:13px}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}.nav{width:224px;position:fixed;inset:0 auto 0 0;background:var(--navy);color:#f1f5fb;padding:19px 0;overflow:auto;z-index:25}.brand{font-size:18px;font-weight:800;letter-spacing:1.2px;padding:8px 20px 26px}.brand small{display:block;letter-spacing:3px;font-size:9px;margin-left:19px}.nav .section{font-size:10px;letter-spacing:1.5px;color:#a1b4d1;margin:20px 19px 8px;font-weight:800}.nav a{display:block;color:#aec2dd;text-decoration:none;padding:11px 20px;font-size:12px}.nav a:hover,.nav a.active{color:white;background:#1b4c9d;border-radius:7px;margin:0 7px;padding-left:13px}.main{margin-left:224px;min-height:100vh;padding:22px 24px 24px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.top h1{margin:0 0 5px;font-size:26px;letter-spacing:-.8px}.sub{color:var(--muted);font-size:12px}.top-side{display:flex;gap:12px;align-items:center}.top-search{width:255px}input,select,textarea{width:100%;border:1px solid #dbe2ee;border-radius:8px;padding:10px 11px;background:white;color:var(--ink);outline:none}input:focus,select:focus,textarea:focus{border-color:#4985ea;box-shadow:0 0 0 3px #e0ebff}.mini-user{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:white;background:#2155a8;font-weight:800}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}.kpi,.panel{background:#fff;box-shadow:0 4px 15px #1b36600b;border:1px solid #e8edf5;border-radius:12px}.kpi{padding:16px 16px 17px;display:flex;align-items:center;gap:13px}.kpi-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:10px;font-size:21px;background:#e7f0ff}.kpi:nth-child(2) .kpi-icon{background:#ffeaed}.kpi:nth-child(3) .kpi-icon{background:#fff0d8}.kpi:nth-child(4) .kpi-icon{background:#e1f7ef}.kpi-name{font-weight:700;font-size:11px}.kpi-val{font-size:30px;font-weight:800;line-height:1.25}.kpi-note{font-size:11px;color:var(--muted)}.workspace{display:grid;grid-template-columns:minmax(0,1.76fr) minmax(335px,1fr);gap:15px;align-items:start}.col{min-width:0}.panel{padding:14px;margin-bottom:14px}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.panel h2{font-size:17px;margin:0}.btn{border:0;border-radius:7px;padding:10px 14px;font-weight:700;white-space:nowrap}.btn.primary{background:var(--blue);color:white}.btn.light{background:#eef3fc;color:#254c90}.btn.ghost{background:white;border:1px solid var(--line);color:#3c4b65}.btn.sm{font-size:11px;padding:7px 10px}.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}.controls input,.controls select{padding:9px 7px;font-size:11px;min-width:0}.table-wrap{overflow:auto}.table-wrap table{border-collapse:collapse;width:100%;min-width:720px}th{font-size:10px;color:#52617a;text-align:left;background:#f5f8fd;padding:11px 10px;white-space:nowrap}td{font-size:11px;padding:12px 10px;border-bottom:1px solid #edf1f6;vertical-align:middle}.linkrow{cursor:pointer}.linkrow:hover{background:#f5f9ff}.linkrow.selected{background:#eaf2ff;box-shadow:inset 3px 0 var(--blue)}.muted{font-size:10px;color:#7a879e}.pill{border-radius:20px;display:inline-block;padding:4px 8px;font-size:10px;white-space:nowrap;font-weight:700}.pill.red{background:#fee5e8;color:#bf2840}.pill.orange{background:#fff0d7;color:#a66a0e}.pill.blue{background:#e0eeff;color:#1556bb}.pill.green{background:#def7eb;color:#008358}.pill.gray{background:#e9edf2;color:#657388}.empty{padding:22px;color:var(--muted);text-align:center}.detail-head{display:flex;gap:12px;align-items:start;justify-content:space-between}.detail-avatar{background:#122f58;color:#fff;border-radius:50%;height:49px;width:49px;display:grid;place-items:center;font-weight:800;font-size:20px;flex-shrink:0}.detail-name{font-size:17px;font-weight:800}.tabs{display:flex;gap:5px;border-bottom:1px solid #dbe4f1;margin:15px -14px 12px;padding:0 10px}.tab{border:0;background:none;padding:12px 11px;color:#6c7b93;font-size:11px}.tab.on{font-weight:700;color:#2364e8;border-bottom:3px solid #2364e8}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}.info-box,.follow,.history,.notes{border:1px solid #e6eaf1;border-radius:10px;padding:12px;margin-bottom:12px;min-width:0}.info-row{margin:8px 0;overflow-wrap:anywhere}.info-row strong{font-size:11px}.detail-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:12px;font-weight:800}.task-tools{display:flex;gap:7px;align-items:center;margin-top:10px}.task-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #edf1f6}.task-row:last-child{border:0}.timeline-item{border-left:2px solid #a5c6ff;padding:0 0 14px 15px;margin:0 0 0 8px;position:relative}.timeline-item:before{content:'';position:absolute;left:-6px;top:1px;width:10px;height:10px;border-radius:100%;background:#3576e5}.timeline-item:last-child{padding-bottom:0}.modalback{position:fixed;inset:0;background:#0a1c3e80;display:none;justify-content:center;align-items:center;padding:16px;z-index:99}.modalback.show{display:flex}.modal{background:#fff;border-radius:14px;width:min(690px,100%);max-height:94vh;overflow:auto;padding:22px;box-shadow:0 18px 48px #05153055}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.modal-head h2{margin:0;font-size:18px}.x{background:none;border:0;font-size:24px;color:#6a768a}.fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field.full{grid-column:1/-1}.field label{display:block;font-size:11px;font-weight:700;margin-bottom:6px}.field textarea{min-height:83px;resize:vertical}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.smallaction{display:flex;gap:6px;flex-wrap:wrap}.hidden{display:none!important}.loading{color:var(--muted);font-size:12px}.footer{padding:13px 0;color:#8796ad;font-size:11px;text-align:right}.mobile-open{display:none}.overlay{display:none}@media(max-width:1300px){.workspace{grid-template-columns:minmax(0,1.2fr) minmax(315px,1fr)}.kpi{padding:12px}.kpi-icon{width:37px;height:37px}}@media(max-width:1080px){.workspace{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.main{margin-left:0;padding:16px}.nav{transform:translateX(-100%);transition:transform .2s}.nav.open{transform:translateX(0)}.mobile-open{display:inline-flex;align-items:center;justify-content:center;border:0;background:#193865;color:#fff;padding:8px 11px;border-radius:7px}.top{align-items:flex-start}.top h1{font-size:20px}.top-side{flex:0}.top-search{display:none}.kpis{gap:8px}.kpi{gap:6px;padding:12px}.kpi-icon{height:34px;width:34px;font-size:15px}.kpi-val{font-size:24px}.info-grid{grid-template-columns:1fr}.controls{grid-template-columns:repeat(2,1fr)}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.overlay.open{display:block;position:fixed;inset:0;background:#0c234199;z-index:24}}
+</style></head><body>
+<div id="navOverlay" class="overlay" onclick="toggleMobileNav()"></div>
+<nav id="sidebar" class="nav"><div class="brand">◈ SUBURBAN<small>BREWING CO.</small></div>
+<a href="../index.html">◫ &nbsp; Dashboard</a><div class="section">SALES</div>
+<a href="leads.html" class="active">♙ &nbsp; Sales Leads</a>
+<a href="sales-opportunities.html">◈ &nbsp; Sales Opportunities</a>
+<a href="invoice-search.html">▣ &nbsp; Invoice Search</a>
+<a href="new invoices.html">＋ &nbsp; New Invoice</a><a href="deliveries.html">☷ &nbsp; Delivery Tracking</a>
+<div class="section">INVENTORY</div><a href="../inventory/brewery.html">▤ &nbsp; Packaged Inventory</a>
+<div class="section">REPORTS</div><a href="../Reports/Monthly-sales.html">▥ &nbsp; Monthly Sales Report</a></nav>
+<main class="main"><header class="top"><div><button class="mobile-open" onclick="toggleMobileNav()">☰ Menu</button><h1>Sales Leads & Follow-Ups</h1><div class="sub">Manage your pipeline, follow up with prospects, and grow Suburban Brewing Co. accounts.</div></div>
+<div class="top-side"><input class="top-search" placeholder="Search leads, accounts, or contacts..." id="globalSearch" oninput="syncSearch(this.value)"><div class="mini-user">SBC</div></div></header>
+<section class="kpis"><div class="kpi"><div class="kpi-icon">👥</div><div><div class="kpi-name">Total Active Leads</div><div class="kpi-val" id="kActive">—</div><div class="kpi-note">Open prospects</div></div></div>
+<div class="kpi"><div class="kpi-icon">📆</div><div><div class="kpi-name">Follow-Ups Due Today</div><div class="kpi-val" id="kDue">—</div><div class="kpi-note" id="kOverdue">—</div></div></div>
+<div class="kpi"><div class="kpi-icon">🔥</div><div><div class="kpi-name">Warm Prospects</div><div class="kpi-val" id="kWarm">—</div><div class="kpi-note">Showing strong interest</div></div></div>
+<div class="kpi"><div class="kpi-icon">📈</div><div><div class="kpi-name">Closed / Converted</div><div class="kpi-val" id="kWon">—</div><div class="kpi-note">All time</div></div></div></section>
+<section class="workspace"><div class="col">
+<section class="panel"><div class="panel-head"><h2>Leads</h2><button class="btn primary" onclick="openLeadModal()">＋ Add New Lead</button></div>
+<div class="controls"><select id="fStatus" onchange="renderLeads()"><option value="">All Statuses</option></select><select id="fType" onchange="renderLeads()"><option value="">All Account Types</option></select><select id="fRep" onchange="renderLeads()"><option value="">All Reps</option></select><input type="date" id="fDate" title="Filter by follow-up date" onchange="renderLeads()"></div>
+<div class="controls" style="grid-template-columns:1fr auto"><input id="leadSearch" placeholder="Search leads..." oninput="renderLeads()"><button class="btn light sm" onclick="clearFilters()">Clear filters</button></div>
+<div class="table-wrap"><table><thead><tr><th>Account Name</th><th>Contact</th><th>Type</th><th>Status</th><th>Last Contact</th><th>Next Follow-Up</th><th>Priority</th><th>Outcome</th></tr></thead><tbody id="leadRows"><tr><td colspan="8" class="empty">Loading leads…</td></tr></tbody></table></div></section>
+<section class="panel"><div class="panel-head"><h2>Follow-Up Tasks</h2><button class="btn light sm" onclick="openTaskModal()">＋ Add Task</button></div><div class="table-wrap"><table style="min-width:530px"><thead><tr><th>Task</th><th>Account</th><th>Due Date</th><th>Priority</th><th>Action</th></tr></thead><tbody id="taskRows"><tr><td colspan="5" class="empty">Loading tasks…</td></tr></tbody></table></div></section>
+</div><div class="col"><section class="panel" id="leadDetail"><div class="empty">Choose a lead to view its details.</div></section></div></section>
+<div class="footer">© <span id="year"></span> Suburban Brewing Co. · Sales CRM</div></main>
+<div class="modalback" id="leadModal"><div class="modal"><div class="modal-head"><h2 id="leadModalTitle">Add New Lead</h2><button class="x" onclick="closeModal('leadModal')" aria-label="Close">×</button></div>
+<form id="leadForm" onsubmit="saveLead(event)"><div class="fields">
+<div class="field"><label>Account Name *</label><input id="accountName" required maxlength="160" placeholder="e.g. The Riverside Tavern"></div><div class="field"><label>Contact Name *</label><input id="contactName" required maxlength="160" placeholder="e.g. Jamie Smith"></div>
+<div class="field"><label>Account Type *</label><select id="accountType" required><option value="">Select account type</option><option>Restaurant</option><option>Bar</option><option>Wholesaler</option><option>Distributor</option><option>Retail</option><option>Private Club</option><option>Golf Club</option><option>Other</option></select></div>
+<div class="field"><label>Status *</label><select id="status"><option>New</option><option>Warm</option><option>Cold</option><option>Follow-Up Due</option><option>Won</option><option>Lost</option></select></div>
+<div class="field"><label>Phone</label><input id="phone" type="tel"></div><div class="field"><label>Email</label><input id="email" type="email"></div>
+<div class="field"><label>City</label><input id="city"></div><div class="field"><label>State</label><input id="state" placeholder="PA"></div>
+<div class="field"><label>Priority</label><select id="priority"><option>Medium</option><option>High</option><option>Low</option></select></div><div class="field"><label>Next Follow-Up Date</label><input id="nextFollowUp" type="date"></div>
+<div class="field"><label>Lead Source</label><input id="leadSource" placeholder="Trade show, referral…"></div><div class="field"><label>Assigned Rep</label><input id="assignedRep" placeholder="Sales representative"></div>
+<div class="field"><label>Interest Level</label><select id="interestLevel"><option value="">Select level</option><option>High</option><option>Medium</option><option>Low</option></select></div><div class="field"><label>Estimated Volume</label><input id="estVolume" placeholder="e.g. 3–5 bbl / month"></div>
+<div class="field full"><label>Notes</label><textarea id="notes" maxlength="4000"></textarea></div></div>
+<div class="actions"><button type="button" class="btn ghost" onclick="closeModal('leadModal')">Cancel</button><button class="btn primary" id="saveLeadBtn" type="submit">Create Lead</button></div></form></div></div>
+<div class="modalback" id="activityModal"><div class="modal" style="max-width:590px"><div class="modal-head"><h2>Log Lead Activity</h2><button class="x" onclick="closeModal('activityModal')">×</button></div><form onsubmit="saveActivity(event)"><div class="fields">
+<div class="field"><label>Activity Type *</label><select id="actType"><option>Initial Visit</option><option>Follow-Up Call</option><option>In-Person Follow-Up</option><option>Email Sent</option><option>Sample Drop-Off</option><option>Invoice Sent</option><option>Meeting</option><option>Other</option></select></div>
+<div class="field"><label>Activity Date</label><input id="actDate" type="date" required></div><div class="field full"><label>Activity Notes</label><textarea id="actNotes" required maxlength="4000" placeholder="Describe what happened and the next action…"></textarea></div>
+<div class="field"><label>Outcome</label><select id="actOutcome"><option value="">No change</option><option>Warm</option><option>Cold</option><option>Won</option><option>Lost</option></select></div><div class="field"><label>Next Follow-Up Date</label><input id="actNext" type="date"></div><div class="field full"><label>New Follow-Up Task (optional)</label><input id="actTask" placeholder="Call buyer about seasonal lineup"></div>
+<div class="field"><label>Priority</label><select id="actPriority"><option>Medium</option><option>High</option><option>Low</option></select></div><div class="field"><label>Created By</label><input id="actRep" placeholder="Sales representative"></div>
+<div class="field full"><label><input style="width:auto" type="checkbox" id="actReminder" checked> Email reminder enabled for this task (requires configured trigger)</label></div></div>
+<div class="actions"><button class="btn ghost" type="button" onclick="closeModal('activityModal')">Cancel</button><button class="btn primary" id="saveActBtn">Save Activity</button></div></form></div></div>
+<div class="modalback" id="taskModal"><div class="modal" style="max-width:510px"><div class="modal-head"><h2>Create Follow-Up Task</h2><button class="x" onclick="closeModal('taskModal')">×</button></div><form onsubmit="saveTask(event)"><div class="fields">
+<div class="field full"><label>Lead *</label><select id="taskLead" required></select></div><div class="field full"><label>Task *</label><input id="taskTitle" required maxlength="200" placeholder="Send pricing / call account…"></div>
+<div class="field"><label>Due Date *</label><input id="taskDate" type="date" required></div><div class="field"><label>Priority</label><select id="taskPriority"><option>Medium</option><option>High</option><option>Low</option></select></div>
+<div class="field full"><label><input type="checkbox" style="width:auto" id="taskReminder" checked> Include in daily email reminders</label></div></div>
+<div class="actions"><button type="button" class="btn ghost" onclick="closeModal('taskModal')">Cancel</button><button type="submit" class="btn primary" id="saveTaskBtn">Create Task</button></div></form></div></div>
+<script>
+// IMPORTANT: Replace this string with the /exec URL of your NEW standalone LeadsBackend.gs deployment.
+const API_URL='PASTE_NEW_LEADS_BACKEND_EXEC_URL_HERE';
+let dashboard={leads:[],tasks:[],stats:{}},selectedId='',selectedLead=null,activeTab='Overview',leadEditId='';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const localDateISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const displayDate=s=>{if(!s)return '—';const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[2]}/${m[3]}/${m[1]}`:String(s)};
+const chip=(s,priority=false)=>{const val=String(s||'New'),key=val.toLowerCase();const color=priority?(key==='high'?'red':key==='low'?'gray':'orange'):(key.includes('due')?'red':key==='warm'?'orange':key==='new'?'blue':key==='won'||key==='converted'?'green':key==='lost'?'gray':'blue');return `<span class="pill ${color}">${esc(val)}</span>`};
+function toast(title,text,icon='info'){if(window.Swal)return Swal.fire({title,text,icon,confirmButtonColor:'#2364e8'});alert(title+': '+text)}
+function jsonp(action,params={}){return new Promise((resolve,reject)=>{
+  if(!/^https:\/\/script\.google\.com\/macros\/s\//.test(API_URL))return reject(Error('Set API_URL in this HTML to your deployed LeadsBackend.gs /exec URL.'));
+  const cb='sbcCRMcb'+Date.now()+Math.floor(Math.random()*100000),script=document.createElement('script');
+  let done=false;const timer=setTimeout(()=>finish(Error('The CRM request timed out. Check the Apps Script deployment permissions and URL.')),25000);
+  const finish=(err,value)=>{if(done)return;done=true;clearTimeout(timer);script.remove();try{delete window[cb]}catch(_){};err?reject(err):resolve(value)};
+  window[cb]=value=>{if(value&&value.success===false)finish(Error(value.error||'Request failed'));else finish(null,value)};
+  const u=new URL(API_URL);u.searchParams.set('action',action);u.searchParams.set('callback',cb);
+  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,k==='data'?JSON.stringify(v):String(v)));
+  script.onerror=()=>finish(Error('Could not reach the CRM backend. Verify the /exec URL and access settings.'));
+  script.src=u.toString();document.head.appendChild(script);
+})}
+async function api(action,data){return jsonp(action,{data})}
+function toggleMobileNav(){ $('sidebar').classList.toggle('open');$('navOverlay').classList.toggle('open') }
+function syncSearch(v){$('leadSearch').value=v;renderLeads()}
+function setSelectOptions(id,base,values){const select=$(id),prev=select.value;select.innerHTML=`<option value="">${esc(base)}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');select.value=prev;}
+async function refresh(preferred){try{
+  const d=await jsonp('getSalesDashboard');dashboard=d;
+  $('kActive').textContent=d.stats.activeLeads;$('kDue').textContent=d.stats.followUpsDueToday;$('kOverdue').textContent=d.stats.overdueFollowUps+' overdue';$('kWarm').textContent=d.stats.warmProspects;$('kWon').textContent=d.stats.converted;
+  setSelectOptions('fStatus','All Statuses',[...new Set(d.leads.map(l=>l.displayStatus||l.status).filter(Boolean))].sort());
+  setSelectOptions('fType','All Account Types',[...new Set(d.leads.map(l=>l.accountType).filter(Boolean))].sort());
+  setSelectOptions('fRep','All Reps',[...new Set(d.leads.map(l=>l.assignedRep).filter(Boolean))].sort());
+  renderLeads();renderTasks();
+  selectedId=(preferred||selectedId||d.selectedLeadId||'');
+  if(selectedId && d.leads.some(l=>l.leadId===selectedId))await loadDetail(selectedId);
+  else {$('leadDetail').innerHTML='<div class="empty">No lead selected. Create a lead to begin.</div>';selectedId='';selectedLead=null}
+}catch(e){$('leadRows').innerHTML=`<tr><td colspan="8" class="empty">${esc(e.message)}</td></tr>`;toast('CRM Connection Error',e.message,'error')}}
+function clearFilters(){['fStatus','fType','fRep','fDate','leadSearch','globalSearch'].forEach(id=>$(id).value='');renderLeads()}
+function renderLeads(){const status=$('fStatus').value,type=$('fType').value,rep=$('fRep').value,date=$('fDate').value,q=$('leadSearch').value.trim().toLowerCase();const leads=dashboard.leads.filter(l=>(!status||(l.displayStatus||l.status)===status)&&(!type||l.accountType===type)&&(!rep||l.assignedRep===rep)&&(!date||l.nextFollowUp===date)&&(!q||[l.accountName,l.contactName,l.city,l.state,l.accountType].some(x=>String(x||'').toLowerCase().includes(q))));
+$('leadRows').innerHTML=leads.length?leads.map(l=>`<tr class="linkrow ${l.leadId===selectedId?'selected':''}" data-lead="${esc(l.leadId)}"><td><strong>${esc(l.accountName)}</strong><div class="muted">${esc([l.city,l.state].filter(Boolean).join(', '))}</div></td><td>${esc(l.contactName)}</td><td>${esc(l.accountType)}</td><td>${chip(l.displayStatus||l.status)}</td><td>${esc(displayDate(l.lastContact))}</td><td>${esc(displayDate(l.nextFollowUp))}</td><td>${chip(l.priority,true)}</td><td>${esc(l.outcome||'—')}</td></tr>`).join(''):'<tr><td colspan="8" class="empty">No leads match these filters.</td></tr>';
+$('leadRows').querySelectorAll('tr[data-lead]').forEach(tr=>tr.addEventListener('click',()=>loadDetail(tr.dataset.lead)))}
+function renderTasks(){const arr=dashboard.tasks||[];$('taskRows').innerHTML=arr.length?arr.map(t=>`<tr><td><strong>${esc(t.task)}</strong></td><td>${esc(t.account)}</td><td>${esc(displayDate(t.dueDate))}</td><td>${chip(t.priority,true)}</td><td><button class="btn light sm" data-task="${esc(t.taskId)}">Complete</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">No open follow-up tasks.</td></tr>';
+$('taskRows').querySelectorAll('[data-task]').forEach(b=>b.addEventListener('click',()=>completeTask(b.dataset.task)))}
+async function loadDetail(id){selectedId=id;activeTab='Overview';renderLeads();$('leadDetail').innerHTML='<div class="empty">Loading lead activity…</div>';try{const d=await jsonp('getLeadById',{leadId:id});if(id!==selectedId)return;selectedLead=d.lead;renderDetail()}catch(e){$('leadDetail').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+function setTab(tab){activeTab=tab;renderDetail()}
+function renderDetail(){const l=selectedLead;if(!l)return;const tabs=['Overview','Activity','Notes','Opportunities'];$('leadDetail').innerHTML=`<div class="detail-head"><div style="display:flex;gap:10px;align-items:center"><div class="detail-avatar">${esc((l.accountName||'?').charAt(0))}</div><div><div class="detail-name">${esc(l.accountName)}</div><div class="sub">${esc(l.accountType)} · ${esc([l.city,l.state].filter(Boolean).join(', '))}</div></div></div><div>${chip(l.displayStatus||l.status)}</div></div>
+<div class="tabs">${tabs.map(t=>`<button class="tab ${t===activeTab?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div><div id="tabBody"></div>`;
+$('leadDetail').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));let html='';
+if(activeTab==='Overview'){
+ const open=(l.tasks||[]).filter(t=>t.status!=='Completed');
+ html=`<div class="info-grid"><div class="info-box"><strong>👤 ${esc(l.contactName)}</strong><div class="muted">Primary contact</div><div class="info-row">☎ ${esc(l.phone||'Not added')}</div><div class="info-row">✉ ${l.email?`<a href="mailto:${encodeURIComponent(l.email)}">${esc(l.email)}</a>`:'Not added'}</div><div class="info-row">⌖ ${esc([l.city,l.state].filter(Boolean).join(', '))}</div></div><div class="info-box"><div class="info-row"><strong>Lead Source</strong> ${esc(l.leadSource||'—')}</div><div class="info-row"><strong>Interest</strong> ${esc(l.interestLevel||'—')}</div><div class="info-row"><strong>Rep</strong> ${esc(l.assignedRep||'—')}</div><div class="info-row"><strong>Est. Volume</strong> ${esc(l.estVolume||'—')}</div></div></div>
+ <div class="follow"><div class="detail-section-head">📅 Next Follow-Up <button class="btn light sm" id="newTaskBtn">+ Task</button></div><div style="margin-bottom:10px">${chip(l.nextFollowUp?displayDate(l.nextFollowUp):'Not scheduled',!l.nextFollowUp)}</div>
+ ${open.slice(0,5).map(t=>`<div class="task-row"><div><strong>${esc(t.task)}</strong><div class="muted">${esc(displayDate(t.dueDate))} · ${esc(t.priority)} · Reminders ${t.reminderOn?'on':'off'}</div></div><div class="smallaction"><button class="btn light sm" data-remind="${esc(t.taskId)}" data-on="${t.reminderOn?'1':'0'}">${t.reminderOn?'Disable':'Enable'} reminder</button><button class="btn primary sm" data-complete="${esc(t.taskId)}">Complete</button></div></div>`).join('')||'<div class="muted">No outstanding tasks.</div>'}<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn light sm" id="editLeadBtn">Edit Lead</button><button class="btn primary sm" id="logActivityBtn">Log Activity</button></div></div>
+ <div class="history"><div class="detail-section-head">Activity History <button class="btn light sm" id="viewHistoryBtn">View all</button></div>${timeline((l.activities||[]).slice(0,4))}</div>`;
+}else if(activeTab==='Activity')html=`<div class="panel-head"><strong>Activity History</strong><button class="btn primary sm" id="logActivityBtn">+ Log Activity</button></div><div class="history">${timeline(l.activities||[])}</div>`;
+else if(activeTab==='Notes')html=`<div class="notes"><label style="font-weight:800;display:block;margin-bottom:9px">Account Notes</label><textarea id="editNotes" rows="7" maxlength="4000" style="width:100%">${esc(l.notes||'')}</textarea><div style="display:flex;justify-content:flex-end;margin-top:9px"><button class="btn primary sm" id="saveNotesBtn">Save Notes</button></div><p class="muted">Activity notes remain available separately in the history timeline.</p></div>`;
+else html=`<div class="info-box"><div class="detail-section-head">Opportunity Details</div><div class="info-row"><strong>Status:</strong> ${chip(l.status)}</div><div class="info-row"><strong>Outcome:</strong> ${esc(l.outcome||'Not recorded')}</div><div class="info-row"><strong>Expected Volume:</strong> ${esc(l.estVolume||'Not estimated')}</div><div class="info-row"><strong>Interest Level:</strong> ${esc(l.interestLevel||'Unknown')}</div><button class="btn primary sm" id="editLeadBtn">Edit Lead / Outcome</button></div>`;
+$('tabBody').innerHTML=html;
+function bind(id,fn){if($(id))$(id).onclick=fn}
+bind('newTaskBtn',openTaskModal);bind('editLeadBtn',()=>openLeadModal(true));bind('logActivityBtn',openActivityModal);bind('viewHistoryBtn',()=>setTab('Activity'));
+bind('saveNotesBtn',saveNotes);$('tabBody').querySelectorAll('[data-complete]').forEach(b=>b.onclick=()=>completeTask(b.dataset.complete));$('tabBody').querySelectorAll('[data-remind]').forEach(b=>b.onclick=()=>setReminder(b.dataset.remind,b.dataset.on!=='1'));
+}
+function timeline(activities){return activities.length?activities.map(a=>`<div class="timeline-item"><strong>${esc(a.type)}</strong><div class="muted" style="margin:4px 0">${esc(displayDate(a.date))} · ${esc(a.time||'')} ${a.createdBy?' · '+esc(a.createdBy):''}</div><div style="line-height:1.6">${esc(a.notes)}</div>${a.nextFollowUp?`<div class="muted">Next follow-up: ${esc(displayDate(a.nextFollowUp))}</div>`:''}</div>`).join(''):'<div class="muted">No activities recorded.</div>'}
+function openModal(id){$(id).classList.add('show')};function closeModal(id){$(id).classList.remove('show')}
+function openLeadModal(edit=false){leadEditId=edit&&selectedLead?selectedLead.leadId:'';$('leadModalTitle').textContent=leadEditId?'Edit Lead':'Add New Lead';$('saveLeadBtn').textContent=leadEditId?'Save Changes':'Create Lead';$('leadForm').reset();if(leadEditId){const l=selectedLead;['accountName','contactName','accountType','status','phone','email','city','state','priority','nextFollowUp','leadSource','assignedRep','interestLevel','estVolume','notes'].forEach(id=>$(id).value=l[id]||'');$('nextFollowUp').disabled=true;}else $('nextFollowUp').disabled=false;openModal('leadModal')}
+function readFields(ids){return Object.fromEntries(ids.map(id=>[id,$(id).value.trim()]))}
+async function saveLead(ev){ev.preventDefault();const ids=['accountName','contactName','accountType','status','phone','email','city','state','priority','nextFollowUp','leadSource','assignedRep','interestLevel','estVolume','notes'];const data=readFields(ids);if(leadEditId){delete data.nextFollowUp;data.leadId=leadEditId}const b=$('saveLeadBtn');b.disabled=true;try{const r=await api(leadEditId?'updateLead':'createLead',data);closeModal('leadModal');await refresh(r.leadId||leadEditId);toast('Saved',leadEditId?'Lead updated successfully':'Lead created successfully','success')}catch(e){toast('Save Failed',e.message,'error')}finally{b.disabled=false}}
+function openActivityModal(){if(!selectedId)return toast('Select a lead','Select an account first','info');['actNotes','actNext','actTask','actRep','actOutcome'].forEach(id=>$(id).value='');$('actDate').value=localDateISO();$('actPriority').value=selectedLead.priority||'Medium';$('actReminder').checked=true;openModal('activityModal')}
+async function saveActivity(ev){ev.preventDefault();const data={leadId:selectedId,activityType:$('actType').value,activityDate:$('actDate').value,notes:$('actNotes').value.trim(),outcome:$('actOutcome').value,nextFollowUp:$('actNext').value,task:$('actTask').value,priority:$('actPriority').value,createdBy:$('actRep').value,reminderOn:$('actReminder').checked};if(data.outcome==='Won'||data.outcome==='Lost'||data.outcome==='Warm'||data.outcome==='Cold')data.status=data.outcome;const b=$('saveActBtn');b.disabled=true;try{await api('addLeadActivity',data);closeModal('activityModal');await refresh(selectedId);toast('Activity Saved','History and follow-up dates updated.','success')}catch(e){toast('Save Failed',e.message,'error')}finally{b.disabled=false}}
+function openTaskModal(){if(!dashboard.leads.length)return toast('Create a lead first','Tasks need an existing lead.','info');$('taskLead').innerHTML=dashboard.leads.map(l=>`<option value="${esc(l.leadId)}">${esc(l.accountName)}</option>`).join('');$('taskLead').value=selectedId||dashboard.leads[0].leadId;$('taskTitle').value='';$('taskDate').value='';$('taskPriority').value='Medium';$('taskReminder').checked=true;openModal('taskModal')}
+async function saveTask(ev){ev.preventDefault();const b=$('saveTaskBtn');b.disabled=true;try{await api('createLeadTask',{leadId:$('taskLead').value,task:$('taskTitle').value.trim(),dueDate:$('taskDate').value,priority:$('taskPriority').value,reminderOn:$('taskReminder').checked});const id=$('taskLead').value;closeModal('taskModal');await refresh(id);toast('Task Saved','Follow-up task added','success')}catch(e){toast('Save Failed',e.message,'error')}finally{b.disabled=false}}
+async function completeTask(taskId){const ok=window.Swal?await Swal.fire({title:'Complete follow-up?',icon:'question',showCancelButton:true,confirmButtonText:'Mark Complete'}):{isConfirmed:confirm('Mark this follow-up complete?')};if(!ok.isConfirmed)return;try{await api('markTaskComplete',{taskId});await refresh(selectedId);toast('Completed','Follow-up added to activity history.','success')}catch(e){toast('Error',e.message,'error')}}
+async function setReminder(taskId,reminderOn){try{await api('updateLeadTask',{taskId,reminderOn});await refresh(selectedId)}catch(e){toast('Error',e.message,'error')}}
+async function saveNotes(){try{await api('updateLead',{leadId:selectedId,notes:$('editNotes').value});await refresh(selectedId);setTab('Notes');toast('Saved','Account notes updated','success')}catch(e){toast('Error',e.message,'error')}}
+window.addEventListener('DOMContentLoaded',()=>{$('year').textContent=new Date().getFullYear();if(typeof setupUserProfile==='function')setupUserProfile();if(typeof checkUnreadCount==='function')checkUnreadCount();refresh()});
+</script></body></html>
