@@ -204,7 +204,7 @@ function routeOpenFull(){
 function routeRender(){
   const box=$('routeResults');if(!currentRoute){box.hidden=true;box.innerHTML='';return;}
   const r=currentRoute;box.hidden=false;
-  let html=`<div class="route-summary"><span class="route-stat">${r.totalStops} stops</span><span class="route-stat">${r.existingCount} scheduled follow-ups</span><span class="route-stat">${r.prospectCount} new prospects</span><span class="route-stat">${r.routingMode==='approximate'?'Approx. ':''}${esc(r.distanceMiles)} miles</span><span class="route-stat">${r.routingMode==='approximate'?'Est. ':''}${esc(r.driveMinutes)} min driving</span><span class="route-stat">Back at ${esc(r.returnTime)}</span></div>`;
+  let html=`<div class="route-summary"><span class="route-stat">${r.totalStops} stops</span><span class="route-stat">${r.existingCount} scheduled follow-ups</span><span class="route-stat">${r.prospectCount} new prospects</span><span class="route-stat">${r.routingMode==='approximate'||r.routingMode==='optimized-estimated'?'Approx. ':''}${esc(r.distanceMiles)} miles</span><span class="route-stat">${r.routingMode==='approximate'?'Est. ':''}${esc(r.driveMinutes)} min driving</span><span class="route-stat">Back at ${esc(r.returnTime)}</span></div>`;
   const warnings=r.warnings||[];
   if(warnings.length)html+=`<div class="route-notice"><strong>Route notes:</strong><ul style="margin:6px 0 0;padding-left:18px">${warnings.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
   html+=`<div class="route-endpoint"><div>🏠 <strong>0 · Depart Suburban Brewing</strong><div class="muted">${esc(r.departure)} · ${esc(r.origin)}</div></div><button type="button" class="btn light sm" data-nav-leg="0">Directions to first stop</button></div>`;
@@ -232,7 +232,7 @@ async function generateRoute(e){e.preventDefault();const btn=$('routeGenerateBtn
  try{
   const data={routeDate:$('routeDate').value,startTime:$('routeStart').value,maxStops:Number($('routeMax').value),prospectLimit:Number($('routeNew').value),radiusMiles:Number($('routeRadius').value),discoverProspects:$('routeDiscover').checked};
   const r=await api('planLeadRoute',data);
-  currentRoute=r;routeRender();$('routeStatus').textContent=`${r.routingMode==='approximate'?'Estimated fallback route':'Road-optimized route'} generated for ${displayDate(r.routeDate)}. Starts and ends at the brewery.`;
+  currentRoute=r;routeRender();$('routeStatus').textContent=`${r.routingMode==='approximate'?'Estimated fallback route':r.routingMode==='optimized-estimated'?'Optimized order with estimated mileage':'Road-optimized route'} generated for ${displayDate(r.routeDate)}. Starts and ends at the brewery.`;
  }catch(err){$('routeStatus').textContent='Route failed: '+err.message; $('routeStatus').style.whiteSpace='pre-line';toast('Route Builder Error',err.message,'error')}
  finally{btn.disabled=false;btn.textContent='Generate Route';}
 }
