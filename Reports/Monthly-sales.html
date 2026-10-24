@@ -469,7 +469,7 @@
           <p style="color:#6b7280;font-size:13px;margin-top:0;">Select the rep for each delivered invoice. This changes the saved invoice assignment and recalculates the commission report.</p>
           <div class="table-container">
             <table>
-              <thead><tr><th>Invoice</th><th>Customer</th><th>Net Sales</th><th>Assign Sales Rep</th><th>Action</th></tr></thead>
+              <thead><tr><th>Invoice</th><th>Customer</th><th>Net Sales</th><th>Assign Sales Rep / Owner</th><th>Action</th></tr></thead>
               <tbody id="commissionReviewRows"></tbody>
             </table>
           </div>
@@ -632,7 +632,7 @@
         ).join('') || '<tr><td colspan="4">No rep sales for this month.</td></tr>';
 
         const notice = document.getElementById('unassignedNotice');
-        notice.textContent = data.unassignedCount ? `${data.unassignedCount} unassigned delivered invoice(s), totaling ${formatMoney(data.unassignedSales)}, require rep assignment before commission is credited.` : '';
+        notice.textContent = data.unassignedCount ? `${data.unassignedCount} unassigned delivered invoice(s), totaling ${formatMoney(data.unassignedSales)}, need a rep or owner assignment. Owner sales earn no commission.` : '';
         await renderCommissionReview(data.reviewInvoices || []);
         const note = [];
         if (Number(data.totalReportedSales || 0) !== Number(data.totalSales || 0)) {
@@ -659,7 +659,7 @@
       const status = document.getElementById('commissionReviewStatus');
       panel.style.display = invoices.length ? '' : 'none';
       if (!invoices.length) { tbody.innerHTML = ''; status.textContent = ''; return; }
-      tbody.innerHTML = '<tr><td colspan="5">Loading eligible sales representatives...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5">Loading sales reps and owner...</td></tr>';
       status.textContent = '';
       try {
         if (!commissionReviewReps) {
@@ -670,18 +670,18 @@
           commissionReviewReps = result.reps || [];
         }
         const choices = commissionReviewReps.map(rep =>
-          `<option value="${escapeReportText(rep.key)}">${escapeReportText(rep.name)}</option>`).join('');
+          `<option value="${escapeReportText(rep.key)}">${escapeReportText(rep.name)}${rep.isOwner ? ' (Owner — no commission)' : ''}</option>`).join('');
         tbody.innerHTML = invoices.map((inv, idx) => `<tr>
           <td>#${escapeReportText(inv.number)}</td>
           <td>${escapeReportText(inv.customer)}</td>
           <td>${formatMoney(inv.amount)}</td>
           <td><select id="reviewRep${idx}" aria-label="Sales rep for invoice ${escapeReportText(inv.number)}" style="width:100%;min-width:145px;padding:7px;border:1px solid #cbd5e1;border-radius:7px;">
-            <option value="">Select a rep</option>${choices}</select></td>
+            <option value="">Select rep or owner</option>${choices}</select></td>
           <td><button class="btn btn-primary" style="padding:8px 12px;" id="reviewSave${idx}" onclick="saveCommissionReviewAssignment(${idx})" ${choices ? '' : 'disabled'}>Save</button></td>
         </tr>`).join('');
-        if (!choices) status.textContent = 'No eligible sales reps found in the Employee Database.';
+        if (!choices) status.textContent = 'No sales reps or owner available for invoice assignment.';
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="5">Unable to load eligible sales reps.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5">Unable to load sales reps and owner.</td></tr>';
         status.textContent = String(err.message || err);
       }
     }
@@ -694,9 +694,9 @@
       const button = document.getElementById(`reviewSave${index}`);
       const status = document.getElementById('commissionReviewStatus');
       const repKey = picker ? picker.value : '';
-      if (!repKey) { status.textContent = 'Select a sales rep first.'; return; }
+      if (!repKey) { status.textContent = 'Select a sales rep or owner first.'; return; }
       const rep = (commissionReviewReps || []).find(r => r.key === repKey);
-      if (!window.confirm(`Assign invoice #${inv.number} to ${rep ? rep.name : 'this rep'}? This will change commission attribution.`)) return;
+      if (!window.confirm(`Assign invoice #${inv.number} to ${rep ? rep.name : 'this person'}? ${rep && rep.isOwner ? 'Owner-assigned invoices earn no commission.' : 'This will change commission attribution.'}`)) return;
       commissionReviewBusy = true;
       button.disabled = true;
       button.textContent = 'Saving…';
@@ -714,7 +714,7 @@
         const result = await response.json();
         if (!result.success) throw new Error(result.error || 'Assignment failed');
         await loadData();
-        document.getElementById('commissionFilterStatus').textContent = `Invoice #${inv.number} assigned to ${result.repName}. Commission totals refreshed.`;
+        document.getElementById('commissionFilterStatus').textContent = `Invoice #${inv.number} assigned to ${result.repName}.${result.isOwner ? ' Owner commission is $0.' : ' Commission totals refreshed.'}`;
       } catch (err) {
         status.textContent = `Could not save: ${err.message || err}`;
         button.disabled = false;
