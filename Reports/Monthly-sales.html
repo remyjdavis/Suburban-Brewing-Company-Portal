@@ -464,6 +464,17 @@
             <tbody id="repSummaryRows"><tr><td colspan="4">Loading report...</td></tr></tbody></table>
         </div>
         <div id="unassignedNotice" class="settings-note" style="margin-top:12px;"></div>
+        <div id="commissionReviewPanel" style="display:none;margin-top:18px;padding-top:18px;border-top:1px solid #e5e7eb;">
+          <h3 style="margin:0 0 6px;">Unassigned Invoice Review</h3>
+          <p style="color:#6b7280;font-size:13px;margin-top:0;">Select the rep for each delivered invoice. This changes the saved invoice assignment and recalculates the commission report.</p>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Invoice</th><th>Customer</th><th>Net Sales</th><th>Assign Sales Rep</th><th>Action</th></tr></thead>
+              <tbody id="commissionReviewRows"></tbody>
+            </table>
+          </div>
+          <p class="settings-note" id="commissionReviewStatus" aria-live="polite"></p>
+        </div>
       </div>
 
     </div>
@@ -548,6 +559,8 @@
     }
 
     let currentCommissionReport = null;
+    let commissionReviewReps = null;
+    let commissionReviewBusy = false;
 
     function escapeReportText(value) {
       return String(value ?? '').replace(/[&<>"']/g, c => ({
@@ -620,6 +633,7 @@
 
         const notice = document.getElementById('unassignedNotice');
         notice.textContent = data.unassignedCount ? `${data.unassignedCount} unassigned delivered invoice(s), totaling ${formatMoney(data.unassignedSales)}, require rep assignment before commission is credited.` : '';
+        await renderCommissionReview(data.reviewInvoices || []);
         const note = [];
         if (Number(data.totalReportedSales || 0) !== Number(data.totalSales || 0)) {
           note.push(`Reported sales: ${formatMoney(data.totalReportedSales)}`);
@@ -633,7 +647,80 @@
         console.error('Failed to load commission report', e);
         if (list) list.innerHTML = `<tr><td colspan="5">Report failed: ${escapeReportText(e.message)}</td></tr>`;
         document.getElementById('repSummaryRows').innerHTML = '';
+        document.getElementById('commissionReviewPanel').style.display = 'none';
         status.textContent = `Could not load report: ${e.message}`;
+      }
+    }
+
+
+    async function renderCommissionReview(invoices) {
+      const panel = document.getElementById('commissionReviewPanel');
+      const tbody = document.getElementById('commissionReviewRows');
+      const status = document.getElementById('commissionReviewStatus');
+      panel.style.display = invoices.length ? '' : 'none';
+      if (!invoices.length) { tbody.innerHTML = ''; status.textContent = ''; return; }
+      tbody.innerHTML = '<tr><td colspan="5">Loading eligible sales representatives...</td></tr>';
+      status.textContent = '';
+      try {
+        if (!commissionReviewReps) {
+          const response = await fetch(`${API_URL}?action=getCommissionAssignableReps`, { redirect: 'follow' });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const result = await response.json();
+          if (!result.success) throw new Error(result.error || 'Unable to load reps');
+          commissionReviewReps = result.reps || [];
+        }
+        const choices = commissionReviewReps.map(rep =>
+          `<option value="${escapeReportText(rep.key)}">${escapeReportText(rep.name)}</option>`).join('');
+        tbody.innerHTML = invoices.map((inv, idx) => `<tr>
+          <td>#${escapeReportText(inv.number)}</td>
+          <td>${escapeReportText(inv.customer)}</td>
+          <td>${formatMoney(inv.amount)}</td>
+          <td><select id="reviewRep${idx}" aria-label="Sales rep for invoice ${escapeReportText(inv.number)}" style="width:100%;min-width:145px;padding:7px;border:1px solid #cbd5e1;border-radius:7px;">
+            <option value="">Select a rep</option>${choices}</select></td>
+          <td><button class="btn btn-primary" style="padding:8px 12px;" id="reviewSave${idx}" onclick="saveCommissionReviewAssignment(${idx})" ${choices ? '' : 'disabled'}>Save</button></td>
+        </tr>`).join('');
+        if (!choices) status.textContent = 'No eligible sales reps found in the Employee Database.';
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="5">Unable to load eligible sales reps.</td></tr>';
+        status.textContent = String(err.message || err);
+      }
+    }
+
+    async function saveCommissionReviewAssignment(index) {
+      if (commissionReviewBusy || !currentCommissionReport) return;
+      const inv = (currentCommissionReport.reviewInvoices || [])[index];
+      if (!inv) return;
+      const picker = document.getElementById(`reviewRep${index}`);
+      const button = document.getElementById(`reviewSave${index}`);
+      const status = document.getElementById('commissionReviewStatus');
+      const repKey = picker ? picker.value : '';
+      if (!repKey) { status.textContent = 'Select a sales rep first.'; return; }
+      const rep = (commissionReviewReps || []).find(r => r.key === repKey);
+      if (!window.confirm(`Assign invoice #${inv.number} to ${rep ? rep.name : 'this rep'}? This will change commission attribution.`)) return;
+      commissionReviewBusy = true;
+      button.disabled = true;
+      button.textContent = 'Saving…';
+      status.textContent = `Saving invoice #${inv.number}...`;
+      try {
+        // Existing hosted portal uses GET+JSON actions for cross-origin Apps Script.
+        // No commission review key is required. Protect write endpoints at the server.
+        const params = new URLSearchParams({
+          action: 'assignCommissionReviewRep',
+          invoiceNumber: String(inv.number),
+          repKey
+        });
+        const response = await fetch(`${API_URL}?${params.toString()}`, { redirect: 'follow', cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || 'Assignment failed');
+        await loadData();
+        document.getElementById('commissionFilterStatus').textContent = `Invoice #${inv.number} assigned to ${result.repName}. Commission totals refreshed.`;
+      } catch (err) {
+        status.textContent = `Could not save: ${err.message || err}`;
+        button.disabled = false;
+        button.textContent = 'Save';
+      } finally {
+        commissionReviewBusy = false;
       }
     }
 
