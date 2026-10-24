@@ -24,6 +24,17 @@
 @media(max-width:1080px){.route-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:700px){.route-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.route-stop{flex-direction:column}.route-stop-actions{justify-content:flex-start}.route-summary{gap:6px}}
 @media print{.nav,.top,.kpis,.workspace,#routeForm,#routeStatus,.route-actions,.route-stop-actions,.footer{display:none!important}.main{margin:0;padding:0}.route-builder{border:0;box-shadow:none;margin:0}.route-stop{break-inside:avoid}.route-result{display:block!important}}
+
+/* Weekly owner reports + points of distribution */
+.crm-report-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
+.crm-mini-stat{background:#f1f6ff;border-radius:9px;padding:13px}.crm-mini-stat b{font-size:24px;display:block;color:#153964}
+.crm-warning{background:#fff7e9;border:1px solid #f6d9a5;border-radius:9px;padding:12px;margin:9px 0}
+.crm-danger{background:#fff0f0;border:1px solid #f8c9c9;border-radius:9px;padding:12px;margin:9px 0}
+.crm-report-days details{border:1px solid #e8edf5;padding:10px;margin:7px 0;border-radius:9px}.crm-report-days summary{cursor:pointer;font-weight:700}
+.crm-order-line{display:grid;grid-template-columns:2fr repeat(3,minmax(65px,1fr)) auto;gap:7px;align-items:end;padding:8px;border:1px solid #e5e9f1;border-radius:9px;margin:7px 0}
+.crm-order-line label{font-size:10px;font-weight:700;display:block;margin-bottom:4px}.crm-order-line input{padding:8px}
+.crm-report-row{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #edf1f6;padding:8px 0}
+@media(max-width:700px){.crm-report-grid{grid-template-columns:repeat(2,1fr)}.crm-order-line{grid-template-columns:1fr 1fr}.crm-order-line .crm-product{grid-column:1/-1}}
 </style></head><body>
 <div id="navOverlay" class="overlay" onclick="toggleMobileNav()"></div>
 <nav id="sidebar" class="nav"><div class="brand">◈ SUBURBAN<small>BREWING CO.</small></div>
@@ -57,6 +68,19 @@
 </form>
 <div id="routeStatus" role="status" aria-live="polite" class="sub" style="margin-top:12px"></div>
 <div id="routeResults" class="route-result" hidden></div>
+</section>
+<section class="panel" id="weeklySalesPanel">
+ <div class="panel-head"><div><h2>📊 Weekly Sales & Distribution</h2><div class="sub">Owner report · cases and kegs · new accounts · POD losses</div></div><button class="btn light sm" type="button" onclick="loadWeeklyReport()">Refresh Report</button></div>
+ <div class="crm-report-grid" id="podStats"><div class="loading">Loading distribution…</div></div>
+ <div id="invoiceSyncBanner" class="muted" style="margin:10px 0" aria-live="polite">Checking SBC invoice synchronization…</div>
+ <div id="podAlertsPanel" aria-live="polite"></div>
+ <div class="controls" style="grid-template-columns:1fr 1fr auto;align-items:end">
+  <div><label for="reportWeekDate" style="font-size:11px;font-weight:700">Week containing</label><input type="date" id="reportWeekDate"></div>
+  <div><label for="reportRepFilter" style="font-size:11px;font-weight:700">Sales rep</label><select id="reportRepFilter"><option value="all">All reps</option></select></div>
+  <button type="button" class="btn primary" onclick="loadWeeklyReport()">Review Week</button>
+ </div>
+ <div class="muted">Preview is read-only. Delivered invoice quantities are synchronized from the main SBC invoice sheet; visit-entered orders are kept separately and not counted twice. Correct sales quantities in invoicing, and field visit notes here.</div>
+ <div id="weeklyReportResults" aria-live="polite" class="crm-report-days" style="margin-top:12px"></div>
 </section>
 <section class="workspace"><div class="col">
 <section class="panel"><div class="panel-head"><h2>Accounts & Leads</h2><button class="btn primary" onclick="openLeadModal()">＋ Add New Lead</button></div>
@@ -93,13 +117,31 @@
 <div class="field"><label>Activity Date</label><input id="actDate" type="date" required></div><div class="field full"><label>Activity Notes</label><textarea id="actNotes" required maxlength="4000" placeholder="Describe what happened and the next action…"></textarea></div>
 <div class="field"><label>Outcome</label><select id="actOutcome"><option value="">No change</option><option>Warm</option><option>Cold</option><option>Won</option><option>Lost</option></select></div><div class="field"><label>Next Follow-Up Date</label><input id="actNext" type="date"></div><div class="field full"><label>New Follow-Up Task (optional)</label><input id="actTask" placeholder="Call buyer about seasonal lineup"></div>
 <div class="field"><label>Priority</label><select id="actPriority"><option>Medium</option><option>High</option><option>Low</option></select></div><div class="field"><label>Created By</label><input id="actRep" placeholder="Sales representative"></div>
-<div class="field full"><label><input style="width:auto" type="checkbox" id="actReminder" checked> Email reminder enabled for this task (requires configured trigger)</label></div></div>
+<div class="field full"><label><input style="width:auto" type="checkbox" id="actReminder" checked> Email reminder enabled for this task (requires configured trigger)</label></div>
+<div class="field full"><strong>Field orders / commitments (optional)</strong><div class="muted">Record beer orders or commitments taken in the field. Once invoice sync is running, only DELIVERED invoices activate PODs and count in confirmed case/keg totals. Do not enter samples as sales.</div><div id="activitySalesLines"></div><button type="button" class="btn light sm" onclick="addOrderLine('activitySalesLines')">＋ Add product</button></div></div>
 <div class="actions"><button class="btn ghost" type="button" onclick="closeModal('activityModal')">Cancel</button><button class="btn primary" id="saveActBtn">Save Activity</button></div></form></div></div>
 <div class="modalback" id="taskModal"><div class="modal" style="max-width:510px"><div class="modal-head"><h2>Create Follow-Up Task</h2><button class="x" onclick="closeModal('taskModal')">×</button></div><form onsubmit="saveTask(event)"><div class="fields">
 <div class="field full"><label>Lead *</label><select id="taskLead" required></select></div><div class="field full"><label>Task *</label><input id="taskTitle" required maxlength="200" placeholder="Send pricing / call account…"></div>
 <div class="field"><label>Due Date *</label><input id="taskDate" type="date" required></div><div class="field"><label>Priority</label><select id="taskPriority"><option>Medium</option><option>High</option><option>Low</option></select></div>
 <div class="field full"><label><input type="checkbox" style="width:auto" id="taskReminder" checked> Include in daily email reminders</label></div></div>
 <div class="actions"><button type="button" class="btn ghost" onclick="closeModal('taskModal')">Cancel</button><button type="submit" class="btn primary" id="saveTaskBtn">Create Task</button></div></form></div></div>
+
+<datalist id="crmProductSuggestions"></datalist>
+<div class="modalback" id="visitModal"><div class="modal"><div class="modal-head"><h2 id="visitModalTitle">Complete Route Visit</h2><button class="x" onclick="closeModal('visitModal')">×</button></div>
+<form onsubmit="saveRouteVisitWithOrders(event)"><div class="fields">
+<div class="field full"><label>Visit notes</label><textarea id="visitNotes" maxlength="4000" placeholder="Buyer conversation, products discussed, next steps"></textarea></div>
+<div class="field full"><strong>Orders taken during visit</strong><div class="muted">Field orders are tracked for follow-up; the invoice delivery is the authoritative sale used in PODs and weekly confirmed sales.</div><div id="visitSalesLines"></div><button type="button" class="btn light sm" onclick="addOrderLine('visitSalesLines')">＋ Add product</button></div>
+</div><div class="actions"><button class="btn ghost" type="button" onclick="closeModal('visitModal')">Cancel</button><button id="visitSaveBtn" class="btn primary" type="submit">Save Visit &amp; Orders</button></div></form></div></div>
+<div class="modalback" id="saleEditModal"><div class="modal"><div class="modal-head"><h2>Edit Confirmed Order</h2><button class="x" onclick="closeModal('saleEditModal')">×</button></div>
+<form onsubmit="saveSaleCorrection(event)"><div class="fields">
+<div class="field full"><label>Product</label><input id="editSaleProduct" maxlength="140" required></div>
+<div class="field"><label>Purchase Date</label><input id="editSaleDate" type="date" required></div>
+<div class="field"><label>Order Status</label><select id="editSaleStatus"><option>Confirmed</option><option>Voided</option></select></div>
+<div class="field"><label>Cases</label><input id="editSaleCases" type="number" min="0" max="9999" step="1" required></div>
+<div class="field"><label>1/6 Kegs</label><input id="editSaleSixth" type="number" min="0" max="9999" step="1" required></div>
+<div class="field"><label>1/2 Kegs</label><input id="editSaleHalf" type="number" min="0" max="9999" step="1" required></div>
+<div class="field full"><label>Notes</label><textarea id="editSaleNotes" maxlength="500"></textarea></div></div>
+<div class="actions"><button class="btn ghost" type="button" onclick="closeModal('saleEditModal')">Cancel</button><button class="btn primary" type="submit" id="saveCorrectionBtn">Save Correction</button></div></form></div></div>
 <script>
 // IMPORTANT: Replace this string with the /exec URL of your NEW standalone LeadsBackend.gs deployment.
 const API_URL='https://script.google.com/macros/s/AKfycbwN0KEtHlCZg2p9yiIS1JdZwb0-wLgAl58tyP1MrjfCi9V4kRp2jLhoe4GKWIS1pHyS/exec';
@@ -113,7 +155,7 @@ function toast(title,text,icon='info'){if(window.Swal)return Swal.fire({title,te
 function jsonp(action,params={}){return new Promise((resolve,reject)=>{
   if(!/^https:\/\/script\.google\.com\/macros\/s\//.test(API_URL))return reject(Error('Set API_URL in this HTML to your deployed LeadsBackend.gs /exec URL.'));
   const cb='sbcCRMcb'+Date.now()+Math.floor(Math.random()*100000),script=document.createElement('script');
-  let done=false;const timer=setTimeout(()=>finish(Error('No response from the CRM backend before the page deadline. Open Apps Script → Executions to see which request was slow. The backend now limits provider waits.')),action==='planLeadRoute'?120000:action==='lookupLeadHours'?40000:25000);
+  let done=false;const timer=setTimeout(()=>finish(Error('No response from the CRM backend before the page deadline. Open Apps Script → Executions to see which request was slow. The backend now limits provider waits.')),action==='planLeadRoute'?120000:action==='getSalesWeeklyReport'?60000:action==='getPODDashboard'?45000:action==='lookupLeadHours'?40000:25000);
   const finish=(err,value)=>{if(done)return;done=true;clearTimeout(timer);script.remove();try{delete window[cb]}catch(_){};err?reject(err):resolve(value)};
   window[cb]=value=>{if(value&&value.success===false){const notes=Array.isArray(value.warnings)?value.warnings.slice(0,6).filter(Boolean):[];finish(Error((value.error||'Request failed')+(notes.length?'\n'+notes.join('\n'):'')));}else finish(null,value)};
   const u=new URL(API_URL);u.searchParams.set('action',action);u.searchParams.set('callback',cb);
@@ -131,7 +173,7 @@ async function refresh(preferred){try{
   setSelectOptions('fStatus','All Statuses',[...new Set(d.leads.map(l=>l.displayStatus||l.status).filter(Boolean))].sort());
   setSelectOptions('fType','All Account Types',[...new Set(d.leads.map(l=>l.accountType).filter(Boolean))].sort());
   setSelectOptions('fRep','All Reps',[...new Set(d.leads.map(l=>l.assignedRep).filter(Boolean))].sort());
-  renderLeads();renderTasks();
+  renderLeads();renderTasks();reportRepSelector();
   selectedId=(preferred||selectedId||d.selectedLeadId||'');
   if(selectedId && d.leads.some(l=>l.leadId===selectedId))await loadDetail(selectedId);
   else {$('leadDetail').innerHTML='<div class="empty">No lead selected. Create a lead to begin.</div>';selectedId='';selectedLead=null}
@@ -150,7 +192,7 @@ function renderTasks(){const arr=dashboard.tasks||[];$('taskRows').innerHTML=arr
 $('taskRows').querySelectorAll('[data-task]').forEach(b=>b.addEventListener('click',()=>completeTask(b.dataset.task)))}
 async function loadDetail(id){selectedId=id;activeTab='Overview';renderLeads();$('leadDetail').innerHTML='<div class="empty">Loading lead activity…</div>';try{const d=await jsonp('getLeadById',{leadId:id});if(id!==selectedId)return;selectedLead=d.lead;renderDetail()}catch(e){$('leadDetail').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
 function setTab(tab){activeTab=tab;renderDetail()}
-function renderDetail(){const l=selectedLead;if(!l)return;const tabs=['Overview','Activity','Notes','Opportunities'];$('leadDetail').innerHTML=`<div class="detail-head"><div style="display:flex;gap:10px;align-items:center"><div class="detail-avatar">${esc((l.accountName||'?').charAt(0))}</div><div><div class="detail-name">${esc(l.accountName)}</div><div class="sub">${esc(l.accountType)} · ${esc([l.city,l.state].filter(Boolean).join(', '))}</div></div></div><div class="smallaction" style="align-items:center"><span>${chip(l.displayStatus||l.status)}</span><button class="btn primary sm" type="button" id="editAccountTopBtn">✎ Edit Account</button></div></div>
+function renderDetail(){const l=selectedLead;if(!l)return;const tabs=['Overview','Activity','Orders & PODs','Notes','Opportunities'];$('leadDetail').innerHTML=`<div class="detail-head"><div style="display:flex;gap:10px;align-items:center"><div class="detail-avatar">${esc((l.accountName||'?').charAt(0))}</div><div><div class="detail-name">${esc(l.accountName)}</div><div class="sub">${esc(l.accountType)} · ${esc([l.city,l.state].filter(Boolean).join(', '))}</div></div></div><div class="smallaction" style="align-items:center"><span>${chip(l.displayStatus||l.status)}</span><button class="btn primary sm" type="button" id="editAccountTopBtn">✎ Edit Account</button></div></div>
 <div class="tabs">${tabs.map(t=>`<button class="tab ${t===activeTab?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div><div id="tabBody"></div>`;
 $('leadDetail').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));let html='';
 if(activeTab==='Overview'){
@@ -165,7 +207,7 @@ else html=`<div class="info-box"><div class="detail-section-head">Opportunity De
 $('tabBody').innerHTML=html;
 function bind(id,fn){if($(id))$(id).onclick=fn}
 bind('newTaskBtn',openTaskModal);bind('editAccountTopBtn',()=>openLeadModal(true));bind('editLeadBtn',()=>openLeadModal(true));bind('findHoursBtn',findAccountHours);bind('logActivityBtn',openActivityModal);bind('viewHistoryBtn',()=>setTab('Activity'));
-bind('saveNotesBtn',saveNotes);$('tabBody').querySelectorAll('[data-complete]').forEach(b=>b.onclick=()=>completeTask(b.dataset.complete));$('tabBody').querySelectorAll('[data-remind]').forEach(b=>b.onclick=()=>setReminder(b.dataset.remind,b.dataset.on!=='1'));
+bind('saveNotesBtn',saveNotes);$('tabBody').querySelectorAll('[data-sale-edit]').forEach(b=>b.onclick=()=>openSaleCorrection(b.dataset.saleEdit));$('tabBody').querySelectorAll('[data-complete]').forEach(b=>b.onclick=()=>completeTask(b.dataset.complete));$('tabBody').querySelectorAll('[data-remind]').forEach(b=>b.onclick=()=>setReminder(b.dataset.remind,b.dataset.on!=='1'));
 }
 function timeline(activities){return activities.length?activities.map(a=>`<div class="timeline-item"><strong>${esc(a.type)}</strong><div class="muted" style="margin:4px 0">${esc(displayDate(a.date))} · ${esc(a.time||'')} ${a.createdBy?' · '+esc(a.createdBy):''}</div><div style="line-height:1.6">${esc(a.notes)}</div>${a.nextFollowUp?`<div class="muted">Next follow-up: ${esc(displayDate(a.nextFollowUp))}</div>`:''}</div>`).join(''):'<div class="muted">No activities recorded.</div>'}
 function openModal(id){$(id).classList.add('show')};function closeModal(id){$(id).classList.remove('show')}
@@ -231,8 +273,8 @@ async function saveLead(ev){
   }catch(err){toast('Save Failed',err.message,'error')}
   finally{btn.disabled=false;btn.textContent=editing?'Save Account Changes':'Create Lead'}
 }
-function openActivityModal(){if(!selectedId)return toast('Select a lead','Select an account first','info');['actNotes','actNext','actTask','actRep','actOutcome'].forEach(id=>$(id).value='');$('actDate').value=localDateISO();$('actPriority').value=selectedLead.priority||'Medium';$('actReminder').checked=true;openModal('activityModal')}
-async function saveActivity(ev){ev.preventDefault();const data={leadId:selectedId,activityType:$('actType').value,activityDate:$('actDate').value,notes:$('actNotes').value.trim(),outcome:$('actOutcome').value,nextFollowUp:$('actNext').value,task:$('actTask').value,priority:$('actPriority').value,createdBy:$('actRep').value,reminderOn:$('actReminder').checked};if(data.outcome==='Won'||data.outcome==='Lost'||data.outcome==='Warm'||data.outcome==='Cold')data.status=data.outcome;const b=$('saveActBtn');b.disabled=true;try{await api('addLeadActivity',data);closeModal('activityModal');await refresh(selectedId);toast('Activity Saved','History and follow-up dates updated.','success')}catch(e){toast('Save Failed',e.message,'error')}finally{b.disabled=false}}
+function openActivityModal(){if(!selectedId)return toast('Select a lead','Select an account first','info');['actNotes','actNext','actTask','actRep','actOutcome'].forEach(id=>$(id).value='');$('actDate').value=localDateISO();$('actPriority').value=selectedLead.priority||'Medium';$('actReminder').checked=true;$('activitySalesLines').innerHTML='';activitySubmissionId=newSubmissionId();openModal('activityModal')}
+async function saveActivity(ev){ev.preventDefault();const data={leadId:selectedId,activityType:$('actType').value,activityDate:$('actDate').value,notes:$('actNotes').value.trim(),outcome:$('actOutcome').value,nextFollowUp:$('actNext').value,task:$('actTask').value,priority:$('actPriority').value,createdBy:$('actRep').value||selectedLead?.assignedRep||'',reminderOn:$('actReminder').checked,salesLines:readOrderLines('activitySalesLines'),submissionId:activitySubmissionId||newSubmissionId()};if(data.outcome==='Won'||data.outcome==='Lost'||data.outcome==='Warm'||data.outcome==='Cold')data.status=data.outcome;const b=$('saveActBtn');b.disabled=true;try{await api('addLeadActivity',data);closeModal('activityModal');activitySubmissionId='';await refresh(selectedId);await loadPODDashboard();toast('Activity Saved','History and follow-up dates updated.','success')}catch(e){toast('Save Failed',e.message,'error')}finally{b.disabled=false}}
 function openTaskModal(){if(!dashboard.leads.length)return toast('Create a lead first','Tasks need an existing lead.','info');$('taskLead').innerHTML=dashboard.leads.map(l=>`<option value="${esc(l.leadId)}">${esc(l.accountName)}</option>`).join('');$('taskLead').value=selectedId||dashboard.leads[0].leadId;$('taskTitle').value='';$('taskDate').value='';$('taskPriority').value='Medium';$('taskReminder').checked=true;openModal('taskModal')}
 async function saveTask(ev){ev.preventDefault();const b=$('saveTaskBtn');b.disabled=true;try{await api('createLeadTask',{leadId:$('taskLead').value,task:$('taskTitle').value.trim(),dueDate:$('taskDate').value,priority:$('taskPriority').value,reminderOn:$('taskReminder').checked});const id=$('taskLead').value;closeModal('taskModal');await refresh(id);toast('Task Saved','Follow-up task added','success')}catch(e){toast('Save Failed',e.message,'error')}finally{b.disabled=false}}
 async function completeTask(taskId){const ok=window.Swal?await Swal.fire({title:'Complete follow-up?',icon:'question',showCancelButton:true,confirmButtonText:'Mark Complete'}):{isConfirmed:confirm('Mark this follow-up complete?')};if(!ok.isConfirmed)return;try{await api('markTaskComplete',{taskId});await refresh(selectedId);toast('Completed','Follow-up added to activity history.','success')}catch(e){toast('Error',e.message,'error')}}
@@ -323,13 +365,114 @@ async function routeSaveProspect(index){const stop=currentRoute&&currentRoute.st
  try{const r=await api('saveRouteProspect',{placeId:stop.placeId});stop.convertedLeadId=r.leadId;routeRender();await refresh(r.leadId);toast('Lead Saved',r.alreadyExists?'This account already exists.':'New prospect added to Sales Leads.','success')}
  catch(err){toast('Save Failed',err.message,'error')}
 }
-async function routeVisit(index){const stop=currentRoute&&currentRoute.stops[index];if(!stop||!stop.leadId)return;
- let notes='Sales route follow-up visit completed.';
- if(window.Swal){const q=await Swal.fire({title:'Complete visit to '+stop.name,input:'textarea',inputLabel:'Visit notes',inputValue:notes,showCancelButton:true,confirmButtonText:'Save Visit'});if(!q.isConfirmed)return;notes=q.value||notes;}
- else{const n=prompt('Visit notes:',notes);if(n===null)return;notes=n||notes;}
- try{const out=await api('completeRouteStop',{leadId:stop.leadId,notes,routeDate:currentRoute.routeDate});stop.visited=true;routeRender();await refresh(stop.leadId);toast('Visit Saved',out.message||'Visit recorded in account history.','success')}
- catch(err){toast('Save Failed',err.message,'error')}
+function routeVisit(index){openRouteVisit(index)}
+
+// Sales recording: one confirmed beer/product per line, with three package counts.
+let visitStopIndex=-1,activeSaleId='',currentPODDashboard=null,activitySubmissionId='',visitSubmissionId='';
+function newSubmissionId(){return 'sbc-'+Date.now()+'-'+Math.random().toString(36).slice(2,12)}
+function addOrderLine(containerId,values={}){
+  const container=$(containerId),line=document.createElement('div');
+  line.className='crm-order-line';
+  line.innerHTML=`<div class="crm-product"><label>Beer / Product</label><input class="sales-product" list="crmProductSuggestions" maxlength="140" placeholder="Exact product name" value="${esc(values.product||'')}"></div>
+  <div><label>Cases</label><input class="sales-cases" type="number" min="0" max="9999" step="1" value="${esc(values.cases??0)}"></div>
+  <div><label>1/6 Kegs</label><input class="sales-sixth" type="number" min="0" max="9999" step="1" value="${esc(values.sixthKegs??0)}"></div>
+  <div><label>1/2 Kegs</label><input class="sales-half" type="number" min="0" max="9999" step="1" value="${esc(values.halfKegs??0)}"></div>
+  <button type="button" class="btn light sm" aria-label="Remove product" onclick="this.closest('.crm-order-line').remove()">×</button>`;
+  container.appendChild(line);
+}
+function readOrderLines(containerId){return [...$(containerId).querySelectorAll('.crm-order-line')].map(row=>({
+  product:row.querySelector('.sales-product').value.trim(),
+  cases:row.querySelector('.sales-cases').value.trim()||'0',
+  sixthKegs:row.querySelector('.sales-sixth').value.trim()||'0',
+  halfKegs:row.querySelector('.sales-half').value.trim()||'0'
+}));}
+function openRouteVisit(index){
+  const stop=currentRoute?.stops[index];if(!stop||!stop.leadId)return;
+  visitStopIndex=index;visitSubmissionId=newSubmissionId();$('visitModalTitle').textContent='Visit — '+stop.name;
+  $('visitNotes').value='';$('visitSalesLines').innerHTML='';openModal('visitModal');
+}
+async function saveRouteVisitWithOrders(event){
+  event.preventDefault();const stop=currentRoute?.stops[visitStopIndex];if(!stop)return;
+  const b=$('visitSaveBtn');b.disabled=true;
+  try{
+    const result=await api('completeRouteStop',{leadId:stop.leadId,routeDate:currentRoute.routeDate,
+      notes:$('visitNotes').value.trim(),salesLines:readOrderLines('visitSalesLines'),submissionId:visitSubmissionId||newSubmissionId()});
+    stop.visited=true;closeModal('visitModal');visitSubmissionId='';routeRender();await refresh(stop.leadId);
+    await loadPODDashboard();toast('Visit Saved','Visit saved; orders will be confirmed when delivered in invoicing.','success');
+  }catch(err){toast('Visit Not Saved',err.message,'error')}finally{b.disabled=false;}
+}
+function openSaleCorrection(id){
+  const s=selectedLead?.sales?.find(x=>x.saleId===id);if(!s)return;
+  activeSaleId=id;$('editSaleProduct').value=s.product;$('editSaleDate').value=s.saleDate;
+  $('editSaleStatus').value=s.status||'Confirmed';$('editSaleCases').value=s.cases;
+  $('editSaleSixth').value=s.sixthKegs;$('editSaleHalf').value=s.halfKegs;
+  $('editSaleNotes').value=s.notes||'';openModal('saleEditModal');
+}
+async function saveSaleCorrection(event){
+  event.preventDefault();const b=$('saveCorrectionBtn');b.disabled=true;
+  try{
+    await api('updateLeadSale',{saleId:activeSaleId,product:$('editSaleProduct').value.trim(),
+      saleDate:$('editSaleDate').value,status:$('editSaleStatus').value,cases:$('editSaleCases').value,
+      sixthKegs:$('editSaleSixth').value,halfKegs:$('editSaleHalf').value,notes:$('editSaleNotes').value,
+      editedBy:selectedLead?.assignedRep||''});
+    closeModal('saleEditModal');await refresh(selectedId);await loadPODDashboard();toast('Saved','Sales record corrected and POD status recalculated.','success');
+  }catch(e){toast('Update Failed',e.message,'error')}finally{b.disabled=false}
+}
+function renderAccountOrders(l){
+  const sales=l.sales||[],invoices=l.invoiceSales||[],pods=l.pods||[];
+  return `<div class="panel-head"><strong>Delivered Orders & PODs</strong><button type="button" class="btn light sm" id="logActivityBtn">＋ Log Activity / Order</button></div>
+  <div class="info-box"><strong>Product Distribution · delivered invoices</strong>${pods.length?pods.map(p=>`<div class="crm-report-row"><div><b>${esc(p.product)}</b><div class="muted">Last delivered ${esc(displayDate(p.lastPurchase))} · ${p.daysSinceLastPurchase} days</div></div>${chip(p.status)}</div>`).join(''):'<p class="muted">No delivered product placements matched to this CRM account yet.</p>'}</div>
+  <div class="info-box"><strong>Delivered Invoice History · read-only</strong>${invoices.length?invoices.slice(0,100).map(x=>`<div class="crm-report-row"><div><strong>${esc(x.product)}</strong><div class="muted">Invoice ${esc(x.invoiceNumber)} · ${esc(displayDate(x.saleDate))} · ${x.cases} cases · ${x.sixthKegs} sixth kegs · ${x.halfKegs} half kegs</div></div></div>`).join(''):'<div class="muted">No delivered invoices matched. Review Invoice_Customer_Map if the account has purchased.</div>'}</div>
+  <div class="info-box"><strong>Field-Entered Orders / Commitments · editable</strong><p class="muted">For visit notes and pipeline tracking only once invoice sync is active. These entries do not add to confirmed sales or POD counts.</p>${sales.length?sales.slice(0,100).map(x=>`<div class="crm-report-row"><div><strong>${esc(x.product)}</strong><div class="muted">${esc(displayDate(x.saleDate))} · ${x.cases} cases · ${x.sixthKegs} sixth kegs · ${x.halfKegs} half kegs · ${esc(x.status)}</div></div><button type="button" class="btn light sm" data-sale-edit="${esc(x.saleId)}">Edit</button></div>`).join(''):'<div class="muted">No field orders recorded.</div>'}</div>`;
+}
+async function loadPODDashboard(){try{
+  const x=await jsonp('getPODDashboard');currentPODDashboard=x;
+  const products=[...new Set(x.pods.map(p=>p.product).filter(Boolean))].sort();
+  $('crmProductSuggestions').innerHTML=products.map(x=>`<option value="${esc(x)}"></option>`).join('');
+  $('podStats').innerHTML=[['Active PODs',x.active],['At Risk · 75–89 Days',x.atRisk],['Lost · 90+ Days',x.lost],['Total Ever Placed',x.pods.length]].map(([label,n])=>`<div class="crm-mini-stat"><b>${n}</b>${esc(label)}</div>`).join('');
+  const sync=x.invoiceSync||{},tag=$('invoiceSyncBanner');
+  if(sync.ready){
+    tag.className=sync.requiresReview?'crm-warning':'sub';
+    tag.innerHTML=`<strong>Invoice sync:</strong> ${esc(sync.lastSynced)} · ${sync.matchedLines} matched delivered lines. `+
+      (sync.requiresReview?`<b>Reconciliation needed:</b> ${sync.unmatchedCustomers} unmatched customer names, ${sync.unknownPackages} unknown packages, ${sync.fallbackDates} missing delivery dates, ${sync.missingItemInvoices} empty/invalid invoices. Fix mapping/date issues in the existing sheets before relying on lost-POD alerts.`:'Confirmed delivery data is the source for POD status.');
+  } else {
+    tag.className='crm-warning';
+    tag.textContent='Invoice sync not yet configured. POD statistics still use field-entered orders and are not invoice verified. Run setupLeadCRM and syncInvoicePurchases in Sales Leads Apps Script.';
+  }
+  const alerts=x.pods.filter(p=>p.status!=='Active');
+  $('podAlertsPanel').innerHTML=alerts.length?`<div class="${x.lost?'crm-danger':'crm-warning'}"><strong>⚠️ Distribution alerts</strong> — ${x.lost} lost and ${x.atRisk} at risk. ${x.lost?'Lost placements have passed 90 days without a confirmed reorder.':''}<div>${alerts.slice(0,40).map(p=>`<div class="crm-report-row"><span><b>${esc(p.account)}</b> — ${esc(p.product)} · ${esc(p.lastPurchase)} · ${p.daysSinceLastPurchase} days · ${esc(p.rep)}</span><button class="btn light sm" data-pod-open="${esc(p.leadId)}">Open</button></div>`).join('')}</div></div>`:'<div class="sub">No at-risk or lost placements in recorded order history.</div>';
+  $('podAlertsPanel').querySelectorAll('[data-pod-open]').forEach(b=>b.onclick=()=>{loadDetail(b.dataset.podOpen);document.querySelector('#leadDetail')?.scrollIntoView({behavior:'smooth',block:'start'})});
+ }catch(e){$('podStats').innerHTML='<div class="crm-danger">POD status unavailable: '+esc(e.message)+'</div>';}
+}
+function reportRepSelector(){
+  const sel=$('reportRepFilter'),previous=sel.value;
+  const names=[...new Set((dashboard.leads||[]).map(l=>l.assignedRep).filter(Boolean))].sort();
+  sel.innerHTML='<option value="all">All reps</option>'+names.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===previous))sel.value=previous;
+}
+async function loadWeeklyReport(){
+  const box=$('weeklyReportResults');box.innerHTML='<div class="loading">Preparing the report…</div>';
+  try{
+    const date=$('reportWeekDate').value||localDateISO(),rep=$('reportRepFilter').value;
+    const r=await jsonp('getSalesWeeklyReport',{weekStart:date,rep});
+    const t=r.totals, sync=r.invoiceSync||{};
+    let html="<div class='"+(sync.requiresReview?'crm-warning':'sub')+"'><b>Sales source:</b> "+(sync.ready?'Delivered SBC invoices, synchronized '+esc(sync.lastSynced):'Field sales only — invoice sync not yet active')+
+      (sync.requiresReview?'. Reconciliation required; totals/PODs may be incomplete.':'')+'</div>';
+    html+= `<div class="route-home"><b>Reporting week:</b> ${esc(displayDate(r.start))} – ${esc(displayDate(r.end))}<br><b>Totals:</b> ${t.visits} visits · ${t.cases} cases · ${t.sixthKegs} sixth kegs · ${t.halfKegs} half kegs · ${t.newAccountsTouched} new accounts touched · ${t.firstOrders} first orders · ${t.placementsOpened} new product PODs</div>`;
+    r.reps.forEach(person=>{
+      const p=r.previousByRep[person.rep]||{};
+      html+=`<h3>${esc(person.rep)}</h3><div class="sub">${person.visits} visits (last week ${p.visits||0}) · ${person.calls} calls/emails · ${person.followUpsCompleted} follow-ups closed · ${person.cases} cases (last week ${p.cases||0}) · ${person.sixthKegs} sixth kegs · ${person.halfKegs} half kegs · ${person.newAccountsTouched} first contacts · ${person.firstOrders} first-time buyers</div>`;
+      person.daily.forEach(day=>{html+=`<details><summary>${esc(displayDate(day.date))} — ${day.activities.length} activities, ${day.cases} cases, ${day.sixthKegs} sixth kegs, ${day.halfKegs} half kegs</summary>
+      ${day.activities.map(a=>`<div class="crm-report-row"><div><b>${esc(a.account)} — ${esc(a.type)}</b><div class="sub">${esc(a.notes||a.outcome||'Activity logged')}</div></div></div>`).join('')||'<p class="muted">No activities</p>'}
+      ${day.orders.map(o=>`<div class="crm-report-row"><span>${esc(o.account)} — ${esc(o.product)}</span><b>${o.cases} cases / ${o.sixthKegs} 1/6 / ${o.halfKegs} 1/2</b></div>`).join('')}</details>`;});
+    });
+    html+=`<h3>POD Health</h3><p><b>${r.podSummary.active} active · ${r.podSummary.atRisk} at risk · ${r.podSummary.lost} lost</b> · Net active change: ${r.podSummary.netActiveChange>=0?'+':''}${r.podSummary.netActiveChange} · ${r.podSummary.regained.length} regained PODs</p>`;
+    html+='<h4>New POD losses this week</h4>'+(r.podSummary.newlyLost.map(p=>`<div class="crm-danger">${esc(p.account)} — ${esc(p.product)} · Last purchased ${esc(p.lastPurchase)} · ${esc(p.rep)}</div>`).join('')||'<p class="sub">None newly lost.</p>');
+    html+='<h4>Overdue follow-ups</h4>'+(r.overdueTasks.map(a=>`<div class="crm-danger">${esc(a.dueDate)} · ${esc(a.account)} · ${esc(a.rep)} — ${esc(a.task)}</div>`).join('')||'<p class="sub">None overdue.</p>');
+    html+='<h4>Upcoming follow-ups</h4>'+(r.nextActions.map(a=>`<div class="crm-report-row"><span>${esc(a.dueDate)} · ${esc(a.account)} · ${esc(a.rep)}</span><b>${esc(a.task)}</b></div>`).join('')||'<p class="sub">No upcoming tasks in this window.</p>');
+    box.innerHTML=html;
+  }catch(e){box.innerHTML='<div class="crm-danger">Weekly report unavailable: '+esc(e.message)+'</div>';}
 }
 
-window.addEventListener('DOMContentLoaded',()=>{$('year').textContent=new Date().getFullYear();$('routeDate').value=localDateISO();if(typeof setupUserProfile==='function')setupUserProfile();if(typeof checkUnreadCount==='function')checkUnreadCount();refresh()});
+window.addEventListener('DOMContentLoaded',()=>{$('year').textContent=new Date().getFullYear();$('routeDate').value=localDateISO();$('reportWeekDate').value=localDateISO();if(typeof setupUserProfile==='function')setupUserProfile();if(typeof checkUnreadCount==='function')checkUnreadCount();refresh().then(()=>{reportRepSelector();loadPODDashboard();loadWeeklyReport();})});
 </script></body></html>
