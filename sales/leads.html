@@ -35,6 +35,11 @@
 .crm-order-line label{font-size:10px;font-weight:700;display:block;margin-bottom:4px}.crm-order-line input{padding:8px}
 .crm-report-row{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #edf1f6;padding:8px 0}
 @media(max-width:700px){.crm-report-grid{grid-template-columns:repeat(2,1fr)}.crm-order-line{grid-template-columns:1fr 1fr}.crm-order-line .crm-product{grid-column:1/-1}}
+</style><style>
+.crm-pod-clickable{cursor:pointer;text-align:left;color:inherit;border:1px solid #d9a53d;background:#fff8eb}
+.crm-pod-clickable:hover,.crm-pod-clickable:focus-visible{outline:2px solid #b27413;outline-offset:2px}
+.crm-risk-list{border:1px solid #e7c181;background:#fff9ed;border-radius:12px;padding:14px;margin:12px 0}
+.crm-pod-focused{outline:3px solid #e1a039;outline-offset:2px;background:#fff2d7;border-radius:8px;padding:8px}
 </style></head><body>
 <div id="navOverlay" class="overlay" onclick="toggleMobileNav()"></div>
 <nav id="sidebar" class="nav"><div class="brand">◈ SUBURBAN<small>BREWING CO.</small></div>
@@ -73,6 +78,7 @@
  <div class="panel-head"><div><h2>📊 Weekly Sales & Distribution</h2><div class="sub">Owner report · cases and kegs · new accounts · POD losses</div></div><button class="btn light sm" type="button" onclick="loadWeeklyReport()">Refresh Report</button></div>
  <div class="crm-report-grid" id="podStats"><div class="loading">Loading distribution…</div></div>
  <div id="invoiceSyncBanner" class="muted" style="margin:10px 0" aria-live="polite">Checking SBC invoice synchronization…</div>
+ <div id="podRiskAccounts" class="crm-risk-list" hidden aria-live="polite"></div>
  <div id="podAlertsPanel" aria-live="polite"></div>
  <div class="controls" style="grid-template-columns:1fr 1fr auto;align-items:end">
   <div><label for="reportWeekDate" style="font-size:11px;font-weight:700">Week containing</label><input type="date" id="reportWeekDate"></div>
@@ -190,6 +196,29 @@ $('leadRows').querySelectorAll('[data-edit-account]').forEach(btn=>btn.addEventL
 }));}
 function renderTasks(){const arr=dashboard.tasks||[];$('taskRows').innerHTML=arr.length?arr.map(t=>`<tr><td><strong>${esc(t.task)}</strong></td><td>${esc(t.account)}</td><td>${esc(displayDate(t.dueDate))}</td><td>${chip(t.priority,true)}</td><td><button class="btn light sm" data-task="${esc(t.taskId)}">Complete</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">No open follow-up tasks.</td></tr>';
 $('taskRows').querySelectorAll('[data-task]').forEach(b=>b.addEventListener('click',()=>completeTask(b.dataset.task)))}
+async function openAtRiskPOD(leadId,podKey){
+  focusedPODKey=podKey;
+  await loadDetail(leadId);
+  setTab('Orders & PODs');
+  const row=[...$('leadDetail').querySelectorAll('[data-pod-key]')].find(el=>el.dataset.podKey===podKey);
+  if(row){row.classList.add('crm-pod-focused');row.scrollIntoView({behavior:'smooth',block:'center'});}
+  else document.querySelector('#leadDetail')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function openAtRiskAccounts(){
+  const panel=$('podRiskAccounts'),pods=(currentPODDashboard?.pods||[]).filter(p=>p.status==='At Risk');
+  if(!panel)return;
+  if(!panel.hidden){panel.hidden=true;return;}
+  const accounts=new Map();
+  pods.forEach(p=>{if(!accounts.has(p.leadId))accounts.set(p.leadId,{name:p.account,items:[]});accounts.get(p.leadId).items.push(p);});
+  panel.innerHTML='<h3>Accounts with PODs at risk (75–89 days)</h3>'+(!accounts.size?'<p>No at-risk placements right now.</p>':
+    [...accounts].sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([id,a])=>
+      '<div class="crm-report-row"><div><b>'+esc(a.name)+'</b><div class="muted">'+a.items.length+' beer placement(s) near the 90-day cutoff · '+a.items.map(p=>esc(p.product)).join(', ')+'</div></div><button type="button" class="btn primary sm" data-risk-lead="'+esc(id)+'">View Products</button></div>').join(''));
+  panel.querySelectorAll('[data-risk-lead]').forEach(b=>b.onclick=()=>{
+    const p=pods.find(x=>x.leadId===b.dataset.riskLead);
+    if(p)openAtRiskPOD(p.leadId,p.podKey);
+  });
+  panel.hidden=false;panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 async function loadDetail(id){selectedId=id;activeTab='Overview';renderLeads();$('leadDetail').innerHTML='<div class="empty">Loading lead activity…</div>';try{const d=await jsonp('getLeadById',{leadId:id});if(id!==selectedId)return;selectedLead=d.lead;renderDetail()}catch(e){$('leadDetail').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
 function setTab(tab){activeTab=tab;renderDetail()}
 function renderDetail(){const l=selectedLead;if(!l)return;const tabs=['Overview','Activity','Orders & PODs','Notes','Opportunities'];$('leadDetail').innerHTML=`<div class="detail-head"><div style="display:flex;gap:10px;align-items:center"><div class="detail-avatar">${esc((l.accountName||'?').charAt(0))}</div><div><div class="detail-name">${esc(l.accountName)}</div><div class="sub">${esc(l.accountType)} · ${esc([l.city,l.state].filter(Boolean).join(', '))}</div></div></div><div class="smallaction" style="align-items:center"><span>${chip(l.displayStatus||l.status)}</span><button class="btn primary sm" type="button" id="editAccountTopBtn">✎ Edit Account</button></div></div>
@@ -202,6 +231,7 @@ if(activeTab==='Overview'){
  ${open.slice(0,5).map(t=>`<div class="task-row"><div><strong>${esc(t.task)}</strong><div class="muted">${esc(displayDate(t.dueDate))} · ${esc(t.priority)} · Reminders ${t.reminderOn?'on':'off'}</div></div><div class="smallaction"><button class="btn light sm" data-remind="${esc(t.taskId)}" data-on="${t.reminderOn?'1':'0'}">${t.reminderOn?'Disable':'Enable'} reminder</button><button class="btn primary sm" data-complete="${esc(t.taskId)}">Complete</button></div></div>`).join('')||'<div class="muted">No outstanding tasks.</div>'}<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn light sm" id="editLeadBtn">Edit Lead</button><button class="btn primary sm" id="logActivityBtn">Log Activity</button></div></div>
  <div class="history"><div class="detail-section-head">Activity History <button class="btn light sm" id="viewHistoryBtn">View all</button></div>${timeline((l.activities||[]).slice(0,4))}</div>`;
 }else if(activeTab==='Activity')html=`<div class="panel-head"><strong>Activity History</strong><button class="btn primary sm" id="logActivityBtn">+ Log Activity</button></div><div class="history">${timeline(l.activities||[])}</div>`;
+else if(activeTab==='Orders & PODs')html=renderAccountOrders(l);
 else if(activeTab==='Notes')html=`<div class="notes"><label style="font-weight:800;display:block;margin-bottom:9px">Account Notes</label><textarea id="editNotes" rows="7" maxlength="4000" style="width:100%">${esc(l.notes||'')}</textarea><div style="display:flex;justify-content:flex-end;margin-top:9px"><button class="btn primary sm" id="saveNotesBtn">Save Notes</button></div><p class="muted">Activity notes remain available separately in the history timeline.</p></div>`;
 else html=`<div class="info-box"><div class="detail-section-head">Opportunity Details</div><div class="info-row"><strong>Status:</strong> ${chip(l.status)}</div><div class="info-row"><strong>Outcome:</strong> ${esc(l.outcome||'Not recorded')}</div><div class="info-row"><strong>Expected Volume:</strong> ${esc(l.estVolume||'Not estimated')}</div><div class="info-row"><strong>Interest Level:</strong> ${esc(l.interestLevel||'Unknown')}</div><button class="btn primary sm" id="editLeadBtn">Edit Lead / Outcome</button></div>`;
 $('tabBody').innerHTML=html;
@@ -369,6 +399,7 @@ function routeVisit(index){openRouteVisit(index)}
 
 // Sales recording: one confirmed beer/product per line, with three package counts.
 let visitStopIndex=-1,activeSaleId='',currentPODDashboard=null,activitySubmissionId='',visitSubmissionId='';
+let focusedPODKey='';
 function newSubmissionId(){return 'sbc-'+Date.now()+'-'+Math.random().toString(36).slice(2,12)}
 function addOrderLine(containerId,values={}){
   const container=$(containerId),line=document.createElement('div');
@@ -421,7 +452,7 @@ async function saveSaleCorrection(event){
 function renderAccountOrders(l){
   const sales=l.sales||[],invoices=l.invoiceSales||[],pods=l.pods||[];
   return `<div class="panel-head"><strong>Delivered Orders & PODs</strong><button type="button" class="btn light sm" id="logActivityBtn">＋ Log Activity / Order</button></div>
-  <div class="info-box"><strong>Product Distribution · delivered invoices</strong>${pods.length?pods.map(p=>`<div class="crm-report-row"><div><b>${esc(p.product)}</b><div class="muted">Last delivered ${esc(displayDate(p.lastPurchase))} · ${p.daysSinceLastPurchase} days</div></div>${chip(p.status)}</div>`).join(''):'<p class="muted">No delivered product placements matched to this CRM account yet.</p>'}</div>
+  <div class="info-box"><strong>Product Distribution · delivered invoices</strong>${pods.length?pods.map(p=>`<div class="crm-report-row ${p.podKey===focusedPODKey?'crm-pod-focused':''}" data-pod-key="${esc(p.podKey)}"><div><b>${esc(p.product)}</b><div class="muted">Last delivered ${esc(displayDate(p.lastPurchase))} · ${p.daysSinceLastPurchase} days · ${p.status==='At Risk'?'Reorder needed before 90 days':p.status==='Lost'?'Lost distribution':'Active'}</div></div>${chip(p.status)}</div>`).join(''):'<p class="muted">No delivered product placements matched to this CRM account yet.</p>'}</div>
   <div class="info-box"><strong>Delivered Invoice History · read-only</strong>${invoices.length?invoices.slice(0,100).map(x=>`<div class="crm-report-row"><div><strong>${esc(x.product)}</strong><div class="muted">Invoice ${esc(x.invoiceNumber)} · ${esc(displayDate(x.saleDate))} · ${x.cases} cases · ${x.sixthKegs} sixth kegs · ${x.halfKegs} half kegs</div></div></div>`).join(''):'<div class="muted">No delivered invoices matched. Review Invoice_Customer_Map if the account has purchased.</div>'}</div>
   <div class="info-box"><strong>Field-Entered Orders / Commitments · editable</strong><p class="muted">For visit notes and pipeline tracking only once invoice sync is active. These entries do not add to confirmed sales or POD counts.</p>${sales.length?sales.slice(0,100).map(x=>`<div class="crm-report-row"><div><strong>${esc(x.product)}</strong><div class="muted">${esc(displayDate(x.saleDate))} · ${x.cases} cases · ${x.sixthKegs} sixth kegs · ${x.halfKegs} half kegs · ${esc(x.status)}</div></div><button type="button" class="btn light sm" data-sale-edit="${esc(x.saleId)}">Edit</button></div>`).join(''):'<div class="muted">No field orders recorded.</div>'}</div>`;
 }
@@ -429,11 +460,11 @@ async function loadPODDashboard(){try{
   const x=await jsonp('getPODDashboard');currentPODDashboard=x;
   const products=[...new Set(x.pods.map(p=>p.product).filter(Boolean))].sort();
   $('crmProductSuggestions').innerHTML=products.map(x=>`<option value="${esc(x)}"></option>`).join('');
-  $('podStats').innerHTML=[['Active PODs',x.active],['At Risk · 75–89 Days',x.atRisk],['Lost · 90+ Days',x.lost],['Total Ever Placed',x.pods.length]].map(([label,n])=>`<div class="crm-mini-stat"><b>${n}</b>${esc(label)}</div>`).join('');
+  $('podStats').innerHTML=[['Active PODs',x.active],['At Risk · 75–89 Days',x.atRisk],['Lost · 90+ Days',x.lost],['Total Ever Placed',x.pods.length]].map(([label,n],i)=>i===1?`<button type="button" class="crm-mini-stat crm-pod-clickable" onclick="openAtRiskAccounts()" aria-controls="podRiskAccounts"><b>${n}</b>${esc(label)} · View accounts</button>`:`<div class="crm-mini-stat"><b>${n}</b>${esc(label)}</div>`).join('');
   const sync=x.invoiceSync||{},tag=$('invoiceSyncBanner');
   if(sync.ready){
     tag.className=sync.requiresReview?'crm-warning':'sub';
-    tag.innerHTML=`<strong>Invoice sync:</strong> ${esc(sync.lastSynced)} · ${sync.matchedLines} matched delivered lines. `+
+    tag.innerHTML=`<strong>Invoice sync:</strong> ${esc(sync.lastSynced)} · ${sync.matchedLines} matched delivered lines · ${sync.importedAccountsLastSync||0} accounts imported on last sync. `+
       (sync.requiresReview?`<b>Reconciliation needed:</b> ${sync.unmatchedCustomers} unmatched customer names, ${sync.unknownPackages} unknown packages, ${sync.fallbackDates} missing delivery dates, ${sync.missingItemInvoices} empty/invalid invoices. Fix mapping/date issues in the existing sheets before relying on lost-POD alerts.`:'Confirmed delivery data is the source for POD status.');
   } else {
     tag.className='crm-warning';
@@ -461,7 +492,7 @@ async function loadWeeklyReport(){
     html+= `<div class="route-home"><b>Reporting week:</b> ${esc(displayDate(r.start))} – ${esc(displayDate(r.end))}<br><b>Totals:</b> ${t.visits} visits · ${t.cases} cases · ${t.sixthKegs} sixth kegs · ${t.halfKegs} half kegs · ${t.newAccountsTouched} new accounts touched · ${t.firstOrders} first orders · ${t.placementsOpened} new product PODs</div>`;
     r.reps.forEach(person=>{
       const p=r.previousByRep[person.rep]||{};
-      html+=`<h3>${esc(person.rep)}</h3><div class="sub">${person.visits} visits (last week ${p.visits||0}) · ${person.calls} calls/emails · ${person.followUpsCompleted} follow-ups closed · ${person.cases} cases (last week ${p.cases||0}) · ${person.sixthKegs} sixth kegs · ${person.halfKegs} half kegs · ${person.newAccountsTouched} first contacts · ${person.firstOrders} first-time buyers</div>`;
+      html+=`<h3>${esc(person.rep)}</h3><div class="sub">${esc(person.email||'Sales rep email not on file')} · ${person.visits} visits (last week ${p.visits||0}) · ${person.calls} calls/emails · ${person.followUpsCompleted} follow-ups closed · ${person.cases} cases (last week ${p.cases||0}) · ${person.sixthKegs} sixth kegs · ${person.halfKegs} half kegs · ${person.newAccountsTouched} first contacts · ${person.firstOrders} first-time buyers</div>`;
       person.daily.forEach(day=>{html+=`<details><summary>${esc(displayDate(day.date))} — ${day.activities.length} activities, ${day.cases} cases, ${day.sixthKegs} sixth kegs, ${day.halfKegs} half kegs</summary>
       ${day.activities.map(a=>`<div class="crm-report-row"><div><b>${esc(a.account)} — ${esc(a.type)}</b><div class="sub">${esc(a.notes||a.outcome||'Activity logged')}</div></div></div>`).join('')||'<p class="muted">No activities</p>'}
       ${day.orders.map(o=>`<div class="crm-report-row"><span>${esc(o.account)} — ${esc(o.product)}</span><b>${o.cases} cases / ${o.sixthKegs} 1/6 / ${o.halfKegs} 1/2</b></div>`).join('')}</details>`;});
