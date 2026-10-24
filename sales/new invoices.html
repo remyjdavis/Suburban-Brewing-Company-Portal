@@ -842,12 +842,20 @@ table.invoice-table {
     <strong>Suburban Brewing Company</strong><br>
     3041 Horseshoe Pike Suite 120 & 130<br>
     Honey Brook, PA 19344<br>
-    <span id="ui-rep-role">Owner</span>: 
-    <span id="ui-rep-name">Eric Yost</span> · 
-    <span id="ui-rep-phone">(484)354-0400</span> · 
-    <span id="ui-rep-email">eric@suburbanbg.com</span>
+    <span id="ui-rep-role">Sales Rep</span>:
+    <span id="ui-rep-name">Not selected</span> ·
+    <span id="ui-rep-phone"></span>
+    <span id="ui-rep-email"></span>
   </div>
 </header>
+
+      <div class="invoice-rep-picker" style="margin:12px 0 16px; padding:12px; border:1px solid #cbd5e1; border-radius:8px; background:#f8fafc;">
+        <label for="sales-rep-select" style="display:block; font-size:13px; font-weight:700; margin-bottom:6px;">Sales representative <span style="color:#b91c1c;">*</span></label>
+        <select id="sales-rep-select" required style="width:100%; max-width:430px; padding:10px; border:1px solid #94a3b8; border-radius:6px; background:white; font-size:14px;">
+          <option value="">Loading representatives…</option>
+        </select>
+        <div id="sales-rep-hint" style="font-size:12px; color:#64748b; margin-top:6px;">Select the rep who should receive invoice credit. Territory suggestions do not override your choice.</div>
+      </div>
 
       <div class="invoice-title">INVOICE</div>
       <div class="invoice-divider"></div>
@@ -1077,6 +1085,78 @@ table.invoice-table {
     let groupedProducts = {};
     let employees = [];
     let currentRep = {};
+
+    function eligibleInvoiceSalesReps() {
+      return employees.filter(emp => emp && emp.name && /sales|owner/i.test(String(emp.role || '')));
+    }
+
+    function renderSelectedSalesRep(rep) {
+      const nameEl = document.getElementById('ui-rep-name');
+      document.getElementById('ui-rep-role').textContent = rep ? (rep.role || 'Sales Rep') : 'Sales Rep';
+      nameEl.textContent = rep ? rep.name : 'Not selected';
+      nameEl.dataset.territory = rep ? (rep.territory || '') : '';
+      document.getElementById('ui-rep-phone').textContent = rep ? (rep.phone || '') : '';
+      document.getElementById('ui-rep-email').textContent = rep ? (rep.email || '') : '';
+      currentRep = rep || {};
+    }
+
+    function selectedInvoiceSalesRep() {
+      const select = document.getElementById('sales-rep-select');
+      const opt = select && select.selectedOptions.length ? select.selectedOptions[0] : null;
+      if (!opt || !opt.value) return null;
+      if (opt.dataset.historical === 'true') {
+        return { name: opt.dataset.repName, email: opt.dataset.repEmail || '',
+          phone: opt.dataset.repPhone || '', role: opt.dataset.repRole || 'Sales Rep',
+          territory: opt.dataset.repTerritory || '' };
+      }
+      const index = Number(opt.value);
+      const rep = (window.invoiceSalesReps || [])[index];
+      return rep || null;
+    }
+
+    function populateInvoiceSalesRepSelector() {
+      const select = document.getElementById('sales-rep-select');
+      select.replaceChildren();
+      select.add(new Option('-- Select a sales representative --', ''));
+      const reps = eligibleInvoiceSalesReps().sort((a,b) => a.name.localeCompare(b.name));
+      // Use the sorted list for stable option indexes and rep metadata.
+      window.invoiceSalesReps = reps;
+      reps.forEach((rep, i) => {
+        const opt = new Option(rep.name + ' — ' + (rep.role || 'Sales Rep'), String(i));
+        select.add(opt);
+      });
+      select.addEventListener('change', () => renderSelectedSalesRep(selectedInvoiceSalesRep()));
+      renderSelectedSalesRep(null);
+      if (!reps.length) {
+        document.getElementById('sales-rep-hint').textContent =
+          'No sales reps could be loaded from Employee Database. Check permissions before saving.';
+      }
+    }
+
+    function setInvoiceSalesRepFromSavedInvoice(header) {
+      const name = String(header.repName || '').trim();
+      const email = String(header.repEmail || '').trim().toLowerCase();
+      const select = document.getElementById('sales-rep-select');
+      if (!name) { select.value = ''; renderSelectedSalesRep(null); return; }
+      const current = (window.invoiceSalesReps || []).findIndex(rep =>
+        String(rep.name || '').trim().toLowerCase() === name.toLowerCase() &&
+        (!email || String(rep.email || '').trim().toLowerCase() === email));
+      if (current >= 0) {
+        select.value = String(current);
+      } else {
+        const option = new Option(name + ' — Previously assigned (not in active directory)', 'historic');
+        option.dataset.historical = 'true';
+        option.dataset.repName = name;
+        option.dataset.repEmail = header.repEmail || '';
+        option.dataset.repPhone = header.repPhone || '';
+        option.dataset.repRole = header.repRole || 'Sales Rep';
+        option.dataset.repTerritory = header.repTerritory || '';
+        select.add(option);
+        select.value = 'historic';
+      }
+      renderSelectedSalesRep(selectedInvoiceSalesRep());
+    }
+
     const KEG_DEPOSITS = {
       "1/2 Keg": 30,
       "1/6 Keg": 30
@@ -1113,22 +1193,12 @@ table.invoice-table {
             loadEmployees()
         ]);
 
-function forceHeaderUpdate() {
-    let rep = employees.find(e => e.role && e.role.toLowerCase() === "sales rep");
-    if (!rep) rep = employees.find(e => e.role && e.role.toLowerCase() === "owner");
-    if (!rep) rep = { name: "Eric Yost", role: "Owner", phone: "(484)354-0400", email: "eric@suburbanbg.com" };
-
-    document.getElementById("ui-rep-role").textContent = rep.role;
-    document.getElementById("ui-rep-name").textContent = rep.name;
-    document.getElementById("ui-rep-phone").textContent = rep.phone;
-    document.getElementById("ui-rep-email").textContent = rep.email;
-}
-
-forceHeaderUpdate(); // Run it immediately on load
         console.log("All data loaded successfully");
     } catch (err) {
         console.error("Data loading failed", err);
     }
+    // Even on partial load failures, show a clear rep selection/error state.
+    populateInvoiceSalesRepSelector();
 
     // 3. Now run logic that depends on that data
     const urlParams = new URLSearchParams(window.location.search);
@@ -1546,36 +1616,14 @@ function selectCustomer(c) {
     const customerTerritory = detectTerritory(c.address);
     console.log("System detected territory: " + customerTerritory + " from address: " + c.address);
 
-    // --- 🟢 FUZZY REP SEARCH ---
-    let rep = employees.find(e => {
-        const sheetTerritory = String(e.territory || "").toLowerCase().trim();
-        const detectedTerritory = customerTerritory.toLowerCase().trim();
-        
-        return sheetTerritory !== "" && sheetTerritory === detectedTerritory;
-    });
-
-    // 🟢 THE FIX: Fallback to the General Sales Rep instead of Eric
-    if (!rep) {
-        rep = employees.find(e => e.role && e.role.toLowerCase().includes("sales rep"));
-    }
-
-    // 3. Fallback if everything fails
-    if (!rep || !rep.name) {
-        rep = { 
-            name: "Eric Yost", 
-            role: "Owner", 
-            phone: "(484) 354-0400", 
-            email: "eric@suburbanbg.com",
-            territory: "Main Office" 
-        };
-    }
-
-    // 🟢 ADDED: Update UI with the found Rep
-    document.getElementById("ui-rep-role").textContent = rep.role || "Sales Rep";
-    document.getElementById("ui-rep-name").textContent = rep.name;
-    document.getElementById("ui-rep-phone").textContent = rep.phone;
-    document.getElementById("ui-rep-email").textContent = rep.email;
-    document.getElementById("ui-rep-name").dataset.territory = rep.territory || customerTerritory;
+    // Territory is only a suggestion; never overwrite a selected sales rep.
+    const suggestedRep = eligibleInvoiceSalesReps().find(e =>
+      String(e.territory || '').trim().toLowerCase() === customerTerritory.toLowerCase()
+    );
+    const repHint = document.getElementById('sales-rep-hint');
+    repHint.textContent = suggestedRep
+      ? `Territory suggestion (${customerTerritory}): ${suggestedRep.name}. Choose the assigned sales rep above.`
+      : 'Select the sales rep responsible for this invoice. The choice is saved for future commissions.';
 
     // --------------------------------------------------------------
 
@@ -2351,6 +2399,12 @@ const depositCreditInputEl = document.getElementById("invoice-deposit-credit-inp
   /* =====  INVOICE PAYLOAD FUNCTION (UPDATED) ===== */
 function buildInvoicePayload() {
   if (!selectedCustomer) { alert("Select a customer first"); return null; }
+  const assignedRep = selectedInvoiceSalesRep();
+  if (!assignedRep) {
+    Swal.fire('Sales Rep Required', 'Choose the sales representative for this invoice before saving.', 'warning');
+    document.getElementById('sales-rep-select').focus();
+    return null;
+  }
 
   const items = [];
   overrideLogs = []; // Reset logs
@@ -2433,14 +2487,12 @@ function buildInvoicePayload() {
     customerType: selectedCustomer.type,
     paymentMethod: selectedCustomer.paymentMethod,
 
-    // 🟢 GRAB CURRENTLY DISPLAYED REP INFO
-    // 🟢 GRAB CURRENTLY DISPLAYED REP INFO
-    repName: document.getElementById("ui-rep-name").textContent,
-    repPhone: document.getElementById("ui-rep-phone").textContent,
-    repEmail: document.getElementById("ui-rep-email").textContent, // <-- ADD THIS LINE
-    repRole: document.getElementById("ui-rep-role").textContent,
-    // Add territory from the dataset we set in Step 2
-    territory: document.getElementById("ui-rep-name").dataset.territory || "General",
+    // Explicitly chosen rep is written to the same row as the invoice.
+    repName: assignedRep.name,
+    repPhone: assignedRep.phone || '',
+    repEmail: assignedRep.email || '',
+    repRole: assignedRep.role || 'Sales Rep',
+    territory: assignedRep.territory || '',
     subtotal, 
     discount, 
     tax, 
@@ -2470,9 +2522,14 @@ function buildInvoicePayload() {
     document.getElementById("email-invoice-btn").disabled = true;
 
    /* ===== SAVE INVOICE FUNCTION (UPDATED) ===== */
+let invoiceSaveInProgress = false;
 function saveInvoice() {
+  if (invoiceSaveInProgress) return;
   const payload = buildInvoicePayload();
   if (!payload) return;
+  invoiceSaveInProgress = true;
+  const saveButton = document.getElementById('save-invoice-btn');
+  if (saveButton) saveButton.disabled = true;
 
   const url =
     API_URL +
@@ -2516,9 +2573,13 @@ if (res.fileId) {
     .catch(err => {
       console.error(err);
       alert("Network error saving invoice");
+    })
+    .finally(() => {
+      invoiceSaveInProgress = false;
+      if (saveButton) saveButton.disabled = false;
     });
 }
-    document.getElementById("save-invoice-btn").addEventListener("click", saveInvoice);
+    // The save listener is attached once in DOMContentLoaded (above).
     /* ===== PRINT INVOICE FUNCTION ===== */
     async function printInvoice() {
     if (!window.currentInvoiceFileId) {
@@ -2639,6 +2700,7 @@ async function loadInvoiceForEdit(invNum, custName) {
       };
     }
     if (customer) selectCustomer({...customer, depositBalance: Number(customer.depositBalance) || 0});
+    setInvoiceSalesRepFromSavedInvoice(header);
 
     const tbody = document.getElementById('product-body');
     tbody.innerHTML = '';
@@ -2841,26 +2903,13 @@ function detectTerritoryFromAddress(address) {
  * Swaps the header info based on the detected territory.
  */
 function updateInvoiceBranding(county) {
-    // Find the Sales Rep assigned to this county in Column N (Index 13)
-    const assignedRep = employees.find(emp => 
-        emp.role && emp.role.toLowerCase().includes("sales rep") && 
-        emp.territory === county
+    // Kept for older callers; territory suggestions must never change selected rep.
+    const suggested = eligibleInvoiceSalesReps().find(emp =>
+      String(emp.territory || '').trim().toLowerCase() === String(county || '').trim().toLowerCase()
     );
-
-    if (assignedRep) {
-        document.getElementById("ui-rep-name").textContent = assignedRep.name;
-        document.getElementById("ui-rep-phone").textContent = assignedRep.phone || "(484)354-0400";
-        document.getElementById("ui-rep-email").textContent = assignedRep.email;
-        document.getElementById("ui-rep-role").textContent = "Sales Rep";
-        // Store the territory in a hidden data attribute or log it
-        document.getElementById("ui-rep-role").dataset.territory = assignedRep.territory;
-    } else {
-        // Fallback to Eric/Main Office if no specific rep is found for that county
-        document.getElementById("ui-rep-name").textContent = "Eric Yost";
-        document.getElementById("ui-rep-phone").textContent = "(484)354-0400";
-        document.getElementById("ui-rep-email").textContent = "eric@suburbanbg.com";
-        document.getElementById("ui-rep-role").textContent = "Owner";
-        document.getElementById("ui-rep-role").dataset.territory = "Main Office";
+    const hint = document.getElementById('sales-rep-hint');
+    if (hint && suggested) {
+      hint.textContent = `Territory suggestion (${county}): ${suggested.name}. Select the assigned rep above.`;
     }
 }
   </script>
