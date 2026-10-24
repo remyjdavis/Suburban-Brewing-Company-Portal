@@ -405,23 +405,36 @@
     </div>
 </div>
   
+    <div class="card" style="margin-bottom:20px;">
+      <h3 style="margin-top:0;">Monthly Commission Report Filters</h3>
+      <div class="settings-grid">
+        <div class="settings-field"><label for="reportMonth">Month</label>
+          <select id="reportMonth" onchange="loadData()"></select></div>
+        <div class="settings-field"><label for="reportYear">Year</label>
+          <select id="reportYear" onchange="loadData()"></select></div>
+        <div class="settings-field"><label for="reportRep">Sales Representative</label>
+          <select id="reportRep" onchange="loadData()"><option value="all">All Sales Reps</option></select></div>
+      </div>
+      <div id="commissionFilterStatus" class="settings-note" role="status" aria-live="polite"></div>
+    </div>
+
     <div class="commission-header">
-      <div style="text-transform: uppercase; font-size: 11px; letter-spacing: 2px; opacity: 0.8;">Month-to-Date Commission</div>
+      <div style="text-transform: uppercase; font-size: 11px; letter-spacing: 2px; opacity: 0.8;">Commission for Selected Period</div>
       <div id="commissionValue" class="sales-val">$0.00</div>
-      <div id="currentRate" style="font-size: 18px; font-weight: 700; color: var(--success);">Commission Rate: 5%</div>
+      <div id="currentRate" style="font-size: 18px; font-weight: 700; color: var(--success);">Commission Rate: 12%</div>
       
       <div class="tier-container" style="max-width: 620px;">
-        <div style="font-size: 13px; opacity: 0.85;">Flat 5% rate on commissionable net beer sales. No tier or monthly goal calculation.</div>
+        <div style="font-size: 13px; opacity: 0.85;">Flat 12% rate on delivered, eligible beer sales by assigned rep. Unassigned invoices require review.</div>
       </div>
     </div>
 
     <div class="report-grid">
       <div class="card">
-        <h3>Current Month Invoices</h3>
+        <h3 id="invoiceReportHeading">Delivered Invoices</h3>
         <div class="table-container">
           <table>
             <thead>
-              <tr><th>Invoice #</th><th>Customer</th><th>Amount</th><th>Status</th><th>Commission</th></tr>
+              <tr><th>Invoice #</th><th>Customer</th><th>Sales Rep</th><th>Net Sales</th><th>Commission</th></tr>
             </thead>
             <tbody id="invoiceList"></tbody>
           </table>
@@ -442,6 +455,15 @@
           <div id="grossSales" style="font-size: 24px; font-weight: 700;">$0.00</div>
           <div id="reportFilterNote" class="settings-note"></div>
         </div>
+      </div>
+
+      <div class="card full-width-card">
+        <h3>Commission Breakdown by Sales Rep</h3>
+        <div class="table-container">
+          <table><thead><tr><th>Sales Rep</th><th>Delivered Invoices</th><th>Commissionable Sales</th><th>Commission Due</th></tr></thead>
+            <tbody id="repSummaryRows"><tr><td colspan="4">Loading report...</td></tr></tbody></table>
+        </div>
+        <div id="unassignedNotice" class="settings-note" style="margin-top:12px;"></div>
       </div>
 
       <div class="card full-width-card">
@@ -545,6 +567,7 @@
         });
       });
 
+      initializeCommissionFilters();
       loadData();
       loadCustomerReportSettings();
     });
@@ -556,49 +579,92 @@
     }
 
     let customerReportSettingsCache = [];
+    let currentCommissionReport = null;
+
+    function escapeReportText(value) {
+      return String(value ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function initializeCommissionFilters() {
+      const now = new Date();
+      const month = document.getElementById('reportMonth');
+      const year = document.getElementById('reportYear');
+      const monthNames = ['January','February','March','April','May','June',
+        'July','August','September','October','November','December'];
+      month.innerHTML = monthNames.map((label, index) =>
+        `<option value="${index + 1}">${label}</option>`).join('');
+      month.value = String(now.getMonth() + 1);
+      const years = Array.from({ length: 8 }, (_, idx) => now.getFullYear() - idx);
+      year.innerHTML = years.map(value => `<option value="${value}">${value}</option>`).join('');
+      year.value = String(now.getFullYear());
+    }
+
+    function currentReportQuery(action) {
+      const month = document.getElementById('reportMonth').value;
+      const year = document.getElementById('reportYear').value;
+      const rep = document.getElementById('reportRep').value || 'all';
+      const params = new URLSearchParams({ action, month, year, rep });
+      return `${API_URL}?${params.toString()}`;
+    }
 
     async function loadData() {
+      const status = document.getElementById('commissionFilterStatus');
+      status.textContent = 'Loading selected report...';
+      const list = document.getElementById('invoiceList');
       try {
-        const response = await fetch(`${API_URL}?action=getMonthlySalesData`, { redirect: "follow" });
+        const requestedRep = document.getElementById('reportRep').value || 'all';
+        const response = await fetch(currentReportQuery('getMonthlySalesData'), { redirect: 'follow' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-
         if (data.success === false) throw new Error(data.error || 'Monthly report failed');
+        currentCommissionReport = data;
+        const repSelect = document.getElementById('reportRep');
+        repSelect.innerHTML = '<option value="all">All Sales Reps</option>' + (data.reps || []).map(rep =>
+          `<option value="${escapeReportText(rep.key)}">${escapeReportText(rep.name)}</option>`).join('');
+        repSelect.value = requestedRep;
+        if (repSelect.selectedIndex === -1) repSelect.value = 'all';
 
         document.getElementById('grossSales').innerText = formatMoney(data.totalSales);
         document.getElementById('commissionValue').innerText = formatMoney(data.commission);
         document.getElementById('currentRate').innerText = `Commission Rate: ${data.rate}`;
-
-        const list = document.getElementById('invoiceList');
+        document.getElementById('invoiceReportHeading').innerText = `${data.monthLabel} — ${data.reportRepName}`;
         const invoices = Array.isArray(data.invoices) ? data.invoices : [];
         list.innerHTML = invoices.map(inv => {
           const labels = [];
           if (inv.privateLabel) labels.push('<span class="pill pill-private">Private Label</span>');
           if (!inv.commissionable) labels.push('<span class="pill pill-warning">No Commission</span>');
-          if (inv.commissionable) labels.push('<span class="pill pill-good">Commission</span>');
+          return `<tr>
+            <td>#${escapeReportText(inv.number)}</td>
+            <td><strong>${escapeReportText(inv.customer)}</strong>${labels.length ? '<br>' + labels.join(' ') : ''}</td>
+            <td>${escapeReportText(inv.repName)}</td>
+            <td>${formatMoney(inv.amount)}</td>
+            <td>${formatMoney(inv.commissionAmount)}</td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="5">No delivered invoices for this selection.</td></tr>';
 
-          return `
-            <tr>
-              <td>#${inv.number}</td>
-              <td><strong>${inv.customer}</strong>${labels.length ? '<br>' + labels.join(' ') : ''}</td>
-              <td>${formatMoney(inv.amount)}</td>
-              <td><span style="color: ${inv.status === 'Delivered' ? 'var(--success)' : '#f59e0b'}">${inv.status}</span></td>
-              <td>${inv.commissionable ? 'Yes' : 'No'}</td>
-            </tr>
-          `;
-        }).join('') || '<tr><td colspan="5">No delivered invoices found for this month.</td></tr>';
+        document.getElementById('repSummaryRows').innerHTML = (data.repSummary || []).map(rep => `
+          <tr><td>${escapeReportText(rep.name)}</td><td>${rep.count}</td>
+          <td>${formatMoney(rep.totalSales)}</td><td>${formatMoney(rep.commission)}</td></tr>`
+        ).join('') || '<tr><td colspan="4">No rep sales for this month.</td></tr>';
 
+        const notice = document.getElementById('unassignedNotice');
+        notice.textContent = data.unassignedCount ? `${data.unassignedCount} unassigned delivered invoice(s), totaling ${formatMoney(data.unassignedSales)}, require rep assignment before commission is credited.` : '';
         const note = [];
         if (Number(data.totalReportedSales || 0) !== Number(data.totalSales || 0)) {
           note.push(`Reported sales: ${formatMoney(data.totalReportedSales)}`);
         }
-        if (data.excludedFromMonthlyCount) note.push(`${data.excludedFromMonthlyCount} invoice(s) hidden by monthly-report exclusions`);
-        if (data.excludedFromCommissionCount) note.push(`${data.excludedFromCommissionCount} invoice(s) shown but excluded from commission`);
+        if (data.excludedFromMonthlyCount) note.push(`${data.excludedFromMonthlyCount} invoice(s) hidden by report exclusions`);
+        if (data.excludedFromCommissionCount) note.push(`${data.excludedFromCommissionCount} invoice(s) ineligible for commission`);
         document.getElementById('reportFilterNote').innerText = note.join(' · ');
-
+        status.textContent = '';
       } catch (e) {
-        console.error("Failed to load dashboard data", e);
-        const list = document.getElementById('invoiceList');
-        if (list) list.innerHTML = `<tr><td colspan="5">Monthly report failed: ${e.message}</td></tr>`;
+        currentCommissionReport = null;
+        console.error('Failed to load commission report', e);
+        if (list) list.innerHTML = `<tr><td colspan="5">Report failed: ${escapeReportText(e.message)}</td></tr>`;
+        document.getElementById('repSummaryRows').innerHTML = '';
+        status.textContent = `Could not load report: ${e.message}`;
       }
     }
 
@@ -664,80 +730,75 @@
     }
 
     function generateCommissionPDF() {
-      const comm = document.getElementById('commissionValue').innerText;
-      const rate = document.getElementById('currentRate').innerText.replace('Commission Rate:', '').trim();
-      const sales = document.getElementById('grossSales').innerText;
-      const note = document.getElementById('reportFilterNote').innerText;
-      
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head><style>
-            body { font-family: sans-serif; padding: 40px; color: #333; }
-            .header { border-bottom: 3px solid #1f2937; margin-bottom: 30px; padding-bottom: 10px; }
-            .stat { margin-bottom: 15px; font-size: 18px; }
-            .big { font-size: 32px; font-weight: 800; color: #10b981; }
-            table { width: 100%; border-collapse: collapse; margin-top: 30px; }
-            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-            th { background: #f9fafb; }
-            .pill { display: inline-block; border-radius: 999px; padding: 3px 8px; font-size: 10px; font-weight: 700; background: #e5e7eb; }
-          </style></head>
-          <body>
-            <div class="header">
-              <h1>Monthly Commission Statement</h1>
-              <p>Suburban Brewing Co. | Generated: ${new Date().toLocaleDateString()}</p>
-            </div>
-            <div class="stat">Commissionable Net Sales MTD: <strong>${sales}</strong></div>
-            <div class="stat">Commission Rate: <strong>${rate}</strong></div>
-            <div class="stat">Commission Amount: <span class="big">${comm}</span></div>
-            ${note ? `<p>${note}</p>` : ''}
-            <br><hr><br>
-            <h3>Delivered Invoice Audit</h3>
-            ${document.getElementById('invoiceList').parentElement.outerHTML}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
+      const report = currentCommissionReport;
+      if (!report) { alert('Load the monthly commission report before exporting.'); return; }
+      const win = window.open('', '_blank');
+      if (!win) { alert('Please allow pop-ups to print the report.'); return; }
+      const invoiceRows = (report.invoices || []).map(inv => `<tr>
+        <td>${escapeReportText(inv.date)}</td><td>${escapeReportText(inv.number)}</td>
+        <td>${escapeReportText(inv.customer)}</td><td>${escapeReportText(inv.repName)}</td>
+        <td>${formatMoney(inv.amount)}</td><td>${formatMoney(inv.commissionAmount)}</td></tr>`).join('');
+      const repRows = (report.repSummary || []).map(rep => `<tr>
+        <td>${escapeReportText(rep.name)}</td><td>${rep.count}</td>
+        <td>${formatMoney(rep.totalSales)}</td><td>${formatMoney(rep.commission)}</td></tr>`).join('');
+      win.document.write(`<!doctype html><html><head><title>Commission - ${escapeReportText(report.monthLabel)}</title>
+        <style>body{font-family:Arial,sans-serif;padding:28px;color:#1f2937}
+        h1{margin-bottom:4px}table{border-collapse:collapse;width:100%;margin:20px 0;font-size:12px}
+        th,td{border:1px solid #ccc;padding:7px;text-align:left}th{background:#eee}
+        .sum{font-size:22px;font-weight:bold}.alert{color:#92400e}</style></head><body>
+        <h1>Suburban Brewing Co. — Monthly Commission</h1>
+        <p>${escapeReportText(report.monthLabel)} · ${escapeReportText(report.reportRepName)}</p>
+        <p>Eligible Net Sales: ${formatMoney(report.totalSales)} · Rate: ${escapeReportText(report.rate)}</p>
+        <p class="sum">Commission Due: ${formatMoney(report.commission)}</p>
+        ${report.unassignedCount ? `<p class="alert">Unassigned: ${report.unassignedCount} invoice(s), ${formatMoney(report.unassignedSales)}; review before payout.</p>` : ''}
+        <h2>Rep Breakdown</h2><table><thead><tr><th>Rep</th><th>Invoices</th><th>Eligible Sales</th><th>Commission</th></tr></thead>
+        <tbody>${repRows || '<tr><td colspan="4">No entries</td></tr>'}</tbody></table>
+        <h2>Delivered Invoice Detail</h2><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Rep</th><th>Net Sales</th><th>Commission</th></tr></thead>
+        <tbody>${invoiceRows || '<tr><td colspan="6">No delivered invoices</td></tr>'}</tbody></table>
+        <p>Generated ${new Date().toLocaleString()}</p></body></html>`);
+      win.document.close();
+      win.focus();
+      win.print();
     }
 
     async function generateFullSalesReportPDF() {
-      const response = await fetch(`${API_URL}?action=getFullAuditData`, { redirect: "follow" });
-      const data = await response.json();
-      
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head><style>
-            body { font-family: sans-serif; font-size: 11px; padding: 20px; }
-            h2 { text-transform: uppercase; border-bottom: 1px solid #000; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #000; padding: 6px; text-align: left; }
-            th { background: #eee; }
-          </style></head>
-          <body>
-            <h2>Suburban Brewing Co. - Full Sales & Payment Audit</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th><th>Inv #</th><th>Customer</th><th>Invoice Total</th><th>Commissionable</th><th>Status</th><th>Payment</th><th>Private Label</th><th>Commission</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${data.map(inv => `
-                  <tr>
-                    <td>${inv.date}</td><td>${inv.number}</td><td>${inv.customer}</td>
-                    <td>${formatMoney(inv.amount)}</td><td>${formatMoney(inv.commissionableAmount)}</td><td>${inv.status}</td><td>${inv.paymentType}</td>
-                    <td>${inv.privateLabel ? 'Yes' : 'No'}</td><td>${inv.commissionable ? 'Yes' : 'No'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
+      const win = window.open('', '_blank');
+      if (!win) { alert('Please allow pop-ups to print the audit.'); return; }
+      win.document.write('<p>Loading sales audit...</p>');
+      try {
+        const response = await fetch(currentReportQuery('getFullAuditData'), { redirect: 'follow' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (!Array.isArray(data)) throw new Error(data.error || 'Audit data unavailable');
+        const month = document.getElementById('reportMonth');
+        const monthName = month.options[month.selectedIndex].text;
+        const year = document.getElementById('reportYear').value;
+        const rep = document.getElementById('reportRep');
+        const repName = rep.options[rep.selectedIndex].text;
+        const rows = data.map(inv => `<tr><td>${escapeReportText(inv.date)}</td>
+          <td>${escapeReportText(inv.number)}</td><td>${escapeReportText(inv.customer)}</td>
+          <td>${escapeReportText(inv.repName)}</td><td>${formatMoney(inv.amount)}</td>
+          <td>${formatMoney(inv.commissionableAmount)}</td><td>${formatMoney(inv.commissionAmount)}</td>
+          <td>${escapeReportText(inv.status)}</td><td>${escapeReportText(inv.paymentType)}</td>
+          <td>${inv.privateLabel ? 'Yes' : 'No'}</td></tr>`).join('');
+        win.document.open();
+        win.document.write(`<!doctype html><html><head><title>Sales Audit</title><style>
+          body{font-family:Arial,sans-serif;font-size:11px;padding:20px}
+          table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px;text-align:left}
+          th{background:#eee}</style></head><body>
+          <h2>Suburban Brewing Co. — Full Sales Audit</h2>
+          <p>${escapeReportText(monthName)} ${escapeReportText(year)} · ${escapeReportText(repName)}</p>
+          <table><thead><tr><th>Date</th><th>Inv #</th><th>Customer</th><th>Rep</th><th>Total</th><th>Eligible Sales</th><th>Commission</th><th>Status</th><th>Payment</th><th>Private Label</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="10">No invoices for this selection.</td></tr>'}</tbody></table>
+          </body></html>`);
+        win.document.close();
+        win.focus();
+        win.print();
+      } catch (err) {
+        win.document.open();
+        win.document.write(`<p>Could not load audit: ${escapeReportText(err.message)}</p>`);
+        win.document.close();
+      }
     }
   </script>
 </body>
