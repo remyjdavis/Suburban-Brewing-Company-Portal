@@ -93,7 +93,7 @@
 <div class="actions"><button type="button" class="btn ghost" onclick="closeModal('taskModal')">Cancel</button><button type="submit" class="btn primary" id="saveTaskBtn">Create Task</button></div></form></div></div>
 <script>
 // IMPORTANT: Replace this string with the /exec URL of your NEW standalone LeadsBackend.gs deployment.
-const API_URL='https://script.google.com/macros/s/AKfycbwN0KEtHlCZg2p9yiIS1JdZwb0-wLgAl58tyP1MrjfCi9V4kRp2jLhoe4GKWIS1pHyS/exec';
+const API_URL='https://script.google.com/macros/s/AKfycbxph5eskMBLUSUmeYhyodhoDjUlPvhPLDNos5iyCOuA4_ik2sTSPi0S3kn-l-M8fNgYSQ/exec';
 let dashboard={leads:[],tasks:[],stats:{}},selectedId='',selectedLead=null,activeTab='Overview',leadEditId='';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -104,7 +104,7 @@ function toast(title,text,icon='info'){if(window.Swal)return Swal.fire({title,te
 function jsonp(action,params={}){return new Promise((resolve,reject)=>{
   if(!/^https:\/\/script\.google\.com\/macros\/s\//.test(API_URL))return reject(Error('Set API_URL in this HTML to your deployed LeadsBackend.gs /exec URL.'));
   const cb='sbcCRMcb'+Date.now()+Math.floor(Math.random()*100000),script=document.createElement('script');
-  let done=false;const timer=setTimeout(()=>finish(Error('The CRM request timed out. Check Apps Script permissions, the free openrouteservice quota, or Overpass availability.')),action==='planLeadRoute'?120000:25000);
+  let done=false;const timer=setTimeout(()=>finish(Error('No response from the CRM backend before the page deadline. Open Apps Script → Executions to see which request was slow. The backend now limits provider waits.')),action==='planLeadRoute'?120000:25000);
   const finish=(err,value)=>{if(done)return;done=true;clearTimeout(timer);script.remove();try{delete window[cb]}catch(_){};err?reject(err):resolve(value)};
   window[cb]=value=>{if(value&&value.success===false)finish(Error(value.error||'Request failed'));else finish(null,value)};
   const u=new URL(API_URL);u.searchParams.set('action',action);u.searchParams.set('callback',cb);
@@ -204,7 +204,7 @@ function routeOpenFull(){
 function routeRender(){
   const box=$('routeResults');if(!currentRoute){box.hidden=true;box.innerHTML='';return;}
   const r=currentRoute;box.hidden=false;
-  let html=`<div class="route-summary"><span class="route-stat">${r.totalStops} stops</span><span class="route-stat">${r.existingCount} scheduled follow-ups</span><span class="route-stat">${r.prospectCount} new prospects</span><span class="route-stat">${esc(r.distanceMiles)} miles</span><span class="route-stat">${esc(r.driveMinutes)} min driving</span><span class="route-stat">Back at ${esc(r.returnTime)}</span></div>`;
+  let html=`<div class="route-summary"><span class="route-stat">${r.totalStops} stops</span><span class="route-stat">${r.existingCount} scheduled follow-ups</span><span class="route-stat">${r.prospectCount} new prospects</span><span class="route-stat">${r.routingMode==='approximate'?'Approx. ':''}${esc(r.distanceMiles)} miles</span><span class="route-stat">${r.routingMode==='approximate'?'Est. ':''}${esc(r.driveMinutes)} min driving</span><span class="route-stat">Back at ${esc(r.returnTime)}</span></div>`;
   const warnings=r.warnings||[];
   if(warnings.length)html+=`<div class="route-notice"><strong>Route notes:</strong><ul style="margin:6px 0 0;padding-left:18px">${warnings.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
   html+=`<div class="route-endpoint"><div>🏠 <strong>0 · Depart Suburban Brewing</strong><div class="muted">${esc(r.departure)} · ${esc(r.origin)}</div></div><button type="button" class="btn light sm" data-nav-leg="0">Directions to first stop</button></div>`;
@@ -232,7 +232,7 @@ async function generateRoute(e){e.preventDefault();const btn=$('routeGenerateBtn
  try{
   const data={routeDate:$('routeDate').value,startTime:$('routeStart').value,maxStops:Number($('routeMax').value),prospectLimit:Number($('routeNew').value),radiusMiles:Number($('routeRadius').value),discoverProspects:$('routeDiscover').checked};
   const r=await api('planLeadRoute',data);
-  currentRoute=r;routeRender();$('routeStatus').textContent=`Route generated for ${displayDate(r.routeDate)}. Starts and ends at the brewery.`;
+  currentRoute=r;routeRender();$('routeStatus').textContent=`${r.routingMode==='approximate'?'Estimated fallback route':'Road-optimized route'} generated for ${displayDate(r.routeDate)}. Starts and ends at the brewery.`;
  }catch(err){$('routeStatus').textContent='Route failed: '+err.message;toast('Route Builder Error',err.message,'error')}
  finally{btn.disabled=false;btn.textContent='Generate Route';}
 }
