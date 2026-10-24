@@ -74,7 +74,7 @@
 <div class="field"><label>Phone</label><input id="phone" type="tel"></div><div class="field"><label>Email</label><input id="email" type="email"></div>
 <div class="field full"><label>Street Address (needed for routing)</label><input id="address" maxlength="320" placeholder="Street, city, state and ZIP"></div>
 <div class="field"><label>City</label><input id="city"></div><div class="field"><label>State</label><input id="state" placeholder="PA"></div>
-<div class="field full"><label>Opening Hours (optional; local time)</label><input id="openingHours" maxlength="600" placeholder="Mo-Fr 09:00-17:00; Sa 10:00-14:00; Su off"><div class="muted" style="margin-top:5px">Use 24-hour time and Mo Tu We Th Fr Sa Su. Example: Mo-Fr 09:00-17:00; Sa 10:00-14:00; Su off. Leave blank to look up free OpenStreetMap hours.</div></div>
+<div class="field full"><label>Opening Hours (optional; local time)</label><input id="openingHours" maxlength="600" placeholder="Mo-Fr 09:00-17:00; Sa 10:00-14:00; Su off"><div class="muted" style="margin-top:5px">Use 24-hour time and Mo Tu We Th Fr Sa Su. Example: Mo-Fr 09:00-17:00; Sa 10:00-14:00; Su off. Leave blank for an automatic business-hours lookup where Geoapify data is available.</div></div>
 <div class="field"><label>Priority</label><select id="priority"><option>Medium</option><option>High</option><option>Low</option></select></div><div class="field"><label>Next Follow-Up Date</label><input id="nextFollowUp" type="date"></div>
 <div class="field"><label>Lead Source</label><input id="leadSource" placeholder="Trade show, referral…"></div><div class="field"><label>Assigned Rep</label><input id="assignedRep" placeholder="Sales representative"></div>
 <div class="field"><label>Interest Level</label><select id="interestLevel"><option value="">Select level</option><option>High</option><option>Medium</option><option>Low</option></select></div><div class="field"><label>Estimated Volume</label><input id="estVolume" placeholder="e.g. 3–5 bbl / month"></div>
@@ -229,14 +229,14 @@ function routeRender(){
   ${s.convertedLeadId?'<span class="pill green">Saved as Lead</span>':''}</div></div>`).join('');
   html+=`<div class="route-endpoint"><div>🏠 <strong>Return to Suburban Brewing</strong><div class="muted">${esc(r.returnTime)} · ${esc(r.returnDriveMinutes)} min from final stop</div></div><button type="button" class="btn light sm" data-nav-leg="${r.stops.length}">Navigate Home</button></div>`;
   html+=`<div class="route-actions"><button type="button" class="btn light" id="routePrint">Print Route</button><button type="button" class="btn primary" id="routeMaps">Open Route in Google Maps</button></div>
-  <div style="margin-top:12px;color:#5e5e5e;line-height:1.7;font-size:12px">Business discovery: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors (ODbL)</a>. Route optimization: <a href="https://openrouteservice.org/" target="_blank" rel="noopener noreferrer">openrouteservice</a>. Craft beer availability is unverified. Times are estimates without live traffic. Google Maps links are for navigation only (no paid API calls).</div>`;
+  <div style="margin-top:12px;color:#5e5e5e;line-height:1.7;font-size:12px">Business discovery: Powered by <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify</a> using <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors (ODbL)</a>. Route optimization: <a href="https://openrouteservice.org/" target="_blank" rel="noopener noreferrer">openrouteservice</a>. Craft beer availability is unverified. Times are estimates without live traffic. Google Maps links are for navigation only (no paid API calls).</div>`;
   box.innerHTML=html;
   box.querySelectorAll('[data-nav-leg]').forEach(b=>b.onclick=()=>routeOpenLeg(Number(b.dataset.navLeg)));
   box.querySelectorAll('[data-route-prospect]').forEach(b=>b.onclick=()=>routeSaveProspect(Number(b.dataset.routeProspect)));
   box.querySelectorAll('[data-route-visit]').forEach(b=>b.onclick=()=>routeVisit(Number(b.dataset.routeVisit)));
   $('routePrint').onclick=()=>window.print();$('routeMaps').onclick=routeOpenFull;
 }
-async function generateRoute(e){e.preventDefault();const btn=$('routeGenerateBtn');btn.disabled=true;btn.textContent='Finding & optimizing…';$('routeStatus').textContent='Searching due accounts and OpenStreetMap prospects; optimizing through openrouteservice. No paid Google Maps calls.';
+async function generateRoute(e){e.preventDefault();const btn=$('routeGenerateBtn');btn.disabled=true;btn.textContent='Finding & optimizing…';$('routeStatus').textContent='Searching due accounts and nearby prospects via Geoapify; optimizing through openrouteservice. No paid Google Maps calls.';
  try{
   const data={routeDate:$('routeDate').value,startTime:$('routeStart').value,maxStops:Number($('routeMax').value),prospectLimit:Number($('routeNew').value),radiusMiles:Number($('routeRadius').value),discoverProspects:$('routeDiscover').checked};
   const r=await api('planLeadRoute',data);
