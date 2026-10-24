@@ -419,12 +419,12 @@
     </div>
 
     <div class="commission-header">
-      <div style="text-transform: uppercase; font-size: 11px; letter-spacing: 2px; opacity: 0.8;">Commission for Selected Period</div>
+      <div style="text-transform: uppercase; font-size: 11px; letter-spacing: 2px; opacity: 0.8;">Sales Rep Commissions for Selected Period</div>
       <div id="commissionValue" class="sales-val">$0.00</div>
       <div id="currentRate" style="font-size: 18px; font-weight: 700; color: var(--success);">Commission Rate: 12%</div>
       
       <div class="tier-container" style="max-width: 620px;">
-        <div style="font-size: 13px; opacity: 0.85;">Flat 12% rate on delivered, eligible beer sales by assigned rep. Unassigned invoices require review.</div>
+        <div style="font-size: 13px; opacity: 0.85;">Flat 12% on delivered invoices assigned to sales reps. Owner-assigned sales are recorded but receive no commission. The owner still receives the monthly summary email.</div>
       </div>
     </div>
 
@@ -466,36 +466,6 @@
         <div id="unassignedNotice" class="settings-note" style="margin-top:12px;"></div>
       </div>
 
-      <div class="card full-width-card">
-        <h3>Customer Report Settings</h3>
-        <p style="font-size: 13px; color: #6b7280; margin-bottom: 15px;">Edit whether a customer shows in the monthly report, is marked private label, or counts toward commission.</p>
-
-        <div class="settings-grid">
-          <div class="settings-field">
-            <label for="customerSettingsSelect">Customer</label>
-            <select id="customerSettingsSelect" onchange="loadSelectedCustomerSettings()">
-              <option value="">Loading customers...</option>
-            </select>
-          </div>
-          <label class="setting-check">
-            <input type="checkbox" id="excludeMonthlyReport">
-            <span><strong>Exclude from monthly report</strong><br>This hides the customer from the dashboard, audit PDF, and commission math.</span>
-          </label>
-          <label class="setting-check">
-            <input type="checkbox" id="privateLabelCustomer">
-            <span><strong>Private label</strong><br>Marks the account as private label on reports.</span>
-          </label>
-          <label class="setting-check">
-            <input type="checkbox" id="excludeCommission">
-            <span><strong>Exclude from commission</strong><br>Keeps the customer in the audit, but removes sales from commission.</span>
-          </label>
-        </div>
-
-        <div class="settings-save-row">
-          <button class="btn btn-primary" style="width:auto; padding-left: 18px; padding-right: 18px;" onclick="saveCustomerReportSettings()">Save Customer Settings</button>
-          <span id="settingsSaveStatus" class="settings-note"></span>
-        </div>
-      </div>
     </div>
     
     <div style="flex-grow:1;"></div>
@@ -569,7 +539,6 @@
 
       initializeCommissionFilters();
       loadData();
-      loadCustomerReportSettings();
     });
 
     const API_URL = "https://script.google.com/macros/s/AKfycbxaWt6lA_tFkzsFcqmuEgcZuLJN5u_xrA6vVzdvHJPrlipkWkkc8lxW6AjkwKHaYxHP/exec"; 
@@ -578,7 +547,6 @@
       return `$${(Number(value) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
-    let customerReportSettingsCache = [];
     let currentCommissionReport = null;
 
     function escapeReportText(value) {
@@ -634,6 +602,7 @@
         list.innerHTML = invoices.map(inv => {
           const labels = [];
           if (inv.privateLabel) labels.push('<span class="pill pill-private">Private Label</span>');
+          if (inv.ownerAssigned) labels.push('<span class="pill pill-warning">Owner sale</span>');
           if (!inv.commissionable) labels.push('<span class="pill pill-warning">No Commission</span>');
           return `<tr>
             <td>#${escapeReportText(inv.number)}</td>
@@ -655,8 +624,8 @@
         if (Number(data.totalReportedSales || 0) !== Number(data.totalSales || 0)) {
           note.push(`Reported sales: ${formatMoney(data.totalReportedSales)}`);
         }
-        if (data.excludedFromMonthlyCount) note.push(`${data.excludedFromMonthlyCount} invoice(s) hidden by report exclusions`);
-        if (data.excludedFromCommissionCount) note.push(`${data.excludedFromCommissionCount} invoice(s) ineligible for commission`);
+        if (data.ownerInvoiceCount) note.push(`Owner-assigned sales: ${formatMoney(data.ownerSales)} (no owner commission)`);
+        if (data.nonCommissionableInvoiceCount) note.push(`${data.nonCommissionableInvoiceCount} invoices have $0 commission (owner or unassigned)`);
         document.getElementById('reportFilterNote').innerText = note.join(' · ');
         status.textContent = '';
       } catch (e) {
@@ -665,67 +634,6 @@
         if (list) list.innerHTML = `<tr><td colspan="5">Report failed: ${escapeReportText(e.message)}</td></tr>`;
         document.getElementById('repSummaryRows').innerHTML = '';
         status.textContent = `Could not load report: ${e.message}`;
-      }
-    }
-
-    async function loadCustomerReportSettings() {
-      const select = document.getElementById('customerSettingsSelect');
-      const status = document.getElementById('settingsSaveStatus');
-      try {
-        const response = await fetch(`${API_URL}?action=getCustomerReportSettings`, { redirect: "follow" });
-        const data = await response.json();
-        if (data.success === false) throw new Error(data.error || 'Customer settings failed');
-
-        customerReportSettingsCache = Array.isArray(data.customers) ? data.customers : [];
-        select.innerHTML = customerReportSettingsCache.map((c, idx) => `
-          <option value="${idx}">${c.name}${c.type ? ' — ' + c.type : ''}</option>
-        `).join('') || '<option value="">No customers found</option>';
-        loadSelectedCustomerSettings();
-        status.innerText = '';
-      } catch (err) {
-        console.error(err);
-        select.innerHTML = '<option value="">Could not load customers</option>';
-        status.innerText = err.message;
-      }
-    }
-
-    function loadSelectedCustomerSettings() {
-      const selectedIndex = document.getElementById('customerSettingsSelect').value;
-      const customer = customerReportSettingsCache[Number(selectedIndex)];
-      document.getElementById('excludeMonthlyReport').checked = Boolean(customer && customer.excludeFromMonthlyReport);
-      document.getElementById('privateLabelCustomer').checked = Boolean(customer && customer.privateLabel);
-      document.getElementById('excludeCommission').checked = Boolean(customer && customer.excludeFromCommission);
-    }
-
-    async function saveCustomerReportSettings() {
-      const selectedIndex = document.getElementById('customerSettingsSelect').value;
-      const customer = customerReportSettingsCache[Number(selectedIndex)];
-      const status = document.getElementById('settingsSaveStatus');
-      if (!customer) {
-        status.innerText = 'Pick a customer first.';
-        return;
-      }
-
-      const payload = {
-        customer: customer.name,
-        excludeFromMonthlyReport: document.getElementById('excludeMonthlyReport').checked,
-        privateLabel: document.getElementById('privateLabelCustomer').checked,
-        excludeFromCommission: document.getElementById('excludeCommission').checked
-      };
-
-      status.innerText = 'Saving...';
-      try {
-        const url = `${API_URL}?action=saveCustomerReportSettings&data=${encodeURIComponent(JSON.stringify(payload))}`;
-        const response = await fetch(url, { redirect: "follow" });
-        const data = await response.json();
-        if (!data.success) throw new Error(data.error || 'Save failed');
-
-        Object.assign(customer, payload);
-        status.innerText = data.message || 'Saved.';
-        loadData();
-      } catch (err) {
-        console.error(err);
-        status.innerText = err.message;
       }
     }
 
@@ -746,10 +654,11 @@
         h1{margin-bottom:4px}table{border-collapse:collapse;width:100%;margin:20px 0;font-size:12px}
         th,td{border:1px solid #ccc;padding:7px;text-align:left}th{background:#eee}
         .sum{font-size:22px;font-weight:bold}.alert{color:#92400e}</style></head><body>
-        <h1>Suburban Brewing Co. — Monthly Commission</h1>
+        <h1>Suburban Brewing Co. — Monthly Sales Rep Commission</h1>
         <p>${escapeReportText(report.monthLabel)} · ${escapeReportText(report.reportRepName)}</p>
         <p>Eligible Net Sales: ${formatMoney(report.totalSales)} · Rate: ${escapeReportText(report.rate)}</p>
         <p class="sum">Commission Due: ${formatMoney(report.commission)}</p>
+        <p>Owner-assigned sales: ${formatMoney(report.ownerSales)} (${report.ownerInvoiceCount} invoices); owner commission $0.</p>
         ${report.unassignedCount ? `<p class="alert">Unassigned: ${report.unassignedCount} invoice(s), ${formatMoney(report.unassignedSales)}; review before payout.</p>` : ''}
         <h2>Rep Breakdown</h2><table><thead><tr><th>Rep</th><th>Invoices</th><th>Eligible Sales</th><th>Commission</th></tr></thead>
         <tbody>${repRows || '<tr><td colspan="4">No entries</td></tr>'}</tbody></table>
